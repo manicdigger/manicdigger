@@ -23,23 +23,109 @@ using System.Security.Cryptography;
 
 public class GamePlatformNative : GamePlatform
 {
-    public GamePlatformNative()
-    {
-        System.Threading.ThreadPool.SetMinThreads(32, 32);
-        System.Threading.ThreadPool.SetMaxThreads(128, 128);
-        datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
-        start.Start();
-    }
-
-    public GameWindow window;
-
-    public bool TouchTest = false;
-
-    string[] datapaths;
-
+    #region Primitive
     public override int FloatToInt(float value)
     {
         return (int)value;
+    }
+    
+    public override float MathSin(float a)
+    {
+        return (float)Math.Sin(a);
+    }
+
+    public override float MathCos(float a)
+    {
+        return (float)Math.Cos(a);
+    }
+
+    public override float MathSqrt(float value)
+    {
+        return (float)System.Math.Sqrt(value);
+    }
+
+    public override float MathAcos(float p)
+    {
+        return (float)Math.Acos(p);
+    }
+
+    public override float MathTan(float p)
+    {
+        return (float)Math.Tan(p);
+    }
+
+    public override float FloatModulo(float a, int b)
+    {
+        return a % b;
+    }
+
+
+
+
+    public override int IntParse(string value)
+    {
+        return System.Int32.Parse(value);
+    }
+
+    public override float FloatParse(string value)
+    {
+        return System.Single.Parse(value);
+    }
+
+    public override bool FloatTryParse(string s, FloatRef ret)
+    {
+        float f;
+        if (float.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out f))
+        {
+            ret.value = f;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public override string IntToString(int value)
+    {
+        return value.ToString();
+    }
+
+    public override string FloatToString(float value)
+    {
+        return value.ToString(CultureInfo.InvariantCulture);
+    }
+
+
+    public override string StringToLower(string p)
+    {
+        return p.ToLowerInvariant();
+    }
+
+    public override int[] StringToCharArray(string s, IntRef length)
+    {
+        if (s == null)
+        {
+            length.value = 0;
+            return new int[0];
+        }
+        length.value = s.Length;
+        int[] charArray = new int[s.Length];
+        for (int i = 0; i < s.Length; i++)
+        {
+            charArray[i] = s[i];
+        }
+        return charArray;
+    }
+
+    public override string CharArrayToString(int[] charArray, int length)
+    {
+        StringBuilder s = new StringBuilder();
+        for (int i = 0; i < length; i++)
+        {
+            s.Append((char)charArray[i]);
+        }
+        return s.ToString();
     }
 
     public override string[] StringSplit(string value, string separator, IntRef returnLength)
@@ -54,35 +140,9 @@ public class GamePlatformNative : GamePlatform
         return string.IsNullOrEmpty(data);
     }
 
-    public override int IntParse(string value)
-    {
-        return System.Int32.Parse(value);
-    }
-
-    public override float FloatParse(string value)
-    {
-        return System.Single.Parse(value);
-    }
-
-    public override float MathSqrt(float value)
-    {
-        return (float)System.Math.Sqrt(value);
-    }
-
     public override string StringTrim(string value)
     {
         return value.Trim();
-    }
-
-    public override string IntToString(int value)
-    {
-        return value.ToString();
-    }
-
-    public override string Timestamp()
-    {
-        string time = string.Format("{0:yyyy-MM-dd_HH-mm-ss}", System.DateTime.Now);
-        return time;
     }
 
     public override string StringFormat(string format, string arg0)
@@ -103,6 +163,62 @@ public class GamePlatformNative : GamePlatform
     public override string StringFormat4(string format, string arg0, string arg1, string arg2, string arg3)
     {
         return string.Format(format, arg0, arg1, arg2, arg3);
+    }
+
+    public override byte[] StringToUtf8ByteArray(string s, IntRef retLength)
+    {
+        byte[] data = Encoding.UTF8.GetBytes(s);
+        retLength.value = data.Length;
+        return data;
+    }
+
+    public override string StringFromUtf8ByteArray(byte[] value, int valueLength)
+    {
+        string s = Encoding.UTF8.GetString(value, 0, valueLength);
+        return s;
+    }
+
+    public override bool StringContains(string a, string b)
+    {
+        return a.Contains(b);
+    }
+
+    public override string StringReplace(string s, string from, string to)
+    {
+        return s.Replace(from, to);
+    }
+
+    public override bool StringStartsWithIgnoreCase(string a, string b)
+    {
+        return a.StartsWith(b, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    public override int StringIndexOf(string s, string p)
+    {
+        return s.IndexOf(p);
+    }
+
+    #endregion
+
+    #region Misc
+
+    public GamePlatformNative()
+    {
+        System.Threading.ThreadPool.SetMinThreads(32, 32);
+        System.Threading.ThreadPool.SetMaxThreads(128, 128);
+        datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+        start.Start();
+    }
+
+    public bool TouchTest = false;
+
+    string[] datapaths;
+
+
+    public override string Timestamp()
+    {
+        string time = string.Format("{0:yyyy-MM-dd_HH-mm-ss}", System.DateTime.Now);
+        return time;
     }
 
     public override void ClipboardSetText(string s)
@@ -133,32 +249,6 @@ public class GamePlatformNative : GamePlatform
     public override void Exit()
     {
         Environment.Exit(0);
-    }
-
-    public override int[] StringToCharArray(string s, IntRef length)
-    {
-        if (s == null)
-        {
-            length.value = 0;
-            return new int[0];
-        }
-        length.value = s.Length;
-        int[] charArray = new int[s.Length];
-        for (int i = 0; i < s.Length; i++)
-        {
-            charArray[i] = s[i];
-        }
-        return charArray;
-    }
-
-    public override string CharArrayToString(int[] charArray, int length)
-    {
-        StringBuilder s = new StringBuilder();
-        for (int i = 0; i < length; i++)
-        {
-            s.Append((char)charArray[i]);
-        }
-        return s.ToString();
     }
 
     public override string PathSavegames()
@@ -290,6 +380,925 @@ public class GamePlatformNative : GamePlatform
         touchEventHandlers.Add(handler);
     }
 
+    public override string GetLanguageIso6391()
+    {
+        return CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    }
+
+    Stopwatch start = new Stopwatch();
+
+    public override int TimeMillisecondsFromStart()
+    {
+        return (int)start.ElapsedMilliseconds;
+    }
+
+    public override void ThrowException(string message)
+    {
+        throw new Exception(message);
+    }
+
+    public override BitmapCi BitmapCreate(int width, int height)
+    {
+        BitmapCiCs bmp = new BitmapCiCs();
+        bmp.bmp = new Bitmap(width, height);
+        return bmp;
+    }
+
+    public override void BitmapSetPixelsArgb(BitmapCi bmp, int[] pixels)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        int width = bmp_.bmp.Width;
+        int height = bmp_.bmp.Height;
+        if (IsMono)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int color = pixels[x + y * width];
+                    bmp_.bmp.SetPixel(x, y, Color.FromArgb(color));
+                }
+            }
+        }
+        else
+        {
+            FastBitmap fastbmp = new FastBitmap();
+            fastbmp.bmp = bmp_.bmp;
+            fastbmp.Lock();
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    fastbmp.SetPixel(x, y, pixels[x + y * width]);
+                }
+            }
+            fastbmp.Unlock();
+        }
+    }
+
+    public override BitmapCi BitmapCreateFromPng(byte[] data, int dataLength)
+    {
+        BitmapCiCs bmp = new BitmapCiCs();
+        try
+        {
+            bmp.bmp = new Bitmap(new MemoryStream(data, 0, dataLength));
+        }
+        catch
+        {
+            bmp.bmp = new Bitmap(1, 1);
+            bmp.bmp.SetPixel(0, 0, Color.Orange);
+        }
+        return bmp;
+    }
+
+    public bool IsMono = Type.GetType("Mono.Runtime") != null;
+
+    public override void BitmapGetPixelsArgb(BitmapCi bitmap, int[] bmpPixels)
+    {
+        BitmapCiCs bmp = (BitmapCiCs)bitmap;
+        int width = bmp.bmp.Width;
+        int height = bmp.bmp.Height;
+        if (IsMono)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    bmpPixels[x + y * width] = bmp.bmp.GetPixel(x, y).ToArgb();
+                }
+            }
+        }
+        else
+        {
+            FastBitmap fastbmp = new FastBitmap();
+            fastbmp.bmp = bmp.bmp;
+            fastbmp.Lock();
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    bmpPixels[x + y * width] = fastbmp.GetPixel(x, y);
+                }
+            }
+            fastbmp.Unlock();
+        }
+    }
+
+    public override int LoadTextureFromBitmap(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        return LoadTexture(bmp_.bmp, false);
+    }
+
+    ManicDigger.Renderers.TextRenderer textrenderer = new ManicDigger.Renderers.TextRenderer();
+
+    public override BitmapCi CreateTextTexture(Text_ t)
+    {
+        Bitmap bmp = textrenderer.MakeTextTexture(t);
+        return new BitmapCiCs() { bmp = bmp };
+    }
+
+    public override void SetTextRendererFont(int fontID)
+    {
+        textrenderer.SetFont(fontID);
+    }
+
+    public override float BitmapGetWidth(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        return bmp_.bmp.Width;
+    }
+
+    public override float BitmapGetHeight(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        return bmp_.bmp.Height;
+    }
+
+    public override void BitmapDelete(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        bmp_.bmp.Dispose();
+    }
+
+    AudioOpenAl audio;
+    public GameExit gameexit;
+    void StartAudio()
+    {
+        if (audio == null)
+        {
+            audio = new AudioOpenAl();
+            audio.d_GameExit = gameexit;
+        }
+    }
+
+    public override AudioSampleCi AudioLoad(byte[] data)
+    {
+        StartAudio();
+        return audio.GetSampleFromArray(data);
+    }
+
+    public override void AudioPlay(AudioSampleCi sample, float x, float y, float z)
+    {
+        StartAudio();
+        audio.Play(sample, x, y, z);
+    }
+
+    public override void AudioPlayLoop(AudioSampleCi sample, bool play, bool restart)
+    {
+        StartAudio();
+        audio.PlayAudioLoop((AudioSample)sample, play, restart);
+    }
+
+    public override void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ)
+    {
+        StartAudio();
+        audio.UpdateListener(new Vector3(posX, posY, posZ), new Vector3(orientX, orientY, orientZ));
+    }
+
+    public override void ConsoleWriteLine(string s)
+    {
+        Console.WriteLine(s);
+    }
+
+    public override MonitorObject MonitorCreate()
+    {
+        return new MonitorObject();
+    }
+
+    public override void MonitorEnter(MonitorObject monitorObject)
+    {
+        System.Threading.Monitor.Enter(monitorObject);
+    }
+
+    public override void MonitorExit(MonitorObject monitorObject)
+    {
+        System.Threading.Monitor.Exit(monitorObject);
+    }
+
+    public override AviWriterCi AviWriterCreate()
+    {
+        AviWriterCiCs avi = new AviWriterCiCs();
+        return avi;
+    }
+
+    public override UriCi ParseUri(string uri)
+    {
+        MyUri myuri = new MyUri(uri);
+
+        UriCi ret = new UriCi();
+        ret.url = myuri.Url;
+        ret.ip = myuri.Ip;
+        ret.port = myuri.Port;
+        ret.get = new DictionaryStringString();
+        foreach (var k in myuri.Get)
+        {
+            ret.get.Set(k.Key, k.Value);
+        }
+        return ret;
+    }
+
+    public override RandomCi RandomCreate()
+    {
+        return new RandomNative();
+    }
+
+    public override string PathStorage()
+    {
+        return GameStorePath.GetStorePath();
+    }
+
+    public override string GetGameVersion()
+    {
+        return GameVersion.Version;
+    }
+        
+    ICompression compression = new CompressionGzip();
+    public override void GzipDecompress(byte[] compressed, int compressedLength, byte[] ret)
+    {
+        byte[] data = new byte[compressedLength];
+        for (int i = 0; i < compressedLength; i++)
+        {
+            data[i] = compressed[i];
+        }
+        byte[] decompressed = compression.Decompress(data);
+        for (int i = 0; i < decompressed.Length; i++)
+        {
+            ret[i] = decompressed[i];
+        }
+    }
+    public override byte[] GzipCompress(byte[] data, int dataLength, IntRef retLength)
+    {
+        byte[] data_ = new byte[dataLength];
+        for (int i = 0; i < dataLength; i++)
+        {
+            data_[i] = data[i];
+        }
+        byte[] compressed = compression.Compress(data_);
+        retLength.value = compressed.Length;
+        return compressed;
+    }
+    public bool ENABLE_CHATLOG = true;
+    public string gamepathlogs() { return Path.Combine(PathStorage(), "Logs"); }
+    private static string MakeValidFileName(string name)
+    {
+        string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
+        string invalidReStr = string.Format(@"[{0}]", invalidChars);
+        return Regex.Replace(name, invalidReStr, "_");
+    }
+    public override bool ChatLog(string servername, string p)
+    {
+        if (!ENABLE_CHATLOG)
+        {
+            return true;
+        }
+        if (!Directory.Exists(gamepathlogs()))
+        {
+            Directory.CreateDirectory(gamepathlogs());
+        }
+        string filename = Path.Combine(gamepathlogs(), MakeValidFileName(servername) + ".txt");
+        try
+        {
+            File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public override bool IsValidTypingChar(int c_)
+    {
+        char c = (char)c_;
+        return (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)
+                    || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
+                    && c != '\r' && c != '\t';
+    }
+
+    public override void MessageBoxShowError(string text, string caption)
+    {
+        System.Windows.Forms.MessageBox.Show(text, caption, System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+    }
+
+    public override int ByteArrayLength(byte[] arr)
+    {
+        return arr.Length;
+    }
+
+    public override string[] ReadAllLines(string p, IntRef retCount)
+    {
+        List<string> lines = new List<string>();
+        StringReader reader = new StringReader(p);
+        string line;
+        while ((line = reader.ReadLine()) != null)
+        {
+            lines.Add(line);
+        }
+        retCount.value = lines.Count;
+        return lines.ToArray();
+    }
+
+    public override bool ClipboardContainsText()
+    {
+        return Clipboard.ContainsText();
+    }
+
+    public override string ClipboardGetText()
+    {
+        return Clipboard.GetText();
+    }
+
+    public CrashReporter crashreporter;
+
+    OnCrashHandler onCrashHandler;
+    public override void AddOnCrash(OnCrashHandler handler)
+    {
+        crashreporter.OnCrash = OnCrash;
+        onCrashHandler = handler;
+    }
+
+    void OnCrash()
+    {
+        if (onCrashHandler != null)
+        {
+            onCrashHandler.OnCrash();
+        }
+    }
+
+    public void SetExit(GameExit exit)
+    {
+        gameexit = exit;
+    }
+
+    class UploadData
+    {
+        public string url;
+        public byte[] data;
+        public int dataLength;
+        public HttpResponseCi response;
+    }
+
+    public override void WebClientUploadDataAsync(string url, byte[] data, int dataLength, HttpResponseCi response)
+    {
+        UploadData d = new UploadData();
+        d.url = url;
+        d.data = data;
+        d.dataLength = dataLength;
+        d.response = response;
+        System.Threading.ThreadPool.QueueUserWorkItem(DoUploadData, d);
+    }
+
+    void DoUploadData(object o)
+    {
+        UploadData d = (UploadData)o;
+        try
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(d.url);
+            request.Method = "POST";
+            request.Timeout = 15000; // 15s timeout
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
+
+            request.ContentLength = d.dataLength;
+
+            System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(d.data, 0, d.dataLength);
+                requestStream.Flush();
+            }
+            WebResponse response_ = request.GetResponse();
+
+            MemoryStream m = new MemoryStream();
+            using (Stream s = response_.GetResponseStream())
+            {
+                CopyTo(s, m);
+            }
+            d.response.value = m.ToArray();
+            d.response.valueLength = d.response.value.Length;
+            d.response.done = true;
+
+            request.Abort();
+
+        }
+        catch
+        {
+            d.response.error = true;
+        }
+    }
+
+    public static void CopyTo(Stream source, Stream destination)
+    {
+        // TODO: Argument validation
+        byte[] buffer = new byte[16384]; // For example...
+        int bytesRead;
+        while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            destination.Write(buffer, 0, bytesRead);
+        }
+    }
+
+    public override string FileOpenDialog(string extension, string extensionName, string initialDirectory)
+    {
+        OpenFileDialog d = new OpenFileDialog();
+        d.InitialDirectory = initialDirectory;
+        d.FileName = "Default." + extension;
+        d.Filter = string.Format("{1}|*.{0}|All files|*.*", extension, extensionName);
+        d.CheckFileExists = false;
+        d.CheckPathExists = true;
+        string dir = System.Environment.CurrentDirectory;
+        DialogResult result = d.ShowDialog();
+        System.Environment.CurrentDirectory = dir;
+        if (result == DialogResult.OK)
+        {
+            return d.FileName;
+        }
+        return null;
+    }
+
+    bool mouseCursorVisible = true;
+
+    public override void ApplicationDoEvents()
+    {
+        if (IsMono)
+        {
+            Application.DoEvents();
+            Thread.Sleep(0);
+        }
+    }
+
+    public override void ThreadSpinWait(int iterations)
+    {
+        Thread.SpinWait(iterations);
+    }
+
+    public override void ShowKeyboard(bool show)
+    {
+    }
+
+    public override bool IsFastSystem()
+    {
+        return true;
+    }
+
+    static string GetPreferencesFilePath()
+    {
+        string path = GameStorePath.GetStorePath();
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+        return Path.Combine(path, "Preferences.txt");
+    }
+
+    public override Preferences GetPreferences()
+    {
+        if (File.Exists(GetPreferencesFilePath()))
+        {
+            try
+            {
+                Preferences p = new Preferences();
+                p.platform = this;
+                string[] lines = File.ReadAllLines(GetPreferencesFilePath());
+                foreach (string l in lines)
+                {
+                    int a = l.IndexOf("=", StringComparison.InvariantCultureIgnoreCase);
+                    string name = l.Substring(0, a);
+                    string value = l.Substring(a + 1);
+                    p.SetString(name, value);
+                }
+                return p;
+            }
+            catch
+            {
+                File.Delete(GetPreferencesFilePath());
+                return new Preferences();
+            }
+        }
+        else
+        {
+            Preferences p = new Preferences();
+            p.platform = this;
+            return p;
+        }
+    }
+
+    public override void SetPreferences(Preferences preferences)
+    {
+        DictionaryStringString items = preferences.items;
+        List<string> lines = new List<string>();
+        for (int i = 0; i < items.count; i++)
+        {
+            if (items.items[i] == null)
+            {
+                continue;
+            }
+            string key = items.items[i].key;
+            string value = items.items[i].value;
+            lines.Add(key + "=" + value);
+        }
+        try
+        {
+            File.WriteAllLines(GetPreferencesFilePath(), lines.ToArray());
+        }
+        catch
+        {
+        }
+    }
+
+    bool mousePointerLocked;
+
+    public override bool IsMousePointerLocked()
+    {
+        return mousePointerLocked;
+    }
+
+    public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
+
+    public override bool MultithreadingAvailable()
+    {
+        return true;
+    }
+
+    public override void QueueUserWorkItem(Action_ action)
+    {
+        ThreadPool.QueueUserWorkItem((a) => { action.Run(); });
+    }
+
+    AssetLoader assetloader;
+    public override void LoadAssetsAsyc(AssetList list, FloatRef progress)
+    {
+        if (assetloader == null)
+        {
+            assetloader = new AssetLoader(datapaths);
+        }
+        assetloader.LoadAssetsAsync(list, progress);
+    }
+
+    public override bool MouseCursorIsVisible()
+    {
+        return mouseCursorVisible;
+    }
+
+    public override bool IsSmallScreen()
+    {
+        return TouchTest;
+    }
+
+    public override void OpenLinkInBrowser(string url)
+    {
+        if (!(url.StartsWith("http://") || url.StartsWith("https://")))
+        {
+            //Check if string is an URL - if not, abort
+            return;
+        }
+        Process.Start(url);
+    }
+
+    public string cachepath() { return Path.Combine(PathStorage(), "Cache"); }
+    public void checkcachedir()
+    {
+        if (!Directory.Exists(cachepath()))
+        {
+            Directory.CreateDirectory(cachepath());
+        }
+    }
+
+    public override void SaveAssetToCache(Asset tosave)
+    {
+        //Check if cache directory exists
+        checkcachedir();
+        BinaryWriter bw = new BinaryWriter(File.Create(Path.Combine(cachepath(), tosave.md5)));
+        bw.Write(tosave.name);
+        bw.Write(tosave.dataLength);
+        bw.Write(tosave.data);
+        bw.Close();
+    }
+
+    public override Asset LoadAssetFromCache(string md5)
+    {
+        //Check if cache directory exists
+        checkcachedir();
+        BinaryReader br = new BinaryReader(File.OpenRead(Path.Combine(cachepath(), md5)));
+        string contentName = br.ReadString();
+        int contentLength = br.ReadInt32();
+        byte[] content = br.ReadBytes(contentLength);
+        br.Close();
+        Asset a = new Asset();
+        a.data = content;
+        a.dataLength = contentLength;
+        a.md5 = md5;
+        a.name = contentName;
+        return a;
+    }
+
+    public override bool IsCached(string md5)
+    {
+        if (!Directory.Exists(cachepath()))
+            return false;
+        return File.Exists(Path.Combine(cachepath(), md5));
+    }
+
+    public override bool IsChecksum(string checksum)
+    {
+        //Check if checksum string has correct length
+        if (checksum.Length != 32)
+        {
+            return false;
+        }
+        //Convert checksum string to lowercase letters
+        checksum = checksum.ToLower();
+        char[] chars = checksum.ToCharArray();
+        for (int i = 0; i < chars.Length; i++)
+        {
+            if ((chars[i] < '0' || chars[i] > '9') && (chars[i] < 'a' || chars[i] > 'f'))
+            {
+                //Return false if any character inside the checksum is not hexadecimal
+                return false;
+            }
+        }
+        //Return true if all checks have been passed
+        return true;
+    }
+
+    public override bool IsDebuggerAttached()
+    {
+        return System.Diagnostics.Debugger.IsAttached;
+    }
+
+    #endregion
+
+    #region Tcp
+    public override bool TcpAvailable()
+    {
+        return true;
+    }
+
+    public override void TcpConnect(string ip, int port, BoolRef connected)
+    {
+        this.connected = connected;
+        sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        sock.NoDelay = true;
+        sock.BeginConnect(ip, port, OnConnect, sock);
+    }
+    Socket sock;
+    BoolRef connected;
+    Connection c;
+    void OnConnect(IAsyncResult result)
+    {
+        Socket sock = (Socket)result.AsyncState;
+        c = new Connection(sock);
+        c.ReceivedData += new EventHandler<MessageEventArgs>(c_ReceivedData);
+        if (tosend.Count > 0)
+        {
+            c.Send(tosend.ToArray());
+            tosend.Clear();
+        }
+        connected.value = true;
+    }
+
+    void c_ReceivedData(object sender, MessageEventArgs e)
+    {
+        lock (received)
+        {
+            for (int i = 0; i < e.data.Length; i++)
+            {
+                received.Enqueue(e.data[i]);
+            }
+        }
+    }
+    Queue<byte> tosend = new Queue<byte>();
+    public override void TcpSend(byte[] data, int length)
+    {
+        if (c == null)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                tosend.Enqueue(data[i]);
+            }
+        }
+        else
+        {
+            byte[] data1 = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                data1[i] = data[i];
+            }
+            c.Send(data1);
+        }
+    }
+    Queue<byte> received = new Queue<byte>();
+    public override int TcpReceive(byte[] data, int dataLength)
+    {
+        if (c == null)
+        {
+            return 0;
+        }
+        int total = 0;
+        lock (received)
+        {
+            for (int i = 0; i < dataLength; i++)
+            {
+                if (received.Count == 0)
+                {
+                    break;
+                }
+                data[i] = received.Dequeue();
+                total++;
+            }
+        }
+        return total;
+    }
+
+    public class Connection
+    {
+        public Socket sock;
+        public string address;
+
+        Encoding encoding = Encoding.UTF8;
+
+        public Connection(Socket s)
+        {
+            this.sock = s;
+            address = s.RemoteEndPoint.ToString();
+            this.BeginReceive();
+        }
+        Stopwatch st = new Stopwatch();
+        private void BeginReceive()
+        {
+            this.sock.BeginReceive(
+                    this.dataRcvBuf, 0,
+                    this.dataRcvBuf.Length,
+                    SocketFlags.None,
+                    new AsyncCallback(this.OnBytesReceived),
+                    this);
+        }
+        byte[] dataRcvBuf = new byte[1024 * 8];
+        static int i = 0;
+        protected void OnBytesReceived(IAsyncResult result)
+        {
+            int nBytesRec;
+            try
+            {
+                nBytesRec = this.sock.EndReceive(result);
+            }
+            catch
+            {
+                try
+                {
+                    this.sock.Close();
+                }
+                catch
+                {
+                }
+                if (Disconnected != null)
+                {
+                    Disconnected(null, new ConnectionEventArgs() { });
+                }
+                return;
+            }
+            if (nBytesRec <= 0)
+            {
+                try
+                {
+                    this.sock.Close();
+                }
+                catch
+                {
+                }
+                if (Disconnected != null)
+                {
+                    Disconnected(null, new ConnectionEventArgs() { });
+                }
+                return;
+            }
+
+            byte[] receivedBytes = new byte[nBytesRec];
+            for (int i = 0; i < nBytesRec; i++)
+            {
+                receivedBytes[i] = dataRcvBuf[i];
+            }
+
+            if (nBytesRec > 0)
+            {
+                ReceivedData.Invoke(this, new MessageEventArgs() { data = receivedBytes });
+            }
+
+            st.Reset();
+            st.Start();
+
+            this.sock.BeginReceive(
+                this.dataRcvBuf, 0,
+                this.dataRcvBuf.Length,
+                SocketFlags.None,
+                new AsyncCallback(this.OnBytesReceived),
+                this);
+        }
+        public void Send(byte[] data)
+        {
+            try
+            {
+                sock.BeginSend(data, 0, data.Length, SocketFlags.None, new AsyncCallback(OnSend), null);
+            }
+            catch (Exception e)
+            {
+            }
+        }
+        void OnSend(IAsyncResult result)
+        {
+            sock.EndSend(result);
+        }
+        public event EventHandler<MessageEventArgs> ReceivedData;
+        public event EventHandler<ConnectionEventArgs> Disconnected;
+
+        public override string ToString()
+        {
+            if (address != null)
+            {
+                return address.ToString();
+            }
+            return base.ToString();
+        }
+    }
+    #endregion
+
+    #region Enet
+    public override bool EnetAvailable()
+    {
+        return true;
+    }
+
+    public override EnetHost EnetCreateHost()
+    {
+        return new EnetHostNative() { host = new ENet.Host() };
+    }
+
+    public override void EnetHostInitializeServer(EnetHost host, int port, int peerLimit)
+    {
+        EnetHostNative host_ = (EnetHostNative)host;
+        host_.host.InitializeServer(port, peerLimit);
+    }
+
+    public override bool EnetHostService(EnetHost host, int timeout, EnetEventRef enetEvent)
+    {
+        EnetHostNative host_ = (EnetHostNative)host;
+        ENet.Event e;
+        bool ret = host_.host.Service(timeout, out e);
+        EnetEventNative ee = new EnetEventNative();
+        ee.e = e;
+        enetEvent.e = ee;
+        return ret;
+    }
+
+    public override bool EnetHostCheckEvents(EnetHost host, EnetEventRef event_)
+    {
+        EnetHostNative host_ = (EnetHostNative)host;
+        ENet.Event e;
+        bool ret = host_.host.CheckEvents(out e);
+        EnetEventNative ee = new EnetEventNative();
+        ee.e = e;
+        event_.e = ee;
+        return ret;
+    }
+
+    public override EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit)
+    {
+        EnetHostNative host_ = (EnetHostNative)host;
+        ENet.Peer peer = host_.host.Connect(hostName, port, data, channelLimit);
+        EnetPeerNative peer_ = new EnetPeerNative();
+        peer_.peer = peer;
+        return peer_;
+    }
+
+    public override void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags)
+    {
+        try
+        {
+            EnetPeerNative peer_ = (EnetPeerNative)peer;
+            peer_.peer.Send(channelID, data, (ENet.PacketFlags)flags);
+        }
+        catch
+        {
+        }
+    }
+
+    public override void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth)
+    {
+        if (address != null)
+        {
+            throw new Exception();
+        }
+        EnetHostNative host_ = (EnetHostNative)host;
+        host_.host.Initialize(null, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth);
+    }
+    #endregion
+    
+    #region OpenGlImpl
+
+    public GameWindow window;
+
     public override int GetCanvasWidth()
     {
         return window.Width;
@@ -346,6 +1355,90 @@ public class GamePlatformNative : GamePlatform
         }
         window.SwapBuffers();
     }
+
+    bool wasMousePointerLocked;
+    void UpdateMousePosition(UpdateMousePositionArgs args)
+    {
+        args.mouseCurrentX = System.Windows.Forms.Cursor.Position.X;
+        args.mouseCurrentY = System.Windows.Forms.Cursor.Position.Y;
+        if (!mousePointerLocked)
+        {
+            args.mouseCurrentX = args.mouseCurrentX - window.X;
+            args.mouseCurrentY = args.mouseCurrentY - window.Y;
+
+            args.mouseCurrentY = args.mouseCurrentY - System.Windows.Forms.SystemInformation.CaptionHeight;
+
+            args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
+            args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
+            mouse_previous.X = args.mouseCurrentX;
+            mouse_previous.Y = args.mouseCurrentY;
+        }
+        if (!window.Focused)
+        {
+            return;
+        }
+        if (mousePointerLocked && (!wasMousePointerLocked))
+        {
+            mouse_previous.X = args.mouseCurrentX;
+            mouse_previous.Y = args.mouseCurrentY;
+            args.freemousejustdisabled = false;
+        }
+        wasMousePointerLocked = mousePointerLocked;
+        if (mousePointerLocked)
+        {
+            //There are two versions:
+
+            //a) System.Windows.Forms.Cursor and GameWindow.CursorVisible = true.
+            //It works by centering global mouse cursor every frame.
+            //*Windows:
+            //   *OK.
+            //   *On a few YouTube videos mouse cursor is not hiding properly.
+            //    That could be just a problem with video recording software.
+            //*Ubuntu: Broken, mouse cursor doesn't hide.
+            //*Mac: Broken, mouse doesn't move at all.
+
+            //b) OpenTk.Input.Mouse and GameWindow.CursorVisible = false.
+            //Uses raw mouse coordinates, movement is not accelerated.
+            //*Windows:
+            //  *OK.
+            //  *Worse than a), because this doesn't use system-wide mouse acceleration.
+            //*Ubuntu: Broken, crashes with "libxi" library missing.
+            //*Mac: OK.
+
+            if (!IsMac)
+            {
+                //a)
+                int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
+                int centery = window.Bounds.Top + (window.Bounds.Height / 2);
+
+                args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
+                args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
+
+                System.Windows.Forms.Cursor.Position =
+                    new Point(centerx, centery);
+                mouse_previous = new Point(centerx, centery);
+            }
+            else
+            {
+                //b)
+                var state = OpenTK.Input.Mouse.GetState();
+                float dx = state.X - mouse_previous_state.X;
+                float dy = state.Y - mouse_previous_state.Y;
+                mouse_previous_state = state;
+                //These are raw coordinates, so need to apply acceleration manually.
+                float dx2 = (dx * Math.Abs(dx) * MouseAcceleration1);
+                float dy2 = (dy * Math.Abs(dy) * MouseAcceleration1);
+                dx2 += dx * MouseAcceleration2;
+                dy2 += dy * MouseAcceleration2;
+                args.mouseDeltaX = dx2;
+                args.mouseDeltaY = dy2;
+            }
+        }
+    }
+    public float MouseAcceleration1 = 0.12f;
+    public float MouseAcceleration2 = 0.7f;
+    OpenTK.Input.MouseState mouse_previous_state;
+    Point mouse_previous;
 
     void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
     {
@@ -470,6 +1563,170 @@ public class GamePlatformNative : GamePlatform
         return (int)key;
     }
 
+    public override void MouseCursorSetVisible(bool value)
+    {
+        if (!value)
+        {
+            if (TouchTest)
+            {
+                return;
+            }
+            if (!IsMac)
+            {
+                System.Windows.Forms.Cursor.Hide();
+            }
+            else
+            {
+                window.CursorVisible = false;
+            }
+            mouseCursorVisible = false;
+        }
+        else
+        {
+            if (!IsMac)
+            {
+                System.Windows.Forms.Cursor.Show();
+            }
+            else
+            {
+                window.CursorVisible = true;
+            }
+            mouseCursorVisible = true;
+        }
+    }
+
+    public override void SetVSync(bool enabled)
+    {
+        window.VSync = enabled ? VSyncMode.On : VSyncMode.Off;
+    }
+
+    public override void RequestMousePointerLock()
+    {
+        if (TouchTest)
+        {
+            return;
+        }
+        if (IsMac)
+        {
+            window.CursorVisible = false;
+            System.Windows.Forms.Cursor.Hide();
+        }
+        mousePointerLocked = true;
+    }
+
+    public override void ExitMousePointerLock()
+    {
+        if (IsMac)
+        {
+            window.CursorVisible = true;
+        }
+        mousePointerLocked = false;
+    }
+
+    Screenshot screenshot = new Screenshot();
+
+    public override void SaveScreenshot()
+    {
+        screenshot.d_GameWindow = window;
+        screenshot.SaveScreenshot();
+    }
+
+    public override BitmapCi GrabScreenshot()
+    {
+        screenshot.d_GameWindow = window;
+        Bitmap bmp = screenshot.GrabScreenshot();
+        BitmapCiCs bmp_ = new BitmapCiCs();
+        bmp_.bmp = bmp;
+        return bmp_;
+    }
+
+    public override void WindowExit()
+    {
+        if (gameexit != null)
+        {
+            gameexit.exit = true;
+        }
+        window.Exit();
+    }
+
+    public override void SetTitle(string applicationname)
+    {
+        window.Title = applicationname;
+    }
+
+    public override bool Focused()
+    {
+        return window.Focused;
+    }
+
+    public override string KeyName(int key)
+    {
+        if (Enum.IsDefined(typeof(OpenTK.Input.Key), key))
+        {
+            string s = Enum.GetName(typeof(OpenTK.Input.Key), key);
+            return s;
+        }
+        //if (Enum.IsDefined(typeof(SpecialKey), key))
+        //{
+        //    string s = Enum.GetName(typeof(SpecialKey), key);
+        //    return s;
+        //}
+        return key.ToString();
+    }
+    DisplayResolutionCi[] resolutions;
+    int resolutionsCount;
+    public override DisplayResolutionCi[] GetDisplayResolutions(IntRef retResolutionsCount)
+    {
+        if (resolutions == null)
+        {
+            resolutions = new DisplayResolutionCi[1024];
+            foreach (var r in DisplayDevice.Default.AvailableResolutions)
+            {
+                if (r.Width < 800 || r.Height < 600 || r.BitsPerPixel < 16)
+                {
+                    continue;
+                }
+                DisplayResolutionCi r2 = new DisplayResolutionCi();
+                r2.Width = r.Width;
+                r2.Height = r.Height;
+                r2.BitsPerPixel = r.BitsPerPixel;
+                r2.RefreshRate = r.RefreshRate;
+                resolutions[resolutionsCount++] = r2;
+            }
+        }
+        retResolutionsCount.value = resolutionsCount;
+        return resolutions;
+    }
+
+    public override WindowState GetWindowState()
+    {
+        return (WindowState)window.WindowState;
+    }
+
+    public override void SetWindowState(WindowState value)
+    {
+        window.WindowState = (OpenTK.WindowState)value;
+    }
+
+    public override void ChangeResolution(int width, int height, int bitsPerPixel, float refreshRate)
+    {
+        DisplayDevice.Default.ChangeResolution(width, height, bitsPerPixel, refreshRate);
+    }
+
+    public override DisplayResolutionCi GetDisplayResolutionDefault()
+    {
+        DisplayDevice d = DisplayDevice.Default;
+        DisplayResolutionCi r = new DisplayResolutionCi();
+        r.Width = d.Width;
+        r.Height = d.Height;
+        r.BitsPerPixel = d.BitsPerPixel;
+        r.RefreshRate = d.RefreshRate;
+        return r;
+    }
+
+    #endregion
+
+    #region OpenGl
     public override void GlViewport(int x, int y, int width, int height)
     {
         GL.Viewport(x, y, width, height);
@@ -704,18 +1961,6 @@ public class GamePlatformNative : GamePlatform
         return id;
     }
 
-    public override string GetLanguageIso6391()
-    {
-        return CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-    }
-
-    Stopwatch start = new Stopwatch();
-
-    public override int TimeMillisecondsFromStart()
-    {
-        return (int)start.ElapsedMilliseconds;
-    }
-
     public override void GlDisableCullFace()
     {
         GL.Disable(EnableCap.CullFace);
@@ -724,11 +1969,6 @@ public class GamePlatformNative : GamePlatform
     public override void GlEnableCullFace()
     {
         GL.Enable(EnableCap.CullFace);
-    }
-
-    public override void ThrowException(string message)
-    {
-        throw new Exception(message);
     }
 
     public override void DeleteModel(Model model)
@@ -740,99 +1980,6 @@ public class GamePlatformNative : GamePlatform
     public override void GlEnableTexture2d()
     {
         GL.Enable(EnableCap.Texture2D);
-    }
-
-    public override BitmapCi BitmapCreate(int width, int height)
-    {
-        BitmapCiCs bmp = new BitmapCiCs();
-        bmp.bmp = new Bitmap(width, height);
-        return bmp;
-    }
-
-    public override void BitmapSetPixelsArgb(BitmapCi bmp, int[] pixels)
-    {
-        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
-        int width = bmp_.bmp.Width;
-        int height = bmp_.bmp.Height;
-        if (IsMono)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    int color = pixels[x + y * width];
-                    bmp_.bmp.SetPixel(x, y, Color.FromArgb(color));
-                }
-            }
-        }
-        else
-        {
-            FastBitmap fastbmp = new FastBitmap();
-            fastbmp.bmp = bmp_.bmp;
-            fastbmp.Lock();
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    fastbmp.SetPixel(x, y, pixels[x + y * width]);
-                }
-            }
-            fastbmp.Unlock();
-        }
-    }
-
-    public override BitmapCi BitmapCreateFromPng(byte[] data, int dataLength)
-    {
-        BitmapCiCs bmp = new BitmapCiCs();
-        try
-        {
-            bmp.bmp = new Bitmap(new MemoryStream(data, 0, dataLength));
-        }
-        catch
-        {
-            bmp.bmp = new Bitmap(1, 1);
-            bmp.bmp.SetPixel(0, 0, Color.Orange);
-        }
-        return bmp;
-    }
-
-    public bool IsMono = Type.GetType("Mono.Runtime") != null;
-
-    public override void BitmapGetPixelsArgb(BitmapCi bitmap, int[] bmpPixels)
-    {
-        BitmapCiCs bmp = (BitmapCiCs)bitmap;
-        int width = bmp.bmp.Width;
-        int height = bmp.bmp.Height;
-        if (IsMono)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    bmpPixels[x + y * width] = bmp.bmp.GetPixel(x, y).ToArgb();
-                }
-            }
-        }
-        else
-        {
-            FastBitmap fastbmp = new FastBitmap();
-            fastbmp.bmp = bmp.bmp;
-            fastbmp.Lock();
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    bmpPixels[x + y * width] = fastbmp.GetPixel(x, y);
-                }
-            }
-            fastbmp.Unlock();
-        }
-    }
-
-    public override int LoadTextureFromBitmap(BitmapCi bmp)
-    {
-        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
-        return LoadTexture(bmp_.bmp, false);
     }
 
     public override void GLLineWidth(int width)
@@ -855,272 +2002,9 @@ public class GamePlatformNative : GamePlatform
         GL.DeleteTexture(id);
     }
 
-    ManicDigger.Renderers.TextRenderer textrenderer = new ManicDigger.Renderers.TextRenderer();
-
-    public override BitmapCi CreateTextTexture(Text_ t)
-    {
-        Bitmap bmp = textrenderer.MakeTextTexture(t);
-        return new BitmapCiCs() { bmp = bmp };
-    }
-
-    public override void SetTextRendererFont(int fontID)
-    {
-        textrenderer.SetFont(fontID);
-    }
-
-    public override float BitmapGetWidth(BitmapCi bmp)
-    {
-        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
-        return bmp_.bmp.Width;
-    }
-
-    public override float BitmapGetHeight(BitmapCi bmp)
-    {
-        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
-        return bmp_.bmp.Height;
-    }
-
-    public override void BitmapDelete(BitmapCi bmp)
-    {
-        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
-        bmp_.bmp.Dispose();
-    }
-
-    public override bool FloatTryParse(string s, FloatRef ret)
-    {
-        float f;
-        if (float.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out f))
-        {
-            ret.value = f;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    public override float MathCos(float a)
-    {
-        return (float)Math.Cos(a);
-    }
-
-    public override float MathSin(float a)
-    {
-        return (float)Math.Sin(a);
-    }
-
-    AudioOpenAl audio;
-    public GameExit gameexit;
-    void StartAudio()
-    {
-        if (audio == null)
-        {
-            audio = new AudioOpenAl();
-            audio.d_GameExit = gameexit;
-        }
-    }
-
-    public override AudioSampleCi AudioLoad(byte[] data)
-    {
-        StartAudio();
-        return audio.GetSampleFromArray(data);
-    }
-
-    public override void AudioPlay(AudioSampleCi sample, float x, float y, float z)
-    {
-        StartAudio();
-        audio.Play(sample, x, y, z);
-    }
-
-    public override void AudioPlayLoop(AudioSampleCi sample, bool play, bool restart)
-    {
-        StartAudio();
-        audio.PlayAudioLoop((AudioSample)sample, play, restart);
-    }
-
-    public override void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ)
-    {
-        StartAudio();
-        audio.UpdateListener(new Vector3(posX, posY, posZ), new Vector3(orientX, orientY, orientZ));
-    }
-
-    public override void ConsoleWriteLine(string s)
-    {
-        Console.WriteLine(s);
-    }
-
-    public override DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message)
-    {
-        return (DummyNetOutgoingMessage)message;
-    }
-
-    public override MonitorObject MonitorCreate()
-    {
-        return new MonitorObject();
-    }
-
-    public override void MonitorEnter(MonitorObject monitorObject)
-    {
-        System.Threading.Monitor.Enter(monitorObject);
-    }
-
-    public override void MonitorExit(MonitorObject monitorObject)
-    {
-        System.Threading.Monitor.Exit(monitorObject);
-    }
-
-    public override bool EnetAvailable()
-    {
-        return true;
-    }
-
-    public override EnetHost EnetCreateHost()
-    {
-        return new EnetHostNative() { host = new ENet.Host() };
-    }
-
-    public override void EnetHostInitializeServer(EnetHost host, int port, int peerLimit)
-    {
-        EnetHostNative host_ = (EnetHostNative)host;
-        host_.host.InitializeServer(port, peerLimit);
-    }
-
-    public override bool EnetHostService(EnetHost host, int timeout, EnetEventRef enetEvent)
-    {
-        EnetHostNative host_ = (EnetHostNative)host;
-        ENet.Event e;
-        bool ret = host_.host.Service(timeout, out e);
-        EnetEventNative ee = new EnetEventNative();
-        ee.e = e;
-        enetEvent.e = ee;
-        return ret;
-    }
-
-    public override bool EnetHostCheckEvents(EnetHost host, EnetEventRef event_)
-    {
-        EnetHostNative host_ = (EnetHostNative)host;
-        ENet.Event e;
-        bool ret = host_.host.CheckEvents(out e);
-        EnetEventNative ee = new EnetEventNative();
-        ee.e = e;
-        event_.e = ee;
-        return ret;
-    }
-
-    public override EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit)
-    {
-        EnetHostNative host_ = (EnetHostNative)host;
-        ENet.Peer peer = host_.host.Connect(hostName, port, data, channelLimit);
-        EnetPeerNative peer_ = new EnetPeerNative();
-        peer_.peer = peer;
-        return peer_;
-    }
-
-    public override void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags)
-    {
-        try
-        {
-            EnetPeerNative peer_ = (EnetPeerNative)peer;
-            peer_.peer.Send(channelID, data, (ENet.PacketFlags)flags);
-        }
-        catch
-        {
-        }
-    }
-
-    public override EnetNetConnection CastToEnetNetConnection(INetConnection connection)
-    {
-        return (EnetNetConnection)connection;
-    }
-
-    public override EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg)
-    {
-        return (EnetNetOutgoingMessage)msg;
-    }
-
-    public override void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth)
-    {
-        if (address != null)
-        {
-            throw new Exception();
-        }
-        EnetHostNative host_ = (EnetHostNative)host;
-        host_.host.Initialize(null, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth);
-    }
-
-    Screenshot screenshot = new Screenshot();
-
-    public override void SaveScreenshot()
-    {
-        screenshot.d_GameWindow = window;
-        screenshot.SaveScreenshot();
-    }
-
-    public override BitmapCi GrabScreenshot()
-    {
-        screenshot.d_GameWindow = window;
-        Bitmap bmp = screenshot.GrabScreenshot();
-        BitmapCiCs bmp_ = new BitmapCiCs();
-        bmp_.bmp = bmp;
-        return bmp_;
-    }
-
-    public override AviWriterCi AviWriterCreate()
-    {
-        AviWriterCiCs avi = new AviWriterCiCs();
-        return avi;
-    }
-
-    public override float FloatModulo(float a, int b)
-    {
-        return a % b;
-    }
-
-    public override UriCi ParseUri(string uri)
-    {
-        MyUri myuri = new MyUri(uri);
-
-        UriCi ret = new UriCi();
-        ret.url = myuri.Url;
-        ret.ip = myuri.Ip;
-        ret.port = myuri.Port;
-        ret.get = new DictionaryStringString();
-        foreach (var k in myuri.Get)
-        {
-            ret.get.Set(k.Key, k.Value);
-        }
-        return ret;
-    }
-
-    public override bool StringContains(string a, string b)
-    {
-        return a.Contains(b);
-    }
-
-    public override RandomCi RandomCreate()
-    {
-        return new RandomNative();
-    }
-
     public override void GlClearDepthBuffer()
     {
         GL.Clear(ClearBufferMask.DepthBufferBit);
-    }
-
-    public override string PathStorage()
-    {
-        return GameStorePath.GetStorePath();
-    }
-
-    public override string StringReplace(string s, string from, string to)
-    {
-        return s.Replace(from, to);
-    }
-
-    public override PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a)
-    {
-        return (PlayerInterpolationState)a;
     }
 
     public override void GlLightModelAmbient(int r, int g, int b)
@@ -1128,21 +2012,6 @@ public class GamePlatformNative : GamePlatform
         float mult = 1f;
         float[] global_ambient = new float[] { (float)r / 255f * mult, (float)g / 255f * mult, (float)b / 255f * mult, 1f };
         GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
-    }
-
-    public override float MathAcos(float p)
-    {
-        return (float)Math.Acos(p);
-    }
-
-    public override void SetVSync(bool enabled)
-    {
-        window.VSync = enabled ? VSyncMode.On : VSyncMode.Off;
-    }
-
-    public override string GetGameVersion()
-    {
-        return GameVersion.Version;
     }
 
     public override void GlEnableFog()
@@ -1169,322 +2038,6 @@ public class GamePlatformNative : GamePlatform
     public override void GlFogFogDensity(float density)
     {
         GL.Fog(FogParameter.FogDensity, density);
-    }
-    ICompression compression = new CompressionGzip();
-    public override void GzipDecompress(byte[] compressed, int compressedLength, byte[] ret)
-    {
-        byte[] data = new byte[compressedLength];
-        for (int i = 0; i < compressedLength; i++)
-        {
-            data[i] = compressed[i];
-        }
-        byte[] decompressed = compression.Decompress(data);
-        for (int i = 0; i < decompressed.Length; i++)
-        {
-            ret[i] = decompressed[i];
-        }
-    }
-    public override byte[] GzipCompress(byte[] data, int dataLength, IntRef retLength)
-    {
-        byte[] data_ = new byte[dataLength];
-        for (int i = 0; i < dataLength; i++)
-        {
-            data_[i] = data[i];
-        }
-        byte[] compressed = compression.Compress(data_);
-        retLength.value = compressed.Length;
-        return compressed;
-    }
-    public bool ENABLE_CHATLOG = true;
-    public string gamepathlogs() { return Path.Combine(PathStorage(), "Logs"); }
-    private static string MakeValidFileName(string name)
-    {
-        string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
-        string invalidReStr = string.Format(@"[{0}]", invalidChars);
-        return Regex.Replace(name, invalidReStr, "_");
-    }
-    public override bool ChatLog(string servername, string p)
-    {
-        if (!ENABLE_CHATLOG)
-        {
-            return true;
-        }
-        if (!Directory.Exists(gamepathlogs()))
-        {
-            Directory.CreateDirectory(gamepathlogs());
-        }
-        string filename = Path.Combine(gamepathlogs(), MakeValidFileName(servername) + ".txt");
-        try
-        {
-            File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public override float MathTan(float p)
-    {
-        return (float)Math.Tan(p);
-    }
-
-    public override bool IsValidTypingChar(int c_)
-    {
-        char c = (char)c_;
-        return (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)
-                    || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
-                    && c != '\r' && c != '\t';
-    }
-
-    public override bool StringStartsWithIgnoreCase(string a, string b)
-    {
-        return a.StartsWith(b, StringComparison.InvariantCultureIgnoreCase);
-    }
-
-    public override int StringIndexOf(string s, string p)
-    {
-        return s.IndexOf(p);
-    }
-
-    public override void WindowExit()
-    {
-        if (gameexit != null)
-        {
-            gameexit.exit = true;
-        }
-        window.Exit();
-    }
-
-    public override void MessageBoxShowError(string text, string caption)
-    {
-        System.Windows.Forms.MessageBox.Show(text, caption, System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
-    }
-
-    public override int ByteArrayLength(byte[] arr)
-    {
-        return arr.Length;
-    }
-
-    public override string StringFromUtf8ByteArray(byte[] value, int valueLength)
-    {
-        string s = Encoding.UTF8.GetString(value, 0, valueLength);
-        return s;
-    }
-
-    public override string[] ReadAllLines(string p, IntRef retCount)
-    {
-        List<string> lines = new List<string>();
-        StringReader reader = new StringReader(p);
-        string line;
-        while ((line = reader.ReadLine()) != null)
-        {
-            lines.Add(line);
-        }
-        retCount.value = lines.Count;
-        return lines.ToArray();
-    }
-
-    public override bool ClipboardContainsText()
-    {
-        return Clipboard.ContainsText();
-    }
-
-    public override string ClipboardGetText()
-    {
-        return Clipboard.GetText();
-    }
-
-    public override void SetTitle(string applicationname)
-    {
-        window.Title = applicationname;
-    }
-
-    public override bool Focused()
-    {
-        return window.Focused;
-    }
-
-    public CrashReporter crashreporter;
-
-    OnCrashHandler onCrashHandler;
-    public override void AddOnCrash(OnCrashHandler handler)
-    {
-        crashreporter.OnCrash = OnCrash;
-        onCrashHandler = handler;
-    }
-
-    void OnCrash()
-    {
-        if (onCrashHandler != null)
-        {
-            onCrashHandler.OnCrash();
-        }
-    }
-
-    public override string KeyName(int key)
-    {
-        if (Enum.IsDefined(typeof(OpenTK.Input.Key), key))
-        {
-            string s = Enum.GetName(typeof(OpenTK.Input.Key), key);
-            return s;
-        }
-        //if (Enum.IsDefined(typeof(SpecialKey), key))
-        //{
-        //    string s = Enum.GetName(typeof(SpecialKey), key);
-        //    return s;
-        //}
-        return key.ToString();
-    }
-    DisplayResolutionCi[] resolutions;
-    int resolutionsCount;
-    public override DisplayResolutionCi[] GetDisplayResolutions(IntRef retResolutionsCount)
-    {
-        if (resolutions == null)
-        {
-            resolutions = new DisplayResolutionCi[1024];
-            foreach (var r in DisplayDevice.Default.AvailableResolutions)
-            {
-                if (r.Width < 800 || r.Height < 600 || r.BitsPerPixel < 16)
-                {
-                    continue;
-                }
-                DisplayResolutionCi r2 = new DisplayResolutionCi();
-                r2.Width = r.Width;
-                r2.Height = r.Height;
-                r2.BitsPerPixel = r.BitsPerPixel;
-                r2.RefreshRate = r.RefreshRate;
-                resolutions[resolutionsCount++] = r2;
-            }
-        }
-        retResolutionsCount.value = resolutionsCount;
-        return resolutions;
-    }
-
-    public override WindowState GetWindowState()
-    {
-        return (WindowState)window.WindowState;
-    }
-
-    public override void SetWindowState(WindowState value)
-    {
-        window.WindowState = (OpenTK.WindowState)value;
-    }
-
-    public override void ChangeResolution(int width, int height, int bitsPerPixel, float refreshRate)
-    {
-        DisplayDevice.Default.ChangeResolution(width, height, bitsPerPixel, refreshRate);
-    }
-
-    public void SetExit(GameExit exit)
-    {
-        gameexit = exit;
-    }
-
-    public override DisplayResolutionCi GetDisplayResolutionDefault()
-    {
-        DisplayDevice d = DisplayDevice.Default;
-        DisplayResolutionCi r = new DisplayResolutionCi();
-        r.Width = d.Width;
-        r.Height = d.Height;
-        r.BitsPerPixel = d.BitsPerPixel;
-        r.RefreshRate = d.RefreshRate;
-        return r;
-    }
-
-    public override byte[] StringToUtf8ByteArray(string s, IntRef retLength)
-    {
-        byte[] data = Encoding.UTF8.GetBytes(s);
-        retLength.value = data.Length;
-        return data;
-    }
-
-    class UploadData
-    {
-        public string url;
-        public byte[] data;
-        public int dataLength;
-        public HttpResponseCi response;
-    }
-
-    public override void WebClientUploadDataAsync(string url, byte[] data, int dataLength, HttpResponseCi response)
-    {
-        UploadData d = new UploadData();
-        d.url = url;
-        d.data = data;
-        d.dataLength = dataLength;
-        d.response = response;
-        System.Threading.ThreadPool.QueueUserWorkItem(DoUploadData, d);
-    }
-
-    void DoUploadData(object o)
-    {
-        UploadData d = (UploadData)o;
-        try
-        {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(d.url);
-            request.Method = "POST";
-            request.Timeout = 15000; // 15s timeout
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
-
-            request.ContentLength = d.dataLength;
-
-            System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error
-
-            using (Stream requestStream = request.GetRequestStream())
-            {
-                requestStream.Write(d.data, 0, d.dataLength);
-                requestStream.Flush();
-            }
-            WebResponse response_ = request.GetResponse();
-
-            MemoryStream m = new MemoryStream();
-            using (Stream s = response_.GetResponseStream())
-            {
-                CopyTo(s, m);
-            }
-            d.response.value = m.ToArray();
-            d.response.valueLength = d.response.value.Length;
-            d.response.done = true;
-
-            request.Abort();
-
-        }
-        catch
-        {
-            d.response.error = true;
-        }
-    }
-
-    public static void CopyTo(Stream source, Stream destination)
-    {
-        // TODO: Argument validation
-        byte[] buffer = new byte[16384]; // For example...
-        int bytesRead;
-        while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
-        {
-            destination.Write(buffer, 0, bytesRead);
-        }
-    }
-
-    public override string FileOpenDialog(string extension, string extensionName, string initialDirectory)
-    {
-        OpenFileDialog d = new OpenFileDialog();
-        d.InitialDirectory = initialDirectory;
-        d.FileName = "Default." + extension;
-        d.Filter = string.Format("{1}|*.{0}|All files|*.*", extension, extensionName);
-        d.CheckFileExists = false;
-        d.CheckPathExists = true;
-        string dir = System.Environment.CurrentDirectory;
-        DialogResult result = d.ShowDialog();
-        System.Environment.CurrentDirectory = dir;
-        if (result == DialogResult.OK)
-        {
-            return d.FileName;
-        }
-        return null;
     }
 
     public override int GlGetMaxTextureSize()
@@ -1530,141 +2083,14 @@ public class GamePlatformNative : GamePlatform
         GL.ShadeModel(ShadingModel.Smooth);
     }
 
-    bool mouseCursorVisible = true;
-    public override void MouseCursorSetVisible(bool value)
-    {
-        if (!value)
-        {
-            if (TouchTest)
-            {
-                return;
-            }
-            if (!IsMac)
-            {
-                System.Windows.Forms.Cursor.Hide();
-            }
-            else
-            {
-                window.CursorVisible = false;
-            }
-            mouseCursorVisible = false;
-        }
-        else
-        {
-            if (!IsMac)
-            {
-                System.Windows.Forms.Cursor.Show();
-            }
-            else
-            {
-                window.CursorVisible = true;
-            }
-            mouseCursorVisible = true;
-        }
-    }
-
-    public override void ApplicationDoEvents()
-    {
-        if (IsMono)
-        {
-            Application.DoEvents();
-            Thread.Sleep(0);
-        }
-    }
-
-    bool wasMousePointerLocked;
-    void UpdateMousePosition(UpdateMousePositionArgs args)
-    {
-        args.mouseCurrentX = System.Windows.Forms.Cursor.Position.X;
-        args.mouseCurrentY = System.Windows.Forms.Cursor.Position.Y;
-        if (!mousePointerLocked)
-        {
-            args.mouseCurrentX = args.mouseCurrentX - window.X;
-            args.mouseCurrentY = args.mouseCurrentY - window.Y;
-
-            args.mouseCurrentY = args.mouseCurrentY - System.Windows.Forms.SystemInformation.CaptionHeight;
-
-            args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
-            args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
-            mouse_previous.X = args.mouseCurrentX;
-            mouse_previous.Y = args.mouseCurrentY;
-        }
-        if (!window.Focused)
-        {
-            return;
-        }
-        if (mousePointerLocked && (!wasMousePointerLocked))
-        {
-            mouse_previous.X = args.mouseCurrentX;
-            mouse_previous.Y = args.mouseCurrentY;
-            args.freemousejustdisabled = false;
-        }
-        wasMousePointerLocked = mousePointerLocked;
-        if (mousePointerLocked)
-        {
-            //There are two versions:
-
-            //a) System.Windows.Forms.Cursor and GameWindow.CursorVisible = true.
-            //It works by centering global mouse cursor every frame.
-            //*Windows:
-            //   *OK.
-            //   *On a few YouTube videos mouse cursor is not hiding properly.
-            //    That could be just a problem with video recording software.
-            //*Ubuntu: Broken, mouse cursor doesn't hide.
-            //*Mac: Broken, mouse doesn't move at all.
-
-            //b) OpenTk.Input.Mouse and GameWindow.CursorVisible = false.
-            //Uses raw mouse coordinates, movement is not accelerated.
-            //*Windows:
-            //  *OK.
-            //  *Worse than a), because this doesn't use system-wide mouse acceleration.
-            //*Ubuntu: Broken, crashes with "libxi" library missing.
-            //*Mac: OK.
-
-            if (!IsMac)
-            {
-                //a)
-                int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
-                int centery = window.Bounds.Top + (window.Bounds.Height / 2);
-
-                args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
-                args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
-
-                System.Windows.Forms.Cursor.Position =
-                    new Point(centerx, centery);
-                mouse_previous = new Point(centerx, centery);
-            }
-            else
-            {
-                //b)
-                var state = OpenTK.Input.Mouse.GetState();
-                float dx = state.X - mouse_previous_state.X;
-                float dy = state.Y - mouse_previous_state.Y;
-                mouse_previous_state = state;
-                //These are raw coordinates, so need to apply acceleration manually.
-                float dx2 = (dx * Math.Abs(dx) * MouseAcceleration1);
-                float dy2 = (dy * Math.Abs(dy) * MouseAcceleration1);
-                dx2 += dx * MouseAcceleration2;
-                dy2 += dy * MouseAcceleration2;
-                args.mouseDeltaX = dx2;
-                args.mouseDeltaY = dy2;
-            }
-        }
-    }
-    public float MouseAcceleration1 = 0.12f;
-    public float MouseAcceleration2 = 0.7f;
-    OpenTK.Input.MouseState mouse_previous_state;
-    Point mouse_previous;
-
-    public override void ThreadSpinWait(int iterations)
-    {
-        Thread.SpinWait(iterations);
-    }
-
     public override void GlDisableFog()
     {
         GL.Disable(EnableCap.Fog);
     }
+
+    #endregion
+    
+    #region Game
 
     bool singlePlayerServerAvailable = true;
     public override bool SinglePlayerServerAvailable()
@@ -1677,7 +2103,7 @@ public class GamePlatformNative : GamePlatform
         singlepLayerServerExit = false;
         StartSinglePlayerServer(saveFilename);
     }
-    
+
     public bool singlepLayerServerExit;
     public override void SinglePlayerServerExit()
     {
@@ -1697,85 +2123,14 @@ public class GamePlatformNative : GamePlatform
         return singlePlayerServerDummyNetwork;
     }
 
-    public override bool TcpAvailable()
+    public override void SinglePlayerServerDisable()
     {
-        return true;
+        singlePlayerServerAvailable = false;
     }
 
-    public override void TcpConnect(string ip, int port, BoolRef connected)
+    public override DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message)
     {
-        this.connected = connected;
-        sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        sock.NoDelay = true;
-        sock.BeginConnect(ip, port, OnConnect, sock);
-    }
-    Socket sock;
-    BoolRef connected;
-    Connection c;
-    void OnConnect(IAsyncResult result)
-    {
-        Socket sock = (Socket)result.AsyncState;
-        c = new Connection(sock);
-        c.ReceivedData += new EventHandler<MessageEventArgs>(c_ReceivedData);
-        if (tosend.Count > 0)
-        {
-            c.Send(tosend.ToArray());
-            tosend.Clear();
-        }
-        connected.value = true;
-    }
-
-    void c_ReceivedData(object sender, MessageEventArgs e)
-    {
-        lock (received)
-        {
-            for (int i = 0; i < e.data.Length; i++)
-            {
-                received.Enqueue(e.data[i]);
-            }
-        }
-    }
-    Queue<byte> tosend = new Queue<byte>();
-    public override void TcpSend(byte[] data, int length)
-    {
-        if (c == null)
-        {
-            for (int i = 0; i < length; i++)
-            {
-                tosend.Enqueue(data[i]);
-            }
-        }
-        else
-        {
-            byte[] data1 = new byte[length];
-            for (int i = 0; i < length; i++)
-            {
-                data1[i] = data[i];
-            }
-            c.Send(data1);
-        }
-    }
-    Queue<byte> received = new Queue<byte>();
-    public override int TcpReceive(byte[] data, int dataLength)
-    {
-        if (c == null)
-        {
-            return 0;
-        }
-        int total = 0;
-        lock (received)
-        {
-            for (int i = 0; i < dataLength; i++)
-            {
-                if (received.Count == 0)
-                {
-                    break;
-                }
-                data[i] = received.Dequeue();
-                total++;
-            }
-        }
-        return total;
+        return (DummyNetOutgoingMessage)message;
     }
 
     public override TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message)
@@ -1783,343 +2138,22 @@ public class GamePlatformNative : GamePlatform
         return (TcpNetOutgoingMessage)message;
     }
 
-    public class Connection
+    public override EnetNetConnection CastToEnetNetConnection(INetConnection connection)
     {
-        public Socket sock;
-        public string address;
-
-        Encoding encoding = Encoding.UTF8;
-
-        public Connection(Socket s)
-        {
-            this.sock = s;
-            address = s.RemoteEndPoint.ToString();
-            this.BeginReceive();
-        }
-        Stopwatch st = new Stopwatch();
-        private void BeginReceive()
-        {
-            this.sock.BeginReceive(
-                    this.dataRcvBuf, 0,
-                    this.dataRcvBuf.Length,
-                    SocketFlags.None,
-                    new AsyncCallback(this.OnBytesReceived),
-                    this);
-        }
-        byte[] dataRcvBuf = new byte[1024 * 8];
-        static int i = 0;
-        protected void OnBytesReceived(IAsyncResult result)
-        {
-            int nBytesRec;
-            try
-            {
-                nBytesRec = this.sock.EndReceive(result);
-            }
-            catch
-            {
-                try
-                {
-                    this.sock.Close();
-                }
-                catch
-                {
-                }
-                if (Disconnected != null)
-                {
-                    Disconnected(null, new ConnectionEventArgs() { });
-                }
-                return;
-            }
-            if (nBytesRec <= 0)
-            {
-                try
-                {
-                    this.sock.Close();
-                }
-                catch
-                {
-                }
-                if (Disconnected != null)
-                {
-                    Disconnected(null, new ConnectionEventArgs() { });
-                }
-                return;
-            }
-
-            byte[] receivedBytes = new byte[nBytesRec];
-            for (int i = 0; i < nBytesRec; i++)
-            {
-                receivedBytes[i] = dataRcvBuf[i];
-            }
-
-            if (nBytesRec > 0)
-            {
-                ReceivedData.Invoke(this, new MessageEventArgs() { data = receivedBytes });
-            }
-
-            st.Reset();
-            st.Start();
-
-            this.sock.BeginReceive(
-                this.dataRcvBuf, 0,
-                this.dataRcvBuf.Length,
-                SocketFlags.None,
-                new AsyncCallback(this.OnBytesReceived),
-                this);
-        }
-        public void Send(byte[] data)
-        {
-            try
-            {
-                sock.BeginSend(data, 0, data.Length, SocketFlags.None, new AsyncCallback(OnSend), null);
-            }
-            catch (Exception e)
-            {
-            }
-        }
-        void OnSend(IAsyncResult result)
-        {
-            sock.EndSend(result);
-        }
-        public event EventHandler<MessageEventArgs> ReceivedData;
-        public event EventHandler<ConnectionEventArgs> Disconnected;
-
-        public override string ToString()
-        {
-            if (address != null)
-            {
-                return address.ToString();
-            }
-            return base.ToString();
-        }
+        return (EnetNetConnection)connection;
     }
 
-    public override void ShowKeyboard(bool show)
+    public override EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg)
     {
+        return (EnetNetOutgoingMessage)msg;
     }
 
-    public override bool IsFastSystem()
+    public override PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a)
     {
-        return true;
+        return (PlayerInterpolationState)a;
     }
 
-    static string GetPreferencesFilePath()
-    {
-        string path = GameStorePath.GetStorePath();
-        if (!Directory.Exists(path))
-        {
-            Directory.CreateDirectory(path);
-        }
-        return Path.Combine(path, "Preferences.txt");
-    }
-
-    public override Preferences GetPreferences()
-    {
-        if (File.Exists(GetPreferencesFilePath()))
-        {
-            try
-            {
-                Preferences p = new Preferences();
-                p.platform = this;
-                string[] lines = File.ReadAllLines(GetPreferencesFilePath());
-                foreach (string l in lines)
-                {
-                    int a = l.IndexOf("=", StringComparison.InvariantCultureIgnoreCase);
-                    string name = l.Substring(0, a);
-                    string value = l.Substring(a + 1);
-                    p.SetString(name, value);
-                }
-                return p;
-            }
-            catch
-            {
-                File.Delete(GetPreferencesFilePath());
-                return new Preferences();
-            }
-        }
-        else
-        {
-            Preferences p = new Preferences();
-            p.platform = this;
-            return p;
-        }
-    }
-
-    public override void SetPreferences(Preferences preferences)
-    {
-        DictionaryStringString items = preferences.items;
-        List<string> lines = new List<string>();
-        for (int i = 0; i < items.count; i++)
-        {
-            if (items.items[i] == null)
-            {
-                continue;
-            }
-            string key = items.items[i].key;
-            string value = items.items[i].value;
-            lines.Add(key + "=" + value);
-        }
-        try
-        {
-            File.WriteAllLines(GetPreferencesFilePath(), lines.ToArray());
-        }
-        catch
-        {
-        }
-    }
-
-    bool mousePointerLocked;
-
-    public override bool IsMousePointerLocked()
-    {
-        return mousePointerLocked;
-    }
-
-    public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
-
-    public override void RequestMousePointerLock()
-    {
-        if (TouchTest)
-        {
-            return;
-        }
-        if (IsMac)
-        {
-            window.CursorVisible = false;
-            System.Windows.Forms.Cursor.Hide();
-        }
-        mousePointerLocked = true;
-    }
-
-    public override void ExitMousePointerLock()
-    {
-        if (IsMac)
-        {
-            window.CursorVisible = true;
-        }
-        mousePointerLocked = false;
-    }
-
-    public override bool MultithreadingAvailable()
-    {
-        return true;
-    }
-
-    public override void QueueUserWorkItem(Action_ action)
-    {
-        ThreadPool.QueueUserWorkItem((a) => { action.Run(); });
-    }
-
-    AssetLoader assetloader;
-    public override void LoadAssetsAsyc(AssetList list, FloatRef progress)
-    {
-        if (assetloader == null)
-        {
-            assetloader = new AssetLoader(datapaths);
-        }
-        assetloader.LoadAssetsAsync(list, progress);
-    }
-
-    public override string StringToLower(string p)
-    {
-        return p.ToLowerInvariant();
-    }
-
-    public override void SinglePlayerServerDisable()
-    {
-        singlePlayerServerAvailable = false;
-    }
-
-    public override string FloatToString(float value)
-    {
-        return value.ToString(CultureInfo.InvariantCulture);
-    }
-
-    public override bool MouseCursorIsVisible()
-    {
-        return mouseCursorVisible;
-    }
-
-    public override bool IsSmallScreen()
-    {
-        return TouchTest;
-    }
-
-    public override void OpenLinkInBrowser(string url)
-    {
-        if (!(url.StartsWith("http://") || url.StartsWith("https://")))
-        {
-            //Check if string is an URL - if not, abort
-            return;
-        }
-        Process.Start(url);
-    }
-
-    public string cachepath() { return Path.Combine(PathStorage(), "Cache"); }
-    public void checkcachedir()
-    {
-        if (!Directory.Exists(cachepath()))
-        {
-            Directory.CreateDirectory(cachepath());
-        }
-    }
-
-    public override void SaveAssetToCache(Asset tosave)
-    {
-        //Check if cache directory exists
-        checkcachedir();
-        BinaryWriter bw = new BinaryWriter(File.Create(Path.Combine(cachepath(), tosave.md5)));
-        bw.Write(tosave.name);
-        bw.Write(tosave.dataLength);
-        bw.Write(tosave.data);
-        bw.Close();
-    }
-
-    public override Asset LoadAssetFromCache(string md5)
-    {
-        //Check if cache directory exists
-        checkcachedir();
-        BinaryReader br = new BinaryReader(File.OpenRead(Path.Combine(cachepath(), md5)));
-        string contentName = br.ReadString();
-        int contentLength = br.ReadInt32();
-        byte[] content = br.ReadBytes(contentLength);
-        br.Close();
-        Asset a = new Asset();
-        a.data = content;
-        a.dataLength = contentLength;
-        a.md5 = md5;
-        a.name = contentName;
-        return a;
-    }
-
-    public override bool IsCached(string md5)
-    {
-        if (!Directory.Exists(cachepath()))
-            return false;
-        return File.Exists(Path.Combine(cachepath(), md5));
-    }
-
-    public override bool IsChecksum(string checksum)
-    {
-        //Check if checksum string has correct length
-        if (checksum.Length != 32)
-        {
-            return false;
-        }
-        //Convert checksum string to lowercase letters
-        checksum = checksum.ToLower();
-        char[] chars = checksum.ToCharArray();
-        for (int i = 0; i < chars.Length; i++)
-        {
-            if ((chars[i] < '0' || chars[i] > '9') && (chars[i] < 'a' || chars[i] > 'f'))
-            {
-                //Return false if any character inside the checksum is not hexadecimal
-                return false;
-            }
-        }
-        //Return true if all checks have been passed
-        return true;
-    }
+    #endregion
 }
 
 public class AssetLoader

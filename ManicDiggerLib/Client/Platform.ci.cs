@@ -1,23 +1,41 @@
 ﻿public abstract class GamePlatform
 {
+    // Primitive
     public abstract int FloatToInt(float value);
-    public abstract string[] StringSplit(string value, string separator, IntRef returnLength);
+    public abstract float MathSin(float a);
+    public abstract float MathCos(float a);
+    public abstract float MathSqrt(float value);
+    public abstract float MathAcos(float p);
+    public abstract float MathTan(float p);
+    public abstract float FloatModulo(float a, int b);
+
     public abstract int IntParse(string value);
     public abstract float FloatParse(string value);
-    public abstract float MathSqrt(float value);
-    public abstract string StringTrim(string value);
     public abstract string IntToString(int value);
     public abstract string FloatToString(float value);
-    public abstract string Timestamp();
+    public abstract bool FloatTryParse(string s, FloatRef ret);
     public abstract string StringFormat(string format, string arg0);
     public abstract string StringFormat2(string format, string arg0, string arg1);
     public abstract string StringFormat3(string format, string arg0, string arg1, string arg2);
     public abstract string StringFormat4(string format, string arg0, string arg1, string arg2, string arg3);
+    public abstract int[] StringToCharArray(string s, IntRef length);
+    public abstract string CharArrayToString(int[] charArray, int length);
+    public abstract bool StringEmpty(string data);
+    public abstract bool StringContains(string a, string b);
+    public abstract string StringReplace(string s, string from, string to);
+    public abstract bool StringStartsWithIgnoreCase(string a, string b);
+    public abstract int StringIndexOf(string s, string p);
+    public abstract string StringTrim(string value);
+    public abstract string StringToLower(string p);
+    public abstract string StringFromUtf8ByteArray(byte[] value, int valueLength);
+    public abstract byte[] StringToUtf8ByteArray(string s, IntRef retLength);
+    public abstract string[] StringSplit(string value, string separator, IntRef returnLength);
+
+    // Misc
+    public abstract string Timestamp();
     public abstract void ClipboardSetText(string s);
     public abstract void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight);
     public abstract void Exit();
-    public abstract int[] StringToCharArray(string s, IntRef length);
-    public abstract string CharArrayToString(int[] charArray, int length);
     public abstract string PathSavegames();
     public abstract string PathCombine(string part1, string part2);
     public abstract string[] DirectoryGetFiles(string path, IntRef length);
@@ -31,93 +49,40 @@
     public abstract void AddOnTouchEvent(TouchEventHandler handler);
     public abstract int GetCanvasWidth();
     public abstract int GetCanvasHeight();
-    public abstract void GlViewport(int x, int y, int width, int height);
-    public abstract void GlClearColorBufferAndDepthBuffer();
-    public abstract void GlDisableDepthTest();
-    public abstract void BindTexture2d(int texture);
-    public abstract Model CreateModel(ModelData modelData);
-    public abstract void DrawModel(Model model);
-    public abstract void InitShaders();
-    public abstract void SetMatrixUniformProjection(float[] pMatrix);
-    public abstract void SetMatrixUniformModelView(float[] mvMatrix);
-    public abstract void GlClearColorRgbaf(float r, float g, float b, float a);
-    public abstract void GlEnableDepthTest();
     public abstract string GetLanguageIso6391();
     public abstract int TimeMillisecondsFromStart();
-    public abstract void DrawModels(Model[] model, int count);
-    public abstract void GlDisableCullFace();
-    public abstract void GlEnableCullFace();
     public abstract void ThrowException(string message);
-    public abstract void DeleteModel(Model model);
-    public abstract void GlEnableTexture2d();
     public abstract BitmapCi BitmapCreate(int width, int height);
     public abstract void BitmapSetPixelsArgb(BitmapCi bmp, int[] pixels);
-    public abstract int LoadTextureFromBitmap(BitmapCi bmp);
-    public abstract void GLLineWidth(int width);
-    public abstract void GLDisableAlphaTest();
-    public abstract void GLEnableAlphaTest();
-    public abstract void GLDeleteTexture(int id);
     public abstract BitmapCi CreateTextTexture(Text_ t);
     public abstract void SetTextRendererFont(int fontID);
     public abstract float BitmapGetWidth(BitmapCi bmp);
     public abstract float BitmapGetHeight(BitmapCi bmp);
     public abstract void BitmapDelete(BitmapCi bmp);
-    public abstract void DrawModelData(ModelData data);
-    public abstract bool FloatTryParse(string s, FloatRef ret);
-    public abstract float MathCos(float a);
-    public abstract float MathSin(float a);
     public abstract AudioSampleCi AudioLoad(byte[] data);
     public abstract void AudioPlay(AudioSampleCi sample, float x, float y, float z);
     public abstract void AudioPlayLoop(AudioSampleCi sample, bool play, bool restart);
     public abstract void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ);
     public abstract void ConsoleWriteLine(string p);
-    public abstract DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message);
     public abstract MonitorObject MonitorCreate();
     public abstract void MonitorEnter(MonitorObject monitorObject);
     public abstract void MonitorExit(MonitorObject monitorObject);
-    public abstract bool EnetAvailable();
-    public abstract EnetHost EnetCreateHost();
-    public abstract void EnetHostInitializeServer(EnetHost host, int port, int peerLimit);
-    public abstract bool EnetHostService(EnetHost host, int timeout, EnetEventRef enetEvent);
-    public abstract bool EnetHostCheckEvents(EnetHost host, EnetEventRef event_);
-    public abstract EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit);
-    public abstract void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags);
-    public abstract EnetNetConnection CastToEnetNetConnection(INetConnection connection);
-    public abstract EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg);
-    public abstract void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth);
     public abstract void SaveScreenshot();
     public abstract BitmapCi GrabScreenshot();
     public abstract AviWriterCi AviWriterCreate();
-    public abstract bool StringEmpty(string data);
-    public abstract float FloatModulo(float a, int b);
     public abstract UriCi ParseUri(string uri);
-    public abstract bool StringContains(string a, string b);
     public abstract RandomCi RandomCreate();
-    public abstract void GlClearDepthBuffer();
     public abstract string PathStorage();
-    public abstract string StringReplace(string s, string from, string to);
-    public abstract PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a);
-    public abstract void GlLightModelAmbient(int r, int g, int b);
-    public abstract float MathAcos(float p);
     public abstract void SetVSync(bool enabled);
     public abstract string GetGameVersion();
-    public abstract void GlEnableFog();
-    public abstract void GlHintFogHintNicest();
-    public abstract void GlFogFogModeExp2();
-    public abstract void GlFogFogColor(int r, int g, int b, int a);
-    public abstract void GlFogFogDensity(float density);
     public abstract void GzipDecompress(byte[] compressed, int compressedLength, byte[] ret);
     public abstract bool ChatLog(string servername, string p);
-    public abstract float MathTan(float p);
     public abstract bool IsValidTypingChar(int c);
-    public abstract bool StringStartsWithIgnoreCase(string a, string b);
-    public abstract int StringIndexOf(string s, string p);
     public abstract void WindowExit();
     public abstract void MessageBoxShowError(string text, string caption);
     public abstract int ByteArrayLength(byte[] arr);
     public abstract BitmapCi BitmapCreateFromPng(byte[] data, int dataLength);
     public abstract void BitmapGetPixelsArgb(BitmapCi bitmap, int[] bmpPixels);
-    public abstract string StringFromUtf8ByteArray(byte[] value, int valueLength);
     public abstract string[] ReadAllLines(string p, IntRef retCount);
     public abstract bool ClipboardContainsText();
     public abstract string ClipboardGetText();
@@ -130,31 +95,12 @@
     public abstract void SetWindowState(WindowState value);
     public abstract void ChangeResolution(int width, int height, int bitsPerPixel, float refreshRate);
     public abstract DisplayResolutionCi GetDisplayResolutionDefault();
-    public abstract byte[] StringToUtf8ByteArray(string s, IntRef retLength);
     public abstract void WebClientUploadDataAsync(string url, byte[] data, int dataLength, HttpResponseCi response);
     public abstract string FileOpenDialog(string extension, string extensionName, string initialDirectory);
-    public abstract int GlGetMaxTextureSize();
-    public abstract void GlDepthMask(bool flag);
-    public abstract void GlCullFaceBack();
-    public abstract void GlEnableLighting();
-    public abstract void GlEnableColorMaterial();
-    public abstract void GlColorMaterialFrontAndBackAmbientAndDiffuse();
-    public abstract void GlShadeModelSmooth();
     public abstract void MouseCursorSetVisible(bool value);
     public abstract bool MouseCursorIsVisible();
     public abstract void ApplicationDoEvents();
     public abstract void ThreadSpinWait(int iterations);
-    public abstract void GlDisableFog();
-    public abstract bool SinglePlayerServerAvailable();
-    public abstract void SinglePlayerServerStart(string saveFilename);
-    public abstract void SinglePlayerServerExit();
-    public abstract bool SinglePlayerServerLoaded();
-    public abstract DummyNetwork SinglePlayerServerGetNetwork();
-    public abstract bool TcpAvailable();
-    public abstract void TcpConnect(string ip, int port, BoolRef connected);
-    public abstract void TcpSend(byte[] data, int length);
-    public abstract int TcpReceive(byte[] data, int dataLength);
-    public abstract TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message);
     public abstract void ShowKeyboard(bool show);
     public abstract bool IsFastSystem();
     public abstract Preferences GetPreferences();
@@ -165,23 +111,82 @@
     public abstract bool MultithreadingAvailable();
     public abstract void QueueUserWorkItem(Action_ action);
     public abstract void LoadAssetsAsyc(AssetList list, FloatRef progress);
-    public abstract string StringToLower(string p);
     public abstract byte[] GzipCompress(byte[] data, int dataLength, IntRef retLength);
-    public abstract void SinglePlayerServerDisable();
-    public virtual bool IsDebuggerAttached()
-    {
-#if !CITO
-        return System.Diagnostics.Debugger.IsAttached;
-#else
-        return false;
-#endif
-    }
+    public abstract bool IsDebuggerAttached();
     public abstract bool IsSmallScreen();
     public abstract void OpenLinkInBrowser(string url);
     public abstract void SaveAssetToCache(Asset tosave);
     public abstract Asset LoadAssetFromCache(string md5);
     public abstract bool IsCached(string md5);
     public abstract bool IsChecksum(string checksum);
+    
+    // Tcp
+    public abstract bool TcpAvailable();
+    public abstract void TcpConnect(string ip, int port, BoolRef connected);
+    public abstract void TcpSend(byte[] data, int length);
+    public abstract int TcpReceive(byte[] data, int dataLength);
+
+    // Enet
+    public abstract bool EnetAvailable();
+    public abstract EnetHost EnetCreateHost();
+    public abstract void EnetHostInitializeServer(EnetHost host, int port, int peerLimit);
+    public abstract bool EnetHostService(EnetHost host, int timeout, EnetEventRef enetEvent);
+    public abstract bool EnetHostCheckEvents(EnetHost host, EnetEventRef event_);
+    public abstract EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit);
+    public abstract void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags);
+    public abstract void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth);
+    
+    // OpenGl
+    public abstract void GlViewport(int x, int y, int width, int height);
+    public abstract void GlClearColorBufferAndDepthBuffer();
+    public abstract void GlDisableDepthTest();
+    public abstract void GlClearColorRgbaf(float r, float g, float b, float a);
+    public abstract void GlEnableDepthTest();
+    public abstract void GlDisableCullFace();
+    public abstract void GlEnableCullFace();
+    public abstract void GlEnableTexture2d();
+    public abstract void GLLineWidth(int width);
+    public abstract void GLDisableAlphaTest();
+    public abstract void GLEnableAlphaTest();
+    public abstract void GLDeleteTexture(int id);
+    public abstract void GlClearDepthBuffer();
+    public abstract void GlLightModelAmbient(int r, int g, int b);
+    public abstract void GlEnableFog();
+    public abstract void GlHintFogHintNicest();
+    public abstract void GlFogFogModeExp2();
+    public abstract void GlFogFogColor(int r, int g, int b, int a);
+    public abstract void GlFogFogDensity(float density);
+    public abstract int GlGetMaxTextureSize();
+    public abstract void GlDepthMask(bool flag);
+    public abstract void GlCullFaceBack();
+    public abstract void GlEnableLighting();
+    public abstract void GlEnableColorMaterial();
+    public abstract void GlColorMaterialFrontAndBackAmbientAndDiffuse();
+    public abstract void GlShadeModelSmooth();
+    public abstract void GlDisableFog();
+    public abstract void BindTexture2d(int texture);
+    public abstract Model CreateModel(ModelData modelData);
+    public abstract void DrawModel(Model model);
+    public abstract void InitShaders();
+    public abstract void SetMatrixUniformProjection(float[] pMatrix);
+    public abstract void SetMatrixUniformModelView(float[] mvMatrix);
+    public abstract void DrawModels(Model[] model, int count);
+    public abstract void DrawModelData(ModelData data);
+    public abstract void DeleteModel(Model model);
+    public abstract int LoadTextureFromBitmap(BitmapCi bmp);
+    
+    // Game
+    public abstract bool SinglePlayerServerAvailable();
+    public abstract void SinglePlayerServerStart(string saveFilename);
+    public abstract void SinglePlayerServerExit();
+    public abstract bool SinglePlayerServerLoaded();
+    public abstract void SinglePlayerServerDisable();
+    public abstract DummyNetwork SinglePlayerServerGetNetwork();
+    public abstract PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a);
+    public abstract DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message);
+    public abstract TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message);
+    public abstract EnetNetConnection CastToEnetNetConnection(INetConnection connection);
+    public abstract EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg);
 }
 
 public class Asset
