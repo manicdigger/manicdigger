@@ -616,6 +616,10 @@ public class TerrainChunkTesselatorCi
         {
             blockheight = one * 1 / 2; // 0.5f;
         }
+        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Flat)
+        {
+            blockheight = one * 1 / 20; // 0.05f;
+        }
         if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
         {
             int type = TorchTypeEnum.Normal;
@@ -1075,6 +1079,10 @@ public class TerrainChunkTesselatorCi
         if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
         {
             blockheight = one / 2; // 0.5f;
+        }
+        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Flat)
+        {
+            blockheight = one * 1 / 20; // 0.05f;
         }
         if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
         {

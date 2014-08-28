@@ -908,6 +908,7 @@ namespace ManicDigger
         Ladder,
         Fence,
         HalfHeight,
+        Flat,
     }
 
     public enum WalkableType

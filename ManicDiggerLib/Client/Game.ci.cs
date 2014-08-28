@@ -1097,6 +1097,10 @@
         {
             return one / 2;
         }
+        if (blocktypes[GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.Flat)
+        {
+            return one / 20;
+        }
         return 1;
     }
 
