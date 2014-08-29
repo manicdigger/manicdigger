@@ -19,7 +19,7 @@
     int cameraPointsCount;
     float playingTime;
     
-    public override bool OnClientCommand(ClientCommandArgs args)
+    public override bool OnClientCommand(Game game, ClientCommandArgs args)
     {
         if (args.command == "cam")
         {
@@ -191,7 +191,7 @@
     const int framerate = 60;
 
     // Todo: cubic interpolation
-    public override void OnNewFrame(NewFrameEventArgs args)
+    public override void OnNewFrame(Game game, NewFrameEventArgs args)
     {
         float dt = args.GetDt();
         if (playingTime == -1)

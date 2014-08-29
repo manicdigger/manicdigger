@@ -31,7 +31,7 @@
     const int MaxCount = 300;
     ClientModManager m;
 
-    public override void OnNewFrame(NewFrameEventArgs args)
+    public override void OnNewFrame(Game game, NewFrameEventArgs args)
     {
         float dt = args.GetDt();
         UpdateGraph(dt);
@@ -104,7 +104,7 @@
     bool drawfpstext;
     bool drawfpsgraph;
 
-    public override bool OnClientCommand(ClientCommandArgs args)
+    public override bool OnClientCommand(Game game, ClientCommandArgs args)
     {
         if (args.command == "fps")
         {

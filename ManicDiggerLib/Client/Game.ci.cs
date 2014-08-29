@@ -93,13 +93,9 @@
         TPP_CAMERA_DISTANCE_MIN = 1;
         TPP_CAMERA_DISTANCE_MAX = 10;
         options = new OptionsCi();
-        BlockDamageToPlayerTimer = TimerCi.Create(BlockDamageToPlayerEvery, BlockDamageToPlayerEvery * 2);
         overheadcameraK = new Kamera();
         fillarea = new DictionaryVector3Float();
         fillAreaLimit = 200;
-        walksoundtimer = 0;
-        lastwalksound = 0;
-        stepsoundduration = one * 4 / 10;
         speculativeCount = 0;
         speculative = new Speculative[speculativeMax];
         typinglog = new string[1024 * 16];
@@ -108,7 +104,6 @@
         localplayeranim = new AnimationState();
         localplayeranimationhint = new AnimationHint();
         MonsterRenderers = new DictionaryStringCharacterRenderer();
-        railheight = one * 3 / 10;
         enable_move = true;
         escapeMenu = new GuiStateEscapeMenu();
         handTexture = -1;
@@ -141,6 +136,7 @@
         screenTextEditor.game = this;
         screens[1] = screenTextEditor;
         audiosamples = new DictionaryStringAudioSample();
+        soundnow = new BoolRef();
     }
     ScreenTextEditor screenTextEditor;
 
@@ -150,11 +146,6 @@
 
     public void Start()
     {
-        if (!issingleplayer)
-        {
-            skinserverResponse = new HttpResponseCi();
-            platform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/skinserver.txt", skinserverResponse);
-        }
         textColorRenderer = new TextColorRenderer();
         textColorRenderer.platform = platform;
         language.platform = platform;
@@ -276,6 +267,15 @@
         modmanager.game = this;
         AddMod(new ModAutoCamera());
         AddMod(new ModFpsHistoryGraph());
+        AddMod(new ModWalkSound());
+        AddMod(new ModFallDamageToPlayer());
+        AddMod(new ModBlockDamageToPlayer());
+        AddMod(new ModLoadPlayerTextures());
+        AddMod(new ModSendPosition());
+        AddMod(new ModInterpolatePositions());
+        AddMod(new ModRail());
+        AddMod(new ModTestModel());
+        AddMod(new ModDrawPlayers());
         s = new BlockOctreeSearcher();
         s.platform = platform;
 
@@ -309,8 +309,6 @@
         return (h * sizey + y) * sizex + x;
     }
 #endif
-
-    HttpResponseCi skinserverResponse;
 
     void AddMod(ClientMod mod)
     {
@@ -1839,7 +1837,7 @@
         return radius + RadiusWhenMoving * radius * (Game.MinFloat(playervelocity.Length() / movespeed, 1));
     }
 
-    RandomCi rnd;
+    internal RandomCi rnd;
 
     internal PointFloatRef GetAim()
     {
@@ -2141,16 +2139,16 @@
             SendPacketClient(p);
         }
     }
-
-    int GetPlayerEyesBlockX()
+    
+    public int GetPlayerEyesBlockX()
     {
         return platform.FloatToInt(MathFloor(player.playerposition.X));
     }
-    int GetPlayerEyesBlockY()
+    public int GetPlayerEyesBlockY()
     {
         return platform.FloatToInt(MathFloor(player.playerposition.Z));
     }
-    int GetPlayerEyesBlockZ()
+    public int GetPlayerEyesBlockZ()
     {
         return platform.FloatToInt(MathFloor(player.playerposition.Y + entities[LocalPlayerId].player.EyeHeight));
     }
@@ -2164,56 +2162,6 @@
         else
         {
             return platform.FloatToInt(a) - 1;
-        }
-    }
-
-    int lastfalldamagetimeMilliseconds;
-    internal void UpdateFallDamageToPlayer()
-    {
-        //fallspeed 4 is 10 blocks high
-        //fallspeed 5.5 is 20 blocks high
-        float fallspeed = player.movedz / (-basemovespeed);
-
-        //test = false;
-        //if (fallspeed > 5.5f)
-        //{
-        //    test = true;
-        //}
-
-        int posX = GetPlayerEyesBlockX();
-        int posY = GetPlayerEyesBlockY();
-        int posZ = GetPlayerEyesBlockZ();
-        if ((blockheight(posX, posY, posZ) < posZ - 8)
-            || fallspeed > 3)
-        {
-            AudioPlayLoop("fallloop.wav", fallspeed > 2, true);
-        }
-        else
-        {
-            AudioPlayLoop("fallloop.wav", false, true);
-        }
-
-        //fall damage
-
-        if (IsValidPos(posX, posY, posZ - 3))
-        {
-            int blockBelow = GetBlock(posX, posY, posZ - 3);
-            if ((blockBelow != 0) && (!IsWater(blockBelow)))
-            {
-                float severity = 0;
-                if (fallspeed < 4) { return; }
-                else if (fallspeed < (one * 45 / 10)) { severity = (one * 3 / 10); }
-                else if (fallspeed < 5) { severity = (one * 5 / 10); }
-                else if (fallspeed < (one * 55 / 10)) { severity = (one * 6 / 10); }
-                else if (fallspeed < 6) { severity = (one * 8 / 10); }
-                else { severity = 1; }
-                if ((one * (platform.TimeMillisecondsFromStart() - lastfalldamagetimeMilliseconds) / 1000) < 1)
-                {
-                    return;
-                }
-                lastfalldamagetimeMilliseconds = platform.TimeMillisecondsFromStart();
-                ApplyDamageToPlayer(platform.FloatToInt(severity * PlayerStats.MaxHealth), Packet_DeathReasonEnum.FallDamage, 0);	//Maybe give ID of last player touched?
-            }
         }
     }
 
@@ -2563,24 +2511,6 @@
     public float NextFloat(float min, float max)
     {
         return rnd.NextFloat() * (max - min) + min;
-    }
-
-    internal void SendPosition(float positionX, float positionY, float positionZ, float orientationX, float orientationY, float orientationZ)
-    {
-        Packet_ClientPositionAndOrientation p = new Packet_ClientPositionAndOrientation();
-        {
-            p.PlayerId = this.LocalPlayerId;//self
-            p.X = platform.FloatToInt(positionX * 32);
-            p.Y = platform.FloatToInt(positionY * 32);
-            p.Z = platform.FloatToInt(positionZ * 32);
-            p.Heading = HeadingByte(orientationX, orientationY, orientationZ);
-            p.Pitch = PitchByte(orientationX, orientationY, orientationZ);
-            p.Stance = localstance;
-        }
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.PositionandOrientation;
-        pp.PositionAndOrientation = p;
-        SendPacketClient(pp);
     }
 
     public byte HeadingByte(float orientationX, float orientationY, float orientationZ)
@@ -3319,85 +3249,7 @@
         return entity;
     }
 
-    internal void InterpolatePositions(float dt)
-    {
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity e = entities[i];
-            if (e == null) { continue; }
-            if (e.player == null) { continue; }
-            if (i == LocalPlayerId) { continue; }
-            if (!e.player.PositionLoaded) { continue; }
-
-            if (e.player.playerDrawInfo == null)
-            {
-                e.player.playerDrawInfo = new PlayerDrawInfo();
-                NetworkInterpolation n = new NetworkInterpolation();
-                PlayerInterpolate playerInterpolate = new PlayerInterpolate();
-                playerInterpolate.platform = platform;
-                n.req = playerInterpolate;
-                n.DELAYMILLISECONDS = 500;
-                n.EXTRAPOLATE = false;
-                n.EXTRAPOLATION_TIMEMILLISECONDS = 300;
-                e.player.playerDrawInfo.interpolation = n;
-            }
-            e.player.playerDrawInfo.interpolation.DELAYMILLISECONDS = Game.MaxInt(100, ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds());
-            Player p = e.player;
-
-            PlayerDrawInfo info = p.playerDrawInfo;
-            float networkposX = p.NetworkX;
-            float networkposY = p.NetworkY;
-            float networkposZ = p.NetworkZ;
-            if ((!Vec3Equal(networkposX, networkposY, networkposZ,
-                            info.lastnetworkposX, info.lastnetworkposY, info.lastnetworkposZ))
-                || p.NetworkHeading != info.lastnetworkheading
-                || p.NetworkPitch != info.lastnetworkpitch)
-            {
-                PlayerInterpolationState state = new PlayerInterpolationState();
-                state.positionX = networkposX;
-                state.positionY = networkposY;
-                state.positionZ = networkposZ;
-                state.heading = p.NetworkHeading;
-                state.pitch = p.NetworkPitch;
-                info.interpolation.AddNetworkPacket(state, totaltimeMilliseconds);
-            }
-            PlayerInterpolationState curstate = platform.CastToPlayerInterpolationState(info.interpolation.InterpolatedState(totaltimeMilliseconds));
-            if (curstate == null)
-            {
-                curstate = new PlayerInterpolationState();
-            }
-            //do not interpolate player position if player is controlled by game world
-            if (EnablePlayerUpdatePositionContainsKey(i) && !EnablePlayerUpdatePosition(i))
-            {
-                curstate.positionX = p.NetworkX;
-                curstate.positionY = p.NetworkY;
-                curstate.positionZ = p.NetworkZ;
-            }
-            float curposX = curstate.positionX;
-            float curposY = curstate.positionY;
-            float curposZ = curstate.positionZ;
-            info.velocityX = curposX - info.lastcurposX;
-            info.velocityY = curposY - info.lastcurposY;
-            info.velocityZ = curposZ - info.lastcurposZ;
-            p.moves = (!Vec3Equal(curposX, curposY, curposZ, info.lastcurposX, info.lastcurposY, info.lastcurposZ));
-            info.lastcurposX = curposX;
-            info.lastcurposY = curposY;
-            info.lastcurposZ = curposZ;
-            info.lastnetworkposX = networkposX;
-            info.lastnetworkposY = networkposY;
-            info.lastnetworkposZ = networkposZ;
-            info.lastnetworkheading = p.NetworkHeading;
-            info.lastnetworkpitch = p.NetworkPitch;
-
-            p.PositionX = curposX;
-            p.PositionY = curposY;
-            p.PositionZ = curposZ;
-            p.Heading = curstate.heading;
-            p.Pitch = curstate.pitch;
-        }
-    }
-
-    bool Vec3Equal(float ax, float ay, float az, float bx, float by, float bz)
+    public bool Vec3Equal(float ax, float ay, float az, float bx, float by, float bz)
     {
         return ax == bx && ay == by && az == bz;
     }
@@ -3835,74 +3687,7 @@
         //GL.Fog(FogParameter.FogEnd, fogstart + fogsize);
     }
 
-    public const int BlockDamageToPlayerEvery = 1;
-    TimerCi BlockDamageToPlayerTimer;
-
-    //TODO server side?
-    internal void UpdateBlockDamageToPlayer(float dt)
-    {
-        float pX = player.playerposition.X;
-        float pY = player.playerposition.Y;
-        float pZ = player.playerposition.Z;
-        pY += entities[LocalPlayerId].player.EyeHeight;
-        int block1 = 0;
-        int block2 = 0;
-        if (IsValidPos(MathFloor(pX), MathFloor(pZ), MathFloor(pY)))
-        {
-            block1 = GetBlock(platform.FloatToInt(pX), platform.FloatToInt(pZ), platform.FloatToInt(pY));
-        }
-        if (IsValidPos(MathFloor(pX), MathFloor(pZ), MathFloor(pY) - 1))
-        {
-            block2 = GetBlock(platform.FloatToInt(pX), platform.FloatToInt(pZ), platform.FloatToInt(pY) - 1);
-        }
-
-        int damage = d_Data.DamageToPlayer()[block1] + d_Data.DamageToPlayer()[block2];
-        if (damage > 0)
-        {
-            int hurtingBlock = block1;	//Use block at eyeheight as source block
-            if (hurtingBlock == 0) { hurtingBlock = block2; }	//Fallback to block at feet if eyeheight block is air
-            int times = BlockDamageToPlayerTimer.Update(dt);
-            for (int i = 0; i < times; i++)
-            {
-                ApplyDamageToPlayer(damage, Packet_DeathReasonEnum.BlockDamage, hurtingBlock);
-            }
-        }
-
-        //Player drowning
-        int deltaTime = platform.FloatToInt(one * (platform.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds)); //Time in milliseconds
-        if (deltaTime >= 1000)
-        {
-            if (WaterSwimming())
-            {
-                PlayerStats.CurrentOxygen -= 1;
-                if (PlayerStats.CurrentOxygen <= 0)
-                {
-                    PlayerStats.CurrentOxygen = 0;
-                    int dmg = platform.FloatToInt(one * PlayerStats.MaxHealth / 10);
-                    if (dmg < 1)
-                    {
-                        dmg = 1;
-                    }
-                    ApplyDamageToPlayer(dmg, Packet_DeathReasonEnum.Drowning, block1);
-                }
-            }
-            else
-            {
-                PlayerStats.CurrentOxygen = PlayerStats.MaxOxygen;
-            }
-            if (ServerVersionAtLeast(2014, 3, 31))
-            {
-                Packet_Client packet = new Packet_Client();
-                packet.Id = Packet_ClientIdEnum.Oxygen;
-                packet.Oxygen = new Packet_ClientOxygen();
-                packet.Oxygen.CurrentOxygen = PlayerStats.CurrentOxygen;
-                SendPacketClient(packet);
-            }
-            lastOxygenTickMilliseconds = platform.TimeMillisecondsFromStart();
-        }
-    }
-
-    bool ServerVersionAtLeast(int year, int month, int day)
+    public bool ServerVersionAtLeast(int year, int month, int day)
     {
         if (serverGameVersion == null)
         {
@@ -4276,37 +4061,6 @@
             return d_Data.WalkSound()[b];
         }
         return d_Data.WalkSound()[0];
-    }
-
-    float walksoundtimer;
-    int lastwalksound;
-    float stepsoundduration;
-    internal void UpdateWalkSound(float dt)
-    {
-        if (dt == -1)
-        {
-            dt = stepsoundduration / 2;
-        }
-        walksoundtimer += dt;
-        string[] soundwalk = soundwalkcurrent();
-        if (GetSoundCount(soundwalk) == 0)
-        {
-            return;
-        }
-        if (walksoundtimer >= stepsoundduration)
-        {
-            walksoundtimer = 0;
-            lastwalksound++;
-            if (lastwalksound >= GetSoundCount(soundwalk))
-            {
-                lastwalksound = 0;
-            }
-            if ((rnd.Next() % 100) < 40)
-            {
-                lastwalksound = rnd.Next() % (GetSoundCount(soundwalk));
-            }
-            AudioPlay(soundwalk[lastwalksound]);
-        }
     }
 
     internal void Draw2dText1(string text, int x, int y, int fontsize, IntRef color, bool enabledepthtest)
@@ -4834,10 +4588,6 @@
                     //    AddChatline("USE: .movespeed [movespeed]");
                     //}
                 }
-                else if (cmd == "testmodel")
-                {
-                    ENABLE_DRAW_TEST_CHARACTER = BoolCommandArgument(arguments);
-                }
                 else if (cmd == "gui")
                 {
                     ENABLE_DRAW2D = BoolCommandArgument(arguments);
@@ -4883,7 +4633,7 @@
                         ClientCommandArgs args = new ClientCommandArgs();
                         args.arguments = arguments;
                         args.command = cmd;
-                        clientmods[i].OnClientCommand(args);
+                        clientmods[i].OnClientCommand(this, args);
                     }
                     string chatline = StringTools.StringSubstring(platform, d_HudChat.GuiTypingBuffer, 0, MinInt(d_HudChat.GuiTypingBuffer.Length, 256));
                     SendChat(chatline);
@@ -4897,7 +4647,7 @@
             SendChat(chatline);
         }
     }
-    bool BoolCommandArgument(string arguments)
+    public bool BoolCommandArgument(string arguments)
     {
         arguments = platform.StringTrim(arguments);
         return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
@@ -5840,189 +5590,10 @@
         }
     }
 
-    internal string skinserver;
-    internal void LoadPlayerTextures()
-    {
-        if (!issingleplayer)
-        {
-            if (skinserverResponse.done)
-            {
-                skinserver = platform.StringFromUtf8ByteArray(skinserverResponse.value, skinserverResponse.valueLength);
-            }
-            else if (skinserverResponse.error)
-            {
-                skinserver = null;
-            }
-            else
-            {
-                return;
-            }
-        }
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity e = entities[i];
-            if (e == null) { continue; }
-            if (e.player == null) { continue; }
-            if (e.player.CurrentTexture != -1)
-            {
-                continue;
-            }
-            // a) download skin
-            if (!issingleplayer && e.player.Type == PlayerType.Player && e.player.Texture == null)
-            {
-                if (e.player.SkinDownloadResponse == null)
-                {
-                    e.player.SkinDownloadResponse = new HttpResponseCi();
-                    string url = StringTools.StringAppend(platform, skinserver, StringTools.StringSubstringToEnd(platform, e.player.Name, 2));
-                    url = StringTools.StringAppend(platform, url, ".png");
-                    platform.WebClientDownloadDataAsync(url, e.player.SkinDownloadResponse);
-                    continue;
-                }
-                if (!e.player.SkinDownloadResponse.error)
-                {
-                    if (!e.player.SkinDownloadResponse.done)
-                    {
-                        continue;
-                    }
-                    BitmapCi bmp_ = platform.BitmapCreateFromPng(e.player.SkinDownloadResponse.value, e.player.SkinDownloadResponse.valueLength);
-                    if (bmp_ != null)
-                    {
-                        e.player.CurrentTexture = GetTextureOrLoad(e.player.Name, bmp_);
-                        platform.BitmapDelete(bmp_);
-                        continue;
-                    }
-                }
-            }
-            // b) file skin
-            if (e.player.Texture == null)
-            {
-                e.player.CurrentTexture = GetTexture("mineplayer.png");
-                continue;
-            }
-
-            byte[] file = GetFile(e.player.Texture);
-            if (file == null)
-            {
-                e.player.CurrentTexture = 0;
-                continue;
-            }
-            BitmapCi bmp = platform.BitmapCreateFromPng(file, platform.ByteArrayLength(file));
-            if (bmp == null)
-            {
-                e.player.CurrentTexture = 0;
-                continue;
-            }
-            e.player.CurrentTexture = GetTextureOrLoad(e.player.Texture, bmp);
-            platform.BitmapDelete(bmp);
-        }
-    }
-
-    internal void DrawPlayers(float dt)
-    {
-        totaltimeMilliseconds = platform.TimeMillisecondsFromStart();
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            if (entities[i] == null)
-            {
-                continue;
-            }
-            if (entities[i].player == null)
-            {
-                continue;
-            }
-            Player p_ = entities[i].player;
-            if (i == LocalPlayerId)
-            {
-                continue;
-            }
-            if (!p_.PositionLoaded)
-            {
-                continue;
-            }
-            if (!d_FrustumCulling.SphereInFrustum(p_.PositionX, p_.PositionY, p_.PositionZ, 3))
-            {
-                continue;
-            }
-            int cx = platform.FloatToInt(p_.PositionX) / chunksize;
-            int cy = platform.FloatToInt(p_.PositionZ) / chunksize;
-            int cz = platform.FloatToInt(p_.PositionY) / chunksize;
-            if (IsValidChunkPos(cx, cy, cz, chunksize))
-            {
-                if (!terrainRenderer.IsChunkRendered(cx, cy, cz))
-                {
-                    continue;
-                }
-            }
-            float shadow = (one * MaybeGetLight(platform.FloatToInt(p_.PositionX), platform.FloatToInt(p_.PositionZ), platform.FloatToInt(p_.PositionY))) / Game.maxlight;
-            p_.playerDrawInfo.anim.light = shadow;
-            float FeetPosX = p_.PositionX;
-            float FeetPosY = p_.PositionY;
-            float FeetPosZ = p_.PositionZ;
-            AnimationHint animHint = entities[i].player.AnimationHint_;
-            float playerspeed = (Length(p_.playerDrawInfo.velocityX, p_.playerDrawInfo.velocityY, p_.playerDrawInfo.velocityZ) / dt) * (one * 4 / 100);
-            if (p_.Type == PlayerType.Player)
-            {
-                ICharacterRenderer r = GetCharacterRenderer(p_.Model);
-                r.SetAnimation("walk");
-                r.DrawCharacter(p_.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch, p_.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
-                //DrawCharacter(info.anim, FeetPos,
-                //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
-            }
-            else
-            {
-                //fix crash on monster spawn
-                ICharacterRenderer r = GetCharacterRenderer(d_DataMonsters.MonsterCode[p_.MonsterType]);
-                //var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
-                r.SetAnimation("walk");
-                //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
-                r.DrawCharacter(p_.playerDrawInfo.anim, p_.PositionX, p_.PositionY, p_.PositionZ,
-                    Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch,
-                    p_.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
-            }
-        }
-        if (ENABLE_TPP_VIEW)
-        {
-            float LocalPlayerPositionX = player.playerposition.X;
-            float LocalPlayerPositionY = player.playerposition.Y;
-            float LocalPlayerPositionZ = player.playerposition.Z;
-            float LocalPlayerOrientationX = player.playerorientation.X;
-            float LocalPlayerOrientationY = player.playerorientation.Y;
-            float LocalPlayerOrientationZ = player.playerorientation.Z;
-            float velocityX = lastlocalplayerposX - LocalPlayerPositionX;
-            float velocityY = lastlocalplayerposY - LocalPlayerPositionY;
-            float velocityZ = lastlocalplayerposZ - LocalPlayerPositionZ;
-            bool moves = (lastlocalplayerposX != LocalPlayerPositionX
-                || lastlocalplayerposY != LocalPlayerPositionY
-                || lastlocalplayerposZ != LocalPlayerPositionZ); //bool moves = velocity.Length > 0.08;
-            float shadow = (one * MaybeGetLight(
-                platform.FloatToInt(LocalPlayerPositionX),
-                platform.FloatToInt(LocalPlayerPositionZ),
-                platform.FloatToInt(LocalPlayerPositionY)))
-                / Game.maxlight;
-            localplayeranim.light = shadow;
-            ICharacterRenderer r = GetCharacterRenderer(entities[LocalPlayerId].player.Model);
-            r.SetAnimation("walk");
-            Vector3Ref playerspeed = Vector3Ref.Create(playervelocity.X / 60, playervelocity.Y / 60, playervelocity.Z / 60);
-            float playerspeedf = playerspeed.Length() * (one * 15 / 10);
-            r.DrawCharacter
-                (localplayeranim, LocalPlayerPositionX, LocalPlayerPositionY,
-                LocalPlayerPositionZ,
-                Game.IntToByte(-HeadingByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ) - 256 / 4),
-                PitchByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ),
-                moves, dt, entities[LocalPlayerId].player.CurrentTexture, localplayeranimationhint, playerspeedf);
-            lastlocalplayerposX = LocalPlayerPositionX;
-            lastlocalplayerposY = LocalPlayerPositionY;
-            lastlocalplayerposZ = LocalPlayerPositionZ;
-        }
-    }
-
-    float lastlocalplayerposX;
-    float lastlocalplayerposY;
-    float lastlocalplayerposZ;
-    AnimationState localplayeranim;
+    internal AnimationState localplayeranim;
     internal AnimationHint localplayeranimationhint;
 
-    ICharacterRenderer GetCharacterRenderer(string key)
+    public ICharacterRenderer GetCharacterRenderer(string key)
     {
         if (!MonsterRenderers.ContainsKey(key))
         {
@@ -6081,124 +5652,6 @@
             return UpDown.Down;
         }
         return UpDown.None;
-    }
-
-    internal float currentvehiclespeed;
-    internal int currentrailblockX;
-    internal int currentrailblockY;
-    internal int currentrailblockZ;
-    internal float currentrailblockprogress;
-    internal VehicleDirection12 currentdirection;
-    internal VehicleDirection12 lastdirection;
-    internal float railheight;
-
-    internal Vector3Ref CurrentRailPos()
-    {
-        RailSlope slope = d_RailMapUtil.GetRailSlope(currentrailblockX,
-            currentrailblockY, currentrailblockZ);
-        float aX = currentrailblockX;
-        float aY = currentrailblockY;
-        float aZ = currentrailblockZ;
-        float x_correction = 0;
-        float y_correction = 0;
-        float z_correction = 0;
-        float half = one / 2;
-        switch (currentdirection)
-        {
-            case VehicleDirection12.HorizontalRight:
-                x_correction += currentrailblockprogress;
-                y_correction += half;
-                if (slope == RailSlope.TwoRightRaised)
-                    z_correction += currentrailblockprogress;
-                if (slope == RailSlope.TwoLeftRaised)
-                    z_correction += 1 - currentrailblockprogress;
-                break;
-            case VehicleDirection12.HorizontalLeft:
-                x_correction += 1 - currentrailblockprogress;
-                y_correction += half;
-                if (slope == RailSlope.TwoRightRaised)
-                    z_correction += 1 - currentrailblockprogress;
-                if (slope == RailSlope.TwoLeftRaised)
-                    z_correction += currentrailblockprogress;
-                break;
-            case VehicleDirection12.VerticalDown:
-                x_correction += half;
-                y_correction += currentrailblockprogress;
-                if (slope == RailSlope.TwoDownRaised)
-                    z_correction += currentrailblockprogress;
-                if (slope == RailSlope.TwoUpRaised)
-                    z_correction += 1 - currentrailblockprogress;
-                break;
-            case VehicleDirection12.VerticalUp:
-                x_correction += half;
-                y_correction += 1 - currentrailblockprogress;
-                if (slope == RailSlope.TwoDownRaised)
-                    z_correction += 1 - currentrailblockprogress;
-                if (slope == RailSlope.TwoUpRaised)
-                    z_correction += currentrailblockprogress;
-                break;
-            case VehicleDirection12.UpLeftLeft:
-                x_correction += half * (1 - currentrailblockprogress);
-                y_correction += half * currentrailblockprogress;
-                break;
-            case VehicleDirection12.UpLeftUp:
-                x_correction += half * currentrailblockprogress;
-                y_correction += half - half * currentrailblockprogress;
-                break;
-            case VehicleDirection12.UpRightRight:
-                x_correction += half + half * currentrailblockprogress;
-                y_correction += half * currentrailblockprogress;
-                break;
-            case VehicleDirection12.UpRightUp:
-                x_correction += 1 - half * currentrailblockprogress;
-                y_correction += half - half * currentrailblockprogress;
-                break;
-            case VehicleDirection12.DownLeftLeft:
-                x_correction += half * (1 - currentrailblockprogress);
-                y_correction += 1 - half * currentrailblockprogress;
-                break;
-            case VehicleDirection12.DownLeftDown:
-                x_correction += half * currentrailblockprogress;
-                y_correction += half + half * currentrailblockprogress;
-                break;
-            case VehicleDirection12.DownRightRight:
-                x_correction += half + half * currentrailblockprogress;
-                y_correction += 1 - half * currentrailblockprogress;
-                break;
-            case VehicleDirection12.DownRightDown:
-                x_correction += 1 - half * currentrailblockprogress;
-                y_correction += half + half * currentrailblockprogress;
-                break;
-        }
-        //+1 because player can't be inside rail block (picking wouldn't work)
-        return Vector3Ref.Create(aX + x_correction, aZ + railheight + 1 + z_correction, aY + y_correction);
-    }
-
-    internal bool railriding;
-    int lastrailsoundtimeMilliseconds;
-    int lastrailsound;
-    internal void RailSound()
-    {
-        float railsoundpersecond = currentvehiclespeed;
-        if (railsoundpersecond > 10)
-        {
-            railsoundpersecond = 10;
-        }
-        AudioPlayLoop("railnoise.wav", railriding && railsoundpersecond > (one * 1 / 10), false);
-        if (!railriding)
-        {
-            return;
-        }
-        if ((platform.TimeMillisecondsFromStart() - lastrailsoundtimeMilliseconds) > 1000 / railsoundpersecond)
-        {
-            AudioPlay(platform.StringFormat("rail{0}.wav", platform.IntToString(lastrailsound + 1)));
-            lastrailsoundtimeMilliseconds = platform.TimeMillisecondsFromStart();
-            lastrailsound++;
-            if (lastrailsound >= 4)
-            {
-                lastrailsound = 0;
-            }
-        }
     }
 
     internal VehicleDirection12 BestNewDirection(int dirVehicleDirection12Flags, bool turnleft, bool turnright, BoolRef retFound)
@@ -6263,23 +5716,6 @@
 
     internal bool enable_move;
 
-    internal float originalmodelheight;
-    internal void ExitVehicle()
-    {
-        SetCharacterEyesHeight(originalmodelheight);
-        railriding = false;
-        ENABLE_FREEMOVE = false;
-        enable_move = true;
-    }
-
-    internal void Reverse()
-    {
-        currentdirection = DirectionUtils.Reverse(currentdirection);
-        currentrailblockprogress = 1 - currentrailblockprogress;
-        lastdirection = currentdirection;
-        //currentvehiclespeed = 0;
-    }
-
     public static Vector3IntRef NextTile(VehicleDirection12 direction, int currentTileX, int currentTileY, int currentTileZ)
     {
         return NextTile_(DirectionUtils.ResultExit(direction), currentTileX, currentTileY, currentTileZ);
@@ -6325,162 +5761,6 @@
         }
         return possible_railsVehicleDirection12Flags;
     }
-
-    Entity localMinecart;
-
-    internal void RailOnNewFrame(float dt)
-    {
-        if (localMinecart == null)
-        {
-            localMinecart = new Entity();
-            localMinecart.minecart = new Minecart();
-            EntityAddLocal(localMinecart);
-        }
-        localMinecart.minecart.enabled = railriding;
-        if (railriding)
-        {
-            Minecart m = localMinecart.minecart;
-            m.positionX = player.playerposition.X;
-            m.positionY = player.playerposition.Y;
-            m.positionZ = player.playerposition.Z;
-            m.direction = currentdirection;
-            m.lastdirection = lastdirection;
-            m.progress = currentrailblockprogress;
-        }
-
-        localplayeranimationhint.InVehicle = railriding;
-        localplayeranimationhint.DrawFixX = 0;
-        localplayeranimationhint.DrawFixY = railriding ? (-one * 7 / 10) : 0;
-        localplayeranimationhint.DrawFixZ = 0;
-
-        bool turnright = keyboardState[GetKey(GlKeys.D)];
-        bool turnleft = keyboardState[GetKey(GlKeys.A)];
-        RailSound();
-        if (railriding)
-        {
-            ENABLE_FREEMOVE = true;
-            enable_move = false;
-            Vector3Ref railPos = CurrentRailPos();
-            player.playerposition.X = railPos.X;
-            player.playerposition.Y = railPos.Y;
-            player.playerposition.Z = railPos.Z;
-            currentrailblockprogress += currentvehiclespeed * dt;
-            if (currentrailblockprogress >= 1)
-            {
-                lastdirection = currentdirection;
-                currentrailblockprogress = 0;
-                TileEnterData newenter = new TileEnterData();
-                Vector3IntRef nexttile = Game.NextTile(currentdirection, currentrailblockX, currentrailblockY, currentrailblockZ);
-                newenter.BlockPositionX = nexttile.X;
-                newenter.BlockPositionY = nexttile.Y;
-                newenter.BlockPositionZ = nexttile.Z;
-                //slope
-                if (GetUpDownMove(currentrailblockX, currentrailblockY, currentrailblockZ,
-                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Up)
-                {
-                    newenter.BlockPositionZ++;
-                }
-                if (GetUpDownMove(newenter.BlockPositionX,
-                    newenter.BlockPositionY,
-                    newenter.BlockPositionZ - 1,
-                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Down)
-                {
-                    newenter.BlockPositionZ--;
-                }
-
-                newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection));
-                BoolRef newdirFound = new BoolRef();
-                VehicleDirection12 newdir = BestNewDirection(PossibleRails(newenter), turnleft, turnright, newdirFound);
-                if (!newdirFound.value)
-                {
-                    //end of rail
-                    currentdirection = DirectionUtils.Reverse(currentdirection);
-                }
-                else
-                {
-                    currentdirection = newdir;
-                    currentrailblockX = platform.FloatToInt(newenter.BlockPositionX);
-                    currentrailblockY = platform.FloatToInt(newenter.BlockPositionY);
-                    currentrailblockZ = platform.FloatToInt(newenter.BlockPositionZ);
-                }
-            }
-        }
-        if (keyboardState[GetKey(GlKeys.W)] && GuiTyping != TypingState.Typing)
-        {
-            currentvehiclespeed += 1 * dt;
-        }
-        if (keyboardState[GetKey(GlKeys.S)] && GuiTyping != TypingState.Typing)
-        {
-            currentvehiclespeed -= 5 * dt;
-        }
-        if (currentvehiclespeed < 0)
-        {
-            currentvehiclespeed = 0;
-        }
-        //todo fix
-        //if (viewport.keypressed != null && viewport.keypressed.Key == GlKeys.Q)            
-        if (!wasqpressed && keyboardState[GetKey(GlKeys.Q)] && GuiTyping != TypingState.Typing)
-        {
-            Reverse();
-        }
-        if (!wasepressed && keyboardState[GetKey(GlKeys.E)] && !railriding && !ENABLE_FREEMOVE && GuiTyping != TypingState.Typing)
-        {
-            currentrailblockX = platform.FloatToInt(player.playerposition.X);
-            currentrailblockY = platform.FloatToInt(player.playerposition.Z);
-            currentrailblockZ = platform.FloatToInt(player.playerposition.Y) - 1;
-            if (!IsValidPos(currentrailblockX, currentrailblockY, currentrailblockZ))
-            {
-                ExitVehicle();
-            }
-            else
-            {
-                int railunderplayer = d_Data.Rail()[this.GetBlock(currentrailblockX, currentrailblockY, currentrailblockZ)];
-                railriding = true;
-                originalmodelheight = GetCharacterEyesHeight();
-                SetCharacterEyesHeight(minecartheight());
-                currentvehiclespeed = 0;
-                if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
-                {
-                    currentdirection = VehicleDirection12.HorizontalRight;
-                }
-                else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
-                {
-                    currentdirection = VehicleDirection12.VerticalUp;
-                }
-                else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
-                {
-                    currentdirection = VehicleDirection12.UpLeftUp;
-                }
-                else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
-                {
-                    currentdirection = VehicleDirection12.UpRightUp;
-                }
-                else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
-                {
-                    currentdirection = VehicleDirection12.DownLeftLeft;
-                }
-                else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
-                {
-                    currentdirection = VehicleDirection12.DownRightRight;
-                }
-                else
-                {
-                    ExitVehicle();
-                }
-                lastdirection = currentdirection;
-            }
-        }
-        else if (!wasepressed && keyboardState[GetKey(GlKeys.E)] && railriding && GuiTyping != TypingState.Typing)
-        {
-            ExitVehicle();
-            player.playerposition.Y += one * 7 / 10;
-        }
-        wasqpressed = keyboardState[GetKey(GlKeys.Q)] && GuiTyping != TypingState.Typing;
-        wasepressed = keyboardState[GetKey(GlKeys.E)] && GuiTyping != TypingState.Typing;
-    }
-    float minecartheight() { return one / 2; }
-    bool wasqpressed;
-    bool wasepressed;
 
     internal MinecartRenderer d_MinecartRenderer;
     internal void DrawMinecarts(float dt)
@@ -7120,12 +6400,21 @@
         PerspectiveMode();
     }
 
+    internal BoolRef soundnow;
+
+    internal float movedx;
+    internal float movedy;
     internal void FrameTick(float dt)
     {
         //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
         //UpdateTerrain();
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            NewFrameEventArgs args_ = new NewFrameEventArgs();
+            args_.SetDt(dt);
+            clientmods[i].OnNewFrameFixed(this, args_);
+        }
         OnNewFrame(dt);
-        RailOnNewFrame(dt);
         ClearInactivePlayersDrawInfo();
 
         if (guistate == GuiState.MapLoading) { return; }
@@ -7137,8 +6426,8 @@
         float overheadcameraspeed = 3;
         bool wantsjump = GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.Space)];
         bool shiftkeydown = keyboardState[GetKey(GlKeys.ShiftLeft)];
-        float movedx = 0;
-        float movedy = 0;
+        movedx = 0;
+        movedy = 0;
         bool moveup = false;
         bool movedown = false;
         if (guistate == GuiState.Normal)
@@ -7281,20 +6570,10 @@
             move.wantsjump = wantsjump;
             move.shiftkeydown = shiftkeydown;
         }
-        BoolRef soundnow = new BoolRef();
+        soundnow = new BoolRef();
         if (FollowId() == null)
         {
             d_Physics.Move(player, move, dt, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), entities[LocalPlayerId].player.ModelHeight);
-            if (soundnow.value)
-            {
-                UpdateWalkSound(-1);
-            }
-            if (player.isplayeronground && movedx != 0 || movedy != 0)
-            {
-                UpdateWalkSound(dt);
-            }
-            UpdateBlockDamageToPlayer(dt);
-            UpdateFallDamageToPlayer();
         }
         else
         {
@@ -8359,7 +7638,6 @@
             FrameTick(dt);
             accumulator -= dt;
         }
-        LoadPlayerTextures();
 
         if (guistate == GuiState.MapLoading)
         {
@@ -8404,9 +7682,11 @@
             }
             d_SunMoonRenderer.Draw(deltaTime);
 
-            InterpolatePositions(deltaTime);
-            DrawPlayers(deltaTime);
-            DrawTestModel(deltaTime);
+            for (int i = 0; i < clientmodsCount; i++)
+            {
+                if (clientmods[i] == null) { continue; }
+                clientmods[i].OnNewFrameDraw3d(this, deltaTime);
+            }
             terrainRenderer.DrawTerrain();
             DrawPlayerNames();
             particleEffectBlockBreak.Draw(deltaTime);
@@ -8456,29 +7736,6 @@
         GotoDraw2d(deltaTime);
     }
 
-    void DrawTestModel(float deltaTime)
-    {
-        if (!ENABLE_DRAW_TEST_CHARACTER)
-        {
-            return;
-        }
-        if (testmodel == null)
-        {
-            testmodel = new AnimatedModelRenderer();
-            byte[] data = GetFile("player2.txt");
-            int dataLength = GetFileLength("player2.txt");
-            string dataString = platform.StringFromUtf8ByteArray(data, dataLength);
-            AnimatedModel model = AnimatedModelSerializer.Deserialize(platform, dataString);
-            testmodel.Start(this, model);
-        }
-        GLPushMatrix();
-        GLTranslate(MapSizeX / 2, blockheight(MapSizeX / 2, MapSizeY / 2 - 2, 128), MapSizeY / 2 - 2);
-        platform.BindTexture2d(GetTexture("mineplayer.png"));
-        testmodel.Render(deltaTime);
-        GLPopMatrix();
-    }
-    AnimatedModelRenderer testmodel;
-
     int lastWidth;
     int lastHeight;
     void UpdateResize()
@@ -8504,7 +7761,7 @@
         {
             NewFrameEventArgs args_ = new NewFrameEventArgs();
             args_.SetDt(dt);
-            clientmods[i].OnNewFrame(args_);
+            clientmods[i].OnNewFrame(this, args_);
         }
 
         mouseleftclick = mouserightclick = false;
@@ -9184,12 +8441,6 @@ public class NetworkProcessTask : Task
                 break;
             }
             TryReadPacket(msg.ReadBytes(msg.LengthBytes()), msg.LengthBytes());
-        }
-        if (game.spawned && ((game.platform.TimeMillisecondsFromStart() - game.lastpositionsentMilliseconds) > 100))
-        {
-            game.lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
-            game.SendPosition(game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
-                game.player.playerorientation.X, game.player.playerorientation.Y, game.player.playerorientation.Z);
         }
     }
 
@@ -11103,9 +10354,11 @@ public class FreemoveLevelEnum
 
 public abstract class ClientMod
 {
-    public abstract void Start(ClientModManager modmanager);
-    public virtual bool OnClientCommand(ClientCommandArgs args) { return false; }
-    public virtual void OnNewFrame(NewFrameEventArgs args) { }
+    public virtual void Start(ClientModManager modmanager) { }
+    public virtual bool OnClientCommand(Game game, ClientCommandArgs args) { return false; }
+    public virtual void OnNewFrame(Game game, NewFrameEventArgs args) { }
+    public virtual void OnNewFrameFixed(Game game, NewFrameEventArgs args) { }
+    public virtual void OnNewFrameDraw3d(Game game, float deltaTime) { }
     public virtual void OnKeyDown(KeyEventArgs args) { }
     public virtual void OnKeyUp(KeyEventArgs args) { }
 }
@@ -12224,4 +11477,904 @@ public class ServerPackets
         p.QueryAnswer = answer;
         return p;
     }
+}
+
+public class ModWalkSound : ClientMod
+{
+    public ModWalkSound()
+    {
+        one = 1;
+        walksoundtimer = 0;
+        lastwalksound = 0;
+        stepsoundduration = one * 4 / 10;
+    }
+    float one;
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.FollowId() == null)
+        {
+            if (game.soundnow.value)
+            {
+                UpdateWalkSound(game, -1);
+            }
+            if (game.player.isplayeronground && game.movedx != 0 || game.movedy != 0)
+            {
+                UpdateWalkSound(game, args.GetDt());
+            }
+        }
+    }
+    internal void UpdateWalkSound(Game game, float dt)
+    {
+        if (dt == -1)
+        {
+            dt = stepsoundduration / 2;
+        }
+        walksoundtimer += dt;
+        string[] soundwalk = game.soundwalkcurrent();
+        if (game.GetSoundCount(soundwalk) == 0)
+        {
+            return;
+        }
+        if (walksoundtimer >= stepsoundduration)
+        {
+            walksoundtimer = 0;
+            lastwalksound++;
+            if (lastwalksound >= game.GetSoundCount(soundwalk))
+            {
+                lastwalksound = 0;
+            }
+            if ((game.rnd.Next() % 100) < 40)
+            {
+                lastwalksound = game.rnd.Next() % (game.GetSoundCount(soundwalk));
+            }
+            game.AudioPlay(soundwalk[lastwalksound]);
+        }
+    }
+    internal float walksoundtimer;
+    internal int lastwalksound;
+    internal float stepsoundduration;
+}
+
+public class ModFallDamageToPlayer : ClientMod
+{
+    public ModFallDamageToPlayer()
+    {
+        one = 1;
+    }
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+        if (game.FollowId() == null)
+        {
+            UpdateFallDamageToPlayer(game);
+        }
+    }
+    float one;
+    int lastfalldamagetimeMilliseconds;
+    internal void UpdateFallDamageToPlayer(Game game)
+    {
+        //fallspeed 4 is 10 blocks high
+        //fallspeed 5.5 is 20 blocks high
+        float fallspeed = game.player.movedz / (-game.basemovespeed);
+
+        //test = false;
+        //if (fallspeed > 5.5f)
+        //{
+        //    test = true;
+        //}
+
+        int posX = game.GetPlayerEyesBlockX();
+        int posY = game.GetPlayerEyesBlockY();
+        int posZ = game.GetPlayerEyesBlockZ();
+        if ((game.blockheight(posX, posY, posZ) < posZ - 8)
+            || fallspeed > 3)
+        {
+            game.AudioPlayLoop("fallloop.wav", fallspeed > 2, true);
+        }
+        else
+        {
+            game.AudioPlayLoop("fallloop.wav", false, true);
+        }
+
+        //fall damage
+
+        if (game.IsValidPos(posX, posY, posZ - 3))
+        {
+            int blockBelow = game.GetBlock(posX, posY, posZ - 3);
+            if ((blockBelow != 0) && (!game.IsWater(blockBelow)))
+            {
+                float severity = 0;
+                if (fallspeed < 4) { return; }
+                else if (fallspeed < (one * 45 / 10)) { severity = (one * 3 / 10); }
+                else if (fallspeed < 5) { severity = (one * 5 / 10); }
+                else if (fallspeed < (one * 55 / 10)) { severity = (one * 6 / 10); }
+                else if (fallspeed < 6) { severity = (one * 8 / 10); }
+                else { severity = 1; }
+                if ((one * (game.platform.TimeMillisecondsFromStart() - lastfalldamagetimeMilliseconds) / 1000) < 1)
+                {
+                    return;
+                }
+                lastfalldamagetimeMilliseconds = game.platform.TimeMillisecondsFromStart();
+                game.ApplyDamageToPlayer(game.platform.FloatToInt(severity * game.PlayerStats.MaxHealth), Packet_DeathReasonEnum.FallDamage, 0);	//Maybe give ID of last player touched?
+            }
+        }
+    }
+}
+
+public class ModBlockDamageToPlayer : ClientMod
+{
+    public ModBlockDamageToPlayer()
+    {
+        one = 1;
+        BlockDamageToPlayerTimer = TimerCi.Create(BlockDamageToPlayerEvery, BlockDamageToPlayerEvery * 2);
+    }
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+        if (game.FollowId() == null)
+        {
+            UpdateBlockDamageToPlayer(game, args.GetDt());
+        }
+    }
+    public const int BlockDamageToPlayerEvery = 1;
+    TimerCi BlockDamageToPlayerTimer;
+
+    float one;
+
+    //TODO server side?
+    internal void UpdateBlockDamageToPlayer(Game game, float dt)
+    {
+        float pX = game.player.playerposition.X;
+        float pY = game.player.playerposition.Y;
+        float pZ = game.player.playerposition.Z;
+        pY += game.entities[game.LocalPlayerId].player.EyeHeight;
+        int block1 = 0;
+        int block2 = 0;
+        if (game.IsValidPos(game.MathFloor(pX), game.MathFloor(pZ), game.MathFloor(pY)))
+        {
+            block1 = game.GetBlock(game.platform.FloatToInt(pX), game.platform.FloatToInt(pZ), game.platform.FloatToInt(pY));
+        }
+        if (game.IsValidPos(game.MathFloor(pX), game.MathFloor(pZ), game.MathFloor(pY) - 1))
+        {
+            block2 = game.GetBlock(game.platform.FloatToInt(pX), game.platform.FloatToInt(pZ), game.platform.FloatToInt(pY) - 1);
+        }
+
+        int damage = game.d_Data.DamageToPlayer()[block1] + game.d_Data.DamageToPlayer()[block2];
+        if (damage > 0)
+        {
+            int hurtingBlock = block1;	//Use block at eyeheight as source block
+            if (hurtingBlock == 0) { hurtingBlock = block2; }	//Fallback to block at feet if eyeheight block is air
+            int times = BlockDamageToPlayerTimer.Update(dt);
+            for (int i = 0; i < times; i++)
+            {
+                game.ApplyDamageToPlayer(damage, Packet_DeathReasonEnum.BlockDamage, hurtingBlock);
+            }
+        }
+
+        //Player drowning
+        int deltaTime = game.platform.FloatToInt(one * (game.platform.TimeMillisecondsFromStart() - game.lastOxygenTickMilliseconds)); //Time in milliseconds
+        if (deltaTime >= 1000)
+        {
+            if (game.WaterSwimming())
+            {
+                game.PlayerStats.CurrentOxygen -= 1;
+                if (game.PlayerStats.CurrentOxygen <= 0)
+                {
+                    game.PlayerStats.CurrentOxygen = 0;
+                    int dmg = game.platform.FloatToInt(one * game.PlayerStats.MaxHealth / 10);
+                    if (dmg < 1)
+                    {
+                        dmg = 1;
+                    }
+                    game.ApplyDamageToPlayer(dmg, Packet_DeathReasonEnum.Drowning, block1);
+                }
+            }
+            else
+            {
+                game.PlayerStats.CurrentOxygen = game.PlayerStats.MaxOxygen;
+            }
+            if (game.ServerVersionAtLeast(2014, 3, 31))
+            {
+                Packet_Client packet = new Packet_Client();
+                packet.Id = Packet_ClientIdEnum.Oxygen;
+                packet.Oxygen = new Packet_ClientOxygen();
+                packet.Oxygen.CurrentOxygen = game.PlayerStats.CurrentOxygen;
+                game.SendPacketClient(packet);
+            }
+            game.lastOxygenTickMilliseconds = game.platform.TimeMillisecondsFromStart();
+        }
+    }
+}
+
+public class ModLoadPlayerTextures : ClientMod
+{
+    public override void OnNewFrame(Game game, NewFrameEventArgs args)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+        if (!started)
+        {
+            started = true;
+            if (!game.issingleplayer)
+            {
+                skinserverResponse = new HttpResponseCi();
+                game.platform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/skinserver.txt", skinserverResponse);
+            }
+        }
+        LoadPlayerTextures(game);
+    }
+    bool started;
+    internal string skinserver;
+    internal HttpResponseCi skinserverResponse;
+    internal void LoadPlayerTextures(Game game)
+    {
+        if (!game.issingleplayer)
+        {
+            if (skinserverResponse.done)
+            {
+                skinserver = game.platform.StringFromUtf8ByteArray(skinserverResponse.value, skinserverResponse.valueLength);
+            }
+            else if (skinserverResponse.error)
+            {
+                skinserver = null;
+            }
+            else
+            {
+                return;
+            }
+        }
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity e = game.entities[i];
+            if (e == null) { continue; }
+            if (e.player == null) { continue; }
+            if (e.player.CurrentTexture != -1)
+            {
+                continue;
+            }
+            // a) download skin
+            if (!game.issingleplayer && e.player.Type == PlayerType.Player && e.player.Texture == null)
+            {
+                if (e.player.SkinDownloadResponse == null)
+                {
+                    e.player.SkinDownloadResponse = new HttpResponseCi();
+                    string url = StringTools.StringAppend(game.platform, skinserver, StringTools.StringSubstringToEnd(game.platform, e.player.Name, 2));
+                    url = StringTools.StringAppend(game.platform, url, ".png");
+                    game.platform.WebClientDownloadDataAsync(url, e.player.SkinDownloadResponse);
+                    continue;
+                }
+                if (!e.player.SkinDownloadResponse.error)
+                {
+                    if (!e.player.SkinDownloadResponse.done)
+                    {
+                        continue;
+                    }
+                    BitmapCi bmp_ = game.platform.BitmapCreateFromPng(e.player.SkinDownloadResponse.value, e.player.SkinDownloadResponse.valueLength);
+                    if (bmp_ != null)
+                    {
+                        e.player.CurrentTexture = game.GetTextureOrLoad(e.player.Name, bmp_);
+                        game.platform.BitmapDelete(bmp_);
+                        continue;
+                    }
+                }
+            }
+            // b) file skin
+            if (e.player.Texture == null)
+            {
+                e.player.CurrentTexture = game.GetTexture("mineplayer.png");
+                continue;
+            }
+
+            byte[] file = game.GetFile(e.player.Texture);
+            if (file == null)
+            {
+                e.player.CurrentTexture = 0;
+                continue;
+            }
+            BitmapCi bmp = game.platform.BitmapCreateFromPng(file, game.platform.ByteArrayLength(file));
+            if (bmp == null)
+            {
+                e.player.CurrentTexture = 0;
+                continue;
+            }
+            e.player.CurrentTexture = game.GetTextureOrLoad(e.player.Texture, bmp);
+            game.platform.BitmapDelete(bmp);
+        }
+    }
+}
+
+public class ModSendPosition : ClientMod
+{
+    public override void OnNewFrame(Game game, NewFrameEventArgs args)
+    {
+        if (game.spawned && ((game.platform.TimeMillisecondsFromStart() - game.lastpositionsentMilliseconds) > 100))
+        {
+            game.lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
+            SendPosition(game, game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
+                game.player.playerorientation.X, game.player.playerorientation.Y, game.player.playerorientation.Z);
+        }
+    }
+
+    internal void SendPosition(Game game, float positionX, float positionY, float positionZ, float orientationX, float orientationY, float orientationZ)
+    {
+        Packet_ClientPositionAndOrientation p = new Packet_ClientPositionAndOrientation();
+        {
+            p.PlayerId = game.LocalPlayerId;//self
+            p.X = game.platform.FloatToInt(positionX * 32);
+            p.Y = game.platform.FloatToInt(positionY * 32);
+            p.Z = game.platform.FloatToInt(positionZ * 32);
+            p.Heading = game.HeadingByte(orientationX, orientationY, orientationZ);
+            p.Pitch = game.PitchByte(orientationX, orientationY, orientationZ);
+            p.Stance = game.localstance;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PositionandOrientation;
+        pp.PositionAndOrientation = p;
+        game.SendPacketClient(pp);
+    }
+}
+
+public class ModInterpolatePositions : ClientMod
+{
+    public override void OnNewFrame(Game game, NewFrameEventArgs args)
+    {
+        InterpolatePositions(game, args.GetDt());
+    }
+    internal void InterpolatePositions(Game game, float dt)
+    {
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity e = game.entities[i];
+            if (e == null) { continue; }
+            if (e.player == null) { continue; }
+            if (i == game.LocalPlayerId) { continue; }
+            if (!e.player.PositionLoaded) { continue; }
+
+            if (e.player.playerDrawInfo == null)
+            {
+                e.player.playerDrawInfo = new PlayerDrawInfo();
+                NetworkInterpolation n = new NetworkInterpolation();
+                PlayerInterpolate playerInterpolate = new PlayerInterpolate();
+                playerInterpolate.platform = game.platform;
+                n.req = playerInterpolate;
+                n.DELAYMILLISECONDS = 500;
+                n.EXTRAPOLATE = false;
+                n.EXTRAPOLATION_TIMEMILLISECONDS = 300;
+                e.player.playerDrawInfo.interpolation = n;
+            }
+            e.player.playerDrawInfo.interpolation.DELAYMILLISECONDS = Game.MaxInt(100, game.ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds());
+            Player p = e.player;
+
+            PlayerDrawInfo info = p.playerDrawInfo;
+            float networkposX = p.NetworkX;
+            float networkposY = p.NetworkY;
+            float networkposZ = p.NetworkZ;
+            if ((!game.Vec3Equal(networkposX, networkposY, networkposZ,
+                            info.lastnetworkposX, info.lastnetworkposY, info.lastnetworkposZ))
+                || p.NetworkHeading != info.lastnetworkheading
+                || p.NetworkPitch != info.lastnetworkpitch)
+            {
+                PlayerInterpolationState state = new PlayerInterpolationState();
+                state.positionX = networkposX;
+                state.positionY = networkposY;
+                state.positionZ = networkposZ;
+                state.heading = p.NetworkHeading;
+                state.pitch = p.NetworkPitch;
+                info.interpolation.AddNetworkPacket(state, game.totaltimeMilliseconds);
+            }
+            PlayerInterpolationState curstate = game.platform.CastToPlayerInterpolationState(info.interpolation.InterpolatedState(game.totaltimeMilliseconds));
+            if (curstate == null)
+            {
+                curstate = new PlayerInterpolationState();
+            }
+            //do not interpolate player position if player is controlled by game world
+            if (game.EnablePlayerUpdatePositionContainsKey(i) && !game.EnablePlayerUpdatePosition(i))
+            {
+                curstate.positionX = p.NetworkX;
+                curstate.positionY = p.NetworkY;
+                curstate.positionZ = p.NetworkZ;
+            }
+            float curposX = curstate.positionX;
+            float curposY = curstate.positionY;
+            float curposZ = curstate.positionZ;
+            info.velocityX = curposX - info.lastcurposX;
+            info.velocityY = curposY - info.lastcurposY;
+            info.velocityZ = curposZ - info.lastcurposZ;
+            p.moves = (!game.Vec3Equal(curposX, curposY, curposZ, info.lastcurposX, info.lastcurposY, info.lastcurposZ));
+            info.lastcurposX = curposX;
+            info.lastcurposY = curposY;
+            info.lastcurposZ = curposZ;
+            info.lastnetworkposX = networkposX;
+            info.lastnetworkposY = networkposY;
+            info.lastnetworkposZ = networkposZ;
+            info.lastnetworkheading = p.NetworkHeading;
+            info.lastnetworkpitch = p.NetworkPitch;
+
+            p.PositionX = curposX;
+            p.PositionY = curposY;
+            p.PositionZ = curposZ;
+            p.Heading = curstate.heading;
+            p.Pitch = curstate.pitch;
+        }
+    }
+}
+
+public class ModRail : ClientMod
+{
+    public ModRail()
+    {
+        one = 1;
+        railheight = one * 3 / 10;
+    }
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        RailOnNewFrame(game, args.GetDt());
+    }
+
+    float one;
+
+    internal Entity localMinecart;
+    internal float minecartheight() { return one / 2; }
+    internal bool wasqpressed;
+    internal bool wasepressed;
+
+    internal void RailOnNewFrame(Game game, float dt)
+    {
+        if (localMinecart == null)
+        {
+            localMinecart = new Entity();
+            localMinecart.minecart = new Minecart();
+            game.EntityAddLocal(localMinecart);
+        }
+        localMinecart.minecart.enabled = railriding;
+        if (railriding)
+        {
+            Minecart m = localMinecart.minecart;
+            m.positionX = game.player.playerposition.X;
+            m.positionY = game.player.playerposition.Y;
+            m.positionZ = game.player.playerposition.Z;
+            m.direction = currentdirection;
+            m.lastdirection = lastdirection;
+            m.progress = currentrailblockprogress;
+        }
+
+        game.localplayeranimationhint.InVehicle = railriding;
+        game.localplayeranimationhint.DrawFixX = 0;
+        game.localplayeranimationhint.DrawFixY = railriding ? (-one * 7 / 10) : 0;
+        game.localplayeranimationhint.DrawFixZ = 0;
+
+        bool turnright = game.keyboardState[game.GetKey(GlKeys.D)];
+        bool turnleft = game.keyboardState[game.GetKey(GlKeys.A)];
+        RailSound(game);
+        if (railriding)
+        {
+            game.ENABLE_FREEMOVE = true;
+            game.enable_move = false;
+            Vector3Ref railPos = CurrentRailPos(game);
+            game.player.playerposition.X = railPos.X;
+            game.player.playerposition.Y = railPos.Y;
+            game.player.playerposition.Z = railPos.Z;
+            currentrailblockprogress += currentvehiclespeed * dt;
+            if (currentrailblockprogress >= 1)
+            {
+                lastdirection = currentdirection;
+                currentrailblockprogress = 0;
+                TileEnterData newenter = new TileEnterData();
+                Vector3IntRef nexttile = Game.NextTile(currentdirection, currentrailblockX, currentrailblockY, currentrailblockZ);
+                newenter.BlockPositionX = nexttile.X;
+                newenter.BlockPositionY = nexttile.Y;
+                newenter.BlockPositionZ = nexttile.Z;
+                //slope
+                if (game.GetUpDownMove(currentrailblockX, currentrailblockY, currentrailblockZ,
+                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Up)
+                {
+                    newenter.BlockPositionZ++;
+                }
+                if (game.GetUpDownMove(newenter.BlockPositionX,
+                    newenter.BlockPositionY,
+                    newenter.BlockPositionZ - 1,
+                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Down)
+                {
+                    newenter.BlockPositionZ--;
+                }
+
+                newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection));
+                BoolRef newdirFound = new BoolRef();
+                VehicleDirection12 newdir = game.BestNewDirection(game.PossibleRails(newenter), turnleft, turnright, newdirFound);
+                if (!newdirFound.value)
+                {
+                    //end of rail
+                    currentdirection = DirectionUtils.Reverse(currentdirection);
+                }
+                else
+                {
+                    currentdirection = newdir;
+                    currentrailblockX = game.platform.FloatToInt(newenter.BlockPositionX);
+                    currentrailblockY = game.platform.FloatToInt(newenter.BlockPositionY);
+                    currentrailblockZ = game.platform.FloatToInt(newenter.BlockPositionZ);
+                }
+            }
+        }
+        if (game.keyboardState[game.GetKey(GlKeys.W)] && game.GuiTyping != TypingState.Typing)
+        {
+            currentvehiclespeed += 1 * dt;
+        }
+        if (game.keyboardState[game.GetKey(GlKeys.S)] && game.GuiTyping != TypingState.Typing)
+        {
+            currentvehiclespeed -= 5 * dt;
+        }
+        if (currentvehiclespeed < 0)
+        {
+            currentvehiclespeed = 0;
+        }
+        //todo fix
+        //if (viewport.keypressed != null && viewport.keypressed.Key == GlKeys.Q)            
+        if (!wasqpressed && game.keyboardState[game.GetKey(GlKeys.Q)] && game.GuiTyping != TypingState.Typing)
+        {
+            Reverse();
+        }
+        if (!wasepressed && game.keyboardState[game.GetKey(GlKeys.E)] && !railriding && !game.ENABLE_FREEMOVE && game.GuiTyping != TypingState.Typing)
+        {
+            currentrailblockX = game.platform.FloatToInt(game.player.playerposition.X);
+            currentrailblockY = game.platform.FloatToInt(game.player.playerposition.Z);
+            currentrailblockZ = game.platform.FloatToInt(game.player.playerposition.Y) - 1;
+            if (!game.IsValidPos(currentrailblockX, currentrailblockY, currentrailblockZ))
+            {
+                ExitVehicle(game);
+            }
+            else
+            {
+                int railunderplayer = game.d_Data.Rail()[game.GetBlock(currentrailblockX, currentrailblockY, currentrailblockZ)];
+                railriding = true;
+                originalmodelheight = game.GetCharacterEyesHeight();
+                game.SetCharacterEyesHeight(minecartheight());
+                currentvehiclespeed = 0;
+                if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
+                {
+                    currentdirection = VehicleDirection12.HorizontalRight;
+                }
+                else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
+                {
+                    currentdirection = VehicleDirection12.VerticalUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
+                {
+                    currentdirection = VehicleDirection12.UpLeftUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
+                {
+                    currentdirection = VehicleDirection12.UpRightUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
+                {
+                    currentdirection = VehicleDirection12.DownLeftLeft;
+                }
+                else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
+                {
+                    currentdirection = VehicleDirection12.DownRightRight;
+                }
+                else
+                {
+                    ExitVehicle(game);
+                }
+                lastdirection = currentdirection;
+            }
+        }
+        else if (!wasepressed && game.keyboardState[game.GetKey(GlKeys.E)] && railriding && game.GuiTyping != TypingState.Typing)
+        {
+            ExitVehicle(game);
+            game.player.playerposition.Y += one * 7 / 10;
+        }
+        wasqpressed = game.keyboardState[game.GetKey(GlKeys.Q)] && game.GuiTyping != TypingState.Typing;
+        wasepressed = game.keyboardState[game.GetKey(GlKeys.E)] && game.GuiTyping != TypingState.Typing;
+    }
+
+    internal Vector3Ref CurrentRailPos(Game game)
+    {
+        RailSlope slope = game.d_RailMapUtil.GetRailSlope(currentrailblockX,
+            currentrailblockY, currentrailblockZ);
+        float aX = currentrailblockX;
+        float aY = currentrailblockY;
+        float aZ = currentrailblockZ;
+        float x_correction = 0;
+        float y_correction = 0;
+        float z_correction = 0;
+        float half = one / 2;
+        switch (currentdirection)
+        {
+            case VehicleDirection12.HorizontalRight:
+                x_correction += currentrailblockprogress;
+                y_correction += half;
+                if (slope == RailSlope.TwoRightRaised)
+                    z_correction += currentrailblockprogress;
+                if (slope == RailSlope.TwoLeftRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                break;
+            case VehicleDirection12.HorizontalLeft:
+                x_correction += 1 - currentrailblockprogress;
+                y_correction += half;
+                if (slope == RailSlope.TwoRightRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                if (slope == RailSlope.TwoLeftRaised)
+                    z_correction += currentrailblockprogress;
+                break;
+            case VehicleDirection12.VerticalDown:
+                x_correction += half;
+                y_correction += currentrailblockprogress;
+                if (slope == RailSlope.TwoDownRaised)
+                    z_correction += currentrailblockprogress;
+                if (slope == RailSlope.TwoUpRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                break;
+            case VehicleDirection12.VerticalUp:
+                x_correction += half;
+                y_correction += 1 - currentrailblockprogress;
+                if (slope == RailSlope.TwoDownRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                if (slope == RailSlope.TwoUpRaised)
+                    z_correction += currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpLeftLeft:
+                x_correction += half * (1 - currentrailblockprogress);
+                y_correction += half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpLeftUp:
+                x_correction += half * currentrailblockprogress;
+                y_correction += half - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpRightRight:
+                x_correction += half + half * currentrailblockprogress;
+                y_correction += half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpRightUp:
+                x_correction += 1 - half * currentrailblockprogress;
+                y_correction += half - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownLeftLeft:
+                x_correction += half * (1 - currentrailblockprogress);
+                y_correction += 1 - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownLeftDown:
+                x_correction += half * currentrailblockprogress;
+                y_correction += half + half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownRightRight:
+                x_correction += half + half * currentrailblockprogress;
+                y_correction += 1 - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownRightDown:
+                x_correction += 1 - half * currentrailblockprogress;
+                y_correction += half + half * currentrailblockprogress;
+                break;
+        }
+        //+1 because player can't be inside rail block (picking wouldn't work)
+        return Vector3Ref.Create(aX + x_correction, aZ + railheight + 1 + z_correction, aY + y_correction);
+    }
+
+    internal void Reverse()
+    {
+        currentdirection = DirectionUtils.Reverse(currentdirection);
+        currentrailblockprogress = 1 - currentrailblockprogress;
+        lastdirection = currentdirection;
+        //currentvehiclespeed = 0;
+    }
+
+    internal void ExitVehicle(Game game)
+    {
+        game.SetCharacterEyesHeight(originalmodelheight);
+        railriding = false;
+        game.ENABLE_FREEMOVE = false;
+        game.enable_move = true;
+    }
+
+    internal float currentvehiclespeed;
+    internal int currentrailblockX;
+    internal int currentrailblockY;
+    internal int currentrailblockZ;
+    internal float currentrailblockprogress;
+    internal VehicleDirection12 currentdirection;
+    internal VehicleDirection12 lastdirection;
+    internal float railheight;
+
+    internal bool railriding;
+    int lastrailsoundtimeMilliseconds;
+    int lastrailsound;
+    internal void RailSound(Game game)
+    {
+        float railsoundpersecond = currentvehiclespeed;
+        if (railsoundpersecond > 10)
+        {
+            railsoundpersecond = 10;
+        }
+        game.AudioPlayLoop("railnoise.wav", railriding && railsoundpersecond > (one * 1 / 10), false);
+        if (!railriding)
+        {
+            return;
+        }
+        if ((game.platform.TimeMillisecondsFromStart() - lastrailsoundtimeMilliseconds) > 1000 / railsoundpersecond)
+        {
+            game.AudioPlay(game.platform.StringFormat("rail{0}.wav", game.platform.IntToString(lastrailsound + 1)));
+            lastrailsoundtimeMilliseconds = game.platform.TimeMillisecondsFromStart();
+            lastrailsound++;
+            if (lastrailsound >= 4)
+            {
+                lastrailsound = 0;
+            }
+        }
+    }
+    internal float originalmodelheight;
+}
+
+public class ModTestModel : ClientMod
+{
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+
+        DrawTestModel(game, deltaTime);
+    }
+
+    void DrawTestModel(Game game, float deltaTime)
+    {
+        if (!game.ENABLE_DRAW_TEST_CHARACTER)
+        {
+            return;
+        }
+        if (testmodel == null)
+        {
+            testmodel = new AnimatedModelRenderer();
+            byte[] data = game.GetFile("player2.txt");
+            int dataLength = game.GetFileLength("player2.txt");
+            string dataString = game.platform.StringFromUtf8ByteArray(data, dataLength);
+            AnimatedModel model = AnimatedModelSerializer.Deserialize(game.platform, dataString);
+            testmodel.Start(game, model);
+        }
+        game.GLPushMatrix();
+        game.GLTranslate(game.MapSizeX / 2, game.blockheight(game.MapSizeX / 2, game.MapSizeY / 2 - 2, 128), game.MapSizeY / 2 - 2);
+        game.platform.BindTexture2d(game.GetTexture("mineplayer.png"));
+        testmodel.Render(deltaTime);
+        game.GLPopMatrix();
+    }
+    AnimatedModelRenderer testmodel;
+
+    public override bool OnClientCommand(Game game, ClientCommandArgs args)
+    {
+        if (args.command == "testmodel")
+        {
+            game.ENABLE_DRAW_TEST_CHARACTER = game.BoolCommandArgument(args.arguments);
+            return true;
+        }
+        return false;
+    }
+}
+
+public class ModDrawPlayers : ClientMod
+{
+    public ModDrawPlayers()
+    {
+        one = 1;
+    }
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        DrawPlayers(game, deltaTime);
+    }
+
+    float one;
+
+    internal void DrawPlayers(Game game, float dt)
+    {
+        game.totaltimeMilliseconds = game.platform.TimeMillisecondsFromStart();
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            if (game.entities[i] == null)
+            {
+                continue;
+            }
+            if (game.entities[i].player == null)
+            {
+                continue;
+            }
+            Player p_ = game.entities[i].player;
+            if (i == game.LocalPlayerId)
+            {
+                continue;
+            }
+            if (!p_.PositionLoaded)
+            {
+                continue;
+            }
+            if (!game.d_FrustumCulling.SphereInFrustum(p_.PositionX, p_.PositionY, p_.PositionZ, 3))
+            {
+                continue;
+            }
+            int cx = game.platform.FloatToInt(p_.PositionX) / Game.chunksize;
+            int cy = game.platform.FloatToInt(p_.PositionZ) / Game.chunksize;
+            int cz = game.platform.FloatToInt(p_.PositionY) / Game.chunksize;
+            if (game.IsValidChunkPos(cx, cy, cz, Game.chunksize))
+            {
+                if (!game.terrainRenderer.IsChunkRendered(cx, cy, cz))
+                {
+                    continue;
+                }
+            }
+            float shadow = (one * game.MaybeGetLight(game.platform.FloatToInt(p_.PositionX), game.platform.FloatToInt(p_.PositionZ), game.platform.FloatToInt(p_.PositionY))) / Game.maxlight;
+            if (p_.playerDrawInfo == null)
+            {
+                continue;
+            }
+            p_.playerDrawInfo.anim.light = shadow;
+            float FeetPosX = p_.PositionX;
+            float FeetPosY = p_.PositionY;
+            float FeetPosZ = p_.PositionZ;
+            AnimationHint animHint = game.entities[i].player.AnimationHint_;
+            float playerspeed = (game.Length(p_.playerDrawInfo.velocityX, p_.playerDrawInfo.velocityY, p_.playerDrawInfo.velocityZ) / dt) * (one * 4 / 100);
+            if (p_.Type == PlayerType.Player)
+            {
+                ICharacterRenderer r = game.GetCharacterRenderer(p_.Model);
+                r.SetAnimation("walk");
+                r.DrawCharacter(p_.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch, p_.moves, dt, game.entities[i].player.CurrentTexture, animHint, playerspeed);
+                //DrawCharacter(info.anim, FeetPos,
+                //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
+            }
+            else
+            {
+                //fix crash on monster spawn
+                ICharacterRenderer r = game.GetCharacterRenderer(game.d_DataMonsters.MonsterCode[p_.MonsterType]);
+                //var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
+                r.SetAnimation("walk");
+                //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
+                r.DrawCharacter(p_.playerDrawInfo.anim, p_.PositionX, p_.PositionY, p_.PositionZ,
+                    Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch,
+                    p_.moves, dt, game.entities[i].player.CurrentTexture, animHint, playerspeed);
+            }
+        }
+        if (game.ENABLE_TPP_VIEW)
+        {
+            float LocalPlayerPositionX = game.player.playerposition.X;
+            float LocalPlayerPositionY = game.player.playerposition.Y;
+            float LocalPlayerPositionZ = game.player.playerposition.Z;
+            float LocalPlayerOrientationX = game.player.playerorientation.X;
+            float LocalPlayerOrientationY = game.player.playerorientation.Y;
+            float LocalPlayerOrientationZ = game.player.playerorientation.Z;
+            float velocityX = lastlocalplayerposX - LocalPlayerPositionX;
+            float velocityY = lastlocalplayerposY - LocalPlayerPositionY;
+            float velocityZ = lastlocalplayerposZ - LocalPlayerPositionZ;
+            bool moves = (lastlocalplayerposX != LocalPlayerPositionX
+                || lastlocalplayerposY != LocalPlayerPositionY
+                || lastlocalplayerposZ != LocalPlayerPositionZ); //bool moves = velocity.Length > 0.08;
+            float shadow = (one * game.MaybeGetLight(
+                game.platform.FloatToInt(LocalPlayerPositionX),
+                game.platform.FloatToInt(LocalPlayerPositionZ),
+                game.platform.FloatToInt(LocalPlayerPositionY)))
+                / Game.maxlight;
+            game.localplayeranim.light = shadow;
+            ICharacterRenderer r = game.GetCharacterRenderer(game.entities[game.LocalPlayerId].player.Model);
+            r.SetAnimation("walk");
+            Vector3Ref playerspeed = Vector3Ref.Create(game.playervelocity.X / 60, game.playervelocity.Y / 60, game.playervelocity.Z / 60);
+            float playerspeedf = playerspeed.Length() * (one * 15 / 10);
+            r.DrawCharacter
+                (game.localplayeranim, LocalPlayerPositionX, LocalPlayerPositionY,
+                LocalPlayerPositionZ,
+                Game.IntToByte(-game.HeadingByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ) - 256 / 4),
+                game.PitchByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ),
+                moves, dt, game.entities[game.LocalPlayerId].player.CurrentTexture, game.localplayeranimationhint, playerspeedf);
+            lastlocalplayerposX = LocalPlayerPositionX;
+            lastlocalplayerposY = LocalPlayerPositionY;
+            lastlocalplayerposZ = LocalPlayerPositionZ;
+        }
+    }
+    internal float lastlocalplayerposX;
+    internal float lastlocalplayerposY;
+    internal float lastlocalplayerposZ;
 }
