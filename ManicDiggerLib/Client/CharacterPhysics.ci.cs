@@ -114,6 +114,54 @@ public class MoveInfo
     internal bool shiftkeydown;
 }
 
+public class ModCharacterPhysics : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+        float one = 1;
+        float dt = args.GetDt();
+        float movespeednow = game.MoveSpeedNow();
+        game.movedx = Game.ClampFloat(game.movedx, -1, 1);
+        game.movedy = Game.ClampFloat(game.movedy, -1, 1);
+        MoveInfo move = new MoveInfo();
+        {
+            move.movedx = game.movedx;
+            move.movedy = game.movedy;
+            move.acceleration = game.acceleration;
+            move.ENABLE_FREEMOVE = game.ENABLE_FREEMOVE;
+            move.ENABLE_NOCLIP = game.ENABLE_NOCLIP;
+            move.jumpstartacceleration = game.jumpstartacceleration;
+            move.movespeednow = movespeednow;
+            move.moveup = game.moveup;
+            move.movedown = game.movedown;
+            move.Swimming = game.Swimming();
+            move.wantsjump = game.wantsjump;
+            move.shiftkeydown = game.shiftkeydown;
+        }
+        game.jumpstartacceleration = (13 + one * 333 / 1000) * game.d_Physics.gravity; // default
+        game.acceleration = new Acceleration(); // default
+        game.soundnow = new BoolRef();
+        if (game.FollowId() == null)
+        {
+            game.d_Physics.Move(game.player, move, dt, game.soundnow, Vector3Ref.Create(game.pushX, game.pushY, game.pushZ), game.entities[game.LocalPlayerId].player.ModelHeight);
+        }
+        else
+        {
+            if (game.FollowId().value == game.LocalPlayerId)
+            {
+                move.movedx = 0;
+                move.movedy = 0;
+                move.wantsjump = false;
+                game.d_Physics.Move(game.player, move, dt, game.soundnow, Vector3Ref.Create(game.pushX, game.pushY, game.pushZ), game.entities[game.LocalPlayerId].player.ModelHeight);
+            }
+        }
+    }
+}
+
 public class CharacterPhysicsCi
 {
     public CharacterPhysicsCi()

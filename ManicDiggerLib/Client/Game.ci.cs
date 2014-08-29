@@ -6,7 +6,6 @@
         performanceinfo = new DictionaryStringString();
         AudioEnabled = true;
         AutoJumpEnabled = false;
-        OverheadCamera_cameraEye = new Vector3Ref();
         playerPositionSpawnX = 15 + one / 2;
         playerPositionSpawnY = 64;
         playerPositionSpawnZ = 15 + one / 2;
@@ -62,31 +61,21 @@
         RadiusWhenMoving = one * 3 / 10;
         playervelocity = new Vector3Ref();
         LocalPlayerId = -1;
-        compassid = -1;
-        needleid = -1;
-        compassangle = 0;
-        compassvertex = 1;
         dialogs = new VisibleDialog[512];
         dialogsCount = 512;
         blockHealth = new DictionaryVector3Float();
         playertexturedefault = -1;
         a = new AnimationState();
-        skyspheretexture = -1;
-        skyspherenighttexture = -1;
-        skysphere = new SkySphere();
         rotation_speed = one * 180 / 20;
         modmanager = new ClientModManager1();
-        particleEffectBlockBreak = new ParticleEffectBlockBreak();
+        particleEffectBlockBreak = new ModDrawParticleEffectBlockBreak();
         PICK_DISTANCE = one * 35 / 10;
         selectedmodelid = -1;
         grenadetime = 3;
         rotationspeed = one * 15 / 100;
-        bouncespeedmultiply = one * 5 / 10;
-        walldistance = one * 3 / 10;
         entities = new Entity[entitiesMax];
         entitiesCount = 512;
         PlayerPushDistance = 2;
-        projectilegravity = 20;
         keyboardState = new bool[256];
         overheadcameradistance = 10;
         tppcameradistance = 3;
@@ -115,12 +104,7 @@
         GLTranslateTempVec3 = Vec3.Create();
         identityMatrix = Mat4.Identity_(Mat4.Create());
         Set3dProjectionTempMat4 = Mat4.Create();
-        upVec3 = Vec3.FromValues(0, 1, 0);
         getAsset = new string[1024 * 2];
-        unproject = new Unproject();
-        tempViewport = new float[4];
-        tempRay = new float[4];
-        tempRayStartPoint = new float[4];
         PlayerStats = new Packet_ServerPlayerStats();
         mLightLevels = new float[16];
         for (int i = 0; i < 16; i++)
@@ -137,6 +121,8 @@
         screens[1] = screenTextEditor;
         audiosamples = new DictionaryStringAudioSample();
         soundnow = new BoolRef();
+        acceleration = new Acceleration();
+        camera = Mat4.Create();
     }
     ScreenTextEditor screenTextEditor;
 
@@ -188,35 +174,24 @@
         d_Data = gamedata;
         d_DataMonsters = new GameDataMonsters();
         d_Config3d = config3d;
-        SkySphere skysphere_ = new SkySphere();
-        skysphere_.game = this;
-        skysphere_.d_MeshBatcher = new MeshBatcher();
-        skysphere_.d_MeshBatcher.d_FrustumCulling = new FrustumCullingDummy();
-        skysphere_.game = this;
-        this.skysphere = skysphere_;
 
         d_Weapon = new WeaponRenderer();
         d_Weapon.d_BlockRendererTorch = blockrenderertorch;
         d_Weapon.game = this;
         CharacterRendererMonsterCode playerrenderer = new CharacterRendererMonsterCode();
         playerrenderer.game = this;
-        ParticleEffectBlockBreak particle = new ParticleEffectBlockBreak();
+        ModDrawParticleEffectBlockBreak particle = new ModDrawParticleEffectBlockBreak();
         this.particleEffectBlockBreak = particle;
         this.d_Data = gamedata;
         this.d_CraftingTableTool = new CraftingTableTool();
         this.d_CraftingTableTool.d_Map = MapStorage2.Create(this);
         this.d_CraftingTableTool.d_Data = gamedata;
-        this.d_RailMapUtil = new RailMapUtil();
-        this.d_RailMapUtil.game = this;
-        this.d_MinecartRenderer = new MinecartRenderer();
-        this.d_MinecartRenderer.game = this;
         d_TerrainTextures = terrainTextures;
 
         this.Reset(10 * 1000, 10 * 1000, 128);
 
         //w.d_CurrentShadows = this;
         SunMoonRenderer sunmoonrenderer = new SunMoonRenderer();
-        sunmoonrenderer.game = this;
         d_SunMoonRenderer = sunmoonrenderer;
         d_SunMoonRenderer = sunmoonrenderer;
         d_Heightmap = new InfiniteMapChunked2d();
@@ -274,8 +249,33 @@
         AddMod(new ModSendPosition());
         AddMod(new ModInterpolatePositions());
         AddMod(new ModRail());
-        AddMod(new ModTestModel());
+        AddMod(new ModDrawTestModel());
         AddMod(new ModDrawPlayers());
+        AddMod(new ModCompass());
+        AddMod(new ModGrenade());
+        AddMod(new ModBullet());
+        AddMod(new ModExpire());
+        AddMod(new ModSetPlayers());
+        AddMod(new ModReloadAmmo());
+        AddMod(new ModPush());
+        AddMod(new SkySphere());
+        AddMod(sunmoonrenderer);
+        AddMod(new ModDrawLinesAroundSelectedBlock());
+        AddMod(new ModDrawTerrain());
+        AddMod(new ModDrawPlayerNames());
+        AddMod(new ModDrawParticleEffectBlockBreak());
+        AddMod(new ModDrawSprites());
+        AddMod(new ModDrawMinecarts());
+        AddMod(new ModDrawHand());
+        AddMod(new ModPicking());
+        AddMod(new ModClearInactivePlayersDrawInfo());
+        AddMod(new ModCameraKeys());
+        AddMod(new ModTrampoline());
+        AddMod(new ModSlipperyWalk());
+        AddMod(new ModNoAirControl());
+        AddMod(new ModCharacterPhysics());
+        AddMod(new ModSendActiveMaterial());
+        AddMod(new ModCamera());
         s = new BlockOctreeSearcher();
         s.platform = platform;
 
@@ -1050,36 +1050,6 @@
         }
     }
 
-    Model wireframeCube;
-    public void DrawLinesAroundSelectedBlock(float x, float y, float z)
-    {
-        if (x == -1 && y == -1 && z == -1)
-        {
-            return;
-        }
-
-        float pickcubeheight = getblockheight(platform.FloatToInt(x), platform.FloatToInt(z), platform.FloatToInt(y));
-
-        float posx = x + one / 2;
-        float posy = y + pickcubeheight * one / 2;
-        float posz = z + one / 2;
-
-        platform.GLLineWidth(2);
-        float size = one * 51 / 100;
-        platform.BindTexture2d(0);
-
-        if (wireframeCube == null)
-        {
-            ModelData data = WireframeCube.Get();
-            wireframeCube = platform.CreateModel(data);
-        }
-        GLPushMatrix();
-        GLTranslate(posx, posy, posz);
-        GLScale(size, pickcubeheight * size, size);
-        DrawModel(wireframeCube);
-        GLPopMatrix();
-    }
-
     public float getblockheight(int x, int y, int z)
     {
         float RailHeight = one * 3 / 10;
@@ -1245,95 +1215,40 @@
 
     internal void SendChat(string s)
     {
-        Packet_ClientMessage p = new Packet_ClientMessage();
-        p.Message = s;
-        p.IsTeamchat = d_HudChat.IsTeamchat ? 1 : 0;
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.Message;
-        pp.Message = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.Chat(s,d_HudChat.IsTeamchat ? 1 : 0));
     }
 
     internal HudChat d_HudChat;
 
     internal void SendPingReply()
     {
-        Packet_ClientPingReply p = new Packet_ClientPingReply();
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.PingReply;
-        pp.PingReply = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.PingReply());
     }
 
     internal void SendSetBlock(int x, int y, int z, int mode, int type, int materialslot)
     {
-        Packet_ClientSetBlock p = new Packet_ClientSetBlock();
-        {
-            p.X = x;
-            p.Y = y;
-            p.Z = z;
-            p.Mode = mode;
-            p.BlockType = type;
-            p.MaterialSlot = materialslot;
-        }
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.SetBlock;
-        pp.SetBlock = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.SetBlock(x,y,z,mode,type, materialslot));
     }
     internal int ActiveMaterial;
 
     internal void SendFillArea(int startx, int starty, int startz, int endx, int endy, int endz, int blockType)
     {
-        Packet_ClientFillArea p = new Packet_ClientFillArea();
-        {
-            p.X1 = startx;
-            p.Y1 = starty;
-            p.Z1 = startz;
-            p.X2 = endx;
-            p.Y2 = endy;
-            p.Z2 = endz;
-            p.BlockType = blockType;
-            p.MaterialSlot = ActiveMaterial;
-        }
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.FillArea;
-        pp.FillArea = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.FillArea(startx, starty, startz, endx, endy, endz, blockType, ActiveMaterial));
     }
 
     internal void InventoryClick(Packet_InventoryPosition pos)
     {
-        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
-        p.A = pos;
-        p.Action = Packet_InventoryActionTypeEnum.Click;
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.InventoryAction;
-        pp.InventoryAction = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.InventoryClick(pos));
     }
 
     internal void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
     {
-        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
-        p.A = from;
-        p.B = to;
-        p.Action = Packet_InventoryActionTypeEnum.WearItem;
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.InventoryAction;
-        pp.InventoryAction = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.WearItem(from, to));
     }
 
     internal void MoveToInventory(Packet_InventoryPosition from)
     {
-        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
-        p.A = from;
-        p.Action = Packet_InventoryActionTypeEnum.MoveToInventory;
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.InventoryAction;
-        pp.InventoryAction = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.MoveToInventory(from));
     }
 
     internal DictionaryStringString performanceinfo;
@@ -1351,13 +1266,7 @@
 
     internal void Respawn()
     {
-        Packet_Client p = new Packet_Client();
-        {
-            p.Id = Packet_ClientIdEnum.SpecialKey;
-            p.SpecialKey_ = new Packet_ClientSpecialKey();
-            p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.Respawn;
-        }
-        SendPacketClient(p);
+        SendPacketClient(ClientPackets.SpecialKeyRespawn());
         player.movedz = 0;
     }
 
@@ -2023,52 +1932,6 @@
         return m;
     }
 
-    int compassid;
-    int needleid;
-    float compassangle;
-    float compassvertex;
-
-    bool CompassInActiveMaterials()
-    {
-        for (int i = 0; i < 10; i++)
-        {
-            if (MaterialSlots(i) == d_Data.BlockIdCompass())
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void DrawCompass()
-    {
-        if (!CompassInActiveMaterials()) return;
-        if (compassid == -1)
-        {
-            compassid = GetTexture("compass.png");
-            needleid = GetTexture("compassneedle.png");
-        }
-        float size = 175;
-        float posX = Width() - 100;
-        float posY = 100;
-        float playerorientation = -((player.playerorientation.Y / (2 * Game.GetPi())) * 360);
-
-        compassvertex += (playerorientation - compassangle) / 50;
-        compassvertex *= (one * 9 / 10);
-        compassangle += compassvertex;
-
-        // compass
-        Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
-
-        // compass needle
-        GLPushMatrix();
-        GLTranslate(posX, posY, 0);
-        GLRotate(compassangle, 0, 0, 90);
-        GLTranslate(-size / 2, -size / 2, 0);
-        Draw2dTexture(needleid, 0, 0, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
-        GLPopMatrix();
-    }
-
     internal bool IsTileEmptyForPhysics(int x, int y, int z)
     {
         if (z >= MapSizeZ)
@@ -2112,16 +1975,7 @@
         if (PlayerStats.CurrentHealth <= 0)
         {
             AudioPlay("death.wav");
-            {
-                Packet_Client p = new Packet_Client();
-                p.Id = Packet_ClientIdEnum.Death;
-                p.Death = new Packet_ClientDeath();
-                {
-                    p.Death.Reason = damageSource;
-                    p.Death.SourcePlayer = sourceId;
-                }
-                SendPacketClient(p);
-            }
+            SendPacketClient(ClientPackets.Death(damageSource, sourceId));
 
             //Respawn(); //Death is not respawn ;)
         }
@@ -2129,15 +1983,7 @@
         {
             AudioPlay(rnd.Next() % 2 == 0 ? "grunt1.wav" : "grunt2.wav");
         }
-        {
-            Packet_Client p = new Packet_Client();
-            {
-                p.Id = Packet_ClientIdEnum.Health;
-                p.Health = new Packet_ClientHealth();
-                p.Health.CurrentHealth = PlayerStats.CurrentHealth;
-            }
-            SendPacketClient(p);
-        }
+        SendPacketClient(ClientPackets.Health(PlayerStats.CurrentHealth));
     }
     
     public int GetPlayerEyesBlockX()
@@ -2364,16 +2210,7 @@
 
     internal void SendRequestBlob(string[] required, int requiredCount)
     {
-        Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
-        if (ServerVersionAtLeast(2014, 4, 13))
-        {
-            p.RequestedMd5 = new Packet_StringList();
-            p.RequestedMd5.SetItems(required, requiredCount, requiredCount);
-        }
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.RequestBlob;
-        pp.RequestBlob = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.RequestBlob(this, required, requiredCount));
     }
 
     internal int currentTimeMilliseconds;
@@ -2462,12 +2299,9 @@
     public const string playertexturedefaultfilename = "mineplayer.png";
     internal bool ENABLE_DRAW_TEST_CHARACTER;
     internal AnimationState a;
-    internal int skyspheretexture;
-    internal int skyspherenighttexture;
     internal SkySphere skysphere;
     internal int reloadblock;
     internal int reloadstartMilliseconds;
-    internal int PreviousActiveMaterialBlock;
     internal int lastOxygenTickMilliseconds;
     internal int typinglogpos;
     internal TypingState GuiTyping;
@@ -2479,11 +2313,7 @@
     internal float rotation_speed;
     internal void SendLeave(int reason)
     {
-        Packet_Client p = new Packet_Client();
-        p.Id = Packet_ClientIdEnum.Leave;
-        p.Leave = new Packet_ClientLeave();
-        p.Leave.Reason = reason;
-        SendPacketClient(p);
+        SendPacketClient(ClientPackets.Leave(reason));
     }
     internal HudInventory d_HudInventory;
     internal WeaponRenderer d_Weapon;
@@ -2493,7 +2323,7 @@
     internal ClientMod[] clientmods;
     internal int clientmodsCount;
     internal bool SkySphereNight;
-    internal ParticleEffectBlockBreak particleEffectBlockBreak;
+    internal ModDrawParticleEffectBlockBreak particleEffectBlockBreak;
     internal int lastchunkupdates;
     internal int lasttitleupdateMilliseconds;
     internal bool ENABLE_DRAWPOSITION;
@@ -2614,15 +2444,7 @@
         {
             return;
         }
-        Packet_ClientCraft cmd = new Packet_ClientCraft();
-        cmd.X = x;
-        cmd.Y = y;
-        cmd.Z = z;
-        cmd.RecipeId = recipe.value;
-        Packet_Client p = new Packet_Client();
-        p.Id = Packet_ClientIdEnum.Craft;
-        p.Craft = cmd;
-        SendPacketClient(p);
+        SendPacketClient(ClientPackets.Craft(x, y, z, recipe.value));
     }
     internal float PICK_DISTANCE;
     internal bool leftpressedpicking;
@@ -2816,191 +2638,7 @@
         Draw2dBitmapFile("target.png", Width() / 2 - aimwidth / 2, Height() / 2 - aimheight / 2, aimwidth, aimheight);
     }
 
-    internal void DrawSkySphere()
-    {
-        if (skyspheretexture == -1)
-        {
-            BitmapCi skysphereBmp = platform.BitmapCreateFromPng(GetFile("skysphere.png"), GetFileLength("skysphere.png"));
-            BitmapCi skysphereNightBmp = platform.BitmapCreateFromPng(GetFile("skyspherenight.png"), GetFileLength("skyspherenight.png"));
-            skyspheretexture = platform.LoadTextureFromBitmap(skysphereBmp);
-            skyspherenighttexture = platform.LoadTextureFromBitmap(skysphereNightBmp);
-            platform.BitmapDelete(skysphereBmp);
-            platform.BitmapDelete(skysphereNightBmp);
-        }
-        int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
-        if (terrainRenderer.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
-        {
-            texture = skyspheretexture;
-        }
-        skysphere.SkyTexture = texture;
-        skysphere.Draw(currentfov());
-    }
     internal int totaltimeMilliseconds;
-
-    float bouncespeedmultiply;
-    float walldistance;
-    internal Vector3Ref GrenadeBounce(Vector3Ref oldposition, Vector3Ref newposition, Vector3Ref velocity, float dt)
-    {
-        bool ismoving = velocity.Length() > 100 * dt;
-        float modelheight = walldistance;
-        oldposition.Y += walldistance;
-        newposition.Y += walldistance;
-
-        //Math.Floor() is needed because casting negative values to integer is not floor.
-        Vector3IntRef oldpositioni = Vector3IntRef.Create(MathFloor(oldposition.X),
-            MathFloor(oldposition.Z),
-            MathFloor(oldposition.Y));
-        float playerpositionX = newposition.X;
-        float playerpositionY = newposition.Y;
-        float playerpositionZ = newposition.Z;
-        //left
-        {
-            float qnewpositionX = newposition.X;
-            float qnewpositionY = newposition.Y;
-            float qnewpositionZ = newposition.Z + walldistance;
-            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
-            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
-            if (newposition.Z - oldposition.Z > 0)
-            {
-                if (!newempty)
-                {
-                    velocity.Z = -velocity.Z;
-                    velocity.X *= bouncespeedmultiply;
-                    velocity.Y *= bouncespeedmultiply;
-                    velocity.Z *= bouncespeedmultiply;
-                    if (ismoving)
-                    {
-                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                    }
-                    //playerposition.Z = oldposition.Z - newposition.Z;
-                }
-            }
-        }
-        //front
-        {
-            float qnewpositionX = newposition.X + walldistance;
-            float qnewpositionY = newposition.Y;
-            float qnewpositionZ = newposition.Z;
-            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
-            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
-            if (newposition.X - oldposition.X > 0)
-            {
-                if (!newempty)
-                {
-                    velocity.X = -velocity.X;
-                    velocity.X *= bouncespeedmultiply;
-                    velocity.Y *= bouncespeedmultiply;
-                    velocity.Z *= bouncespeedmultiply;
-                    if (ismoving)
-                    {
-                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                    }
-                    //playerposition.X = oldposition.X - newposition.X;
-                }
-            }
-        }
-        //top
-        {
-            float qnewpositionX = newposition.X;
-            float qnewpositionY = newposition.Y - walldistance;
-            float qnewpositionZ = newposition.Z;
-            int x = MathFloor(qnewpositionX);
-            int y = MathFloor(qnewpositionZ);
-            int z = MathFloor(qnewpositionY);
-            float a_ = walldistance;
-            bool newfull = (!IsTileEmptyForPhysics(x, y, z))
-                || (qnewpositionX - MathFloor(qnewpositionX) <= a_ && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
-                || (qnewpositionX - MathFloor(qnewpositionX) >= (1 - a_) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
-                || (qnewpositionZ - MathFloor(qnewpositionZ) <= a_ && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
-                || (qnewpositionZ - MathFloor(qnewpositionZ) >= (1 - a_) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
-            if (newposition.Y - oldposition.Y < 0)
-            {
-                if (newfull)
-                {
-                    velocity.Y = -velocity.Y;
-                    velocity.X *= bouncespeedmultiply;
-                    velocity.Y *= bouncespeedmultiply;
-                    velocity.Z *= bouncespeedmultiply;
-                    if (ismoving)
-                    {
-                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                    }
-                    //playerposition.Y = oldposition.Y - newposition.Y;
-                }
-            }
-        }
-        //right
-        {
-            float qnewpositionX = newposition.X;
-            float qnewpositionY = newposition.Y;
-            float qnewpositionZ = newposition.Z - walldistance;
-            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
-            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
-            if (newposition.Z - oldposition.Z < 0)
-            {
-                if (!newempty)
-                {
-                    velocity.Z = -velocity.Z;
-                    velocity.X *= bouncespeedmultiply;
-                    velocity.Y *= bouncespeedmultiply;
-                    velocity.Z *= bouncespeedmultiply;
-                    if (ismoving)
-                    {
-                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                    }
-                    //playerposition.Z = oldposition.Z - newposition.Z;
-                }
-            }
-        }
-        //back
-        {
-            float qnewpositionX = newposition.X - walldistance;
-            float qnewpositionY = newposition.Y;
-            float qnewpositionZ = newposition.Z;
-            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
-            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
-            if (newposition.X - oldposition.X < 0)
-            {
-                if (!newempty)
-                {
-                    velocity.X = -velocity.X;
-                    velocity.X *= bouncespeedmultiply;
-                    velocity.Y *= bouncespeedmultiply;
-                    velocity.Z *= bouncespeedmultiply;
-                    if (ismoving)
-                    {
-                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                    }
-                    //playerposition.X = oldposition.X - newposition.X;
-                }
-            }
-        }
-        //bottom
-        {
-            float qnewpositionX = newposition.X;
-            float qnewpositionY = newposition.Y + modelheight;
-            float qnewpositionZ = newposition.Z;
-            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY));
-            if (newposition.Y - oldposition.Y > 0)
-            {
-                if (!newempty)
-                {
-                    velocity.Y = -velocity.Y;
-                    velocity.X *= bouncespeedmultiply;
-                    velocity.Y *= bouncespeedmultiply;
-                    velocity.Z *= bouncespeedmultiply;
-                    if (ismoving)
-                    {
-                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                    }
-                    //playerposition.Y = oldposition.Y - newposition.Y;
-                }
-            }
-        }
-        //ok:
-        playerpositionY -= walldistance;
-        return Vector3Ref.Create(playerpositionX, playerpositionY, playerpositionZ);
-    }
 
     internal Entity[] entities;
     internal int entitiesCount;
@@ -3008,25 +2646,6 @@
     public const int entityMonsterIdStart = 128;
     public const int entityMonsterIdCount = 128;
     public const int entityLocalIdStart = 256;
-
-    internal void EntityExpire(float dt)
-    {
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity entity = entities[i];
-            if (entity == null) { continue; }
-            if (entity.expires == null) { continue; }
-            entity.expires.timeLeft -= dt;
-            if (entity.expires.timeLeft <= 0)
-            {
-                if (entity.grenade != null)
-                {
-                    GrenadeExplosion(i);
-                }
-                entities[i] = null;
-            }
-        }
-    }
 
     internal void EntityAddLocal(Entity entity)
     {
@@ -3041,191 +2660,7 @@
         entities[entitiesCount++] = entity;
     }
 
-    internal void GetEntitiesPush(Vector3Ref push)
-    {
-        float LocalPlayerPositionX = player.playerposition.X;
-        float LocalPlayerPositionY = player.playerposition.Y;
-        float LocalPlayerPositionZ = player.playerposition.Z;
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity entity = entities[i];
-            if (entity == null) { continue; }
-            if (entity.push == null) { continue; }
-            //Prevent players that aren't displayed from pushing
-            if (entity.player != null && !entity.player.PositionLoaded) { continue; }
-            float kposX = DeserializeFloat(entity.push.XFloat);
-            float kposY = DeserializeFloat(entity.push.ZFloat);
-            float kposZ = DeserializeFloat(entity.push.YFloat);
-            if (entity.push.IsRelativeToPlayerPosition != 0)
-            {
-                kposX += LocalPlayerPositionX;
-                kposY += LocalPlayerPositionY;
-                kposZ += LocalPlayerPositionZ;
-            }
-            float dist = Dist(kposX, kposY, kposZ, LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ);
-            if (dist < DeserializeFloat(entity.push.RangeFloat))
-            {
-                float diffX = LocalPlayerPositionX - kposX;
-                float diffY = LocalPlayerPositionY - kposY;
-                float diffZ = LocalPlayerPositionZ - kposZ;
-                push.X += diffX;
-                push.Y += diffY;
-                push.Z += diffZ;
-            }
-        }
-    }
-
     internal float PlayerPushDistance;
-
-    internal void DrawSprites()
-    {
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity entity = entities[i];
-            if (entity == null) { continue; }
-            if (entity.sprite == null) { continue; }
-            Sprite b = entity.sprite;
-            GLMatrixModeModelView();
-            GLPushMatrix();
-            GLTranslate(b.positionX, b.positionY, b.positionZ);
-            GLRotate(0 - player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
-            GLRotate(0 - player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
-            GLScale((one * 2 / 100), (one * 2 / 100), (one * 2 / 100));
-            GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
-            //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
-            IntRef n = null;
-            if (b.animationcount > 0)
-            {
-                float progress = one - (entity.expires.timeLeft / entity.expires.totalTime);
-                n = IntRef.Create(platform.FloatToInt(progress * (b.animationcount * b.animationcount - 1)));
-            }
-            Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
-            GLPopMatrix();
-        }
-    }
-
-    float projectilegravity;
-
-    internal void UpdateGrenade(int grenadeEntityId, float dt)
-    {
-        float LocalPlayerPositionX = player.playerposition.X;
-        float LocalPlayerPositionY = player.playerposition.Y;
-        float LocalPlayerPositionZ = player.playerposition.Z;
-
-        Entity grenadeEntity = entities[grenadeEntityId];
-        Sprite grenadeSprite = grenadeEntity.sprite;
-        Grenade_ grenade = grenadeEntity.grenade;
-
-        float oldposX = grenadeEntity.sprite.positionX;
-        float oldposY = grenadeSprite.positionY;
-        float oldposZ = grenadeSprite.positionZ;
-        float newposX = grenadeSprite.positionX + grenade.velocityX * dt;
-        float newposY = grenadeSprite.positionY + grenade.velocityY * dt;
-        float newposZ = grenadeSprite.positionZ + grenade.velocityZ * dt;
-        grenade.velocityY += -projectilegravity * dt;
-
-        Vector3Ref velocity = Vector3Ref.Create(grenade.velocityX, grenade.velocityY, grenade.velocityZ);
-        Vector3Ref bouncePosition = GrenadeBounce(Vector3Ref.Create(oldposX, oldposY, oldposZ), Vector3Ref.Create(newposX, newposY, newposZ), velocity, dt);
-        grenade.velocityX = velocity.X;
-        grenade.velocityY = velocity.Y;
-        grenade.velocityZ = velocity.Z;
-        grenadeSprite.positionX = bouncePosition.X;
-        grenadeSprite.positionY = bouncePosition.Y;
-        grenadeSprite.positionZ = bouncePosition.Z;
-    }
-
-    void GrenadeExplosion(int grenadeEntityId)
-    {
-        float LocalPlayerPositionX = player.playerposition.X;
-        float LocalPlayerPositionY = player.playerposition.Y;
-        float LocalPlayerPositionZ = player.playerposition.Z;
-
-        Entity grenadeEntity = entities[grenadeEntityId];
-        Sprite grenadeSprite = grenadeEntity.sprite;
-        Grenade_ grenade = grenadeEntity.grenade;
-
-        AudioPlayAt("grenadeexplosion.ogg", grenadeSprite.positionX, grenadeSprite.positionY, grenadeSprite.positionZ);
-
-        {
-            Entity entity = new Entity();
-
-            Sprite spritenew = new Sprite();
-            spritenew.image = "ani5.png";
-            spritenew.positionX = grenadeSprite.positionX;
-            spritenew.positionY = grenadeSprite.positionY + 1;
-            spritenew.positionZ = grenadeSprite.positionZ;
-            spritenew.size = 200;
-            spritenew.animationcount = 4;
-
-            entity.sprite = spritenew;
-            entity.expires = Expires.Create(1);
-            EntityAddLocal(entity);
-        }
-
-        {
-            Packet_ServerExplosion explosion = new Packet_ServerExplosion();
-            explosion.XFloat = SerializeFloat(grenadeSprite.positionX);
-            explosion.YFloat = SerializeFloat(grenadeSprite.positionZ);
-            explosion.ZFloat = SerializeFloat(grenadeSprite.positionY);
-            explosion.RangeFloat = blocktypes[grenade.block].ExplosionRangeFloat;
-            explosion.IsRelativeToPlayerPosition = 0;
-            explosion.TimeFloat = blocktypes[grenade.block].ExplosionTimeFloat;
-
-            Entity entity = new Entity();
-            entity.push = explosion;
-            entity.expires = new Expires();
-            entity.expires.timeLeft = DeserializeFloat(blocktypes[grenade.block].ExplosionTimeFloat);
-            EntityAddLocal(entity);
-        }
-
-        float dist = Dist(LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ, grenadeSprite.positionX, grenadeSprite.positionY, grenadeSprite.positionZ);
-        float dmg = (1 - dist / DeserializeFloat(blocktypes[grenade.block].ExplosionRangeFloat)) * DeserializeFloat(blocktypes[grenade.block].DamageBodyFloat);
-        if (dmg > 0)
-        {
-            ApplyDamageToPlayer(platform.FloatToInt(dmg), Packet_DeathReasonEnum.Explosion, grenade.sourcePlayer);
-        }
-    }
-
-    internal void UpdateBullets(float dt)
-    {
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity entity = entities[i];
-            if (entity == null) { continue; }
-            if (entity.bullet == null) { continue; }
-
-            Bullet_ b = entity.bullet;
-            if (b.progress < 1)
-            {
-                b.progress = 1;
-            }
-
-            float dirX = b.toX - b.fromX;
-            float dirY = b.toY - b.fromY;
-            float dirZ = b.toZ - b.fromZ;
-            float length = Dist(0, 0, 0, dirX, dirY, dirZ);
-            dirX /= length;
-            dirY /= length;
-            dirZ /= length;
-
-            float posX = b.fromX;
-            float posY = b.fromY;
-            float posZ = b.fromZ;
-            posX += dirX * (b.progress + b.speed * dt);
-            posY += dirY * (b.progress + b.speed * dt);
-            posZ += dirZ * (b.progress + b.speed * dt);
-            b.progress += b.speed * dt;
-
-            entity.sprite.positionX = posX;
-            entity.sprite.positionY = posY;
-            entity.sprite.positionZ = posZ;
-
-            if (b.progress > length)
-            {
-                entities[i] = null;
-            }
-        }
-    }
 
     internal Entity CreateBulletEntity(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, float speed)
     {
@@ -3254,111 +2689,10 @@
         return ax == bx && ay == by && az == bz;
     }
 
-    internal void SetPlayers()
-    {
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity e = entities[i];
-            if (e == null) { continue; }
-            if (e.player == null) { continue; }
-            if (e.push == null)
-            {
-                e.push = new Packet_ServerExplosion();
-            }
-            e.push.RangeFloat = SerializeFloat(PlayerPushDistance);
-            e.push.XFloat = SerializeFloat(e.player.PositionX);
-            e.push.YFloat = SerializeFloat(e.player.PositionZ);
-            e.push.ZFloat = SerializeFloat(e.player.PositionY);
-
-            if ((!e.player.PositionLoaded) ||
-                (i == this.LocalPlayerId) || (e.player.Name == "")
-                || (e.player.playerDrawInfo == null)
-                || (e.player.playerDrawInfo.interpolation == null))
-            {
-                e.drawName = null;
-            }
-            else
-            {
-                if (e.drawName == null)
-                {
-                    e.drawName = new DrawName();
-                }
-                e.drawName.TextX = e.player.PositionX;
-                e.drawName.TextY = e.player.PositionY + e.player.ModelHeight + one * 8 / 10;
-                e.drawName.TextZ = e.player.PositionZ;
-                e.drawName.Name = e.player.Name;
-                if (e.player.Type == PlayerType.Monster)
-                {
-                    e.drawName.DrawHealth = true;
-                    e.drawName.Health = one * e.player.Health / 20;
-                }
-            }
-        }
-    }
-
     internal bool[] keyboardState;
 
-    const int KeyAltLeft = 5;
-    const int KeyAltRight = 6;
-    internal void DrawPlayerNames()
-    {
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            if (entities[i] == null)
-            {
-                continue;
-            }
-            if (entities[i].drawName == null)
-            {
-                continue;
-            }
-            int kKey = i;
-            DrawName p = entities[i].drawName;
-            //todo if picking
-            if ((Dist(player.playerposition.X, player.playerposition.Y, player.playerposition.Z, p.TextX, p.TextY, p.TextZ) < 20)
-                || keyboardState[KeyAltLeft] || keyboardState[KeyAltRight])
-            {
-                string name = p.Name;
-                {
-                    float posX = p.TextX;
-                    float posY = p.TextY;
-                    float posZ = p.TextZ;
-                    float shadow = (one * MaybeGetLight(platform.FloatToInt(posX), platform.FloatToInt(posZ), platform.FloatToInt(posY))) / maxlight;
-                    //do not interpolate player position if player is controlled by game world
-                    //if (EnablePlayerUpdatePositionContainsKey(kKey) && !EnablePlayerUpdatePosition(kKey))
-                    //{
-                    //    posX = p.NetworkX;
-                    //    posY = p.NetworkY;
-                    //    posZ = p.NetworkZ;
-                    //}
-                    GLPushMatrix();
-                    GLTranslate(posX, posY, posZ);
-                    //if (p.Type == PlayerType.Monster)
-                    //{
-                    //    GLTranslate(0, 1, 0);
-                    //}
-                    GLRotate(-player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
-                    GLRotate(-player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
-                    float scale = one * 2 / 100;
-                    GLScale(scale, scale, scale);
-
-                    //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
-                    //Todo: Can't change text color because text has outline anyway.
-                    if (p.DrawHealth)
-                    {
-                        Draw2dTexture(WhiteTexture(), -26, -11, 52, 12, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-                        Draw2dTexture(WhiteTexture(), -25, -10, 50 * (one * p.Health), 10, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
-                    }
-                    FontCi font = new FontCi();
-                    font.family = "Arial";
-                    font.size = 14;
-                    Draw2dText(name, font, -TextSizeWidth(name, 14) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
-                    //                        GL.Translate(0, 1, 0);
-                    GLPopMatrix();
-                }
-            }
-        }
-    }
+    public const int KeyAltLeft = 5;
+    public const int KeyAltRight = 6;
 
     internal bool Swimming()
     {
@@ -3587,49 +2921,18 @@
         }
     }
 
-    internal Packet_Client CreateLoginPacket(string username, string verificationKey)
-    {
-        Packet_ClientIdentification p = new Packet_ClientIdentification();
-        {
-            p.Username = username;
-            p.MdProtocolVersion = platform.GetGameVersion();
-            p.VerificationKey = verificationKey;
-        }
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.PlayerIdentification;
-        pp.Identification = p;
-        return pp;
-    }
-
-    internal Packet_Client CreateLoginPacket_(string username, string verificationKey, string serverPassword)
-    {
-        Packet_ClientIdentification p = new Packet_ClientIdentification();
-        {
-            p.Username = username;
-            p.MdProtocolVersion = platform.GetGameVersion();
-            p.VerificationKey = verificationKey;
-            p.ServerPassword = serverPassword;
-        }
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.PlayerIdentification;
-        pp.Identification = p;
-        return pp;
-    }
-
     internal void Connect(string serverAddress, int port, string username, string auth)
     {
         main.Start();
         main.Connect(serverAddress, port);
-        Packet_Client n = CreateLoginPacket(username, auth);
-        SendPacketClient(n);
+        SendPacketClient(ClientPackets.CreateLoginPacket(platform, username, auth));
     }
 
     internal void Connect_(string serverAddress, int port, string username, string auth, string serverPassword)
     {
         main.Start();
         main.Connect(serverAddress, port);
-        Packet_Client n = CreateLoginPacket_(username, auth, serverPassword);
-        SendPacketClient(n);
+        SendPacketClient(ClientPackets.CreateLoginPacket_(platform, username, auth, serverPassword));
     }
 
     internal void RedrawAllBlocks()
@@ -3643,7 +2946,12 @@
     public const int clearcolorA = 255;
 
     internal void SetFog()
-    {            //Density for linear fog
+    {
+        if (d_Config3d.viewdistance >= 512)
+        {
+            return;
+        }
+        //Density for linear fog
         //float density = 0.3f;
         // use this density for exp2 fog (0.0045f was a bit too much at close ranges)
         float density = one * 25 / 10000; // 0.0025f;
@@ -3762,110 +3070,8 @@
     }
 
     internal BlockOctreeSearcher s;
-    internal void LimitThirdPersonCameraToWalls(Vector3Ref eye, Vector3Ref target, FloatRef curtppcameradistance)
-    {
-        Vector3Ref ray_start_point = target;
-        Vector3Ref raytarget = eye;
-
-        Line3D pick = new Line3D();
-        float raydirX = (raytarget.X - ray_start_point.X);
-        float raydirY = (raytarget.Y - ray_start_point.Y);
-        float raydirZ = (raytarget.Z - ray_start_point.Z);
-
-        float raydirLength1 = Length(raydirX, raydirY, raydirZ);
-        raydirX /= raydirLength1;
-        raydirY /= raydirLength1;
-        raydirZ /= raydirLength1;
-        raydirX = raydirX * (tppcameradistance + 1);
-        raydirY = raydirY * (tppcameradistance + 1);
-        raydirZ = raydirZ * (tppcameradistance + 1);
-        pick.Start = Vec3.FromValues(ray_start_point.X, ray_start_point.Y, ray_start_point.Z);
-        pick.End = new float[3];
-        pick.End[0] = ray_start_point.X + raydirX;
-        pick.End[1] = ray_start_point.Y + raydirY;
-        pick.End[2] = ray_start_point.Z + raydirZ;
-
-        //pick terrain
-        IntRef pick2Count = new IntRef();
-        BlockPosSide[] pick2 = Pick(s, pick, pick2Count);
-
-        if (pick2Count.value > 0)
-        {
-            BlockPosSide pick2nearest = Nearest(pick2, pick2Count.value, ray_start_point.X, ray_start_point.Y, ray_start_point.Z);
-            //pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });
-
-            float pickX = pick2nearest.blockPos[0] - target.X;
-            float pickY = pick2nearest.blockPos[1] - target.Y;
-            float pickZ = pick2nearest.blockPos[2] - target.Z;
-            float pickdistance = Length(pickX, pickY, pickZ);
-            curtppcameradistance.value = Game.MinFloat(pickdistance - 1, curtppcameradistance.value);
-            if (curtppcameradistance.value < one * 3 / 10) { curtppcameradistance.value = one * 3 / 10; }
-        }
-
-        float cameraDirectionX = target.X - eye.X;
-        float cameraDirectionY = target.Y - eye.Y;
-        float cameraDirectionZ = target.Z - eye.Z;
-        float raydirLength = Length(raydirX, raydirY, raydirZ);
-        raydirX /= raydirLength;
-        raydirY /= raydirLength;
-        raydirZ /= raydirLength;
-        eye.X = target.X + raydirX * curtppcameradistance.value;
-        eye.Y = target.Y + raydirY * curtppcameradistance.value;
-        eye.Z = target.Z + raydirZ * curtppcameradistance.value;
-    }
 
     internal Kamera overheadcameraK;
-    internal Vector3Ref OverheadCamera_cameraEye;
-    internal float[] OverheadCamera()
-    {
-        overheadcameraK.GetPosition(platform, OverheadCamera_cameraEye);
-        Vector3Ref cameraEye = OverheadCamera_cameraEye;
-        Vector3Ref cameraTarget = Vector3Ref.Create(overheadcameraK.Center.X, overheadcameraK.Center.Y + GetCharacterEyesHeight(), overheadcameraK.Center.Z);
-        FloatRef currentOverheadcameradistance = FloatRef.Create(overheadcameradistance);
-        LimitThirdPersonCameraToWalls(cameraEye, cameraTarget, currentOverheadcameradistance);
-        float[] ret = new float[16];
-        Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
-            Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
-            upVec3);
-        return ret;
-    }
-
-    float[] upVec3;
-    internal float[] FppCamera()
-    {
-        Vector3Ref forward = new Vector3Ref();
-        VectorTool.ToVectorInFixedSystem(0, 0, 1, player.playerorientation.X, player.playerorientation.Y, forward);
-        Vector3Ref cameraEye = new Vector3Ref();
-        Vector3Ref cameraTarget = new Vector3Ref();
-        float playerEyeX = player.playerposition.X;
-        float playerEyeY = player.playerposition.Y + GetCharacterEyesHeight();
-        float playerEyeZ = player.playerposition.Z;
-        if (!ENABLE_TPP_VIEW)
-        {
-            cameraEye.X = playerEyeX;
-            cameraEye.Y = playerEyeY;
-            cameraEye.Z = playerEyeZ;
-            cameraTarget.X = playerEyeX + forward.X;
-            cameraTarget.Y = playerEyeY + forward.Y;
-            cameraTarget.Z = playerEyeZ + forward.Z;
-        }
-        else
-        {
-            cameraEye.X = playerEyeX + forward.X * -tppcameradistance;
-            cameraEye.Y = playerEyeY + forward.Y * -tppcameradistance;
-            cameraEye.Z = playerEyeZ + forward.Z * -tppcameradistance;
-            cameraTarget.X = playerEyeX;
-            cameraTarget.Y = playerEyeY;
-            cameraTarget.Z = playerEyeZ;
-            FloatRef currentTppcameradistance = FloatRef.Create(tppcameradistance);
-            LimitThirdPersonCameraToWalls(cameraEye, cameraTarget, currentTppcameradistance);
-        }
-        float[] ret = new float[16];
-        Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
-            Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
-            upVec3);
-        return ret;
-    }
 
     internal void FillChunk(Chunk destination, int destinationchunksize, int sourcex, int sourcey, int sourcez, int[] source, int sourcechunksizeX, int sourcechunksizeY, int sourcechunksizeZ)
     {
@@ -3979,18 +3185,6 @@
         }
     }
 
-    internal float HeadingToOrientationX(byte heading)
-    {
-        float x = (one * heading / 256) * 2 * Game.GetPi();
-        return x;
-    }
-
-    internal float PitchToOrientationY(byte pitch)
-    {
-        float y = ((one * pitch / 256) * 2 * Game.GetPi()) - Game.GetPi();
-        return y;
-    }
-
     internal void OnPickUseWithTool(int posX, int posY, int posZ)
     {
         SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.UseWithTool, d_Inventory.RightHand[ActiveMaterial].BlockId, ActiveMaterial);
@@ -4002,7 +3196,7 @@
         {
             KeyEventArgs args_ = new KeyEventArgs();
             args_.SetKeyCode(eKey);
-            clientmods[i].OnKeyUp(args_);
+            clientmods[i].OnKeyUp(this, args_);
         }
         for (int i = 0; i < screensMax; i++)
         {
@@ -4165,11 +3359,7 @@
                 {
                     if (eKeyChar == w.ClickKey)
                     {
-                        Packet_Client p = new Packet_Client();
-                        p.Id = Packet_ClientIdEnum.DialogClick;
-                        p.DialogClick_ = new Packet_ClientDialogClick();
-                        p.DialogClick_.WidgetId = w.Id;
-                        SendPacketClient(p);
+                        SendPacketClient(ClientPackets.DialogClick(w.Id));
                         return;
                     }
                 }
@@ -4404,13 +3594,7 @@
 
     internal void SendGameResolution()
     {
-        Packet_ClientGameResolution p = new Packet_ClientGameResolution();
-        p.Width = Width();
-        p.Height = Height();
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.GameResolution;
-        pp.GameResolution = p;
-        SendPacketClient(pp);
+        SendPacketClient(ClientPackets.GameResolution(Width(), Height()));
     }
 
     bool sendResize;
@@ -5567,29 +4751,6 @@
         return IndexOf(arr, arrLength, value) != -1;
     }
 
-    void ClearInactivePlayersDrawInfo()
-    {
-        int now = platform.TimeMillisecondsFromStart();
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            if (entities[i] == null)
-            {
-                continue;
-            }
-            if (entities[i].player == null)
-            {
-                continue;
-            }
-            int kKey = i;
-            Player p = entities[i].player;
-            if ((one * (now - p.LastUpdateMilliseconds) / 1000) > 2)
-            {
-                p.playerDrawInfo = null;
-                p.PositionLoaded = false;
-            }
-        }
-    }
-
     internal AnimationState localplayeranim;
     internal AnimationHint localplayeranimationhint;
 
@@ -5609,171 +4770,8 @@
     }
     DictionaryStringCharacterRenderer MonsterRenderers;
 
-    internal RailMapUtil d_RailMapUtil;
-    internal int GetUpDownMove(int railblockX, int railblockY, int railblockZ, TileEnterDirection dir)
-    {
-        if (!IsValidPos(railblockX, railblockY, railblockZ))
-        {
-            return UpDown.None;
-        }
-        //going up
-        RailSlope slope = d_RailMapUtil.GetRailSlope(railblockX, railblockY, railblockZ);
-        if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Up)
-        {
-            return UpDown.Up;
-        }
-        if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Down)
-        {
-            return UpDown.Up;
-        }
-        if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Right)
-        {
-            return UpDown.Up;
-        }
-        if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Left)
-        {
-            return UpDown.Up;
-        }
-        //going down
-        if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Down)
-        {
-            return UpDown.Down;
-        }
-        if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Up)
-        {
-            return UpDown.Down;
-        }
-        if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Left)
-        {
-            return UpDown.Down;
-        }
-        if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Right)
-        {
-            return UpDown.Down;
-        }
-        return UpDown.None;
-    }
-
-    internal VehicleDirection12 BestNewDirection(int dirVehicleDirection12Flags, bool turnleft, bool turnright, BoolRef retFound)
-    {
-        retFound.value = true;
-        if (turnright)
-        {
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0)
-            {
-                return VehicleDirection12.DownRightRight;
-            }
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0)
-            {
-                return VehicleDirection12.UpRightUp;
-            }
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0)
-            {
-                return VehicleDirection12.UpLeftLeft;
-            }
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0)
-            {
-                return VehicleDirection12.DownLeftDown;
-            }
-        }
-        if (turnleft)
-        {
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0)
-            {
-                return VehicleDirection12.DownRightDown;
-            }
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0)
-            {
-                return VehicleDirection12.UpRightRight;
-            }
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0)
-            {
-                return VehicleDirection12.UpLeftUp;
-            }
-            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0)
-            {
-                return VehicleDirection12.DownLeftLeft;
-            }
-        }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0) { return VehicleDirection12.DownLeftDown; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0) { return VehicleDirection12.DownLeftLeft; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0) { return VehicleDirection12.DownRightDown; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0) { return VehicleDirection12.DownRightRight; }
-
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalLeft) != 0) { return VehicleDirection12.HorizontalLeft; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalRight) != 0) { return VehicleDirection12.HorizontalRight; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0) { return VehicleDirection12.UpLeftLeft; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0) { return VehicleDirection12.UpLeftUp; }
-
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0) { return VehicleDirection12.UpRightRight; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0) { return VehicleDirection12.UpRightUp; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalDown) != 0) { return VehicleDirection12.VerticalDown; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalUp) != 0) { return VehicleDirection12.VerticalUp; }
-
-        retFound.value = false;
-        return VehicleDirection12.DownLeftDown; // return null
-    }
-
     internal bool enable_move;
 
-    public static Vector3IntRef NextTile(VehicleDirection12 direction, int currentTileX, int currentTileY, int currentTileZ)
-    {
-        return NextTile_(DirectionUtils.ResultExit(direction), currentTileX, currentTileY, currentTileZ);
-    }
-
-    public static Vector3IntRef NextTile_(TileExitDirection direction, int currentTileX, int currentTileY, int currentTileZ)
-    {
-        switch (direction)
-        {
-            case TileExitDirection.Left:
-                return Vector3IntRef.Create(currentTileX - 1, currentTileY, currentTileZ);
-            case TileExitDirection.Right:
-                return Vector3IntRef.Create(currentTileX + 1, currentTileY, currentTileZ);
-            case TileExitDirection.Up:
-                return Vector3IntRef.Create(currentTileX, currentTileY - 1, currentTileZ);
-            case TileExitDirection.Down:
-                return Vector3IntRef.Create(currentTileX, currentTileY + 1, currentTileZ);
-            default:
-                return null;
-        }
-    }
-
-    internal int PossibleRails(TileEnterData enter)
-    {
-        int possible_railsVehicleDirection12Flags = 0;
-        if (IsValidPos(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ))
-        {
-            int newpositionrail = d_Data.Rail()[
-                GetBlock(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ)];
-            VehicleDirection12[] all_possible_rails = new VehicleDirection12[3];
-            int all_possible_railsCount = 0;
-            VehicleDirection12[] possibleRails3 = DirectionUtils.PossibleNewRails3(enter.EnterDirection);
-            for (int i = 0; i < 3; i++)
-            {
-                VehicleDirection12 z = possibleRails3[i];
-                if ((newpositionrail & DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
-                    != 0)
-                {
-                    all_possible_rails[all_possible_railsCount++] = z;
-                }
-            }
-            possible_railsVehicleDirection12Flags = DirectionUtils.ToVehicleDirection12Flags_(all_possible_rails, all_possible_railsCount);
-        }
-        return possible_railsVehicleDirection12Flags;
-    }
-
-    internal MinecartRenderer d_MinecartRenderer;
-    internal void DrawMinecarts(float dt)
-    {
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            if (entities[i] == null) { continue; }
-            if (entities[i].minecart == null) { continue; }
-            Minecart m = entities[i].minecart;
-            if (!m.enabled) { continue; }
-            d_MinecartRenderer.Draw(m.positionX, m.positionY, m.positionZ, m.direction, m.lastdirection, m.progress);
-        }
-    }
     public const int DISCONNECTED_ICON_AFTER_SECONDS = 10;
     internal void KeyDown(int eKey)
     {
@@ -5781,7 +4779,7 @@
         {
             KeyEventArgs args_ = new KeyEventArgs();
             args_.SetKeyCode(eKey);
-            clientmods[i].OnKeyDown(args_);
+            clientmods[i].OnKeyDown(this, args_);
         }
         for (int i = 0; i < screensMax; i++)
         {
@@ -6026,11 +5024,7 @@
             }
             if (eKey == GetKey(GlKeys.Tab))
             {
-                Packet_Client p = new Packet_Client();
-                p.Id = Packet_ClientIdEnum.SpecialKey;
-                p.SpecialKey_ = new Packet_ClientSpecialKey();
-                p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.TabPlayerList;
-                SendPacketClient(p);
+                SendPacketClient(ClientPackets.SpecialKeyTabPlayerList());
             }
             if (eKey == GetKey(GlKeys.E))
             {
@@ -6056,46 +5050,17 @@
                     }
                 }
             }
-            if (eKey == GetKey(GlKeys.R))
-            {
-                Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
-                if (item != null && item.ItemClass == Packet_ItemClassEnum.Block
-                    && blocktypes[item.BlockId].IsPistol
-                    && reloadstartMilliseconds == 0)
-                {
-                    int sound = rnd.Next() % blocktypes[item.BlockId].Sounds.ReloadCount;
-                    AudioPlay(StringTools.StringAppend(platform, blocktypes[item.BlockId].Sounds.Reload[sound], ".ogg"));
-                    reloadstartMilliseconds = platform.TimeMillisecondsFromStart();
-                    reloadblock = item.BlockId;
-                    Packet_Client p = new Packet_Client();
-                    p.Id = Packet_ClientIdEnum.Reload;
-                    p.Reload = new Packet_ClientReload();
-                    SendPacketClient(p);
-                }
-            }
             if (eKey == GetKey(GlKeys.O))
             {
                 Respawn();
             }
             if (eKey == GetKey(GlKeys.L))
             {
-                Packet_Client p = new Packet_Client();
-                {
-                    p.Id = Packet_ClientIdEnum.SpecialKey;
-                    p.SpecialKey_ = new Packet_ClientSpecialKey();
-                    p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.SelectTeam;
-                }
-                SendPacketClient(p);
+                SendPacketClient(ClientPackets.SpecialKeySelectTeam());
             }
             if (eKey == GetKey(GlKeys.P))
             {
-                Packet_Client p = new Packet_Client();
-                {
-                    p.Id = Packet_ClientIdEnum.SpecialKey;
-                    p.SpecialKey_ = new Packet_ClientSpecialKey();
-                    p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.SetSpawn;
-                }
-                SendPacketClient(p);
+                SendPacketClient(ClientPackets.SpecialKeySetSpawn());
 
                 playerPositionSpawnX = player.playerposition.X;
                 playerPositionSpawnY = player.playerposition.Y;
@@ -6305,7 +5270,6 @@
                             screens[i].Render(dt);
                         }
                     }
-                    DrawCompass();
                     d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                     if (GuiTyping == TypingState.Typing)
                     {
@@ -6313,6 +5277,11 @@
                     }
                     DrawAmmo();
                     DrawDialogs();
+                    for (int i = 0; i < clientmodsCount; i++)
+                    {
+                        if (clientmods[i] == null) { continue; }
+                        clientmods[i].OnNewFrameDraw2d(this, dt);
+                    }
                 }
                 break;
             case GuiState.Inventory:
@@ -6404,6 +5373,16 @@
 
     internal float movedx;
     internal float movedy;
+    internal float pushX;
+    internal float pushY;
+    internal float pushZ;
+    internal bool wantsjump;
+    internal bool shiftkeydown;
+    internal bool moveup;
+    internal bool movedown;
+    internal float jumpstartacceleration;
+    internal Acceleration acceleration;
+
     internal void FrameTick(float dt)
     {
         //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
@@ -6415,87 +5394,9 @@
             clientmods[i].OnNewFrameFixed(this, args_);
         }
         OnNewFrame(dt);
-        ClearInactivePlayersDrawInfo();
 
         if (guistate == GuiState.MapLoading) { return; }
 
-        SetPlayers();
-        bool angleup = false;
-        bool angledown = false;
-        float overheadcameraanglemovearea = one * 5 / 100;
-        float overheadcameraspeed = 3;
-        bool wantsjump = GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.Space)];
-        bool shiftkeydown = keyboardState[GetKey(GlKeys.ShiftLeft)];
-        movedx = 0;
-        movedy = 0;
-        bool moveup = false;
-        bool movedown = false;
-        if (guistate == GuiState.Normal)
-        {
-            if (GuiTyping == TypingState.None)
-            {
-                if (d_Physics.reachedwall_1blockhigh && (AutoJumpEnabled || (!platform.IsMousePointerLocked())))
-                {
-                    wantsjump = true;
-                }
-                if (overheadcamera)
-                {
-                    CameraMove m = new CameraMove();
-                    if (keyboardState[GetKey(GlKeys.A)]) { overheadcameraK.TurnRight(dt * overheadcameraspeed); }
-                    if (keyboardState[GetKey(GlKeys.D)]) { overheadcameraK.TurnLeft(dt * overheadcameraspeed); }
-                    if (keyboardState[GetKey(GlKeys.W)]) { angleup = true; }
-                    if (keyboardState[GetKey(GlKeys.S)]) { angledown = true; }
-                    overheadcameraK.Center.X = player.playerposition.X;
-                    overheadcameraK.Center.Y = player.playerposition.Y;
-                    overheadcameraK.Center.Z = player.playerposition.Z;
-                    m.Distance = overheadcameradistance;
-                    m.AngleUp = angleup;
-                    m.AngleDown = angledown;
-                    overheadcameraK.Move(m, dt);
-                    float toDest = Dist(player.playerposition.X, player.playerposition.Y, player.playerposition.Z,
-                        playerdestination.X + one / 2, playerdestination.Y - one / 2, playerdestination.Z + one / 2);
-                    if (toDest >= 1)
-                    {
-                        movedy += 1;
-                        if (d_Physics.reachedwall)
-                        {
-                            wantsjump = true;
-                        }
-                        //player orientation
-                        float qX = playerdestination.X - player.playerposition.X;
-                        float qY = playerdestination.Y - player.playerposition.Y;
-                        float qZ = playerdestination.Z - player.playerposition.Z;
-                        float angle = VectorAngleGet(qX, qY, qZ);
-                        player.playerorientation.Y = Game.GetPi() / 2 + angle;
-                        player.playerorientation.X = Game.GetPi();
-                    }
-                }
-                else if (enable_move)
-                {
-                    if (keyboardState[GetKey(GlKeys.W)]) { movedy += 1; }
-                    if (keyboardState[GetKey(GlKeys.S)]) { movedy += -1; }
-                    if (keyboardState[GetKey(GlKeys.A)]) { movedx += -1; localplayeranimationhint.leanleft = true; localstance = 1; }
-                    else { localplayeranimationhint.leanleft = false; }
-                    if (keyboardState[GetKey(GlKeys.D)]) { movedx += 1; localplayeranimationhint.leanright = true; localstance = 2; }
-                    else { localplayeranimationhint.leanright = false; }
-                    if (!localplayeranimationhint.leanleft && !localplayeranimationhint.leanright) { localstance = 0; }
-
-                    movedx += touchMoveDx;
-                    movedy += touchMoveDy;
-                }
-            }
-            if (ENABLE_FREEMOVE || Swimming())
-            {
-                if (GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.Space)])
-                {
-                    moveup = true;
-                }
-                if (GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.ControlLeft)])
-                {
-                    movedown = true;
-                }
-            }
-        }
         if (guistate == GuiState.EscapeMenu)
         {
         }
@@ -6512,104 +5413,12 @@
         else if (guistate == GuiState.ModalDialog)
         {
         }
-        float movespeednow = MoveSpeedNow();
-        Acceleration acceleration = new Acceleration();
-        int blockunderplayer = BlockUnderPlayer();
-        {
-            //slippery walk on ice and when swimming
-            if ((blockunderplayer != -1 && d_Data.IsSlipperyWalk()[blockunderplayer]) || Swimming())
-            {
-                acceleration = new Acceleration();
-                {
-                    acceleration.acceleration1 = one * 99 / 100;
-                    acceleration.acceleration2 = one * 2 / 10;
-                    acceleration.acceleration3 = 70;
-                }
-            }
-        }
-        float jumpstartacceleration = (13 + one * 333 / 1000) * d_Physics.gravity;
-        if (blockunderplayer != -1 && blockunderplayer == d_Data.BlockIdTrampoline()
-            && (!player.isplayeronground) && !shiftkeydown)
-        {
-            wantsjump = true;
-            jumpstartacceleration = (20 + one * 666 / 1000) * d_Physics.gravity;
-        }
-        //no aircontrol
-        if (!player.isplayeronground)
-        {
-            acceleration = new Acceleration();
-            {
-                acceleration.acceleration1 = one * 99 / 100;
-                acceleration.acceleration2 = one * 2 / 10;
-                acceleration.acceleration3 = 70;
-            }
-        }
-        float pushX = 0;
-        float pushY = 0;
-        float pushZ = 0;
-        Vector3Ref push = new Vector3Ref();
-        GetEntitiesPush(push);
-        pushX += push.X;
-        pushY += push.Y;
-        pushZ += push.Z;
-        EntityExpire(dt);
-        movedx = ClampFloat(movedx, -1, 1);
-        movedy = ClampFloat(movedy, -1, 1);
-        MoveInfo move = new MoveInfo();
-        {
-            move.movedx = movedx;
-            move.movedy = movedy;
-            move.acceleration = acceleration;
-            move.ENABLE_FREEMOVE = ENABLE_FREEMOVE;
-            move.ENABLE_NOCLIP = ENABLE_NOCLIP;
-            move.jumpstartacceleration = jumpstartacceleration;
-            move.movespeednow = movespeednow;
-            move.moveup = moveup;
-            move.movedown = movedown;
-            move.Swimming = Swimming();
-            move.wantsjump = wantsjump;
-            move.shiftkeydown = shiftkeydown;
-        }
-        soundnow = new BoolRef();
-        if (FollowId() == null)
-        {
-            d_Physics.Move(player, move, dt, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), entities[LocalPlayerId].player.ModelHeight);
-        }
-        else
-        {
-            if (FollowId().value == LocalPlayerId)
-            {
-                move.movedx = 0;
-                move.movedy = 0;
-                move.wantsjump = false;
-                d_Physics.Move(player, move, dt, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), entities[LocalPlayerId].player.ModelHeight);
-            }
-        }
-
-        if (guistate == GuiState.EscapeMenu)
-        {
-            //EscapeMenuMouse();
-        }
 
         float orientationX = platform.MathSin(player.playerorientation.Y);
         float orientationY = 0;
         float orientationZ = -platform.MathCos(player.playerorientation.Y);
         platform.AudioUpdateListener(EyesPosX(), EyesPosY(), EyesPosZ(), orientationX, orientationY, orientationZ);
 
-        Packet_Item activeitem = d_Inventory.RightHand[ActiveMaterial];
-        int activeblock = 0;
-        if (activeitem != null) { activeblock = activeitem.BlockId; }
-        if (activeblock != PreviousActiveMaterialBlock)
-        {
-            Packet_Client p = new Packet_Client();
-            {
-                p.Id = Packet_ClientIdEnum.ActiveMaterialSlot;
-                p.ActiveMaterialSlot = new Packet_ClientActiveMaterialSlot();
-                p.ActiveMaterialSlot.ActiveMaterialSlot = ActiveMaterial;
-            }
-            SendPacketClient(p);
-        }
-        PreviousActiveMaterialBlock = activeblock;
         playervelocity.X = player.playerposition.X - lastplayerpositionX;
         playervelocity.Y = player.playerposition.Y - lastplayerpositionY;
         playervelocity.Z = player.playerposition.Z - lastplayerpositionZ;
@@ -6619,98 +5428,24 @@
         lastplayerpositionX = player.playerposition.X;
         lastplayerpositionY = player.playerposition.Y;
         lastplayerpositionZ = player.playerposition.Z;
-        if (reloadstartMilliseconds != 0
-            && (one * (platform.TimeMillisecondsFromStart() - reloadstartMilliseconds) / 1000)
-            > DeserializeFloat(blocktypes[reloadblock].ReloadDelayFloat))
-        {
-            {
-                int loaded = TotalAmmo[reloadblock];
-                loaded = Game.MinInt(blocktypes[reloadblock].AmmoMagazine, loaded);
-                LoadedAmmo[reloadblock] = loaded;
-                reloadstartMilliseconds = 0;
-                reloadblock = -1;
-            }
-        }
-        for (int i = 0; i < entitiesCount; i++)
-        {
-            Entity entity = entities[i];
-            if (entity == null) { continue; }
-            if (entity.grenade == null) { continue; }
-            UpdateGrenade(i, dt);
-        }
         if (guistate == GuiState.CraftingRecipes)
         {
             CraftingMouse();
         }
     }
 
-    public void Update()
+    public void Update(float dt)
     {
-        if (guistate == GuiState.Normal)
+        for (int i = 0; i < clientmodsCount; i++)
         {
-            UpdatePicking();
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnNewFrameReadOnlyMainThread(this, dt);
         }
     }
 
     float lastplayerpositionX;
     float lastplayerpositionY;
     float lastplayerpositionZ;
-
-    Unproject unproject;
-    float[] tempViewport;
-    float[] tempRay;
-    float[] tempRayStartPoint;
-    public void GetPickingLine(Line3D retPick, bool ispistolshoot)
-    {
-        int mouseX;
-        int mouseY;
-
-        if (cameratype == CameraType.Fpp || cameratype == CameraType.Tpp)
-        {
-            mouseX = Width() / 2;
-            mouseY = Height() / 2;
-        }
-        else
-        {
-            mouseX = mouseCurrentX;
-            mouseY = mouseCurrentY;
-        }
-
-        PointFloatRef aim = GetAim();
-        if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
-        {
-            mouseX += platform.FloatToInt(aim.X);
-            mouseY += platform.FloatToInt(aim.Y);
-        }
-
-        tempViewport[0] = 0;
-        tempViewport[1] = 0;
-        tempViewport[2] = Width();
-        tempViewport[3] = Height();
-
-        unproject.UnProject(mouseX, Height() - mouseY, 1, mvMatrix.Peek(), pMatrix.Peek(), tempViewport, tempRay);
-        unproject.UnProject(mouseX, Height() - mouseY, 0, mvMatrix.Peek(), pMatrix.Peek(), tempViewport, tempRayStartPoint);
-
-        float raydirX = (tempRay[0] - tempRayStartPoint[0]);
-        float raydirY = (tempRay[1] - tempRayStartPoint[1]);
-        float raydirZ = (tempRay[2] - tempRayStartPoint[2]);
-        float raydirLength = Length(raydirX, raydirY, raydirZ);
-        raydirX /= raydirLength;
-        raydirY /= raydirLength;
-        raydirZ /= raydirLength;
-
-        retPick.Start = new float[3];
-        retPick.Start[0] = tempRayStartPoint[0];// +raydirX; //do not pick behind
-        retPick.Start[1] = tempRayStartPoint[1];// +raydirY;
-        retPick.Start[2] = tempRayStartPoint[2];// +raydirZ;
-
-        float pickDistance1 = CurrentPickDistance() * ((ispistolshoot) ? 100 : 1);
-        retPick.End = new float[3];
-        retPick.End[0] = tempRayStartPoint[0] + raydirX * pickDistance1;
-        retPick.End[1] = tempRayStartPoint[1] + raydirY * pickDistance1;
-        retPick.End[2] = tempRayStartPoint[2] + raydirZ * pickDistance1;
-    }
-
 
     public BlockPosSide[] Pick(BlockOctreeSearcher s_, Line3D line, IntRef retCount)
     {
@@ -6738,578 +5473,7 @@
         return pick2;
     }
 
-    float CurrentPickDistance()
-    {
-        float pick_distance = PICK_DISTANCE;
-        if (cameratype == CameraType.Tpp)
-        {
-            pick_distance = tppcameradistance + PICK_DISTANCE;
-        }
-        if (cameratype == CameraType.Overhead)
-        {
-            if (platform.IsFastSystem())
-            {
-                pick_distance = 100;
-            }
-            else
-            {
-                pick_distance = overheadcameradistance * 2;
-            }
-        }
-        return pick_distance;
-    }
-
     float[] modelViewInverted;
-    internal void NextBullet(int bulletsshot)
-    {
-        bool left = mouseLeft;
-        bool middle = mouseMiddle;
-        bool right = mouseRight;
-
-        bool IsNextShot = bulletsshot != 0;
-
-        if (!leftpressedpicking)
-        {
-            if (mouseleftclick)
-            {
-                leftpressedpicking = true;
-            }
-            else
-            {
-                left = false;
-            }
-        }
-        else
-        {
-            if (mouseleftdeclick)
-            {
-                leftpressedpicking = false;
-                left = false;
-            }
-        }
-        if (!left)
-        {
-            currentAttackedBlock = null;
-        }
-
-        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
-        bool ispistol = (item != null && blocktypes[item.BlockId].IsPistol);
-        bool ispistolshoot = ispistol && left;
-        bool isgrenade = ispistol && blocktypes[item.BlockId].PistolType == Packet_PistolTypeEnum.Grenade;
-        if (ispistol && isgrenade)
-        {
-            ispistolshoot = mouseleftdeclick;
-        }
-        //grenade cooking
-        if (mouseleftclick)
-        {
-            grenadecookingstartMilliseconds = platform.TimeMillisecondsFromStart();
-            if (ispistol && isgrenade)
-            {
-                if (blocktypes[item.BlockId].Sounds.ShootCount > 0)
-                {
-                    AudioPlay(platform.StringFormat("{0}.ogg", blocktypes[item.BlockId].Sounds.Shoot[0]));
-                }
-            }
-        }
-        float wait = ((one * (platform.TimeMillisecondsFromStart() - grenadecookingstartMilliseconds)) / 1000);
-        if (isgrenade && left)
-        {
-            if (wait >= grenadetime && isgrenade && grenadecookingstartMilliseconds != 0)
-            {
-                ispistolshoot = true;
-                mouseleftdeclick = true;
-            }
-            else
-            {
-                return;
-            }
-        }
-        else
-        {
-            grenadecookingstartMilliseconds = 0;
-        }
-
-        if (ispistol && mouserightclick && (platform.TimeMillisecondsFromStart() - lastironsightschangeMilliseconds) >= 500)
-        {
-            IronSights = !IronSights;
-            lastironsightschangeMilliseconds = platform.TimeMillisecondsFromStart();
-        }
-
-        IntRef pick2count = new IntRef();
-        Line3D pick = new Line3D();
-        GetPickingLine(pick, ispistolshoot);
-        BlockPosSide[] pick2 = Pick(s, pick, pick2count);
-
-        if (left)
-        {
-            d_Weapon.SetAttack(true, false);
-        }
-        else if (right)
-        {
-            d_Weapon.SetAttack(true, true);
-        }
-
-        if (overheadcamera && pick2count.value > 0 && left)
-        {
-            //if not picked any object, and mouse button is pressed, then walk to destination.
-            if (Follow == null)
-            {
-                //Only walk to destination when not following someone
-                playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
-            }
-        }
-        bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
-        bool playertileempty = IsTileEmptyForPhysics(
-                    platform.FloatToInt(player.playerposition.X),
-                    platform.FloatToInt(player.playerposition.Z),
-                    platform.FloatToInt(player.playerposition.Y + (one / 2)));
-        bool playertileemptyclose = IsTileEmptyForPhysicsClose(
-                    platform.FloatToInt(player.playerposition.X),
-                    platform.FloatToInt(player.playerposition.Z),
-                    platform.FloatToInt(player.playerposition.Y + (one / 2)));
-        BlockPosSide pick0 = new BlockPosSide();
-        if (pick2count.value > 0 &&
-            ((pickdistanceok && (playertileempty || (playertileemptyclose)))
-            || overheadcamera)
-            )
-        {
-            SelectedBlockPositionX = platform.FloatToInt(pick2[0].Current()[0]);
-            SelectedBlockPositionY = platform.FloatToInt(pick2[0].Current()[1]);
-            SelectedBlockPositionZ = platform.FloatToInt(pick2[0].Current()[2]);
-            pick0 = pick2[0];
-        }
-        else
-        {
-            SelectedBlockPositionX = -1;
-            SelectedBlockPositionY = -1;
-            SelectedBlockPositionZ = -1;
-            pick0.blockPos = new float[3];
-            pick0.blockPos[0] = -1;
-            pick0.blockPos[1] = -1;
-            pick0.blockPos[2] = -1;
-        }
-        if (cameratype == CameraType.Fpp || cameratype == CameraType.Tpp)
-        {
-            int ntileX = platform.FloatToInt(pick0.Current()[0]);
-            int ntileY = platform.FloatToInt(pick0.Current()[1]);
-            int ntileZ = platform.FloatToInt(pick0.Current()[2]);
-            if (IsUsableBlock(GetBlock(ntileX, ntileZ, ntileY)))
-            {
-                currentAttackedBlock = Vector3IntRef.Create(ntileX, ntileZ, ntileY);
-            }
-        }
-        if (GetFreeMouse())
-        {
-            if (pick2count.value > 0)
-            {
-                OnPick_(pick0);
-            }
-            return;
-        }
-
-        if ((one * (platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay()
-            || IsNextShot)
-        {
-            if (left && d_Inventory.RightHand[ActiveMaterial] == null)
-            {
-                Packet_ClientHealth p = new Packet_ClientHealth();
-                p.CurrentHealth = platform.FloatToInt(2 + rnd.NextFloat() * 4);
-                Packet_Client packet = new Packet_Client();
-                packet.Id = Packet_ClientIdEnum.MonsterHit;
-                packet.Health = p;
-                SendPacketClient(packet);
-            }
-            if (left && !fastclicking)
-            {
-                //todo animation
-                fastclicking = false;
-            }
-            if ((left || right || middle) && (!isgrenade))
-            {
-                lastbuildMilliseconds = platform.TimeMillisecondsFromStart();
-            }
-            if (isgrenade && mouseleftdeclick)
-            {
-                lastbuildMilliseconds = platform.TimeMillisecondsFromStart();
-            }
-            if (reloadstartMilliseconds != 0)
-            {
-                PickingEnd(left, right, middle, ispistol);
-                return;
-            }
-            if (ispistolshoot)
-            {
-                if ((!(LoadedAmmo[item.BlockId] > 0))
-                    || (!(TotalAmmo[item.BlockId] > 0)))
-                {
-                    AudioPlay("Dry Fire Gun-SoundBible.com-2053652037.ogg");
-                    PickingEnd(left, right, middle, ispistol);
-                    return;
-                }
-            }
-            if (ispistolshoot)
-            {
-                float toX = pick.End[0];
-                float toY = pick.End[1];
-                float toZ = pick.End[2];
-                if (pick2count.value > 0)
-                {
-                    toX = pick2[0].blockPos[0];
-                    toY = pick2[0].blockPos[1];
-                    toZ = pick2[0].blockPos[2];
-                }
-
-                Packet_ClientShot shot = new Packet_ClientShot();
-                shot.FromX = SerializeFloat(pick.Start[0]);
-                shot.FromY = SerializeFloat(pick.Start[1]);
-                shot.FromZ = SerializeFloat(pick.Start[2]);
-                shot.ToX = SerializeFloat(toX);
-                shot.ToY = SerializeFloat(toY);
-                shot.ToZ = SerializeFloat(toZ);
-                shot.HitPlayer = -1;
-
-                for (int i = 0; i < entitiesCount; i++)
-                {
-                    if (entities[i] == null)
-                    {
-                        continue;
-                    }
-                    if (entities[i].player == null)
-                    {
-                        continue;
-                    }
-                    Player p_ = entities[i].player;
-                    if (!p_.PositionLoaded)
-                    {
-                        continue;
-                    }
-                    float feetposX = p_.PositionX;
-                    float feetposY = p_.PositionY;
-                    float feetposZ = p_.PositionZ;
-                    //var p = PlayerPositionSpawn;
-                    Box3D bodybox = new Box3D();
-                    float headsize = (p_.ModelHeight - p_.EyeHeight) * 2; //0.4f;
-                    float h = p_.ModelHeight - headsize;
-                    float r = one * 35 / 100;
-
-                    bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ - r);
-                    bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ + r);
-                    bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ - r);
-                    bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ + r);
-
-                    bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
-                    bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
-                    bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
-                    bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
-
-                    Box3D headbox = new Box3D();
-
-                    headbox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
-                    headbox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
-                    headbox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
-                    headbox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
-
-                    headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ - r);
-                    headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ + r);
-                    headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ - r);
-                    headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ + r);
-
-                    float[] p;
-                    float localeyeposX = EyesPosX();
-                    float localeyeposY = EyesPosY();
-                    float localeyeposZ = EyesPosZ();
-                    p = Intersection.CheckLineBoxExact(pick, headbox);
-                    if (p != null)
-                    {
-                        //do not allow to shoot through terrain
-                        if (pick2count.value == 0 || (Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
-                            > Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
-                        {
-                            if (!isgrenade)
-                            {
-                                Entity entity = new Entity();
-                                Sprite sprite = new Sprite();
-                                sprite.positionX = p[0];
-                                sprite.positionY = p[1];
-                                sprite.positionZ = p[2];
-                                sprite.image = "blood.png";
-                                entity.sprite = sprite;
-                                entity.expires = Expires.Create(one * 2 / 10);
-                                EntityAddLocal(entity);
-                            }
-                            shot.HitPlayer = i;
-                            shot.IsHitHead = 1;
-                        }
-                    }
-                    else
-                    {
-                        p = Intersection.CheckLineBoxExact(pick, bodybox);
-                        if (p != null)
-                        {
-                            //do not allow to shoot through terrain
-                            if (pick2count.value == 0 || (Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
-                                > Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
-                            {
-                                if (!isgrenade)
-                                {
-                                    Entity entity = new Entity();
-                                    Sprite sprite = new Sprite();
-                                    sprite.positionX = p[0];
-                                    sprite.positionY = p[1];
-                                    sprite.positionZ = p[2];
-                                    sprite.image = "blood.png";
-                                    entity.sprite = sprite;
-                                    entity.expires = Expires.Create(one * 2 / 10);
-                                    EntityAddLocal(entity);
-                                }
-                                shot.HitPlayer = i;
-                                shot.IsHitHead = 0;
-                            }
-                        }
-                    }
-                }
-                shot.WeaponBlock = item.BlockId;
-                LoadedAmmo[item.BlockId] = LoadedAmmo[item.BlockId] - 1;
-                TotalAmmo[item.BlockId] = TotalAmmo[item.BlockId] - 1;
-                float projectilespeed = DeserializeFloat(blocktypes[item.BlockId].ProjectileSpeedFloat);
-                if (projectilespeed == 0)
-                {
-                    {
-                        Entity entity = CreateBulletEntity(
-                          pick.Start[0], pick.Start[1], pick.Start[2],
-                          toX, toY, toZ, 150);
-                        EntityAddLocal(entity);
-                    }
-                }
-                else
-                {
-                    float vX = toX - pick.Start[0];
-                    float vY = toY - pick.Start[1];
-                    float vZ = toZ - pick.Start[2];
-                    float vLength = Length(vX, vY, vZ);
-                    vX /= vLength;
-                    vY /= vLength;
-                    vZ /= vLength;
-                    vX *= projectilespeed;
-                    vY *= projectilespeed;
-                    vZ *= projectilespeed;
-                    shot.ExplodesAfter = SerializeFloat(grenadetime - wait);
-
-                    {
-                        Entity grenadeEntity = new Entity();
-
-                        Sprite sprite = new Sprite();
-                        sprite.image = "ChemicalGreen.png";
-                        sprite.size = 14;
-                        sprite.animationcount = 0;
-                        sprite.positionX = pick.Start[0];
-                        sprite.positionY = pick.Start[1];
-                        sprite.positionZ = pick.Start[2];
-                        grenadeEntity.sprite = sprite;
-
-                        Grenade_ projectile = new Grenade_();
-                        projectile.velocityX = vX;
-                        projectile.velocityY = vY;
-                        projectile.velocityZ = vZ;
-                        projectile.block = item.BlockId;
-                        projectile.sourcePlayer = LocalPlayerId;
-
-                        grenadeEntity.expires = Expires.Create(grenadetime - wait);
-
-                        grenadeEntity.grenade = projectile;
-                        EntityAddLocal(grenadeEntity);
-                    }
-                }
-                Packet_Client packet = new Packet_Client();
-                packet.Id = Packet_ClientIdEnum.Shot;
-                packet.Shot = shot;
-                SendPacketClient(packet);
-
-                if (blocktypes[item.BlockId].Sounds.ShootEndCount > 0)
-                {
-                    pistolcycle = rnd.Next() % blocktypes[item.BlockId].Sounds.ShootEndCount;
-                    AudioPlay(platform.StringFormat("{0}.ogg", blocktypes[item.BlockId].Sounds.ShootEnd[pistolcycle]));
-                }
-
-                bulletsshot++;
-                if (bulletsshot < DeserializeFloat(blocktypes[item.BlockId].BulletsPerShotFloat))
-                {
-                    NextBullet(bulletsshot);
-                }
-
-                //recoil
-                player.playerorientation.X -= rnd.NextFloat() * CurrentRecoil();
-                player.playerorientation.Y += rnd.NextFloat() * CurrentRecoil() * 2 - CurrentRecoil();
-
-                PickingEnd(left, right, middle, ispistol);
-                return;
-            }
-            if (ispistol && right)
-            {
-                PickingEnd(left, right, middle, ispistol);
-                return;
-            }
-            if (pick2count.value > 0)
-            {
-                if (middle)
-                {
-                    int newtileX = platform.FloatToInt(pick0.Current()[0]);
-                    int newtileY = platform.FloatToInt(pick0.Current()[1]);
-                    int newtileZ = platform.FloatToInt(pick0.Current()[2]);
-                    if (IsValidPos(newtileX, newtileZ, newtileY))
-                    {
-                        int clonesource = GetBlock(newtileX, newtileZ, newtileY);
-                        int clonesource2 = d_Data.WhenPlayerPlacesGetsConvertedTo()[clonesource];
-                        bool gotoDone = false;
-                        //find this block in another right hand.
-                        for (int i = 0; i < 10; i++)
-                        {
-                            if (d_Inventory.RightHand[i] != null
-                                && d_Inventory.RightHand[i].ItemClass == Packet_ItemClassEnum.Block
-                                && d_Inventory.RightHand[i].BlockId == clonesource2)
-                            {
-                                ActiveMaterial = i;
-                                gotoDone = true;
-                            }
-                        }
-                        if (!gotoDone)
-                        {
-                            IntRef freehand = d_InventoryUtil.FreeHand(ActiveMaterial);
-                            //find this block in inventory.
-                            for (int i = 0; i < d_Inventory.ItemsCount; i++)
-                            {
-                                Packet_PositionItem k = d_Inventory.Items[i];
-                                if (k == null)
-                                {
-                                    continue;
-                                }
-                                if (k.Value_.ItemClass == Packet_ItemClassEnum.Block
-                                    && k.Value_.BlockId == clonesource2)
-                                {
-                                    //free hand
-                                    if (freehand != null)
-                                    {
-                                        WearItem(
-                                            InventoryPositionMainArea(k.X, k.Y),
-                                            InventoryPositionMaterialSelector(freehand.value));
-                                        break;
-                                    }
-                                    //try to replace current slot
-                                    if (d_Inventory.RightHand[ActiveMaterial] != null
-                                        && d_Inventory.RightHand[ActiveMaterial].ItemClass == Packet_ItemClassEnum.Block)
-                                    {
-                                        MoveToInventory(
-                                            InventoryPositionMaterialSelector(ActiveMaterial));
-                                        WearItem(
-                                            InventoryPositionMainArea(k.X, k.Y),
-                                            InventoryPositionMaterialSelector(ActiveMaterial));
-                                    }
-                                }
-                            }
-                        }
-                        string[] sound = d_Data.CloneSound()[clonesource];
-                        if (sound != null) // && sound.Length > 0)
-                        {
-                            AudioPlay(sound[0]); //todo sound cycle
-                        }
-                    }
-                }
-                if (left || right)
-                {
-                    BlockPosSide tile = pick0;
-                    int newtileX;
-                    int newtileY;
-                    int newtileZ;
-                    if (right)
-                    {
-                        newtileX = platform.FloatToInt(tile.Translated()[0]);
-                        newtileY = platform.FloatToInt(tile.Translated()[1]);
-                        newtileZ = platform.FloatToInt(tile.Translated()[2]);
-                    }
-                    else
-                    {
-                        newtileX = platform.FloatToInt(tile.Current()[0]);
-                        newtileY = platform.FloatToInt(tile.Current()[1]);
-                        newtileZ = platform.FloatToInt(tile.Current()[2]);
-                    }
-                    if (IsValidPos(newtileX, newtileZ, newtileY))
-                    {
-                        //Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock(newtileX, newtileZ, newtileY));
-                        if (!(pick0.blockPos[0] == -1
-                             && pick0.blockPos[1] == -1
-                            && pick0.blockPos[2] == -1))
-                        {
-                            int blocktype;
-                            if (left) { blocktype = GetBlock(newtileX, newtileZ, newtileY); }
-                            else { blocktype = ((BlockInHand() == null) ? 1 : BlockInHand().value); }
-                            if (left && blocktype == d_Data.BlockIdAdminium())
-                            {
-                                PickingEnd(left, right, middle, ispistol);
-                                return;
-                            }
-                            string[] sound = left ? d_Data.BreakSound()[blocktype] : d_Data.BuildSound()[blocktype];
-                            if (sound != null) // && sound.Length > 0)
-                            {
-                                AudioPlay(sound[0]); //todo sound cycle
-                            }
-                        }
-                        //normal attack
-                        if (!right)
-                        {
-                            //attack
-                            int posx = newtileX;
-                            int posy = newtileZ;
-                            int posz = newtileY;
-                            currentAttackedBlock = Vector3IntRef.Create(posx, posy, posz);
-                            if (!blockHealth.ContainsKey(posx, posy, posz))
-                            {
-                                blockHealth.Set(posx, posy, posz, GetCurrentBlockHealth(posx, posy, posz));
-                            }
-                            blockHealth.Set(posx, posy, posz, blockHealth.Get(posx, posy, posz) - WeaponAttackStrength());
-                            float health = GetCurrentBlockHealth(posx, posy, posz);
-                            if (health <= 0)
-                            {
-                                if (currentAttackedBlock != null)
-                                {
-                                    blockHealth.Remove(posx, posy, posz);
-                                }
-                                currentAttackedBlock = null;
-                                OnPick(platform.FloatToInt(newtileX), platform.FloatToInt(newtileZ), platform.FloatToInt(newtileY),
-                                    platform.FloatToInt(tile.Current()[0]), platform.FloatToInt(tile.Current()[2]), platform.FloatToInt(tile.Current()[1]),
-                                    tile.collisionPos,
-                                    right);
-                            }
-                            PickingEnd(left, right, middle, ispistol);
-                            return;
-                        }
-                        if (!right)
-                        {
-                            particleEffectBlockBreak.StartParticleEffect(newtileX, newtileY, newtileZ);//must be before deletion - gets ground type.
-                        }
-                        if (!IsValidPos(newtileX, newtileZ, newtileY))
-                        {
-                            platform.ThrowException("");
-                        }
-                        OnPick(platform.FloatToInt(newtileX), platform.FloatToInt(newtileZ), platform.FloatToInt(newtileY),
-                            platform.FloatToInt(tile.Current()[0]), platform.FloatToInt(tile.Current()[2]), platform.FloatToInt(tile.Current()[1]),
-                            tile.collisionPos,
-                            right);
-                        //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
-                        //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
-                    }
-                }
-            }
-        }
-        PickingEnd(left, right, middle, ispistol);
-    }
-
-    int lastbuildMilliseconds;
-
-    void OnPick_(BlockPosSide pick0)
-    {
-        //playerdestination = pick0.pos;
-    }
 
     void PickSort(BlockPosSide[] pick, int pickCount, float x, float y, float z)
     {
@@ -7333,28 +5497,7 @@
         }
         while (changed);
     }
-    bool fastclicking;
-    void PickingEnd(bool left, bool right, bool middle, bool ispistol)
-    {
-        fastclicking = false;
-        if ((!(left || right || middle)) && (!ispistol))
-        {
-            lastbuildMilliseconds = 0;
-            fastclicking = true;
-        }
-    }
 
-    internal void UpdatePicking()
-    {
-        if (FollowId() != null)
-        {
-            SelectedBlockPositionX = 0 - 1;
-            SelectedBlockPositionY = 0 - 1;
-            SelectedBlockPositionZ = 0 - 1;
-            return;
-        }
-        NextBullet(0);
-    }
     internal bool mouseLeft;
     internal bool mouseMiddle;
     internal bool mouseRight;
@@ -7372,9 +5515,10 @@
         {
             mouserightclick = true;
         }
-        if (guistate == GuiState.Normal)
+        for (int i = 0; i < clientmodsCount; i++)
         {
-            UpdatePicking();
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnMouseDown(this, args);
         }
         if (guistate == GuiState.Inventory)
         {
@@ -7400,9 +5544,10 @@
         {
             mouserightdeclick = true;
         }
-        if (guistate == GuiState.Normal)
+        for (int i = 0; i < clientmodsCount; i++)
         {
-            UpdatePicking();
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnMouseUp(this, args);
         }
         if (guistate == GuiState.Inventory)
         {
@@ -7608,6 +5753,7 @@
         TaskScheduler(deltaTime);
     }
 
+    internal float[] camera;
     float accumulator;
     internal void MainThreadOnRenderFrame(float deltaTime)
     {
@@ -7655,17 +5801,12 @@
         platform.GlClearColorBufferAndDepthBuffer();
         platform.BindTexture2d(d_TerrainTextures.terrainTexture());
 
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnBeforeNewFrameDraw3d(this, deltaTime);
+        }
         GLMatrixModeModelView();
-
-        float[] camera;
-        if (overheadcamera)
-        {
-            camera = OverheadCamera();
-        }
-        else
-        {
-            camera = FppCamera();
-        }
         GLLoadMatrix(camera);
         CameraMatrix.lastmvmatrix = camera;
 
@@ -7674,63 +5815,11 @@
         bool drawgame = guistate != GuiState.MapLoading;
         if (drawgame)
         {
-            platform.GlDisableFog();
-            DrawSkySphere();
-            if (d_Config3d.viewdistance < 512)
-            {
-                SetFog();
-            }
-            d_SunMoonRenderer.Draw(deltaTime);
-
+            platform.GlEnableDepthTest();
             for (int i = 0; i < clientmodsCount; i++)
             {
                 if (clientmods[i] == null) { continue; }
                 clientmods[i].OnNewFrameDraw3d(this, deltaTime);
-            }
-            terrainRenderer.DrawTerrain();
-            DrawPlayerNames();
-            particleEffectBlockBreak.Draw(deltaTime);
-            if (ENABLE_DRAW2D)
-            {
-                DrawLinesAroundSelectedBlock(SelectedBlockPositionX,
-                    SelectedBlockPositionY, SelectedBlockPositionZ);
-            }
-            DrawSprites();
-            UpdateBullets(deltaTime);
-            DrawMinecarts(deltaTime);
-            if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
-            {
-                Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
-                string img = null;
-                if (item != null)
-                {
-                    img = blocktypes[item.BlockId].Handimage;
-                    if (IronSights)
-                    {
-                        img = blocktypes[item.BlockId].IronSightsImage;
-                    }
-                }
-                if (img == null)
-                {
-                    d_Weapon.DrawWeapon(deltaTime);
-                }
-                else
-                {
-                    OrthoMode(Width(), Height());
-                    if (lasthandimage != img)
-                    {
-                        lasthandimage = img;
-                        byte[] file = GetFile(img);
-                        BitmapCi bmp = platform.BitmapCreateFromPng(file, platform.ByteArrayLength(file));
-                        if (bmp != null)
-                        {
-                            handTexture = platform.LoadTextureFromBitmap(bmp);
-                            platform.BitmapDelete(bmp);
-                        }
-                    }
-                    Draw2dTexture(handTexture, Width() / 2, Height() - 512, 512, 512, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
-                    PerspectiveMode();
-                }
             }
         }
         GotoDraw2d(deltaTime);
@@ -7748,8 +5837,6 @@
             OnResize();
         }
     }
-
-    string lasthandimage;
 
     bool startedconnecting;
     internal void GotoDraw2d(float dt)
@@ -7859,8 +5946,8 @@
         }
     }
 
-    float touchMoveDx;
-    float touchMoveDy;
+    internal float touchMoveDx;
+    internal float touchMoveDy;
     float touchOrientationDx;
     float touchOrientationDy;
     public void OnTouchMove(TouchEventArgs e)
@@ -8387,7 +6474,7 @@ public class UpdateTask : Task
 {
     public override void Run(float dt)
     {
-        game.Update();
+        game.Update(dt);
         game.QueueTaskReadOnlyMainThread(this); // todo
     }
 }
@@ -10358,9 +8445,14 @@ public abstract class ClientMod
     public virtual bool OnClientCommand(Game game, ClientCommandArgs args) { return false; }
     public virtual void OnNewFrame(Game game, NewFrameEventArgs args) { }
     public virtual void OnNewFrameFixed(Game game, NewFrameEventArgs args) { }
+    public virtual void OnNewFrameDraw2d(Game game, float deltaTime) { }
+    public virtual void OnBeforeNewFrameDraw3d(Game game, float deltaTime) { }
     public virtual void OnNewFrameDraw3d(Game game, float deltaTime) { }
-    public virtual void OnKeyDown(KeyEventArgs args) { }
-    public virtual void OnKeyUp(KeyEventArgs args) { }
+    public virtual void OnNewFrameReadOnlyMainThread(Game game, float deltaTime) { }
+    public virtual void OnKeyDown(Game game, KeyEventArgs args) { }
+    public virtual void OnKeyUp(Game game, KeyEventArgs args) { }
+    public virtual void OnMouseUp(Game game, MouseEventArgs args) { }
+    public virtual void OnMouseDown(Game game, MouseEventArgs args) { }
 }
 
 public class ClientCommandArgs
@@ -11322,6 +9414,314 @@ public class OptionsCi
     internal int[] Keys;
 }
 
+public class ClientPackets
+{
+    public static Packet_Client CreateLoginPacket(GamePlatform platform, string username, string verificationKey)
+    {
+        Packet_ClientIdentification p = new Packet_ClientIdentification();
+        {
+            p.Username = username;
+            p.MdProtocolVersion = platform.GetGameVersion();
+            p.VerificationKey = verificationKey;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PlayerIdentification;
+        pp.Identification = p;
+        return pp;
+    }
+
+    public static Packet_Client CreateLoginPacket_(GamePlatform platform, string username, string verificationKey, string serverPassword)
+    {
+        Packet_ClientIdentification p = new Packet_ClientIdentification();
+        {
+            p.Username = username;
+            p.MdProtocolVersion = platform.GetGameVersion();
+            p.VerificationKey = verificationKey;
+            p.ServerPassword = serverPassword;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PlayerIdentification;
+        pp.Identification = p;
+        return pp;
+    }
+
+    public static Packet_Client Oxygen(int currentOxygen)
+    {
+        Packet_Client packet = new Packet_Client();
+        packet.Id = Packet_ClientIdEnum.Oxygen;
+        packet.Oxygen = new Packet_ClientOxygen();
+        packet.Oxygen.CurrentOxygen = currentOxygen;
+        return packet;
+    }
+
+    public static Packet_Client Reload()
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.Reload;
+        p.Reload = new Packet_ClientReload();
+        return p;
+    }
+
+    public static Packet_Client Chat(string s, int isTeamchat)
+    {
+        Packet_ClientMessage p = new Packet_ClientMessage();
+        p.Message = s;
+        p.IsTeamchat = isTeamchat;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.Message;
+        pp.Message = p;
+        return pp;
+    }
+
+    public static Packet_Client PingReply()
+    {
+        Packet_ClientPingReply p = new Packet_ClientPingReply();
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PingReply;
+        pp.PingReply = p;
+        return pp;
+    }
+
+    public static Packet_Client SetBlock(int x, int y, int z, int mode, int type, int materialslot)
+    {
+        Packet_ClientSetBlock p = new Packet_ClientSetBlock();
+        {
+            p.X = x;
+            p.Y = y;
+            p.Z = z;
+            p.Mode = mode;
+            p.BlockType = type;
+            p.MaterialSlot = materialslot;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.SetBlock;
+        pp.SetBlock = p;
+        return pp;
+    }
+
+    public static Packet_Client SpecialKeyRespawn()
+    {
+        Packet_Client p = new Packet_Client();
+        {
+            p.Id = Packet_ClientIdEnum.SpecialKey;
+            p.SpecialKey_ = new Packet_ClientSpecialKey();
+            p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.Respawn;
+        }
+        return p;
+    }
+
+    public static Packet_Client FillArea(int startx, int starty, int startz, int endx, int endy, int endz, int blockType, int ActiveMaterial)
+    {
+        Packet_ClientFillArea p = new Packet_ClientFillArea();
+        {
+            p.X1 = startx;
+            p.Y1 = starty;
+            p.Z1 = startz;
+            p.X2 = endx;
+            p.Y2 = endy;
+            p.Z2 = endz;
+            p.BlockType = blockType;
+            p.MaterialSlot = ActiveMaterial;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.FillArea;
+        pp.FillArea = p;
+        return pp;
+    }
+
+    public static Packet_Client InventoryClick(Packet_InventoryPosition pos)
+    {
+        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
+        p.A = pos;
+        p.Action = Packet_InventoryActionTypeEnum.Click;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.InventoryAction;
+        pp.InventoryAction = p;
+        return pp;
+    }
+
+    public static Packet_Client WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
+    {
+        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
+        p.A = from;
+        p.B = to;
+        p.Action = Packet_InventoryActionTypeEnum.WearItem;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.InventoryAction;
+        pp.InventoryAction = p;
+        return pp;
+    }
+
+    public static Packet_Client MoveToInventory(Packet_InventoryPosition from)
+    {
+        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
+        p.A = from;
+        p.Action = Packet_InventoryActionTypeEnum.MoveToInventory;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.InventoryAction;
+        pp.InventoryAction = p;
+        return pp;
+    }
+
+    public static Packet_Client Death(int reason, int sourcePlayer)
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.Death;
+        p.Death = new Packet_ClientDeath();
+        {
+            p.Death.Reason = reason;
+            p.Death.SourcePlayer = sourcePlayer;
+        }
+        return p;
+    }
+
+    public static Packet_Client Health(int currentHealth)
+    {
+        Packet_Client p = new Packet_Client();
+        {
+            p.Id = Packet_ClientIdEnum.Health;
+            p.Health = new Packet_ClientHealth();
+            p.Health.CurrentHealth = currentHealth;
+        }
+        return p;
+    }
+
+    public static Packet_Client RequestBlob(Game game, string[] required, int requiredCount)
+    {
+        Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
+        if (game.ServerVersionAtLeast(2014, 4, 13))
+        {
+            p.RequestedMd5 = new Packet_StringList();
+            p.RequestedMd5.SetItems(required, requiredCount, requiredCount);
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.RequestBlob;
+        pp.RequestBlob = p;
+        return pp;
+    }
+
+    public static Packet_Client Leave(int reason)
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.Leave;
+        p.Leave = new Packet_ClientLeave();
+        p.Leave.Reason = reason;
+        return p;
+    }
+
+    public static Packet_Client Craft(int x, int y, int z, int recipeId)
+    {
+        Packet_ClientCraft cmd = new Packet_ClientCraft();
+        cmd.X = x;
+        cmd.Y = y;
+        cmd.Z = z;
+        cmd.RecipeId = recipeId;
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.Craft;
+        p.Craft = cmd;
+        return p;
+    }
+
+    public static Packet_Client DialogClick(string widgetId)
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.DialogClick;
+        p.DialogClick_ = new Packet_ClientDialogClick();
+        p.DialogClick_.WidgetId = widgetId;
+        return p;
+    }
+
+    public static Packet_Client GameResolution(int width, int height)
+    {
+        Packet_ClientGameResolution p = new Packet_ClientGameResolution();
+        p.Width = width;
+        p.Height = height;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.GameResolution;
+        pp.GameResolution = p;
+        return pp;
+    }
+
+    public static Packet_Client SpecialKeyTabPlayerList()
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.SpecialKey;
+        p.SpecialKey_ = new Packet_ClientSpecialKey();
+        p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.TabPlayerList;
+        return p;
+    }
+
+    public static Packet_Client SpecialKeySelectTeam()
+    {
+        Packet_Client p = new Packet_Client();
+        {
+            p.Id = Packet_ClientIdEnum.SpecialKey;
+            p.SpecialKey_ = new Packet_ClientSpecialKey();
+            p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.SelectTeam;
+        }
+        return p;
+    }
+
+    public static Packet_Client SpecialKeySetSpawn()
+    {
+        Packet_Client p = new Packet_Client();
+        {
+            p.Id = Packet_ClientIdEnum.SpecialKey;
+            p.SpecialKey_ = new Packet_ClientSpecialKey();
+            p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.SetSpawn;
+        }
+        return p;
+    }
+
+    public static Packet_Client ActiveMaterialSlot(int ActiveMaterial)
+    {
+        Packet_Client p = new Packet_Client();
+        {
+            p.Id = Packet_ClientIdEnum.ActiveMaterialSlot;
+            p.ActiveMaterialSlot = new Packet_ClientActiveMaterialSlot();
+            p.ActiveMaterialSlot.ActiveMaterialSlot = ActiveMaterial;
+        }
+        return p;
+    }
+
+    public static Packet_Client MonsterHit(int damage)
+    {
+        Packet_ClientHealth p = new Packet_ClientHealth();
+        p.CurrentHealth = damage;
+        Packet_Client packet = new Packet_Client();
+        packet.Id = Packet_ClientIdEnum.MonsterHit;
+        packet.Health = p;
+        return packet;
+    }
+
+    public static Packet_Client PositionAndOrientation(Game game, int playerId, float positionX, float positionY, float positionZ, float orientationX, float orientationY, float orientationZ, byte stance)
+    {
+        Packet_ClientPositionAndOrientation p = new Packet_ClientPositionAndOrientation();
+        {
+            p.PlayerId = playerId;
+            p.X = game.platform.FloatToInt(positionX * 32);
+            p.Y = game.platform.FloatToInt(positionY * 32);
+            p.Z = game.platform.FloatToInt(positionZ * 32);
+            p.Heading = game.HeadingByte(orientationX, orientationY, orientationZ);
+            p.Pitch = game.PitchByte(orientationX, orientationY, orientationZ);
+            p.Stance = stance;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PositionandOrientation;
+        pp.PositionAndOrientation = p;
+        return pp;
+    }
+
+    public static Packet_Client ServerQuery()
+    {
+        Packet_ClientServerQuery p1 = new Packet_ClientServerQuery();
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.ServerQuery;
+        pp.Query = p1;
+        return pp;
+    }
+}
+
 public class ServerPackets
 {
     public static Packet_Server Message(string text)
@@ -11332,6 +9732,7 @@ public class ServerPackets
         p.Message.Message = text;
         return p;
     }
+
     public static Packet_Server LevelInitialize()
     {
         Packet_Server p = new Packet_Server();
@@ -11339,6 +9740,7 @@ public class ServerPackets
         p.LevelInitialize = new Packet_ServerLevelInitialize();
         return p;
     }
+
     public static Packet_Server LevelFinalize()
     {
         Packet_Server p = new Packet_Server();
@@ -11346,6 +9748,7 @@ public class ServerPackets
         p.LevelFinalize = new Packet_ServerLevelFinalize();
         return p;
     }
+
     public static Packet_Server Identification(int assignedClientId, int mapSizeX, int mapSizeY, int mapSizeZ, string version)
     {
         Packet_Server p = new Packet_Server();
@@ -11681,11 +10084,7 @@ public class ModBlockDamageToPlayer : ClientMod
             }
             if (game.ServerVersionAtLeast(2014, 3, 31))
             {
-                Packet_Client packet = new Packet_Client();
-                packet.Id = Packet_ClientIdEnum.Oxygen;
-                packet.Oxygen = new Packet_ClientOxygen();
-                packet.Oxygen.CurrentOxygen = game.PlayerStats.CurrentOxygen;
-                game.SendPacketClient(packet);
+                game.SendPacketClient(ClientPackets.Oxygen(game.PlayerStats.CurrentOxygen));
             }
             game.lastOxygenTickMilliseconds = game.platform.TimeMillisecondsFromStart();
         }
@@ -11798,27 +10197,28 @@ public class ModSendPosition : ClientMod
         if (game.spawned && ((game.platform.TimeMillisecondsFromStart() - game.lastpositionsentMilliseconds) > 100))
         {
             game.lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
-            SendPosition(game, game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
-                game.player.playerorientation.X, game.player.playerorientation.Y, game.player.playerorientation.Z);
+            
+            game.SendPacketClient(ClientPackets.PositionAndOrientation(game, game.LocalPlayerId,
+                game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
+                game.player.playerorientation.X, game.player.playerorientation.Y, game.player.playerorientation.Z,
+                game.localstance));
         }
     }
+}
 
-    internal void SendPosition(Game game, float positionX, float positionY, float positionZ, float orientationX, float orientationY, float orientationZ)
+public class ModSendActiveMaterial : ClientMod
+{
+    internal int PreviousActiveMaterialBlock;
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
     {
-        Packet_ClientPositionAndOrientation p = new Packet_ClientPositionAndOrientation();
+        Packet_Item activeitem = game.d_Inventory.RightHand[game.ActiveMaterial];
+        int activeblock = 0;
+        if (activeitem != null) { activeblock = activeitem.BlockId; }
+        if (activeblock != PreviousActiveMaterialBlock)
         {
-            p.PlayerId = game.LocalPlayerId;//self
-            p.X = game.platform.FloatToInt(positionX * 32);
-            p.Y = game.platform.FloatToInt(positionY * 32);
-            p.Z = game.platform.FloatToInt(positionZ * 32);
-            p.Heading = game.HeadingByte(orientationX, orientationY, orientationZ);
-            p.Pitch = game.PitchByte(orientationX, orientationY, orientationZ);
-            p.Stance = game.localstance;
+            game.SendPacketClient(ClientPackets.ActiveMaterialSlot(game.ActiveMaterial));
         }
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.PositionandOrientation;
-        pp.PositionAndOrientation = p;
-        game.SendPacketClient(pp);
+        PreviousActiveMaterialBlock = activeblock;
     }
 }
 
@@ -11916,6 +10316,11 @@ public class ModRail : ClientMod
     }
     public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
     {
+        if (d_RailMapUtil == null)
+        {
+            this.d_RailMapUtil = new RailMapUtil();
+            this.d_RailMapUtil.game = game;
+        }
         RailOnNewFrame(game, args.GetDt());
     }
 
@@ -11968,17 +10373,17 @@ public class ModRail : ClientMod
                 lastdirection = currentdirection;
                 currentrailblockprogress = 0;
                 TileEnterData newenter = new TileEnterData();
-                Vector3IntRef nexttile = Game.NextTile(currentdirection, currentrailblockX, currentrailblockY, currentrailblockZ);
+                Vector3IntRef nexttile = NextTile(currentdirection, currentrailblockX, currentrailblockY, currentrailblockZ);
                 newenter.BlockPositionX = nexttile.X;
                 newenter.BlockPositionY = nexttile.Y;
                 newenter.BlockPositionZ = nexttile.Z;
                 //slope
-                if (game.GetUpDownMove(currentrailblockX, currentrailblockY, currentrailblockZ,
+                if (GetUpDownMove(game, currentrailblockX, currentrailblockY, currentrailblockZ,
                     DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Up)
                 {
                     newenter.BlockPositionZ++;
                 }
-                if (game.GetUpDownMove(newenter.BlockPositionX,
+                if (GetUpDownMove(game, newenter.BlockPositionX,
                     newenter.BlockPositionY,
                     newenter.BlockPositionZ - 1,
                     DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Down)
@@ -11988,7 +10393,7 @@ public class ModRail : ClientMod
 
                 newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection));
                 BoolRef newdirFound = new BoolRef();
-                VehicleDirection12 newdir = game.BestNewDirection(game.PossibleRails(newenter), turnleft, turnright, newdirFound);
+                VehicleDirection12 newdir = BestNewDirection(PossibleRails(game, newenter), turnleft, turnright, newdirFound);
                 if (!newdirFound.value)
                 {
                     //end of rail
@@ -12077,9 +10482,69 @@ public class ModRail : ClientMod
         wasepressed = game.keyboardState[game.GetKey(GlKeys.E)] && game.GuiTyping != TypingState.Typing;
     }
 
+    internal VehicleDirection12 BestNewDirection(int dirVehicleDirection12Flags, bool turnleft, bool turnright, BoolRef retFound)
+    {
+        retFound.value = true;
+        if (turnright)
+        {
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0)
+            {
+                return VehicleDirection12.DownRightRight;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0)
+            {
+                return VehicleDirection12.UpRightUp;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0)
+            {
+                return VehicleDirection12.UpLeftLeft;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0)
+            {
+                return VehicleDirection12.DownLeftDown;
+            }
+        }
+        if (turnleft)
+        {
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0)
+            {
+                return VehicleDirection12.DownRightDown;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0)
+            {
+                return VehicleDirection12.UpRightRight;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0)
+            {
+                return VehicleDirection12.UpLeftUp;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0)
+            {
+                return VehicleDirection12.DownLeftLeft;
+            }
+        }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0) { return VehicleDirection12.DownLeftDown; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0) { return VehicleDirection12.DownLeftLeft; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0) { return VehicleDirection12.DownRightDown; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0) { return VehicleDirection12.DownRightRight; }
+
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalLeft) != 0) { return VehicleDirection12.HorizontalLeft; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalRight) != 0) { return VehicleDirection12.HorizontalRight; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0) { return VehicleDirection12.UpLeftLeft; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0) { return VehicleDirection12.UpLeftUp; }
+
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0) { return VehicleDirection12.UpRightRight; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0) { return VehicleDirection12.UpRightUp; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalDown) != 0) { return VehicleDirection12.VerticalDown; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalUp) != 0) { return VehicleDirection12.VerticalUp; }
+
+        retFound.value = false;
+        return VehicleDirection12.DownLeftDown; // return null
+    }
+
     internal Vector3Ref CurrentRailPos(Game game)
     {
-        RailSlope slope = game.d_RailMapUtil.GetRailSlope(currentrailblockX,
+        RailSlope slope = d_RailMapUtil.GetRailSlope(currentrailblockX,
             currentrailblockY, currentrailblockZ);
         float aX = currentrailblockX;
         float aY = currentrailblockY;
@@ -12211,9 +10676,100 @@ public class ModRail : ClientMod
         }
     }
     internal float originalmodelheight;
+
+    internal RailMapUtil d_RailMapUtil;
+    internal int GetUpDownMove(Game game, int railblockX, int railblockY, int railblockZ, TileEnterDirection dir)
+    {
+        if (!game.IsValidPos(railblockX, railblockY, railblockZ))
+        {
+            return UpDown.None;
+        }
+        //going up
+        RailSlope slope = d_RailMapUtil.GetRailSlope(railblockX, railblockY, railblockZ);
+        if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Up)
+        {
+            return UpDown.Up;
+        }
+        if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Down)
+        {
+            return UpDown.Up;
+        }
+        if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Right)
+        {
+            return UpDown.Up;
+        }
+        if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Left)
+        {
+            return UpDown.Up;
+        }
+        //going down
+        if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Down)
+        {
+            return UpDown.Down;
+        }
+        if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Up)
+        {
+            return UpDown.Down;
+        }
+        if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Left)
+        {
+            return UpDown.Down;
+        }
+        if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Right)
+        {
+            return UpDown.Down;
+        }
+        return UpDown.None;
+    }
+
+    public static Vector3IntRef NextTile(VehicleDirection12 direction, int currentTileX, int currentTileY, int currentTileZ)
+    {
+        return NextTile_(DirectionUtils.ResultExit(direction), currentTileX, currentTileY, currentTileZ);
+    }
+
+    public static Vector3IntRef NextTile_(TileExitDirection direction, int currentTileX, int currentTileY, int currentTileZ)
+    {
+        switch (direction)
+        {
+            case TileExitDirection.Left:
+                return Vector3IntRef.Create(currentTileX - 1, currentTileY, currentTileZ);
+            case TileExitDirection.Right:
+                return Vector3IntRef.Create(currentTileX + 1, currentTileY, currentTileZ);
+            case TileExitDirection.Up:
+                return Vector3IntRef.Create(currentTileX, currentTileY - 1, currentTileZ);
+            case TileExitDirection.Down:
+                return Vector3IntRef.Create(currentTileX, currentTileY + 1, currentTileZ);
+            default:
+                return null;
+        }
+    }
+
+    internal int PossibleRails(Game game, TileEnterData enter)
+    {
+        int possible_railsVehicleDirection12Flags = 0;
+        if (game.IsValidPos(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ))
+        {
+            int newpositionrail = game.d_Data.Rail()[
+                game.GetBlock(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ)];
+            VehicleDirection12[] all_possible_rails = new VehicleDirection12[3];
+            int all_possible_railsCount = 0;
+            VehicleDirection12[] possibleRails3 = DirectionUtils.PossibleNewRails3(enter.EnterDirection);
+            for (int i = 0; i < 3; i++)
+            {
+                VehicleDirection12 z = possibleRails3[i];
+                if ((newpositionrail & DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
+                    != 0)
+                {
+                    all_possible_rails[all_possible_railsCount++] = z;
+                }
+            }
+            possible_railsVehicleDirection12Flags = DirectionUtils.ToVehicleDirection12Flags_(all_possible_rails, all_possible_railsCount);
+        }
+        return possible_railsVehicleDirection12Flags;
+    }
 }
 
-public class ModTestModel : ClientMod
+public class ModDrawTestModel : ClientMod
 {
     public override void OnNewFrameDraw3d(Game game, float deltaTime)
     {
@@ -12377,4 +10933,1703 @@ public class ModDrawPlayers : ClientMod
     internal float lastlocalplayerposX;
     internal float lastlocalplayerposY;
     internal float lastlocalplayerposZ;
+}
+
+public class ModCompass : ClientMod
+{
+    public ModCompass()
+    {
+        one = 1;
+        compassid = -1;
+        needleid = -1;
+        compassangle = 0;
+        compassvertex = 1;
+    }
+
+    public override void OnNewFrameDraw2d(Game game, float dt)
+    {
+        DrawCompass(game);
+    }
+
+    float one;
+    int compassid;
+    int needleid;
+    float compassangle;
+    float compassvertex;
+
+    bool CompassInActiveMaterials(Game game)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            if (game.MaterialSlots(i) == game.d_Data.BlockIdCompass())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void DrawCompass(Game game)
+    {
+        if (!CompassInActiveMaterials(game)) return;
+        if (compassid == -1)
+        {
+            compassid = game.GetTexture("compass.png");
+            needleid = game.GetTexture("compassneedle.png");
+        }
+        float size = 175;
+        float posX = game.Width() - 100;
+        float posY = 100;
+        float playerorientation = -((game.player.playerorientation.Y / (2 * Game.GetPi())) * 360);
+
+        compassvertex += (playerorientation - compassangle) / 50;
+        compassvertex *= (one * 9 / 10);
+        compassangle += compassvertex;
+
+        // compass
+        game.Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+
+        // compass needle
+        game.GLPushMatrix();
+        game.GLTranslate(posX, posY, 0);
+        game.GLRotate(compassangle, 0, 0, 90);
+        game.GLTranslate(-size / 2, -size / 2, 0);
+        game.Draw2dTexture(needleid, 0, 0, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+        game.GLPopMatrix();
+    }
+}
+
+public class ModGrenade : ClientMod
+{
+    public ModGrenade()
+    {
+        one = 1;
+        projectilegravity = 20;
+        bouncespeedmultiply = one * 5 / 10;
+        walldistance = one * 3 / 10;
+    }
+    float one;
+    
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity entity = game.entities[i];
+            if (entity == null) { continue; }
+            if (entity.grenade == null) { continue; }
+            UpdateGrenade(game, i, args.GetDt());
+        }
+    }
+
+    internal void UpdateGrenade(Game game, int grenadeEntityId, float dt)
+    {
+        float LocalPlayerPositionX = game.player.playerposition.X;
+        float LocalPlayerPositionY = game.player.playerposition.Y;
+        float LocalPlayerPositionZ = game.player.playerposition.Z;
+
+        Entity grenadeEntity = game.entities[grenadeEntityId];
+        Sprite grenadeSprite = grenadeEntity.sprite;
+        Grenade_ grenade = grenadeEntity.grenade;
+
+        float oldposX = grenadeEntity.sprite.positionX;
+        float oldposY = grenadeSprite.positionY;
+        float oldposZ = grenadeSprite.positionZ;
+        float newposX = grenadeSprite.positionX + grenade.velocityX * dt;
+        float newposY = grenadeSprite.positionY + grenade.velocityY * dt;
+        float newposZ = grenadeSprite.positionZ + grenade.velocityZ * dt;
+        grenade.velocityY += -projectilegravity * dt;
+
+        Vector3Ref velocity = Vector3Ref.Create(grenade.velocityX, grenade.velocityY, grenade.velocityZ);
+        Vector3Ref bouncePosition = GrenadeBounce(game, Vector3Ref.Create(oldposX, oldposY, oldposZ), Vector3Ref.Create(newposX, newposY, newposZ), velocity, dt);
+        grenade.velocityX = velocity.X;
+        grenade.velocityY = velocity.Y;
+        grenade.velocityZ = velocity.Z;
+        grenadeSprite.positionX = bouncePosition.X;
+        grenadeSprite.positionY = bouncePosition.Y;
+        grenadeSprite.positionZ = bouncePosition.Z;
+    }
+    float projectilegravity;
+    float bouncespeedmultiply;
+    float walldistance;
+    internal Vector3Ref GrenadeBounce(Game game, Vector3Ref oldposition, Vector3Ref newposition, Vector3Ref velocity, float dt)
+    {
+        bool ismoving = velocity.Length() > 100 * dt;
+        float modelheight = walldistance;
+        oldposition.Y += walldistance;
+        newposition.Y += walldistance;
+
+        //Math.Floor() is needed because casting negative values to integer is not floor.
+        Vector3IntRef oldpositioni = Vector3IntRef.Create(game.MathFloor(oldposition.X),
+           game.MathFloor(oldposition.Z),
+          game.MathFloor(oldposition.Y));
+        float playerpositionX = newposition.X;
+        float playerpositionY = newposition.Y;
+        float playerpositionZ = newposition.Z;
+        //left
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z + walldistance;
+            bool newempty = game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY))
+            && game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY) + 1);
+            if (newposition.Z - oldposition.Z > 0)
+            {
+                if (!newempty)
+                {
+                    velocity.Z = -velocity.Z;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        game.AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Z = oldposition.Z - newposition.Z;
+                }
+            }
+        }
+        //front
+        {
+            float qnewpositionX = newposition.X + walldistance;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z;
+            bool newempty = game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY))
+            && game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY) + 1);
+            if (newposition.X - oldposition.X > 0)
+            {
+                if (!newempty)
+                {
+                    velocity.X = -velocity.X;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        game.AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.X = oldposition.X - newposition.X;
+                }
+            }
+        }
+        //top
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y - walldistance;
+            float qnewpositionZ = newposition.Z;
+            int x = game.MathFloor(qnewpositionX);
+            int y = game.MathFloor(qnewpositionZ);
+            int z = game.MathFloor(qnewpositionY);
+            float a_ = walldistance;
+            bool newfull = (!game.IsTileEmptyForPhysics(x, y, z))
+                || (qnewpositionX - game.MathFloor(qnewpositionX) <= a_ && (!game.IsTileEmptyForPhysics(x - 1, y, z)) && (game.IsTileEmptyForPhysics(x - 1, y, z + 1)))
+                || (qnewpositionX - game.MathFloor(qnewpositionX) >= (1 - a_) && (!game.IsTileEmptyForPhysics(x + 1, y, z)) && (game.IsTileEmptyForPhysics(x + 1, y, z + 1)))
+                || (qnewpositionZ - game.MathFloor(qnewpositionZ) <= a_ && (!game.IsTileEmptyForPhysics(x, y - 1, z)) && (game.IsTileEmptyForPhysics(x, y - 1, z + 1)))
+                || (qnewpositionZ - game.MathFloor(qnewpositionZ) >= (1 - a_) && (!game.IsTileEmptyForPhysics(x, y + 1, z)) && (game.IsTileEmptyForPhysics(x, y + 1, z + 1)));
+            if (newposition.Y - oldposition.Y < 0)
+            {
+                if (newfull)
+                {
+                    velocity.Y = -velocity.Y;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        game.AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Y = oldposition.Y - newposition.Y;
+                }
+            }
+        }
+        //right
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z - walldistance;
+            bool newempty = game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY))
+            && game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY) + 1);
+            if (newposition.Z - oldposition.Z < 0)
+            {
+                if (!newempty)
+                {
+                    velocity.Z = -velocity.Z;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        game.AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Z = oldposition.Z - newposition.Z;
+                }
+            }
+        }
+        //back
+        {
+            float qnewpositionX = newposition.X - walldistance;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z;
+            bool newempty = game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY))
+            && game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY) + 1);
+            if (newposition.X - oldposition.X < 0)
+            {
+                if (!newempty)
+                {
+                    velocity.X = -velocity.X;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        game.AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.X = oldposition.X - newposition.X;
+                }
+            }
+        }
+        //bottom
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y + modelheight;
+            float qnewpositionZ = newposition.Z;
+            bool newempty = game.IsTileEmptyForPhysics(game.MathFloor(qnewpositionX), game.MathFloor(qnewpositionZ), game.MathFloor(qnewpositionY));
+            if (newposition.Y - oldposition.Y > 0)
+            {
+                if (!newempty)
+                {
+                    velocity.Y = -velocity.Y;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        game.AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Y = oldposition.Y - newposition.Y;
+                }
+            }
+        }
+        //ok:
+        playerpositionY -= walldistance;
+        return Vector3Ref.Create(playerpositionX, playerpositionY, playerpositionZ);
+    }
+}
+
+public class ModBullet : ClientMod
+{
+    public override void OnNewFrameDraw3d(Game game, float dt)
+    {
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity entity = game.entities[i];
+            if (entity == null) { continue; }
+            if (entity.bullet == null) { continue; }
+
+            Bullet_ b = entity.bullet;
+            if (b.progress < 1)
+            {
+                b.progress = 1;
+            }
+
+            float dirX = b.toX - b.fromX;
+            float dirY = b.toY - b.fromY;
+            float dirZ = b.toZ - b.fromZ;
+            float length = game.Dist(0, 0, 0, dirX, dirY, dirZ);
+            dirX /= length;
+            dirY /= length;
+            dirZ /= length;
+
+            float posX = b.fromX;
+            float posY = b.fromY;
+            float posZ = b.fromZ;
+            posX += dirX * (b.progress + b.speed * dt);
+            posY += dirY * (b.progress + b.speed * dt);
+            posZ += dirZ * (b.progress + b.speed * dt);
+            b.progress += b.speed * dt;
+
+            entity.sprite.positionX = posX;
+            entity.sprite.positionY = posY;
+            entity.sprite.positionZ = posZ;
+
+            if (b.progress > length)
+            {
+                game.entities[i] = null;
+            }
+        }
+    }
+}
+
+public class ModExpire : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity entity = game.entities[i];
+            if (entity == null) { continue; }
+            if (entity.expires == null) { continue; }
+            entity.expires.timeLeft -= args.GetDt();
+            if (entity.expires.timeLeft <= 0)
+            {
+                if (entity.grenade != null)
+                {
+                    GrenadeExplosion(game, i);
+                }
+                game.entities[i] = null;
+            }
+        }
+    }
+
+    void GrenadeExplosion(Game game, int grenadeEntityId)
+    {
+        float LocalPlayerPositionX = game.player.playerposition.X;
+        float LocalPlayerPositionY = game.player.playerposition.Y;
+        float LocalPlayerPositionZ = game.player.playerposition.Z;
+
+        Entity grenadeEntity = game.entities[grenadeEntityId];
+        Sprite grenadeSprite = grenadeEntity.sprite;
+        Grenade_ grenade = grenadeEntity.grenade;
+
+        game.AudioPlayAt("grenadeexplosion.ogg", grenadeSprite.positionX, grenadeSprite.positionY, grenadeSprite.positionZ);
+
+        {
+            Entity entity = new Entity();
+
+            Sprite spritenew = new Sprite();
+            spritenew.image = "ani5.png";
+            spritenew.positionX = grenadeSprite.positionX;
+            spritenew.positionY = grenadeSprite.positionY + 1;
+            spritenew.positionZ = grenadeSprite.positionZ;
+            spritenew.size = 200;
+            spritenew.animationcount = 4;
+
+            entity.sprite = spritenew;
+            entity.expires = Expires.Create(1);
+            game.EntityAddLocal(entity);
+        }
+
+        {
+            Packet_ServerExplosion explosion = new Packet_ServerExplosion();
+            explosion.XFloat = game.SerializeFloat(grenadeSprite.positionX);
+            explosion.YFloat = game.SerializeFloat(grenadeSprite.positionZ);
+            explosion.ZFloat = game.SerializeFloat(grenadeSprite.positionY);
+            explosion.RangeFloat = game.blocktypes[grenade.block].ExplosionRangeFloat;
+            explosion.IsRelativeToPlayerPosition = 0;
+            explosion.TimeFloat = game.blocktypes[grenade.block].ExplosionTimeFloat;
+
+            Entity entity = new Entity();
+            entity.push = explosion;
+            entity.expires = new Expires();
+            entity.expires.timeLeft = game.DeserializeFloat(game.blocktypes[grenade.block].ExplosionTimeFloat);
+            game.EntityAddLocal(entity);
+        }
+
+        float dist = game.Dist(LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ, grenadeSprite.positionX, grenadeSprite.positionY, grenadeSprite.positionZ);
+        float dmg = (1 - dist / game.DeserializeFloat(game.blocktypes[grenade.block].ExplosionRangeFloat)) * game.DeserializeFloat(game.blocktypes[grenade.block].DamageBodyFloat);
+        if (dmg > 0)
+        {
+            game.ApplyDamageToPlayer(game.platform.FloatToInt(dmg), Packet_DeathReasonEnum.Explosion, grenade.sourcePlayer);
+        }
+    }
+}
+
+public class ModSetPlayers : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+        float one = 1;
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity e = game.entities[i];
+            if (e == null) { continue; }
+            if (e.player == null) { continue; }
+            if (e.push == null)
+            {
+                e.push = new Packet_ServerExplosion();
+            }
+            e.push.RangeFloat = game.SerializeFloat(game.PlayerPushDistance);
+            e.push.XFloat = game.SerializeFloat(e.player.PositionX);
+            e.push.YFloat = game.SerializeFloat(e.player.PositionZ);
+            e.push.ZFloat = game.SerializeFloat(e.player.PositionY);
+
+            if ((!e.player.PositionLoaded) ||
+                (i == game.LocalPlayerId) || (e.player.Name == "")
+                || (e.player.playerDrawInfo == null)
+                || (e.player.playerDrawInfo.interpolation == null))
+            {
+                e.drawName = null;
+            }
+            else
+            {
+                if (e.drawName == null)
+                {
+                    e.drawName = new DrawName();
+                }
+                e.drawName.TextX = e.player.PositionX;
+                e.drawName.TextY = e.player.PositionY + e.player.ModelHeight + one * 8 / 10;
+                e.drawName.TextZ = e.player.PositionZ;
+                e.drawName.Name = e.player.Name;
+                if (e.player.Type == PlayerType.Monster)
+                {
+                    e.drawName.DrawHealth = true;
+                    e.drawName.Health = one * e.player.Health / 20;
+                }
+            }
+        }
+    }
+}
+
+public class ModReloadAmmo : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.reloadstartMilliseconds != 0
+            && (game.one * (game.platform.TimeMillisecondsFromStart() - game.reloadstartMilliseconds) / 1000)
+            > game.DeserializeFloat(game.blocktypes[game.reloadblock].ReloadDelayFloat))
+        {
+            {
+                int loaded = game.TotalAmmo[game.reloadblock];
+                loaded = Game.MinInt(game.blocktypes[game.reloadblock].AmmoMagazine, loaded);
+                game.LoadedAmmo[game.reloadblock] = loaded;
+                game.reloadstartMilliseconds = 0;
+                game.reloadblock = -1;
+            }
+        }
+    }
+    public override void OnKeyDown(Game game, KeyEventArgs args)
+    {
+        int eKey = args.GetKeyCode();
+        if (eKey == game.GetKey(GlKeys.R))
+        {
+            Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+            if (item != null && item.ItemClass == Packet_ItemClassEnum.Block
+                && game.blocktypes[item.BlockId].IsPistol
+                && game.reloadstartMilliseconds == 0)
+            {
+                int sound = game.rnd.Next() % game.blocktypes[item.BlockId].Sounds.ReloadCount;
+                game.AudioPlay(StringTools.StringAppend(game.platform, game.blocktypes[item.BlockId].Sounds.Reload[sound], ".ogg"));
+                game.reloadstartMilliseconds = game.platform.TimeMillisecondsFromStart();
+                game.reloadblock = item.BlockId;
+                game.SendPacketClient(ClientPackets.Reload());
+            }
+        }
+    }
+}
+
+public class ModPush : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        game.pushX = 0;
+        game.pushY = 0;
+        game.pushZ = 0;
+
+        float LocalPlayerPositionX = game.player.playerposition.X;
+        float LocalPlayerPositionY = game.player.playerposition.Y;
+        float LocalPlayerPositionZ = game.player.playerposition.Z;
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity entity = game.entities[i];
+            if (entity == null) { continue; }
+            if (entity.push == null) { continue; }
+            //Prevent players that aren't displayed from pushing
+            if (entity.player != null && !entity.player.PositionLoaded) { continue; }
+            float kposX = game.DeserializeFloat(entity.push.XFloat);
+            float kposY = game.DeserializeFloat(entity.push.ZFloat);
+            float kposZ = game.DeserializeFloat(entity.push.YFloat);
+            if (entity.push.IsRelativeToPlayerPosition != 0)
+            {
+                kposX += LocalPlayerPositionX;
+                kposY += LocalPlayerPositionY;
+                kposZ += LocalPlayerPositionZ;
+            }
+            float dist = game.Dist(kposX, kposY, kposZ, LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ);
+            if (dist < game.DeserializeFloat(entity.push.RangeFloat))
+            {
+                float diffX = LocalPlayerPositionX - kposX;
+                float diffY = LocalPlayerPositionY - kposY;
+                float diffZ = LocalPlayerPositionZ - kposZ;
+                game.pushX += diffX;
+                game.pushY += diffY;
+                game.pushZ += diffZ;
+            }
+        }
+    }
+}
+
+public class ModDrawLinesAroundSelectedBlock : ClientMod
+{
+    public ModDrawLinesAroundSelectedBlock()
+    {
+        one = 1;
+    }
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        if (game.ENABLE_DRAW2D)
+        {
+            DrawLinesAroundSelectedBlock(game, game.SelectedBlockPositionX,
+              game.SelectedBlockPositionY, game.SelectedBlockPositionZ);
+        }
+    }
+    float one;
+
+    Model wireframeCube;
+    public void DrawLinesAroundSelectedBlock(Game game, float x, float y, float z)
+    {
+        if (x == -1 && y == -1 && z == -1)
+        {
+            return;
+        }
+
+        float pickcubeheight = game.getblockheight(game.platform.FloatToInt(x), game.platform.FloatToInt(z), game.platform.FloatToInt(y));
+
+        float posx = x + one / 2;
+        float posy = y + pickcubeheight * one / 2;
+        float posz = z + one / 2;
+
+        game.platform.GLLineWidth(2);
+        float size = one * 51 / 100;
+        game.platform.BindTexture2d(0);
+
+        if (wireframeCube == null)
+        {
+            ModelData data = WireframeCube.Get();
+            wireframeCube = game.platform.CreateModel(data);
+        }
+        game.GLPushMatrix();
+        game.GLTranslate(posx, posy, posz);
+        game.GLScale(size, pickcubeheight * size, size);
+        game.DrawModel(wireframeCube);
+        game.GLPopMatrix();
+    }
+}
+
+public class ModDrawTerrain : ClientMod
+{
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        game.terrainRenderer.DrawTerrain();
+    }
+}
+
+public class ModDrawPlayerNames : ClientMod
+{
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            if (game.entities[i] == null)
+            {
+                continue;
+            }
+            if (game.entities[i].drawName == null)
+            {
+                continue;
+            }
+            int kKey = i;
+            DrawName p = game.entities[i].drawName;
+            //todo if picking
+            if ((game.Dist(game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z, p.TextX, p.TextY, p.TextZ) < 20)
+                || game.keyboardState[Game.KeyAltLeft] || game.keyboardState[Game.KeyAltRight])
+            {
+                string name = p.Name;
+                {
+                    float posX = p.TextX;
+                    float posY = p.TextY;
+                    float posZ = p.TextZ;
+                    float shadow = (game.one * game.MaybeGetLight(game.platform.FloatToInt(posX), game.platform.FloatToInt(posZ), game.platform.FloatToInt(posY))) / Game.maxlight;
+                    //do not interpolate player position if player is controlled by game world
+                    //if (EnablePlayerUpdatePositionContainsKey(kKey) && !EnablePlayerUpdatePosition(kKey))
+                    //{
+                    //    posX = p.NetworkX;
+                    //    posY = p.NetworkY;
+                    //    posZ = p.NetworkZ;
+                    //}
+                    game.GLPushMatrix();
+                    game.GLTranslate(posX, posY, posZ);
+                    //if (p.Type == PlayerType.Monster)
+                    //{
+                    //    GLTranslate(0, 1, 0);
+                    //}
+                    game.GLRotate(-game.player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
+                    game.GLRotate(-game.player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+                    float scale = game.one * 2 / 100;
+                    game.GLScale(scale, scale, scale);
+
+                    //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
+                    //Todo: Can't change text color because text has outline anyway.
+                    if (p.DrawHealth)
+                    {
+                        game.Draw2dTexture(game.WhiteTexture(), -26, -11, 52, 12, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+                        game.Draw2dTexture(game.WhiteTexture(), -25, -10, 50 * (game.one * p.Health), 10, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+                    }
+                    FontCi font = new FontCi();
+                    font.family = "Arial";
+                    font.size = 14;
+                    game.Draw2dText(name, font, -game.TextSizeWidth(name, 14) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
+                    //                        GL.Translate(0, 1, 0);
+                    game.GLPopMatrix();
+                }
+            }
+        }
+    }
+}
+
+public class ModDrawSprites : ClientMod
+{
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        float one = 1;
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            Entity entity = game.entities[i];
+            if (entity == null) { continue; }
+            if (entity.sprite == null) { continue; }
+            Sprite b = entity.sprite;
+            game.GLMatrixModeModelView();
+            game.GLPushMatrix();
+            game.GLTranslate(b.positionX, b.positionY, b.positionZ);
+            game.GLRotate(0 - game.player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
+            game.GLRotate(0 - game.player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+            game.GLScale((one * 2 / 100), (one * 2 / 100), (one * 2 / 100));
+            game.GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
+            //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
+            IntRef n = null;
+            if (b.animationcount > 0)
+            {
+                float progress = one - (entity.expires.timeLeft / entity.expires.totalTime);
+                n = IntRef.Create(game.platform.FloatToInt(progress * (b.animationcount * b.animationcount - 1)));
+            }
+            game.Draw2dTexture(game.GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
+            game.GLPopMatrix();
+        }
+    }
+}
+
+public class ModDrawHand : ClientMod
+{
+    internal string lasthandimage;
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        if ((!game.ENABLE_TPP_VIEW) && game.ENABLE_DRAW2D)
+        {
+            Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+            string img = null;
+            if (item != null)
+            {
+                img = game.blocktypes[item.BlockId].Handimage;
+                if (game.IronSights)
+                {
+                    img = game.blocktypes[item.BlockId].IronSightsImage;
+                }
+            }
+            if (img == null)
+            {
+                game.d_Weapon.DrawWeapon(deltaTime);
+            }
+            else
+            {
+                game.OrthoMode(game.Width(), game.Height());
+                if (lasthandimage != img)
+                {
+                    lasthandimage = img;
+                    byte[] file = game.GetFile(img);
+                    BitmapCi bmp = game.platform.BitmapCreateFromPng(file, game.platform.ByteArrayLength(file));
+                    if (bmp != null)
+                    {
+                        game.handTexture = game.platform.LoadTextureFromBitmap(bmp);
+                        game.platform.BitmapDelete(bmp);
+                    }
+                }
+                game.Draw2dTexture(game.handTexture, game.Width() / 2, game.Height() - 512, 512, 512, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+                game.PerspectiveMode();
+            }
+        }
+    }
+}
+
+public class ModPicking : ClientMod
+{
+    public ModPicking()
+    {
+        unproject = new Unproject();
+        tempViewport = new float[4];
+        tempRay = new float[4];
+        tempRayStartPoint = new float[4];
+    }
+    public override void OnNewFrameReadOnlyMainThread(Game game, float deltaTime)
+    {
+        if (game.guistate == GuiState.Normal)
+        {
+            UpdatePicking(game);
+        }
+    }
+    public override void OnMouseUp(Game game, MouseEventArgs args)
+    {
+        if (game.guistate == GuiState.Normal)
+        {
+            UpdatePicking(game);
+        }
+    }
+    public override void OnMouseDown(Game game, MouseEventArgs args)
+    {
+        if (game.guistate == GuiState.Normal)
+        {
+            UpdatePicking(game);
+        }
+    }
+
+    internal void UpdatePicking(Game game)
+    {
+        if (game.FollowId() != null)
+        {
+            game.SelectedBlockPositionX = 0 - 1;
+            game.SelectedBlockPositionY = 0 - 1;
+            game.SelectedBlockPositionZ = 0 - 1;
+            return;
+        }
+        NextBullet(game, 0);
+    }
+
+    internal void NextBullet(Game game, int bulletsshot)
+    {
+        float one = 1;
+        bool left = game.mouseLeft;
+        bool middle = game.mouseMiddle;
+        bool right = game.mouseRight;
+
+        bool IsNextShot = bulletsshot != 0;
+
+        if (!game.leftpressedpicking)
+        {
+            if (game.mouseleftclick)
+            {
+                game.leftpressedpicking = true;
+            }
+            else
+            {
+                left = false;
+            }
+        }
+        else
+        {
+            if (game.mouseleftdeclick)
+            {
+                game.leftpressedpicking = false;
+                left = false;
+            }
+        }
+        if (!left)
+        {
+            game.currentAttackedBlock = null;
+        }
+
+        Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+        bool ispistol = (item != null && game.blocktypes[item.BlockId].IsPistol);
+        bool ispistolshoot = ispistol && left;
+        bool isgrenade = ispistol && game.blocktypes[item.BlockId].PistolType == Packet_PistolTypeEnum.Grenade;
+        if (ispistol && isgrenade)
+        {
+            ispistolshoot = game.mouseleftdeclick;
+        }
+        //grenade cooking
+        if (game.mouseleftclick)
+        {
+            game.grenadecookingstartMilliseconds = game.platform.TimeMillisecondsFromStart();
+            if (ispistol && isgrenade)
+            {
+                if (game.blocktypes[item.BlockId].Sounds.ShootCount > 0)
+                {
+                    game.AudioPlay(game.platform.StringFormat("{0}.ogg", game.blocktypes[item.BlockId].Sounds.Shoot[0]));
+                }
+            }
+        }
+        float wait = ((one * (game.platform.TimeMillisecondsFromStart() - game.grenadecookingstartMilliseconds)) / 1000);
+        if (isgrenade && left)
+        {
+            if (wait >= game.grenadetime && isgrenade && game.grenadecookingstartMilliseconds != 0)
+            {
+                ispistolshoot = true;
+                game.mouseleftdeclick = true;
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            game.grenadecookingstartMilliseconds = 0;
+        }
+
+        if (ispistol && game.mouserightclick && (game.platform.TimeMillisecondsFromStart() - game.lastironsightschangeMilliseconds) >= 500)
+        {
+            game.IronSights = !game.IronSights;
+            game.lastironsightschangeMilliseconds = game.platform.TimeMillisecondsFromStart();
+        }
+
+        IntRef pick2count = new IntRef();
+        Line3D pick = new Line3D();
+        GetPickingLine(game, pick, ispistolshoot);
+        BlockPosSide[] pick2 = game.Pick(game.s, pick, pick2count);
+
+        if (left)
+        {
+            game.d_Weapon.SetAttack(true, false);
+        }
+        else if (right)
+        {
+            game.d_Weapon.SetAttack(true, true);
+        }
+
+        if (game.overheadcamera && pick2count.value > 0 && left)
+        {
+            //if not picked any object, and mouse button is pressed, then walk to destination.
+            if (game.Follow == null)
+            {
+                //Only walk to destination when not following someone
+                game.playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
+            }
+        }
+        bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
+        bool playertileempty = game.IsTileEmptyForPhysics(
+                  game.platform.FloatToInt(game.player.playerposition.X),
+                  game.platform.FloatToInt(game.player.playerposition.Z),
+                  game.platform.FloatToInt(game.player.playerposition.Y + (one / 2)));
+        bool playertileemptyclose = game.IsTileEmptyForPhysicsClose(
+                  game.platform.FloatToInt(game.player.playerposition.X),
+                  game.platform.FloatToInt(game.player.playerposition.Z),
+                  game.platform.FloatToInt(game.player.playerposition.Y + (one / 2)));
+        BlockPosSide pick0 = new BlockPosSide();
+        if (pick2count.value > 0 &&
+            ((pickdistanceok && (playertileempty || (playertileemptyclose)))
+            || game.overheadcamera)
+            )
+        {
+            game.SelectedBlockPositionX = game.platform.FloatToInt(pick2[0].Current()[0]);
+            game.SelectedBlockPositionY = game.platform.FloatToInt(pick2[0].Current()[1]);
+            game.SelectedBlockPositionZ = game.platform.FloatToInt(pick2[0].Current()[2]);
+            pick0 = pick2[0];
+        }
+        else
+        {
+            game.SelectedBlockPositionX = -1;
+            game.SelectedBlockPositionY = -1;
+            game.SelectedBlockPositionZ = -1;
+            pick0.blockPos = new float[3];
+            pick0.blockPos[0] = -1;
+            pick0.blockPos[1] = -1;
+            pick0.blockPos[2] = -1;
+        }
+        if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
+        {
+            int ntileX = game.platform.FloatToInt(pick0.Current()[0]);
+            int ntileY = game.platform.FloatToInt(pick0.Current()[1]);
+            int ntileZ = game.platform.FloatToInt(pick0.Current()[2]);
+            if (game.IsUsableBlock(game.GetBlock(ntileX, ntileZ, ntileY)))
+            {
+                game.currentAttackedBlock = Vector3IntRef.Create(ntileX, ntileZ, ntileY);
+            }
+        }
+        if (game.GetFreeMouse())
+        {
+            if (pick2count.value > 0)
+            {
+                OnPick_(pick0);
+            }
+            return;
+        }
+
+        if ((one * (game.platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= game.BuildDelay()
+            || IsNextShot)
+        {
+            if (left && game.d_Inventory.RightHand[game.ActiveMaterial] == null)
+            {
+                game.SendPacketClient(ClientPackets.MonsterHit(game.platform.FloatToInt(2 + game.rnd.NextFloat() * 4)));
+            }
+            if (left && !fastclicking)
+            {
+                //todo animation
+                fastclicking = false;
+            }
+            if ((left || right || middle) && (!isgrenade))
+            {
+                lastbuildMilliseconds = game.platform.TimeMillisecondsFromStart();
+            }
+            if (isgrenade && game.mouseleftdeclick)
+            {
+                lastbuildMilliseconds = game.platform.TimeMillisecondsFromStart();
+            }
+            if (game.reloadstartMilliseconds != 0)
+            {
+                PickingEnd(left, right, middle, ispistol);
+                return;
+            }
+            if (ispistolshoot)
+            {
+                if ((!(game.LoadedAmmo[item.BlockId] > 0))
+                    || (!(game.TotalAmmo[item.BlockId] > 0)))
+                {
+                    game.AudioPlay("Dry Fire Gun-SoundBible.com-2053652037.ogg");
+                    PickingEnd(left, right, middle, ispistol);
+                    return;
+                }
+            }
+            if (ispistolshoot)
+            {
+                float toX = pick.End[0];
+                float toY = pick.End[1];
+                float toZ = pick.End[2];
+                if (pick2count.value > 0)
+                {
+                    toX = pick2[0].blockPos[0];
+                    toY = pick2[0].blockPos[1];
+                    toZ = pick2[0].blockPos[2];
+                }
+
+                Packet_ClientShot shot = new Packet_ClientShot();
+                shot.FromX = game.SerializeFloat(pick.Start[0]);
+                shot.FromY = game.SerializeFloat(pick.Start[1]);
+                shot.FromZ = game.SerializeFloat(pick.Start[2]);
+                shot.ToX = game.SerializeFloat(toX);
+                shot.ToY = game.SerializeFloat(toY);
+                shot.ToZ = game.SerializeFloat(toZ);
+                shot.HitPlayer = -1;
+
+                for (int i = 0; i < game.entitiesCount; i++)
+                {
+                    if (game.entities[i] == null)
+                    {
+                        continue;
+                    }
+                    if (game.entities[i].player == null)
+                    {
+                        continue;
+                    }
+                    Player p_ = game.entities[i].player;
+                    if (!p_.PositionLoaded)
+                    {
+                        continue;
+                    }
+                    float feetposX = p_.PositionX;
+                    float feetposY = p_.PositionY;
+                    float feetposZ = p_.PositionZ;
+                    //var p = PlayerPositionSpawn;
+                    Box3D bodybox = new Box3D();
+                    float headsize = (p_.ModelHeight - p_.EyeHeight) * 2; //0.4f;
+                    float h = p_.ModelHeight - headsize;
+                    float r = one * 35 / 100;
+
+                    bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ - r);
+                    bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ + r);
+                    bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ - r);
+                    bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ + r);
+
+                    bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
+                    bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
+                    bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
+                    bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
+
+                    Box3D headbox = new Box3D();
+
+                    headbox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
+                    headbox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
+                    headbox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
+                    headbox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
+
+                    headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ - r);
+                    headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ + r);
+                    headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ - r);
+                    headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ + r);
+
+                    float[] p;
+                    float localeyeposX = game.EyesPosX();
+                    float localeyeposY = game.EyesPosY();
+                    float localeyeposZ = game.EyesPosZ();
+                    p = Intersection.CheckLineBoxExact(pick, headbox);
+                    if (p != null)
+                    {
+                        //do not allow to shoot through terrain
+                        if (pick2count.value == 0 || (game.Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
+                            > game.Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
+                        {
+                            if (!isgrenade)
+                            {
+                                Entity entity = new Entity();
+                                Sprite sprite = new Sprite();
+                                sprite.positionX = p[0];
+                                sprite.positionY = p[1];
+                                sprite.positionZ = p[2];
+                                sprite.image = "blood.png";
+                                entity.sprite = sprite;
+                                entity.expires = Expires.Create(one * 2 / 10);
+                                game.EntityAddLocal(entity);
+                            }
+                            shot.HitPlayer = i;
+                            shot.IsHitHead = 1;
+                        }
+                    }
+                    else
+                    {
+                        p = Intersection.CheckLineBoxExact(pick, bodybox);
+                        if (p != null)
+                        {
+                            //do not allow to shoot through terrain
+                            if (pick2count.value == 0 || (game.Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
+                                > game.Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
+                            {
+                                if (!isgrenade)
+                                {
+                                    Entity entity = new Entity();
+                                    Sprite sprite = new Sprite();
+                                    sprite.positionX = p[0];
+                                    sprite.positionY = p[1];
+                                    sprite.positionZ = p[2];
+                                    sprite.image = "blood.png";
+                                    entity.sprite = sprite;
+                                    entity.expires = Expires.Create(one * 2 / 10);
+                                    game.EntityAddLocal(entity);
+                                }
+                                shot.HitPlayer = i;
+                                shot.IsHitHead = 0;
+                            }
+                        }
+                    }
+                }
+                shot.WeaponBlock = item.BlockId;
+                game.LoadedAmmo[item.BlockId] = game.LoadedAmmo[item.BlockId] - 1;
+                game.TotalAmmo[item.BlockId] = game.TotalAmmo[item.BlockId] - 1;
+                float projectilespeed = game.DeserializeFloat(game.blocktypes[item.BlockId].ProjectileSpeedFloat);
+                if (projectilespeed == 0)
+                {
+                    {
+                        Entity entity = game.CreateBulletEntity(
+                          pick.Start[0], pick.Start[1], pick.Start[2],
+                          toX, toY, toZ, 150);
+                        game.EntityAddLocal(entity);
+                    }
+                }
+                else
+                {
+                    float vX = toX - pick.Start[0];
+                    float vY = toY - pick.Start[1];
+                    float vZ = toZ - pick.Start[2];
+                    float vLength = game.Length(vX, vY, vZ);
+                    vX /= vLength;
+                    vY /= vLength;
+                    vZ /= vLength;
+                    vX *= projectilespeed;
+                    vY *= projectilespeed;
+                    vZ *= projectilespeed;
+                    shot.ExplodesAfter = game.SerializeFloat(game.grenadetime - wait);
+
+                    {
+                        Entity grenadeEntity = new Entity();
+
+                        Sprite sprite = new Sprite();
+                        sprite.image = "ChemicalGreen.png";
+                        sprite.size = 14;
+                        sprite.animationcount = 0;
+                        sprite.positionX = pick.Start[0];
+                        sprite.positionY = pick.Start[1];
+                        sprite.positionZ = pick.Start[2];
+                        grenadeEntity.sprite = sprite;
+
+                        Grenade_ projectile = new Grenade_();
+                        projectile.velocityX = vX;
+                        projectile.velocityY = vY;
+                        projectile.velocityZ = vZ;
+                        projectile.block = item.BlockId;
+                        projectile.sourcePlayer = game.LocalPlayerId;
+
+                        grenadeEntity.expires = Expires.Create(game.grenadetime - wait);
+
+                        grenadeEntity.grenade = projectile;
+                        game.EntityAddLocal(grenadeEntity);
+                    }
+                }
+                Packet_Client packet = new Packet_Client();
+                packet.Id = Packet_ClientIdEnum.Shot;
+                packet.Shot = shot;
+                game.SendPacketClient(packet);
+
+                if (game.blocktypes[item.BlockId].Sounds.ShootEndCount > 0)
+                {
+                    game.pistolcycle = game.rnd.Next() % game.blocktypes[item.BlockId].Sounds.ShootEndCount;
+                    game.AudioPlay(game.platform.StringFormat("{0}.ogg", game.blocktypes[item.BlockId].Sounds.ShootEnd[game.pistolcycle]));
+                }
+
+                bulletsshot++;
+                if (bulletsshot < game.DeserializeFloat(game.blocktypes[item.BlockId].BulletsPerShotFloat))
+                {
+                    NextBullet(game, bulletsshot);
+                }
+
+                //recoil
+                game.player.playerorientation.X -= game.rnd.NextFloat() * game.CurrentRecoil();
+                game.player.playerorientation.Y += game.rnd.NextFloat() * game.CurrentRecoil() * 2 - game.CurrentRecoil();
+
+                PickingEnd(left, right, middle, ispistol);
+                return;
+            }
+            if (ispistol && right)
+            {
+                PickingEnd(left, right, middle, ispistol);
+                return;
+            }
+            if (pick2count.value > 0)
+            {
+                if (middle)
+                {
+                    int newtileX = game.platform.FloatToInt(pick0.Current()[0]);
+                    int newtileY = game.platform.FloatToInt(pick0.Current()[1]);
+                    int newtileZ = game.platform.FloatToInt(pick0.Current()[2]);
+                    if (game.IsValidPos(newtileX, newtileZ, newtileY))
+                    {
+                        int clonesource = game.GetBlock(newtileX, newtileZ, newtileY);
+                        int clonesource2 = game.d_Data.WhenPlayerPlacesGetsConvertedTo()[clonesource];
+                        bool gotoDone = false;
+                        //find this block in another right hand.
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (game.d_Inventory.RightHand[i] != null
+                                && game.d_Inventory.RightHand[i].ItemClass == Packet_ItemClassEnum.Block
+                                && game.d_Inventory.RightHand[i].BlockId == clonesource2)
+                            {
+                                game.ActiveMaterial = i;
+                                gotoDone = true;
+                            }
+                        }
+                        if (!gotoDone)
+                        {
+                            IntRef freehand = game.d_InventoryUtil.FreeHand(game.ActiveMaterial);
+                            //find this block in inventory.
+                            for (int i = 0; i < game.d_Inventory.ItemsCount; i++)
+                            {
+                                Packet_PositionItem k = game.d_Inventory.Items[i];
+                                if (k == null)
+                                {
+                                    continue;
+                                }
+                                if (k.Value_.ItemClass == Packet_ItemClassEnum.Block
+                                    && k.Value_.BlockId == clonesource2)
+                                {
+                                    //free hand
+                                    if (freehand != null)
+                                    {
+                                        game.WearItem(
+                                            game.InventoryPositionMainArea(k.X, k.Y),
+                                            game.InventoryPositionMaterialSelector(freehand.value));
+                                        break;
+                                    }
+                                    //try to replace current slot
+                                    if (game.d_Inventory.RightHand[game.ActiveMaterial] != null
+                                        && game.d_Inventory.RightHand[game.ActiveMaterial].ItemClass == Packet_ItemClassEnum.Block)
+                                    {
+                                        game.MoveToInventory(
+                                            game.InventoryPositionMaterialSelector(game.ActiveMaterial));
+                                        game.WearItem(
+                                            game.InventoryPositionMainArea(k.X, k.Y),
+                                            game.InventoryPositionMaterialSelector(game.ActiveMaterial));
+                                    }
+                                }
+                            }
+                        }
+                        string[] sound = game.d_Data.CloneSound()[clonesource];
+                        if (sound != null) // && sound.Length > 0)
+                        {
+                            game.AudioPlay(sound[0]); //todo sound cycle
+                        }
+                    }
+                }
+                if (left || right)
+                {
+                    BlockPosSide tile = pick0;
+                    int newtileX;
+                    int newtileY;
+                    int newtileZ;
+                    if (right)
+                    {
+                        newtileX = game.platform.FloatToInt(tile.Translated()[0]);
+                        newtileY = game.platform.FloatToInt(tile.Translated()[1]);
+                        newtileZ = game.platform.FloatToInt(tile.Translated()[2]);
+                    }
+                    else
+                    {
+                        newtileX = game.platform.FloatToInt(tile.Current()[0]);
+                        newtileY = game.platform.FloatToInt(tile.Current()[1]);
+                        newtileZ = game.platform.FloatToInt(tile.Current()[2]);
+                    }
+                    if (game.IsValidPos(newtileX, newtileZ, newtileY))
+                    {
+                        //Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock(newtileX, newtileZ, newtileY));
+                        if (!(pick0.blockPos[0] == -1
+                             && pick0.blockPos[1] == -1
+                            && pick0.blockPos[2] == -1))
+                        {
+                            int blocktype;
+                            if (left) { blocktype = game.GetBlock(newtileX, newtileZ, newtileY); }
+                            else { blocktype = ((game.BlockInHand() == null) ? 1 : game.BlockInHand().value); }
+                            if (left && blocktype == game.d_Data.BlockIdAdminium())
+                            {
+                                PickingEnd(left, right, middle, ispistol);
+                                return;
+                            }
+                            string[] sound = left ? game.d_Data.BreakSound()[blocktype] : game.d_Data.BuildSound()[blocktype];
+                            if (sound != null) // && sound.Length > 0)
+                            {
+                                game.AudioPlay(sound[0]); //todo sound cycle
+                            }
+                        }
+                        //normal attack
+                        if (!right)
+                        {
+                            //attack
+                            int posx = newtileX;
+                            int posy = newtileZ;
+                            int posz = newtileY;
+                            game.currentAttackedBlock = Vector3IntRef.Create(posx, posy, posz);
+                            if (!game.blockHealth.ContainsKey(posx, posy, posz))
+                            {
+                                game.blockHealth.Set(posx, posy, posz,game. GetCurrentBlockHealth(posx, posy, posz));
+                            }
+                            game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - game.WeaponAttackStrength());
+                            float health = game.GetCurrentBlockHealth(posx, posy, posz);
+                            if (health <= 0)
+                            {
+                                if (game.currentAttackedBlock != null)
+                                {
+                                    game.blockHealth.Remove(posx, posy, posz);
+                                }
+                                game.currentAttackedBlock = null;
+                                game.OnPick(game.platform.FloatToInt(newtileX), game.platform.FloatToInt(newtileZ), game.platform.FloatToInt(newtileY),
+                                    game.platform.FloatToInt(tile.Current()[0]), game.platform.FloatToInt(tile.Current()[2]), game.platform.FloatToInt(tile.Current()[1]),
+                                    tile.collisionPos,
+                                    right);
+                            }
+                            PickingEnd(left, right, middle, ispistol);
+                            return;
+                        }
+                        if (!right)
+                        {
+                            game.particleEffectBlockBreak.StartParticleEffect(newtileX, newtileY, newtileZ);//must be before deletion - gets ground type.
+                        }
+                        if (!game.IsValidPos(newtileX, newtileZ, newtileY))
+                        {
+                            game.platform.ThrowException("");
+                        }
+                        game.OnPick(game.platform.FloatToInt(newtileX), game.platform.FloatToInt(newtileZ), game.platform.FloatToInt(newtileY),
+                            game.platform.FloatToInt(tile.Current()[0]), game.platform.FloatToInt(tile.Current()[2]), game.platform.FloatToInt(tile.Current()[1]),
+                            tile.collisionPos,
+                            right);
+                        //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
+                        //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
+                    }
+                }
+            }
+        }
+        PickingEnd(left, right, middle, ispistol);
+    }
+
+    internal bool fastclicking;
+    internal void PickingEnd(bool left, bool right, bool middle, bool ispistol)
+    {
+        fastclicking = false;
+        if ((!(left || right || middle)) && (!ispistol))
+        {
+            lastbuildMilliseconds = 0;
+            fastclicking = true;
+        }
+    }
+
+    internal int lastbuildMilliseconds;
+
+    internal void OnPick_(BlockPosSide pick0)
+    {
+        //playerdestination = pick0.pos;
+    }
+
+    Unproject unproject;
+    float[] tempViewport;
+    float[] tempRay;
+    float[] tempRayStartPoint;
+    public void GetPickingLine(Game game, Line3D retPick, bool ispistolshoot)
+    {
+        int mouseX;
+        int mouseY;
+
+        if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
+        {
+            mouseX = game.Width() / 2;
+            mouseY = game.Height() / 2;
+        }
+        else
+        {
+            mouseX = game.mouseCurrentX;
+            mouseY = game.mouseCurrentY;
+        }
+
+        PointFloatRef aim = game.GetAim();
+        if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
+        {
+            mouseX += game.platform.FloatToInt(aim.X);
+            mouseY += game.platform.FloatToInt(aim.Y);
+        }
+
+        tempViewport[0] = 0;
+        tempViewport[1] = 0;
+        tempViewport[2] = game.Width();
+        tempViewport[3] = game.Height();
+
+        unproject.UnProject(mouseX, game.Height() - mouseY, 1, game.mvMatrix.Peek(), game.pMatrix.Peek(), tempViewport, tempRay);
+        unproject.UnProject(mouseX, game.Height() - mouseY, 0, game.mvMatrix.Peek(), game.pMatrix.Peek(), tempViewport, tempRayStartPoint);
+
+        float raydirX = (tempRay[0] - tempRayStartPoint[0]);
+        float raydirY = (tempRay[1] - tempRayStartPoint[1]);
+        float raydirZ = (tempRay[2] - tempRayStartPoint[2]);
+        float raydirLength = game.Length(raydirX, raydirY, raydirZ);
+        raydirX /= raydirLength;
+        raydirY /= raydirLength;
+        raydirZ /= raydirLength;
+
+        retPick.Start = new float[3];
+        retPick.Start[0] = tempRayStartPoint[0];// +raydirX; //do not pick behind
+        retPick.Start[1] = tempRayStartPoint[1];// +raydirY;
+        retPick.Start[2] = tempRayStartPoint[2];// +raydirZ;
+
+        float pickDistance1 = CurrentPickDistance(game) * ((ispistolshoot) ? 100 : 1);
+        retPick.End = new float[3];
+        retPick.End[0] = tempRayStartPoint[0] + raydirX * pickDistance1;
+        retPick.End[1] = tempRayStartPoint[1] + raydirY * pickDistance1;
+        retPick.End[2] = tempRayStartPoint[2] + raydirZ * pickDistance1;
+    }
+
+    float CurrentPickDistance(Game game)
+    {
+        float pick_distance = game.PICK_DISTANCE;
+        if (game.cameratype == CameraType.Tpp)
+        {
+            pick_distance = game.tppcameradistance + game.PICK_DISTANCE;
+        }
+        if (game.cameratype == CameraType.Overhead)
+        {
+            if (game.platform.IsFastSystem())
+            {
+                pick_distance = 100;
+            }
+            else
+            {
+                pick_distance = game.overheadcameradistance * 2;
+            }
+        }
+        return pick_distance;
+    }
+}
+
+public class ModClearInactivePlayersDrawInfo : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        float one = 1;
+        int now = game.platform.TimeMillisecondsFromStart();
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            if (game.entities[i] == null)
+            {
+                continue;
+            }
+            if (game.entities[i].player == null)
+            {
+                continue;
+            }
+            int kKey = i;
+            Player p = game.entities[i].player;
+            if ((one * (now - p.LastUpdateMilliseconds) / 1000) > 2)
+            {
+                p.playerDrawInfo = null;
+                p.PositionLoaded = false;
+            }
+        }
+    }
+}
+
+public class ModCameraKeys : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        float one = 1;
+        float dt = args.GetDt();
+
+        if (game.guistate == GuiState.MapLoading) { return; }
+
+        bool angleup = false;
+        bool angledown = false;
+        float overheadcameraanglemovearea = one * 5 / 100;
+        float overheadcameraspeed = 3;
+        game.wantsjump = game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)];
+        game.shiftkeydown = game.keyboardState[game.GetKey(GlKeys.ShiftLeft)];
+        game.movedx = 0;
+        game.movedy = 0;
+        game.moveup = false;
+        game.movedown = false;
+        if (game.guistate == GuiState.Normal)
+        {
+            if (game.GuiTyping == TypingState.None)
+            {
+                if (game.d_Physics.reachedwall_1blockhigh && (game.AutoJumpEnabled || (!game.platform.IsMousePointerLocked())))
+                {
+                    game.wantsjump = true;
+                }
+                if (game.overheadcamera)
+                {
+                    CameraMove m = new CameraMove();
+                    if (game.keyboardState[game.GetKey(GlKeys.A)]) { game.overheadcameraK.TurnRight(dt * overheadcameraspeed); }
+                    if (game.keyboardState[game.GetKey(GlKeys.D)]) { game.overheadcameraK.TurnLeft(dt * overheadcameraspeed); }
+                    if (game.keyboardState[game.GetKey(GlKeys.W)]) { angleup = true; }
+                    if (game.keyboardState[game.GetKey(GlKeys.S)]) { angledown = true; }
+                    game.overheadcameraK.Center.X = game.player.playerposition.X;
+                    game.overheadcameraK.Center.Y = game.player.playerposition.Y;
+                    game.overheadcameraK.Center.Z = game.player.playerposition.Z;
+                    m.Distance = game.overheadcameradistance;
+                    m.AngleUp = angleup;
+                    m.AngleDown = angledown;
+                    game.overheadcameraK.Move(m, dt);
+                    float toDest = game.Dist(game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
+                    game.playerdestination.X + one / 2, game.playerdestination.Y - one / 2, game.playerdestination.Z + one / 2);
+                    if (toDest >= 1)
+                    {
+                        game.movedy += 1;
+                        if (game.d_Physics.reachedwall)
+                        {
+                            game.wantsjump = true;
+                        }
+                        //player orientation
+                        float qX = game.playerdestination.X - game.player.playerposition.X;
+                        float qY = game.playerdestination.Y - game.player.playerposition.Y;
+                        float qZ = game.playerdestination.Z - game.player.playerposition.Z;
+                        float angle = game.VectorAngleGet(qX, qY, qZ);
+                        game.player.playerorientation.Y = Game.GetPi() / 2 + angle;
+                        game.player.playerorientation.X = Game.GetPi();
+                    }
+                }
+                else if (game.enable_move)
+                {
+                    if (game.keyboardState[game.GetKey(GlKeys.W)]) { game.movedy += 1; }
+                    if (game.keyboardState[game.GetKey(GlKeys.S)]) { game.movedy += -1; }
+                    if (game.keyboardState[game.GetKey(GlKeys.A)]) { game.movedx += -1; game.localplayeranimationhint.leanleft = true; game.localstance = 1; }
+                    else { game.localplayeranimationhint.leanleft = false; }
+                    if (game.keyboardState[game.GetKey(GlKeys.D)]) { game.movedx += 1; game.localplayeranimationhint.leanright = true; game.localstance = 2; }
+                    else { game.localplayeranimationhint.leanright = false; }
+                    if (!game.localplayeranimationhint.leanleft && !game.localplayeranimationhint.leanright) { game.localstance = 0; }
+
+                    game.movedx += game.touchMoveDx;
+                    game.movedy += game.touchMoveDy;
+                }
+            }
+            if (game.ENABLE_FREEMOVE || game.Swimming())
+            {
+                if (game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)])
+                {
+                    game.moveup = true;
+                }
+                if (game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.ControlLeft)])
+                {
+                    game.movedown = true;
+                }
+            }
+        }
+    }
+}
+
+public class ModTrampoline : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        int blockunderplayer = game.BlockUnderPlayer();
+
+        float one = 1;
+        if (blockunderplayer != -1 && blockunderplayer == game.d_Data.BlockIdTrampoline()
+            && (!game.player.isplayeronground) && !game.shiftkeydown)
+        {
+            game.wantsjump = true;
+            game.jumpstartacceleration = (20 + one * 666 / 1000) * game.d_Physics.gravity;
+        }
+    }
+}
+
+//slippery walk on ice and when swimming
+public class ModSlipperyWalk : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+
+        float one = 1;
+        int blockunderplayer = game.BlockUnderPlayer();
+
+        if ((blockunderplayer != -1 && game.d_Data.IsSlipperyWalk()[blockunderplayer]) || game.Swimming())
+        {
+            game.acceleration = new Acceleration();
+            {
+                game.acceleration.acceleration1 = one * 99 / 100;
+                game.acceleration.acceleration2 = one * 2 / 10;
+                game.acceleration.acceleration3 = 70;
+            }
+        }
+    }
+}
+
+public class ModNoAirControl : ClientMod
+{
+    public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+
+        float one = 1;
+        if (!game.player.isplayeronground)
+        {
+            game.acceleration = new Acceleration();
+            {
+                game.acceleration.acceleration1 = one * 99 / 100;
+                game.acceleration.acceleration2 = one * 2 / 10;
+                game.acceleration.acceleration3 = 70;
+            }
+        }
+    }
+}
+
+public class ModCamera : ClientMod
+{
+    public ModCamera()
+    {
+        OverheadCamera_cameraEye = new Vector3Ref();
+        upVec3 = Vec3.FromValues(0, 1, 0);
+    }
+    
+    public override void OnBeforeNewFrameDraw3d(Game game, float deltaTime)
+    {
+        if (game.overheadcamera)
+        {
+            game.camera = OverheadCamera(game);
+        }
+        else
+        {
+            game.camera = FppCamera(game);
+        }
+    }
+
+    internal Vector3Ref OverheadCamera_cameraEye;
+    internal float[] OverheadCamera(Game game)
+    {
+        game.overheadcameraK.GetPosition(game.platform, OverheadCamera_cameraEye);
+        Vector3Ref cameraEye = OverheadCamera_cameraEye;
+        Vector3Ref cameraTarget = Vector3Ref.Create(game.overheadcameraK.Center.X, game.overheadcameraK.Center.Y + game.GetCharacterEyesHeight(), game.overheadcameraK.Center.Z);
+        FloatRef currentOverheadcameradistance = FloatRef.Create(game.overheadcameradistance);
+        LimitThirdPersonCameraToWalls(game, cameraEye, cameraTarget, currentOverheadcameradistance);
+        float[] ret = new float[16];
+        Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
+            Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
+            upVec3);
+        return ret;
+    }
+    float[] upVec3;
+
+    internal float[] FppCamera(Game game)
+    {
+        Vector3Ref forward = new Vector3Ref();
+        VectorTool.ToVectorInFixedSystem(0, 0, 1, game.player.playerorientation.X, game.player.playerorientation.Y, forward);
+        Vector3Ref cameraEye = new Vector3Ref();
+        Vector3Ref cameraTarget = new Vector3Ref();
+        float playerEyeX = game.player.playerposition.X;
+        float playerEyeY = game.player.playerposition.Y + game.GetCharacterEyesHeight();
+        float playerEyeZ = game.player.playerposition.Z;
+        if (!game.ENABLE_TPP_VIEW)
+        {
+            cameraEye.X = playerEyeX;
+            cameraEye.Y = playerEyeY;
+            cameraEye.Z = playerEyeZ;
+            cameraTarget.X = playerEyeX + forward.X;
+            cameraTarget.Y = playerEyeY + forward.Y;
+            cameraTarget.Z = playerEyeZ + forward.Z;
+        }
+        else
+        {
+            cameraEye.X = playerEyeX + forward.X * -game.tppcameradistance;
+            cameraEye.Y = playerEyeY + forward.Y * -game.tppcameradistance;
+            cameraEye.Z = playerEyeZ + forward.Z * -game.tppcameradistance;
+            cameraTarget.X = playerEyeX;
+            cameraTarget.Y = playerEyeY;
+            cameraTarget.Z = playerEyeZ;
+            FloatRef currentTppcameradistance = FloatRef.Create(game.tppcameradistance);
+            LimitThirdPersonCameraToWalls(game, cameraEye, cameraTarget, currentTppcameradistance);
+        }
+        float[] ret = new float[16];
+        Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
+            Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
+            upVec3);
+        return ret;
+    }
+
+    internal void LimitThirdPersonCameraToWalls(Game game, Vector3Ref eye, Vector3Ref target, FloatRef curtppcameradistance)
+    {
+        float one = 1;
+        Vector3Ref ray_start_point = target;
+        Vector3Ref raytarget = eye;
+
+        Line3D pick = new Line3D();
+        float raydirX = (raytarget.X - ray_start_point.X);
+        float raydirY = (raytarget.Y - ray_start_point.Y);
+        float raydirZ = (raytarget.Z - ray_start_point.Z);
+
+        float raydirLength1 = game.Length(raydirX, raydirY, raydirZ);
+        raydirX /= raydirLength1;
+        raydirY /= raydirLength1;
+        raydirZ /= raydirLength1;
+        raydirX = raydirX * (game.tppcameradistance + 1);
+        raydirY = raydirY * (game.tppcameradistance + 1);
+        raydirZ = raydirZ * (game.tppcameradistance + 1);
+        pick.Start = Vec3.FromValues(ray_start_point.X, ray_start_point.Y, ray_start_point.Z);
+        pick.End = new float[3];
+        pick.End[0] = ray_start_point.X + raydirX;
+        pick.End[1] = ray_start_point.Y + raydirY;
+        pick.End[2] = ray_start_point.Z + raydirZ;
+
+        //pick terrain
+        IntRef pick2Count = new IntRef();
+        BlockPosSide[] pick2 = game.Pick(game.s, pick, pick2Count);
+
+        if (pick2Count.value > 0)
+        {
+            BlockPosSide pick2nearest = game.Nearest(pick2, pick2Count.value, ray_start_point.X, ray_start_point.Y, ray_start_point.Z);
+            //pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });
+
+            float pickX = pick2nearest.blockPos[0] - target.X;
+            float pickY = pick2nearest.blockPos[1] - target.Y;
+            float pickZ = pick2nearest.blockPos[2] - target.Z;
+            float pickdistance = game.Length(pickX, pickY, pickZ);
+            curtppcameradistance.value = Game.MinFloat(pickdistance - 1, curtppcameradistance.value);
+            if (curtppcameradistance.value < one * 3 / 10) { curtppcameradistance.value = one * 3 / 10; }
+        }
+
+        float cameraDirectionX = target.X - eye.X;
+        float cameraDirectionY = target.Y - eye.Y;
+        float cameraDirectionZ = target.Z - eye.Z;
+        float raydirLength = game.Length(raydirX, raydirY, raydirZ);
+        raydirX /= raydirLength;
+        raydirY /= raydirLength;
+        raydirZ /= raydirLength;
+        eye.X = target.X + raydirX * curtppcameradistance.value;
+        eye.Y = target.Y + raydirY * curtppcameradistance.value;
+        eye.Z = target.Z + raydirZ * curtppcameradistance.value;
+    }
 }

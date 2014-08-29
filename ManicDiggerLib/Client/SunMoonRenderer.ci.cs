@@ -1,4 +1,4 @@
-﻿public class SunMoonRenderer
+﻿public class SunMoonRenderer : ClientMod
 {
     public SunMoonRenderer()
     {
@@ -10,7 +10,6 @@
         ImageSize = 96;
         day_length_in_seconds = 30;
     }
-    internal Game game;
     int hour;
     float one;
     public int GetHour()
@@ -27,7 +26,7 @@
     int moontexture;
     internal int ImageSize;
     internal float day_length_in_seconds;
-    public void Draw(float dt)
+    public override void OnNewFrameDraw3d(Game game, float dt)
     {
         GamePlatform platform = game.platform;
         game.GLMatrixModeModelView();

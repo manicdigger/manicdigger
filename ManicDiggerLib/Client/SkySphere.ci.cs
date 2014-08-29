@@ -1,15 +1,45 @@
-﻿public class SkySphere
+﻿public class SkySphere : ClientMod
 {
     public SkySphere()
     {
         SkyTexture = -1;
+        skyspheretexture = -1;
+        skyspherenighttexture = -1;
     }
-    internal Game game;
-    internal MeshBatcher d_MeshBatcher;
     internal int SkyTexture;
-    //int SkyMeshId = -1;
     Model skymodel;
-    public void Draw(float fov)
+
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        game.platform.GlDisableFog();
+        DrawSkySphere(game);
+        game.SetFog();
+    }
+
+    internal int skyspheretexture;
+    internal int skyspherenighttexture;
+
+    internal void DrawSkySphere(Game game)
+    {
+        if (skyspheretexture == -1)
+        {
+            BitmapCi skysphereBmp = game.platform.BitmapCreateFromPng(game.GetFile("skysphere.png"), game.GetFileLength("skysphere.png"));
+            BitmapCi skysphereNightBmp = game.platform.BitmapCreateFromPng(game.GetFile("skyspherenight.png"), game.GetFileLength("skyspherenight.png"));
+            skyspheretexture = game.platform.LoadTextureFromBitmap(skysphereBmp);
+            skyspherenighttexture = game.platform.LoadTextureFromBitmap(skysphereNightBmp);
+            game.platform.BitmapDelete(skysphereBmp);
+            game.platform.BitmapDelete(skysphereNightBmp);
+        }
+        int texture = game.SkySphereNight ? skyspherenighttexture : skyspheretexture;
+        if (game.terrainRenderer.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
+        {
+            texture = skyspheretexture;
+        }
+        SkyTexture = texture;
+        Draw(game, game.currentfov());
+    }
+
+    public void Draw(Game game, float fov)
     {
         if (SkyTexture == -1)
         {
@@ -22,7 +52,6 @@
         }
         game.Set3dProjection(size * 2, fov);
         game.GLMatrixModeModelView();
-        d_MeshBatcher.BindTexture = false;
         game.GLPushMatrix();
         game.GLTranslate(game.player.playerposition.X,
             game.player.playerposition.Y,

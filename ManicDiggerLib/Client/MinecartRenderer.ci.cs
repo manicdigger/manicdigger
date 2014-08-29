@@ -1,10 +1,4 @@
-﻿public abstract class IModelToDraw
-{
-    public abstract void Draw(float dt);
-    public abstract int Id();
-}
-
-public class Minecart : IModelToDraw
+﻿public class Minecart
 {
     internal bool enabled;
     internal float positionX;
@@ -13,26 +7,29 @@ public class Minecart : IModelToDraw
     internal VehicleDirection12 direction;
     internal VehicleDirection12 lastdirection;
     internal float progress;
-    internal MinecartRenderer renderer;
-    public override void Draw(float dt)
-    {
-        renderer.Draw(positionX, positionY, positionZ, direction, lastdirection, progress);
-    }
-    public override int Id()
-    {
-        return 0;
-    }
 }
 
-public class MinecartRenderer
+public class ModDrawMinecarts : ClientMod
 {
-    public MinecartRenderer()
+    public ModDrawMinecarts()
     {
         minecarttexture = -1;
     }
-    internal Game game;
     int minecarttexture;
-    public void Draw(float positionX, float positionY, float positionZ, VehicleDirection12 dir, VehicleDirection12 lastdir, float progress)
+
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            if (game.entities[i] == null) { continue; }
+            if (game.entities[i].minecart == null) { continue; }
+            Minecart m = game.entities[i].minecart;
+            if (!m.enabled) { continue; }
+            Draw(game, m.positionX, m.positionY, m.positionZ, m.direction, m.lastdirection, m.progress);
+        }
+    }
+
+    public void Draw(Game game, float positionX, float positionY, float positionZ, VehicleDirection12 dir, VehicleDirection12 lastdir, float progress)
     {
         float one = 1;
         if (minecarttexture == -1)
@@ -58,6 +55,7 @@ public class MinecartRenderer
         CuboidRenderer.DrawCuboid(game, -(one * 5 / 10), -(one * 3 / 10), -(one * 5 / 10), 1, 1, 1, cc, 1);
         game.GLPopMatrix();
     }
+
     float vehiclerotation(VehicleDirection12 dir)
     {
         switch (dir)

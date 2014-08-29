@@ -84,7 +84,7 @@
         }
     }
 
-    public override void OnKeyDown(KeyEventArgs args)
+    public override void OnKeyDown(Game game, KeyEventArgs args)
     {
         if (args.GetKeyCode() == GlKeys.F7)
         {

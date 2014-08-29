@@ -45,10 +45,7 @@
     void SendRequest(INetClient client)
     {
         //Create request packet
-        Packet_ClientServerQuery p1 = new Packet_ClientServerQuery();
-        Packet_Client pp = new Packet_Client();
-        pp.Id = Packet_ClientIdEnum.ServerQuery;
-        pp.Query = p1;
+        Packet_Client pp = ClientPackets.ServerQuery();
         
         //Serialize packet
         CitoMemoryStream ms = new CitoMemoryStream();
