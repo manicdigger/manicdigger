@@ -7,10 +7,7 @@ namespace ManicDigger.Mods
 {
     public class RememberPosition : IMod
     {
-        public void PreStart(ModManager m)
-        {
-            m.RequireMod("Default");
-        }
+        public void PreStart(ModManager m) { }
         
         public void Start(ModManager manager)
         {

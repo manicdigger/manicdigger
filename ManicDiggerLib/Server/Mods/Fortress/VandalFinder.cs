@@ -7,7 +7,7 @@ namespace ManicDigger.Mods
     {
         public void PreStart(ModManager m)
         {
-            m.RequireMod("Default");
+            m.RequireMod("CoreBlocks");
             m.RequireMod("BuildLog");
         }
         public void Start(ModManager manager)

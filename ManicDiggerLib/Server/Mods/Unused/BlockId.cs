@@ -13,7 +13,7 @@ namespace ManicDigger.Mods
         public void PreStart(ModManager m)
         {
             // Add all modfiles here which contain block definitions.
-            m.RequireMod("Default");
+            m.RequireMod("CoreBlocks");
             m.RequireMod("Doors");
             m.RequireMod("Tnt");
             m.RequireMod("PermissionBlock");

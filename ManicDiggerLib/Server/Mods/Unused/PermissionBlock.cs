@@ -6,7 +6,7 @@ namespace ManicDigger.Mods
     {
         public void PreStart(ModManager m)
         {
-            m.RequireMod("Default");
+            m.RequireMod("CoreBlocks");
         }
         
         public int PermissionLevelsCount = 4;
