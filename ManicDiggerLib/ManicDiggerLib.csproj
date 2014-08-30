@@ -135,12 +135,13 @@
     <Compile Include="Client\MainMenu.ci.cs" />
     <Compile Include="Server\ModLoader.cs" />
     <Compile Include="Server\Mods\Fortress\BuildLog.cs" />
-    <Compile Include="Server\Mods\Fortress\CraftingTable.cs" />
-    <Compile Include="Server\Mods\Fortress\Default.cs" />
+    <Compile Include="Server\Mods\Fortress\Core.cs" />
+    <Compile Include="Server\Mods\Fortress\CoreCrafting.cs" />
+    <Compile Include="Server\Mods\Fortress\CoreEvents.cs" />
+    <Compile Include="Server\Mods\Fortress\CoreBlocks.cs" />
     <Compile Include="Server\Mods\Fortress\DefaultWorldGenerator.cs" />
     <Compile Include="Server\Mods\Fortress\Doors.cs" />
     <Compile Include="Server\Mods\Fortress\Ghost.cs" />
-    <Compile Include="Server\Mods\Fortress\Monsters.cs" />
     <Compile Include="Server\Mods\Fortress\OreGenerator.cs" />
     <Compile Include="Server\Mods\Fortress\HttpStats.cs" />
     <Compile Include="Server\Mods\Fortress\RememberPosition.cs" />
