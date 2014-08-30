@@ -56,9 +56,21 @@ public partial class Server : ICurrentTime, IDropItem
 {
     public Server()
     {
+        serverPlatform = new ServerPlatformNative();
+
         server = new ServerCi();
+        systems = new ServerSystem[256];
+        systems[systemsCount++] = new ServerSystemHeartbeat();
+        systems[systemsCount++] = new ServerSystemHttpServer();
+        systems[systemsCount++] = new ServerSystemUnloadUnusedChunks();
+        systems[systemsCount++] = new ServerSystemNotifyMap();
+        systems[systemsCount++] = new ServerSystemNotifyMonsters();
     }
     internal ServerCi server;
+    internal ServerSystem[] systems;
+    internal int systemsCount;
+    internal ServerPlatform serverPlatform;
+
     public GameExit exit;
     public ServerMap d_Map;
     public GameData d_Data;
@@ -68,7 +80,6 @@ public partial class Server : ICurrentTime, IDropItem
     public ICompression d_NetworkCompression;
     public INetServer mainSocket0 { get { return server.mainSocket0; } set { server.mainSocket0 = value; } }
     public INetServer mainSocket1 { get { return server.mainSocket1; } set { server.mainSocket1 = value; } }
-    public IServerHeartbeat d_Heartbeat;
 
     public bool LocalConnectionsOnly { get; set; }
     public string[] PublicDataPaths = new string[0];
@@ -143,6 +154,7 @@ public partial class Server : ICurrentTime, IDropItem
     public bool enableshadows = true;
     public Language language = new Language();
 
+    Stopwatch stopwatchDt = new Stopwatch();
     public void Process()
     {
         try
@@ -151,6 +163,13 @@ public partial class Server : ICurrentTime, IDropItem
             ProcessSave();
             //Do server stuff
             ProcessMain();
+            float dt = (float)stopwatchDt.Elapsed.TotalSeconds;
+            stopwatchDt.Reset();
+            stopwatchDt.Start();
+            for (int i = 0; i < systemsCount; i++)
+            {
+                systems[i].Update(this, dt);
+            }
         }
         catch (Exception e)
         {
@@ -216,19 +235,12 @@ public partial class Server : ICurrentTime, IDropItem
             k.Value.socket.Update();
         }
 
-        //Updates the map
-        NotifyMap();
-
         //Send updates to player
         foreach (var k in clients)
         {
             //k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
             NotifyInventory(k.Key);
             NotifyPlayerStats(k.Key);
-            if (config.Monsters)
-            {
-                k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
-            }
         }
 
         //Sends ping to all clients and disconnects timed-out players
@@ -264,9 +276,6 @@ public partial class Server : ICurrentTime, IDropItem
             }
         }
         );
-
-        //Unload chunks currently not seen by players
-        UnloadUnusedChunks();
 
         //Update all loaded chunks
         for (int i = 0; i < ChunksSimulated; i++)
@@ -381,28 +390,6 @@ public partial class Server : ICurrentTime, IDropItem
             }
         }
 
-        //Start heartbeat thread
-        d_Heartbeat = new ServerHeartbeat();
-        if ((Public) && (config.Public))
-        {
-            new Thread((a) =>
-                {
-                    //Keep doing this as long as server doesn't want to exit
-                    int elapsed = 60;
-                    while (!exit.exit)
-                    {
-                        if (elapsed >= 60)
-                        {
-                            SendHeartbeat();
-                            elapsed = 0;
-                        }
-                        elapsed++;
-                        //Only sleep for 1 second to allow thread to exit fast
-                        Thread.Sleep(TimeSpan.FromSeconds(1));
-                    }
-                }).Start();
-        }
-
         all_privileges.AddRange(ServerClientMisc.Privilege.All());
         //Load all installed mods
         LoadMods(false);
@@ -469,6 +456,7 @@ public partial class Server : ICurrentTime, IDropItem
     }
     void Start(int port)
     {
+        Port = port;
         mainSocket0.Configuration().SetPort(port);
         mainSocket0.Start();
         if (mainSocket1 != null)
@@ -476,28 +464,8 @@ public partial class Server : ICurrentTime, IDropItem
             mainSocket1.Configuration().SetPort(port);
             mainSocket1.Start();
         }
-        int httpPort = port + 1;
-        if (config.EnableHTTPServer && (!IsSinglePlayer))
-        {
-            try
-            {
-                httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, httpPort));
-                var m = new MainHttpModule();
-                m.server = this;
-                httpServer.Install(m);
-                foreach (var module in httpModules)
-                {
-                    httpServer.Install(module.module);
-                }
-                httpServer.Start();
-                Console.WriteLine(language.ServerHTTPServerStarted(), httpPort);
-            }
-            catch
-            {
-                Console.WriteLine(language.ServerHTTPServerError(), httpPort);
-            }
-        }
     }
+    internal int Port;
     public void Stop()
     {
         Console.WriteLine("[SERVER] Doing last tick...");
@@ -537,7 +505,7 @@ public partial class Server : ICurrentTime, IDropItem
         modloader.Start(m, m.required);
     }
 
-    string gameMode = "Fortress";
+    internal string gameMode = "Fortress";
     Dictionary<string, string> GetScriptSources()
     {
         string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Server"), "Mods"), "Mods" };
@@ -559,7 +527,6 @@ public partial class Server : ICurrentTime, IDropItem
                 }
             }
             modpaths[i] = Path.Combine(modpaths[i], gameMode);
-            d_Heartbeat.GameMode = System.Web.HttpUtility.UrlEncode(gameMode);
         }
         Dictionary<string, string> scripts = new Dictionary<string, string>();
         foreach (string modpath in modpaths)
@@ -1044,116 +1011,6 @@ public partial class Server : ICurrentTime, IDropItem
         textWriter.Close();
     }
 
-    public void SendHeartbeat()
-    {
-        if (config.Key == null)
-        {
-            return;
-        }
-        d_Heartbeat.Name = config.Name;
-        d_Heartbeat.MaxClients = config.MaxClients;
-        d_Heartbeat.PasswordProtected = config.IsPasswordProtected();
-        d_Heartbeat.AllowGuests = config.AllowGuests;
-        d_Heartbeat.Port = config.Port;
-        d_Heartbeat.Version = GameVersion.Version;
-        d_Heartbeat.Key = config.Key;
-        d_Heartbeat.Motd = config.Motd;
-        List<string> playernames = new List<string>();
-        lock (clients)
-        {
-            foreach (var k in clients)
-            {
-                if (k.Value.IsBot)
-                {
-                    //Exclude bot players from appearing on server list
-                    continue;
-                }
-                playernames.Add(k.Value.playername);
-            }
-        }
-        d_Heartbeat.Players = playernames;
-        d_Heartbeat.UsersCount = playernames.Count;
-        try
-        {
-            d_Heartbeat.SendHeartbeat();
-            if (!writtenServerKey)
-            {
-                Console.WriteLine("hash: " + GetHash(d_Heartbeat.ReceivedKey));
-                writtenServerKey = true;
-            }
-            Console.WriteLine(language.ServerHeartbeatSent());
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.ToString());
-            Console.WriteLine(language.ServerHeartbeatError());
-        }
-    }
-
-    bool writtenServerKey = false;
-    public string hashPrefix = "server=";
-    string GetHash(string hash)
-    {
-        try
-        {
-            if (hash.Contains(hashPrefix))
-            {
-                hash = hash.Substring(hash.IndexOf(hashPrefix) + hashPrefix.Length);
-            }
-        }
-        catch
-        {
-            return "";
-        }
-        return hash;
-    }
-    class MainHttpModule : FragLabs.HTTP.IHttpModule
-    {
-        public Server server;
-        public void Installed(FragLabs.HTTP.HttpServer server)
-        {
-        }
-
-        public void Uninstalled(FragLabs.HTTP.HttpServer server)
-        {
-        }
-
-        public bool ResponsibleForRequest(FragLabs.HTTP.HttpRequest request)
-        {
-            if (request.Uri.AbsolutePath.ToLower() == "/")
-            {
-                return true;
-            }
-            return false;
-        }
-
-        public bool ProcessAsync(FragLabs.HTTP.ProcessRequestEventArgs args)
-        {
-            string html = "<html>";
-            List<string> modules = new List<string>();
-            foreach (var m in server.httpModules)
-            {
-                modules.Add(m.name);
-            }
-            modules.Sort();
-            foreach (string s in modules)
-            {
-                foreach (var m in server.httpModules)
-                {
-                    if (m.name == s)
-                    {
-                        html += string.Format("<a href='{0}'>{0}</a> - {1}", m.name, m.description());
-                    }
-                }
-            }
-            html += "</html>";
-            args.Response.Producer = new FragLabs.HTTP.BufferedProducer(html);
-            return false;
-        }
-    }
-
-    internal FragLabs.HTTP.HttpServer httpServer;
-
     public void Dispose()
     {
         if (!disposed)
@@ -1168,7 +1025,7 @@ public partial class Server : ICurrentTime, IDropItem
     {
         return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
     }
-    int simulationcurrentframe;
+    internal int simulationcurrentframe;
     double oldtime;
     double accumulator;
     float lastServerTick;
@@ -1450,52 +1307,6 @@ public partial class Server : ICurrentTime, IDropItem
         return LastMonsterId++;
     }
 
-    int CompressUnusedIteration = 0;
-    private void UnloadUnusedChunks()
-    {
-        int sizex = mapsizexchunks();
-        int sizey = mapsizeychunks();
-        int sizez = mapsizezchunks();
-
-        for (int i = 0; i < 100; i++)
-        {
-            var v = MapUtil.Pos(CompressUnusedIteration, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
-            ServerChunk c = d_Map.GetChunkValid(v.x, v.y, v.z);
-            var vg = new Vector3i(v.x * chunksize, v.y * chunksize, v.z * chunksize);
-            bool stop = false;
-            if (c != null)
-            {
-                bool unload = true;
-                foreach (var k in clients)
-                {
-                    int viewdist = (int)(chunkdrawdistance * chunksize * 1.5f);
-                    if (DistanceSquared(PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
-                    {
-                        unload = false;
-                    }
-                }
-                if (unload)
-                {
-                    if (c.DirtyForSaving)
-                    {
-                        DoSaveChunk(v.x, v.y, v.z, c);
-                    }
-                    d_Map.SetChunkValid(v.x, v.y, v.z, null);
-                    stop = true;
-                }
-            }
-            CompressUnusedIteration++;
-            if (CompressUnusedIteration >= sizex * sizey * sizez)
-            {
-                CompressUnusedIteration = 0;
-            }
-            if (stop)
-            {
-                return;
-            }
-        }
-    }
-
     //on exit
     public void SaveAll()
     {
@@ -1515,16 +1326,17 @@ public partial class Server : ICurrentTime, IDropItem
         SaveGlobalData();
     }
 
-    private void DoSaveChunk(int x, int y, int z, ServerChunk c)
+    internal void DoSaveChunk(int x, int y, int z, ServerChunk c)
     {
         MemoryStream ms = new MemoryStream();
         Serializer.Serialize(ms, c);
         ChunkDb.SetChunk(d_ChunkDb, x, y, z, ms.ToArray());
     }
+
     int SEND_CHUNKS_PER_SECOND = 10;
     int SEND_MONSTER_UDAPTES_PER_SECOND = 3;
 
-    private void LoadChunk(int cx, int cy, int cz)
+    public void LoadChunk(int cx, int cy, int cz)
     {
         d_Map.LoadChunk(cx, cy, cz);
     }
@@ -1701,154 +1513,6 @@ public partial class Server : ICurrentTime, IDropItem
             }
         }
     }
-    private void NotifyMonsters(int clientid)
-    {
-        ClientOnServer c = clients[clientid];
-        int mapx = c.PositionMul32GlX / 32;
-        int mapy = c.PositionMul32GlZ / 32;
-        int mapz = c.PositionMul32GlY / 32;
-        //3x3x3 chunks
-        List<Packet_ServerMonster> p = new List<Packet_ServerMonster>();
-        for (int xx = -1; xx < 2; xx++)
-        {
-            for (int yy = -1; yy < 2; yy++)
-            {
-                for (int zz = -1; zz < 2; zz++)
-                {
-                    int cx = (mapx / chunksize) + xx;
-                    int cy = (mapy / chunksize) + yy;
-                    int cz = (mapz / chunksize) + zz;
-                    if (!MapUtil.IsValidChunkPos(d_Map, cx, cy, cz, chunksize))
-                    {
-                        continue;
-                    }
-                    ServerChunk chunk = d_Map.GetChunkValid(cx, cy, cz);
-                    if (chunk == null || chunk.Monsters == null)
-                    {
-                        continue;
-                    }
-                    foreach (Monster m in new List<Monster>(chunk.Monsters))
-                    {
-                        MonsterWalk(m);
-                    }
-                    foreach (Monster m in chunk.Monsters)
-                    {
-                        float progress = m.WalkProgress;
-                        if (progress < 0) //delay
-                        {
-                            progress = 0;
-                        }
-                        byte heading = 0;
-                        if (m.WalkDirection.x == -1 && m.WalkDirection.y == 0) { heading = (byte)(((int)byte.MaxValue * 3) / 4); }
-                        if (m.WalkDirection.x == 1 && m.WalkDirection.y == 0) { heading = byte.MaxValue / 4; }
-                        if (m.WalkDirection.x == 0 && m.WalkDirection.y == -1) { heading = 0; }
-                        if (m.WalkDirection.x == 0 && m.WalkDirection.y == 1) { heading = byte.MaxValue / 2; }
-                        var mm = new Packet_ServerMonster()
-                        {
-                            Id = m.Id,
-                            MonsterType = m.MonsterType,
-                            Health = m.Health,
-                            PositionAndOrientation = new Packet_PositionAndOrientation()
-                            {
-                                Heading = heading,
-                                Pitch = 0,
-                                X = (int)((m.X + progress * m.WalkDirection.x) * 32 + 16),
-                                Y = (int)((m.Z + progress * m.WalkDirection.z) * 32),
-                                Z = (int)((m.Y + progress * m.WalkDirection.y) * 32 + 16),
-                            }
-                        };
-                        p.Add(mm);
-                    }
-                }
-            }
-        }
-        //send only nearest monsters
-        p.Sort((a, b) =>
-        {
-            Vector3i posA = new Vector3i(a.PositionAndOrientation.X, a.PositionAndOrientation.Y, a.PositionAndOrientation.Z);
-            Vector3i posB = new Vector3i(b.PositionAndOrientation.X, b.PositionAndOrientation.Y, b.PositionAndOrientation.Z);
-            ClientOnServer client = clients[clientid];
-            Vector3i posPlayer = new Vector3i(client.PositionMul32GlX, client.PositionMul32GlY, client.PositionMul32GlZ);
-            return DistanceSquared(posA, posPlayer).CompareTo(DistanceSquared(posB, posPlayer));
-        }
-        );
-        if (p.Count > sendmaxmonsters)
-        {
-            p.RemoveRange(sendmaxmonsters, p.Count - sendmaxmonsters);
-        }
-        SendPacket(clientid, Serialize(new Packet_Server()
-        {
-            Id = Packet_ServerIdEnum.Monster,
-            Monster = new Packet_ServerMonsters() { Monsters = p.ToArray() }
-        }));
-    }
-    int sendmaxmonsters = 10;
-    void MonsterWalk(Monster m)
-    {
-        m.WalkProgress += 0.3f;
-        if (m.WalkProgress < 1)
-        {
-            return;
-        }
-        int oldcx = m.X / chunksize;
-        int oldcy = m.Y / chunksize;
-        int oldcz = m.Z / chunksize;
-        d_Map.GetChunkValid(oldcx, oldcy, oldcz).Monsters.Remove(m);
-        m.X += m.WalkDirection.x;
-        m.Y += m.WalkDirection.y;
-        m.Z += m.WalkDirection.z;
-        int newcx = m.X / chunksize;
-        int newcy = m.Y / chunksize;
-        int newcz = m.Z / chunksize;
-        if (d_Map.GetChunkValid(newcx, newcy, newcz).Monsters == null)
-        {
-            d_Map.GetChunkValid(newcx, newcy, newcz).Monsters = new List<Monster>();
-        }
-        d_Map.GetChunkValid(newcx, newcy, newcz).Monsters.Add(m);
-        /*
-        if (rnd.Next(3) == 0)
-        {
-            m.WalkDirection = new Vector3i();
-            m.WalkProgress = -2;
-            return;
-        }
-        */
-        List<Vector3i> l = new List<Vector3i>();
-        for (int zz = -1; zz < 2; zz++)
-        {
-            if (d_Map.GetBlock(m.X + 1, m.Y, m.Z + zz) == 0
-                 && d_Map.GetBlock(m.X + 1, m.Y, m.Z + zz - 1) != 0)
-            {
-                l.Add(new Vector3i(1, 0, zz));
-            }
-            if (d_Map.GetBlock(m.X - 1, m.Y, m.Z + zz) == 0
-                && d_Map.GetBlock(m.X - 1, m.Y, m.Z + zz - 1) != 0)
-            {
-                l.Add(new Vector3i(-1, 0, zz));
-            }
-            if (d_Map.GetBlock(m.X, m.Y + 1, m.Z + zz) == 0
-                && d_Map.GetBlock(m.X, m.Y + 1, m.Z + zz - 1) != 0)
-            {
-                l.Add(new Vector3i(0, 1, zz));
-            }
-            if (d_Map.GetBlock(m.X, m.Y - 1, m.Z + zz) == 0
-                && d_Map.GetBlock(m.X, m.Y - 1, m.Z + zz - 1) != 0)
-            {
-                l.Add(new Vector3i(0, -1, zz));
-            }
-        }
-        Vector3i dir;
-        if (l.Count > 0)
-        {
-            dir = l[rnd.Next(l.Count)];
-        }
-        else
-        {
-            dir = new Vector3i();
-        }
-        m.WalkDirection = dir;
-        m.WalkProgress = 0;
-    }
     public PacketServerInventory GetPlayerInventory(string playername)
     {
         if (Inventory == null)
@@ -2003,7 +1667,7 @@ public partial class Server : ICurrentTime, IDropItem
             ServerEventLog(string.Format("{0} disconnects.", name));
         }
     }
-
+    internal string ReceivedKey;
     private DateTime lastQuery = DateTime.UtcNow;
     private void TryReadPacket(int clientid, byte[] data)
     {
@@ -2661,7 +2325,7 @@ public partial class Server : ICurrentTime, IDropItem
                     Port = config.Port,
                     GameMode = gameMode,
                     Password = config.IsPasswordProtected(),
-                    PublicHash = d_Heartbeat.ReceivedKey,
+                    PublicHash = ReceivedKey,
                     ServerVersion = GameVersion.Version,
                     MapSizeX = d_Map.MapSizeX,
                     MapSizeY = d_Map.MapSizeY,
@@ -3154,12 +2818,12 @@ public partial class Server : ICurrentTime, IDropItem
         clients[player_id].usingFill = false;
         return true;
     }
-    bool ClientSeenChunk(int clientid, int vx, int vy, int vz)
+    public bool ClientSeenChunk(int clientid, int vx, int vy, int vz)
     {
         int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
         return clients[clientid].chunksseen[pos];
     }
-    void ClientSeenChunkSet(int clientid, int vx, int vy, int vz, int time)
+    public void ClientSeenChunkSet(int clientid, int vx, int vy, int vz, int time)
     {
         int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
         clients[clientid].chunksseen[pos] = true;
@@ -3690,7 +3354,7 @@ public partial class Server : ICurrentTime, IDropItem
     }
     public int drawdistance = 128;
     public const int chunksize = 32;
-    int chunkdrawdistance { get { return drawdistance / chunksize; } }
+    internal int chunkdrawdistance { get { return drawdistance / chunksize; } }
     IEnumerable<Vector3i> ChunksAroundPlayer(Vector3i playerpos)
     {
         playerpos.x = (playerpos.x / chunksize) * chunksize;
@@ -3710,11 +3374,11 @@ public partial class Server : ICurrentTime, IDropItem
             }
         }
     }
-    byte[] CompressChunkNetwork(ushort[] chunk)
+    public byte[] CompressChunkNetwork(ushort[] chunk)
     {
         return d_NetworkCompression.Compress(Misc.UshortArrayToByteArray(chunk));
     }
-    byte[] CompressChunkNetwork(byte[, ,] chunk)
+    public byte[] CompressChunkNetwork(byte[, ,] chunk)
     {
         MemoryStream ms = new MemoryStream();
         BinaryWriter bw = new BinaryWriter(ms);
@@ -3811,7 +3475,7 @@ public partial class Server : ICurrentTime, IDropItem
         }
     }
 
-    static IEnumerable<byte[]> Parts(byte[] blob, int partsize)
+    public static IEnumerable<byte[]> Parts(byte[] blob, int partsize)
     {
         int i = 0;
         for (; ; )
@@ -4461,15 +4125,6 @@ public partial class Server : ICurrentTime, IDropItem
         return GetClient(playerid).clientGroup.Name;
     }
 
-    public class ActiveHttpModule
-    {
-        public string name;
-        public ManicDigger.Func<string> description;
-        public FragLabs.HTTP.IHttpModule module;
-    }
-
-    List<ActiveHttpModule> httpModules = new List<ActiveHttpModule>();
-
     internal void InstallHttpModule(string name, ManicDigger.Func<string> description, FragLabs.HTTP.IHttpModule module)
     {
         ActiveHttpModule m = new ActiveHttpModule();
@@ -4477,11 +4132,8 @@ public partial class Server : ICurrentTime, IDropItem
         m.description = description;
         m.module = module;
         httpModules.Add(m);
-        if (httpServer != null)
-        {
-            httpServer.Install(module);
-        }
     }
+    internal List<ActiveHttpModule> httpModules = new List<ActiveHttpModule>();
 
     public ModEventHandlers modEventHandlers = new ModEventHandlers();
 
@@ -5034,3 +4686,348 @@ public class CraftingRecipe
     public Ingredient output;
 }
 
+public abstract class ServerSystem
+{
+    public virtual void Update(Server server, float dt) { }
+    public virtual void OnRestart(Server server) { }
+}
+
+public abstract class ServerPlatform
+{
+    public abstract void QueueUserWorkItem(Action_ action);
+}
+
+public class ServerPlatformNative : ServerPlatform
+{
+    public override void QueueUserWorkItem(Action_ action)
+    {
+        ThreadPool.QueueUserWorkItem((a) => { action.Run(); });
+    }
+}
+
+public class ServerSystemHttpServer : ServerSystem
+{
+    bool started;
+    public override void Update(Server server, float dt)
+    {
+        if (!started)
+        {
+            started = true;
+
+            int httpPort = server.Port + 1;
+            if (server.config.EnableHTTPServer && (!server.IsSinglePlayer))
+            {
+                try
+                {
+                    httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, httpPort));
+                    MainHttpModule m = new MainHttpModule();
+                    m.server = server;
+                    m.system = this;
+                    httpServer.Install(m);
+                    foreach (var module in server.httpModules)
+                    {
+                        httpServer.Install(module.module);
+                    }
+                    httpServer.Start();
+                    Console.WriteLine(server.language.ServerHTTPServerStarted(), httpPort);
+                }
+                catch
+                {
+                    Console.WriteLine(server.language.ServerHTTPServerError(), httpPort);
+                }
+            }
+        }
+        for (int i = 0; i < server.httpModules.Count; i++)
+        {
+            ActiveHttpModule m = server.httpModules[i];
+            if (!m.installed)
+            {
+                m.installed = true;
+                if (httpServer != null)
+                {
+                    httpServer.Install(m.module);
+                }
+            }
+        }
+    }
+    internal FragLabs.HTTP.HttpServer httpServer;
+
+    public override void OnRestart(Server server)
+    {
+        foreach (ActiveHttpModule m in server.httpModules)
+        {
+            if (m.installed)
+            {
+                httpServer.Uninstall(m.module);
+            }
+        }
+        server.httpModules.Clear();
+    }
+}
+
+public class ActiveHttpModule
+{
+    public string name;
+    public ManicDigger.Func<string> description;
+    public FragLabs.HTTP.IHttpModule module;
+    public bool installed;
+}
+
+class MainHttpModule : FragLabs.HTTP.IHttpModule
+{
+    public Server server;
+    public ServerSystemHttpServer system;
+    public void Installed(FragLabs.HTTP.HttpServer server)
+    {
+    }
+
+    public void Uninstalled(FragLabs.HTTP.HttpServer server)
+    {
+    }
+
+    public bool ResponsibleForRequest(FragLabs.HTTP.HttpRequest request)
+    {
+        if (request.Uri.AbsolutePath.ToLower() == "/")
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public bool ProcessAsync(FragLabs.HTTP.ProcessRequestEventArgs args)
+    {
+        string html = "<html>";
+        List<string> modules = new List<string>();
+        foreach (var m in server.httpModules)
+        {
+            modules.Add(m.name);
+        }
+        modules.Sort();
+        foreach (string s in modules)
+        {
+            foreach (var m in server.httpModules)
+            {
+                if (m.name == s)
+                {
+                    html += string.Format("<a href='{0}'>{0}</a> - {1}", m.name, m.description());
+                }
+            }
+        }
+        html += "</html>";
+        args.Response.Producer = new FragLabs.HTTP.BufferedProducer(html);
+        return false;
+    }
+}
+
+//Unload chunks currently not seen by players
+public class ServerSystemUnloadUnusedChunks : ServerSystem
+{
+    public override void Update(Server server, float dt)
+    {
+        int sizex = server.mapsizexchunks();
+        int sizey = server.mapsizeychunks();
+        int sizez = server.mapsizezchunks();
+
+        for (int i = 0; i < 100; i++)
+        {
+            var v = MapUtil.Pos(CompressUnusedIteration, server.d_Map.MapSizeX / Server.chunksize, server.d_Map.MapSizeY / Server.chunksize);
+            ServerChunk c = server.d_Map.GetChunkValid(v.x, v.y, v.z);
+            var vg = new Vector3i(v.x * Server.chunksize, v.y * Server.chunksize, v.z * Server.chunksize);
+            bool stop = false;
+            if (c != null)
+            {
+                bool unload = true;
+                foreach (var k in server.clients)
+                {
+                    int viewdist = (int)(server.chunkdrawdistance * Server.chunksize * 1.5f);
+                    if (server.DistanceSquared(server.PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
+                    {
+                        unload = false;
+                    }
+                }
+                if (unload)
+                {
+                    if (c.DirtyForSaving)
+                    {
+                        server.DoSaveChunk(v.x, v.y, v.z, c);
+                    }
+                    server.d_Map.SetChunkValid(v.x, v.y, v.z, null);
+                    stop = true;
+                }
+            }
+            CompressUnusedIteration++;
+            if (CompressUnusedIteration >= sizex * sizey * sizez)
+            {
+                CompressUnusedIteration = 0;
+            }
+            if (stop)
+            {
+                return;
+            }
+        }
+    }
+    int CompressUnusedIteration = 0;
+}
+
+public class ServerSystemNotifyMonsters : ServerSystem
+{
+    public override void Update(Server server, float dt)
+    {
+        if (server.config.Monsters)
+        {
+            foreach (var k in server.clients)
+            {
+                k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(server, k.Key); });
+            }
+        }
+    }
+    
+    void NotifyMonsters(Server server, int clientid)
+    {
+        ClientOnServer c = server.clients[clientid];
+        int mapx = c.PositionMul32GlX / 32;
+        int mapy = c.PositionMul32GlZ / 32;
+        int mapz = c.PositionMul32GlY / 32;
+        //3x3x3 chunks
+        List<Packet_ServerMonster> p = new List<Packet_ServerMonster>();
+        for (int xx = -1; xx < 2; xx++)
+        {
+            for (int yy = -1; yy < 2; yy++)
+            {
+                for (int zz = -1; zz < 2; zz++)
+                {
+                    int cx = (mapx / Server.chunksize) + xx;
+                    int cy = (mapy / Server.chunksize) + yy;
+                    int cz = (mapz / Server.chunksize) + zz;
+                    if (!MapUtil.IsValidChunkPos(server.d_Map, cx, cy, cz, Server.chunksize))
+                    {
+                        continue;
+                    }
+                    ServerChunk chunk = server.d_Map.GetChunkValid(cx, cy, cz);
+                    if (chunk == null || chunk.Monsters == null)
+                    {
+                        continue;
+                    }
+                    foreach (Monster m in new List<Monster>(chunk.Monsters))
+                    {
+                        MonsterWalk(server, m);
+                    }
+                    foreach (Monster m in chunk.Monsters)
+                    {
+                        float progress = m.WalkProgress;
+                        if (progress < 0) //delay
+                        {
+                            progress = 0;
+                        }
+                        byte heading = 0;
+                        if (m.WalkDirection.x == -1 && m.WalkDirection.y == 0) { heading = (byte)(((int)byte.MaxValue * 3) / 4); }
+                        if (m.WalkDirection.x == 1 && m.WalkDirection.y == 0) { heading = byte.MaxValue / 4; }
+                        if (m.WalkDirection.x == 0 && m.WalkDirection.y == -1) { heading = 0; }
+                        if (m.WalkDirection.x == 0 && m.WalkDirection.y == 1) { heading = byte.MaxValue / 2; }
+                        var mm = new Packet_ServerMonster()
+                        {
+                            Id = m.Id,
+                            MonsterType = m.MonsterType,
+                            Health = m.Health,
+                            PositionAndOrientation = new Packet_PositionAndOrientation()
+                            {
+                                Heading = heading,
+                                Pitch = 0,
+                                X = (int)((m.X + progress * m.WalkDirection.x) * 32 + 16),
+                                Y = (int)((m.Z + progress * m.WalkDirection.z) * 32),
+                                Z = (int)((m.Y + progress * m.WalkDirection.y) * 32 + 16),
+                            }
+                        };
+                        p.Add(mm);
+                    }
+                }
+            }
+        }
+        //send only nearest monsters
+        p.Sort((a, b) =>
+        {
+            Vector3i posA = new Vector3i(a.PositionAndOrientation.X, a.PositionAndOrientation.Y, a.PositionAndOrientation.Z);
+            Vector3i posB = new Vector3i(b.PositionAndOrientation.X, b.PositionAndOrientation.Y, b.PositionAndOrientation.Z);
+            ClientOnServer client = server.clients[clientid];
+            Vector3i posPlayer = new Vector3i(client.PositionMul32GlX, client.PositionMul32GlY, client.PositionMul32GlZ);
+            return server.DistanceSquared(posA, posPlayer).CompareTo(server.DistanceSquared(posB, posPlayer));
+        }
+        );
+        if (p.Count > sendmaxmonsters)
+        {
+            p.RemoveRange(sendmaxmonsters, p.Count - sendmaxmonsters);
+        }
+        server.SendPacket(clientid, server.Serialize(new Packet_Server()
+        {
+            Id = Packet_ServerIdEnum.Monster,
+            Monster = new Packet_ServerMonsters() { Monsters = p.ToArray() }
+        }));
+    }
+    int sendmaxmonsters = 10;
+    void MonsterWalk(Server server, Monster m)
+    {
+        m.WalkProgress += 0.3f;
+        if (m.WalkProgress < 1)
+        {
+            return;
+        }
+        int oldcx = m.X / Server.chunksize;
+        int oldcy = m.Y / Server.chunksize;
+        int oldcz = m.Z / Server.chunksize;
+        server.d_Map.GetChunkValid(oldcx, oldcy, oldcz).Monsters.Remove(m);
+        m.X += m.WalkDirection.x;
+        m.Y += m.WalkDirection.y;
+        m.Z += m.WalkDirection.z;
+        int newcx = m.X / Server.chunksize;
+        int newcy = m.Y / Server.chunksize;
+        int newcz = m.Z / Server.chunksize;
+        if (server.d_Map.GetChunkValid(newcx, newcy, newcz).Monsters == null)
+        {
+            server.d_Map.GetChunkValid(newcx, newcy, newcz).Monsters = new List<Monster>();
+        }
+        server.d_Map.GetChunkValid(newcx, newcy, newcz).Monsters.Add(m);
+        /*
+        if (rnd.Next(3) == 0)
+        {
+            m.WalkDirection = new Vector3i();
+            m.WalkProgress = -2;
+            return;
+        }
+        */
+        List<Vector3i> l = new List<Vector3i>();
+        for (int zz = -1; zz < 2; zz++)
+        {
+            if (server.d_Map.GetBlock(m.X + 1, m.Y, m.Z + zz) == 0
+                 && server.d_Map.GetBlock(m.X + 1, m.Y, m.Z + zz - 1) != 0)
+            {
+                l.Add(new Vector3i(1, 0, zz));
+            }
+            if (server.d_Map.GetBlock(m.X - 1, m.Y, m.Z + zz) == 0
+                && server.d_Map.GetBlock(m.X - 1, m.Y, m.Z + zz - 1) != 0)
+            {
+                l.Add(new Vector3i(-1, 0, zz));
+            }
+            if (server.d_Map.GetBlock(m.X, m.Y + 1, m.Z + zz) == 0
+                && server.d_Map.GetBlock(m.X, m.Y + 1, m.Z + zz - 1) != 0)
+            {
+                l.Add(new Vector3i(0, 1, zz));
+            }
+            if (server.d_Map.GetBlock(m.X, m.Y - 1, m.Z + zz) == 0
+                && server.d_Map.GetBlock(m.X, m.Y - 1, m.Z + zz - 1) != 0)
+            {
+                l.Add(new Vector3i(0, -1, zz));
+            }
+        }
+        Vector3i dir;
+        if (l.Count > 0)
+        {
+            dir = l[server.rnd.Next(l.Count)];
+        }
+        else
+        {
+            dir = new Vector3i();
+        }
+        m.WalkDirection = dir;
+        m.WalkProgress = 0;
+    }
+}

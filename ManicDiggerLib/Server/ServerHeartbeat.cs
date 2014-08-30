@@ -4,27 +4,111 @@ using System.Text;
 using System.IO;
 using System.Net;
 
-public interface IServerHeartbeat
+public class ServerSystemHeartbeat : ServerSystem
 {
-    string Name { get; set; }
-    string Key { get; set; }
+    public ServerSystemHeartbeat()
+    {
+        d_Heartbeat = new ServerHeartbeat();
+    }
+    float elapsed;
+    public override void Update(Server server, float dt)
+    {
+        elapsed += dt;
+        while (elapsed >= 60)
+        {
+            elapsed -= 60;
+            if ((server.Public) && (server.config.Public))
+            {
+                d_Heartbeat.GameMode = server.gameMode;
+                server.serverPlatform.QueueUserWorkItem(ActionSendHeartbeat.Create(this, server));
+            }
+        }
+    }
+    ServerHeartbeat d_Heartbeat;
 
-    int MaxClients { get; set; }
-    bool Public { get; set; }
-    bool PasswordProtected { get; set; }
-    bool AllowGuests { get; set; }
-    int Port { get; set; }
-    string Version { get; set; }
-    List<string> Players { get; set; }
-    int UsersCount { get; set; }
-    string Motd { get; set; }
-    string GameMode { get; set; }
-
-    string ReceivedKey { get; set; }
-
-    void SendHeartbeat();
+    public void SendHeartbeat(Server server)
+    {
+        if (server.config.Key == null)
+        {
+            return;
+        }
+        d_Heartbeat.Name = server.config.Name;
+        d_Heartbeat.MaxClients = server.config.MaxClients;
+        d_Heartbeat.PasswordProtected = server.config.IsPasswordProtected();
+        d_Heartbeat.AllowGuests = server.config.AllowGuests;
+        d_Heartbeat.Port = server.config.Port;
+        d_Heartbeat.Version = ManicDigger.ClientNative.GameVersion.Version;
+        d_Heartbeat.Key = server.config.Key;
+        d_Heartbeat.Motd = server.config.Motd;
+        List<string> playernames = new List<string>();
+        lock (server.clients)
+        {
+            foreach (var k in server.clients)
+            {
+                if (k.Value.IsBot)
+                {
+                    //Exclude bot players from appearing on server list
+                    continue;
+                }
+                playernames.Add(k.Value.playername);
+            }
+        }
+        d_Heartbeat.Players = playernames;
+        d_Heartbeat.UsersCount = playernames.Count;
+        try
+        {
+            d_Heartbeat.SendHeartbeat();
+            server.ReceivedKey = d_Heartbeat.ReceivedKey;
+            if (!writtenServerKey)
+            {
+                Console.WriteLine("hash: " + GetHash(d_Heartbeat.ReceivedKey));
+                writtenServerKey = true;
+            }
+            Console.WriteLine(server.language.ServerHeartbeatSent());
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
+            Console.WriteLine(server.language.ServerHeartbeatError());
+        }
+    }
+    bool writtenServerKey = false;
+    public string hashPrefix = "server=";
+    string GetHash(string hash)
+    {
+        try
+        {
+            if (hash.Contains(hashPrefix))
+            {
+                hash = hash.Substring(hash.IndexOf(hashPrefix) + hashPrefix.Length);
+            }
+        }
+        catch
+        {
+            return "";
+        }
+        return hash;
+    }
 }
-public class ServerHeartbeat : IServerHeartbeat
+
+public class ActionSendHeartbeat : Action_
+{
+    public static ActionSendHeartbeat Create(ServerSystemHeartbeat s_, Server server_)
+    {
+        ActionSendHeartbeat a = new ActionSendHeartbeat();
+        a.s = s_;
+        a.server = server_;
+        return a;
+    }
+    ServerSystemHeartbeat s;
+    Server server;
+    public override void Run()
+    {
+        s.SendHeartbeat(server);
+    }
+}
+
+public class ServerHeartbeat
 {
     public ServerHeartbeat()
     {
@@ -38,7 +122,6 @@ public class ServerHeartbeat : IServerHeartbeat
         this.Players = new List<string>();
         this.UsersCount = 0;
         this.Motd = "";
-        this.GameMode = "Fortress";
     }
     public string fListUrl = null;
 
@@ -72,7 +155,7 @@ public class ServerHeartbeat : IServerHeartbeat
         string requestString = staticData +
                                 "&users=" + UsersCount +
                                 "&motd=" + System.Web.HttpUtility.UrlEncode(Motd) +
-                                "&gamemode=" + GameMode +
+                                "&gamemode=" + System.Web.HttpUtility.UrlEncode(GameMode)  +
                                 "&players=" + string.Join(",", Players.ToArray());
 
         var request = (HttpWebRequest)WebRequest.Create(fListUrl);

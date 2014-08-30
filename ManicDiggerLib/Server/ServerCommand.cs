@@ -2352,11 +2352,11 @@ public partial class Server
         ServerEventLog(string.Format("{0} restarts mods.", GetClient(sourceClientId).playername));
 
         modEventHandlers = new ModEventHandlers();
-        foreach (var m in httpModules)
+        for (int i = 0; i < systemsCount; i++)
         {
-            httpServer.Uninstall(m.module);
+            if (systems[i] == null) { continue; }
+            systems[i].OnRestart(this);
         }
-        httpModules.Clear();
 
         LoadMods(true);
         return true;
