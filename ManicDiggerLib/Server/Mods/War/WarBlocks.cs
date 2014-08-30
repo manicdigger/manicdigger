@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ManicDigger.Mods
+namespace ManicDigger.Mods.War
 {
     /// <summary>
     /// This class contains all block definitions specific for War Mod (weapons)

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ManicDigger.Mods
+namespace ManicDigger.Mods.War
 {
     /// <summary>
     /// This class contains core settings for the Manic Digger server. Adapted for War Mod (light levels, render hint)

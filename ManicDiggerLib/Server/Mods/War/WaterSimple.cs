@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ManicDigger.Mods
+namespace ManicDigger.Mods.War
 {
     public class WaterSimple : IMod
     {

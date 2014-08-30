@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace ManicDigger.Mods
+namespace ManicDigger.Mods.War
 {
     public class War : IMod
     {
