@@ -164,9 +164,9 @@ namespace ManicDigger
 
         public void SetString(string language, string id, string translation)
         {
-        	server.language.Override(language, id, translation);
+            server.language.Override(language, id, translation);
         }
-        
+
         public string GetString(string id)
         {
             //Returns string depending on server language
@@ -471,28 +471,28 @@ namespace ManicDigger
                     (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch, server.GetClient(player).stance);
             }
         }
-        
+
         public int GetPlayerHeading(int player)
         {
-        	return server.GetClient(player).positionheading;
+            return server.GetClient(player).positionheading;
         }
-        
+
         public int GetPlayerPitch(int player)
         {
-        	return server.GetClient(player).positionpitch;
+            return server.GetClient(player).positionpitch;
         }
-        
+
         public int GetPlayerStance(int player)
         {
-        	return server.GetClient(player).stance;
+            return server.GetClient(player).stance;
         }
-        
+
         public void SetPlayerOrientation(int player, int heading, int pitch, int stance)
         {
             server.clients[player].positionheading = heading;
-        	server.clients[player].positionpitch = pitch;
+            server.clients[player].positionpitch = pitch;
             server.clients[player].stance = (byte)stance;
-        	foreach (var k in server.clients)
+            foreach (var k in server.clients)
             {
                 server.SendPlayerTeleport(k.Key, player, server.clients[player].PositionMul32GlX, server.clients[player].PositionMul32GlY, server.clients[player].PositionMul32GlZ,
                     (byte)heading, (byte)pitch, (byte)stance);
@@ -752,7 +752,7 @@ namespace ManicDigger
         {
             return server.clients[player].LastPing;
         }
-        
+
         public int AddBot(string name)
         {
             int id = server.GenerateClientId();
@@ -763,7 +763,7 @@ namespace ManicDigger
             server.clients[id] = c;
             c.state = ClientStateOnServer.Playing;
             DummyNetwork network = new DummyNetwork() { ClientReceiveBufferLock = new MonitorObject(), ServerReceiveBufferLock = new MonitorObject() };
-            c.socket = new DummyNetConnection() { network = network , platform = new GamePlatformNative() };
+            c.socket = new DummyNetConnection() { network = network, platform = new GamePlatformNative() };
             c.Ping.SetTimeoutValue(int.MaxValue);
             c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
                 * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
@@ -771,12 +771,12 @@ namespace ManicDigger
             server.SendPlayerSpawnToAll(id);
             return id;
         }
-        
+
         public bool IsBot(int player)
         {
-        	return server.clients[player].IsBot;
+            return server.clients[player].IsBot;
         }
-        
+
         public void SetPlayerHeight(int player, float eyeheight, float modelheight)
         {
             server.clients[player].EyeHeight = eyeheight;
@@ -891,7 +891,7 @@ namespace ManicDigger
         {
             server.KillPlayer(player);
         }
-        
+
         public void DisconnectPlayer(int player, string message)
         {
             server.SendPacket(player, ServerPackets.DisconnectPlayer(message));
@@ -944,12 +944,12 @@ namespace ManicDigger
                 server.SendPlayerSpawnToAll(player);
             }
         }
-        
+
         public int GetAutoRestartInterval()
         {
-        	return server.config.AutoRestartCycle;
+            return server.config.AutoRestartCycle;
         }
-        
+
         public void SendPlayerRedirect(int player, string ip, int port)
         {
             server.SendServerRedirect(player, ip, port);

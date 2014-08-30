@@ -29,7 +29,7 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String>{{ "CompilerVersion", "v3.5" }});
+                CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v3.5" } });
                 var parms = new CompilerParameters
                 {
                     GenerateExecutable = false,
@@ -55,7 +55,7 @@ namespace ManicDigger
                             {
                                 //continue;
                             }
-                            errors += string.Format("{0} Line:{1} {2}",error.ErrorNumber, error.Line, error.ErrorText);
+                            errors += string.Format("{0} Line:{1} {2}", error.ErrorNumber, error.Line, error.ErrorText);
                         }
                         string errormsg = "Can't load mod: " + k.Key + "\n" + errors;
                         try
@@ -144,15 +144,15 @@ namespace ManicDigger
                 {
                     if (!mods.ContainsKey(required_name))
                     {
-                    	try
-                    	{
+                        try
+                        {
                             System.Windows.Forms.MessageBox.Show(string.Format("Can't load mod {0} because its dependency {1} couldn't be loaded.", name, required_name));
-                    	}
-                    	catch
-                    	{
-                    		//This will be the case if the server is running on a headless linux server without X11 installed (previously crashed)
-                    		Console.WriteLine(string.Format("[Mod error] Can't load mod {0} because its dependency {1} couldn't be loaded.", name, required_name));
-                    	}
+                        }
+                        catch
+                        {
+                            //This will be the case if the server is running on a headless linux server without X11 installed (previously crashed)
+                            Console.WriteLine(string.Format("[Mod error] Can't load mod {0} because its dependency {1} couldn't be loaded.", name, required_name));
+                        }
                     }
                     StartMod(required_name, mods[required_name], m);
                 }
