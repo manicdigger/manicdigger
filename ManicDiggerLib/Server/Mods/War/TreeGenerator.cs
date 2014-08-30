@@ -3,11 +3,11 @@ using LibNoise;
 
 namespace ManicDigger.Mods
 {
-    public class TreeGeneratorWar : IMod
+    public class TreeGenerator : IMod
     {
         public void PreStart(ModManager m)
         {
-            m.RequireMod("DefaultWar");
+            m.RequireMod("CoreBlocks");
         }
         public void Start(ModManager manager)
         {

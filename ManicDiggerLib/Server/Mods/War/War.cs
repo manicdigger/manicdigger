@@ -8,35 +8,39 @@ namespace ManicDigger.Mods
     {
         public void PreStart(ModManager m)
         {
-            m.RequireMod("DefaultWar");
+            m.RequireMod("CoreBlocks");
         }
         public void Start(ModManager manager)
         {
             m = manager;
+            CurrentRespawnTime = DateTime.UtcNow;
+            //Basic settings
             m.SetCreative(false);
             m.SetWorldSize(256, 256, 128);
+            m.SetWorldDatabaseReadOnly(true); // WarMode.TeamDeathmatch
+            m.DisablePrivilege("tp");
+            
+            //Register specific functions
             m.RegisterOnPlayerJoin(PlayerJoin);
             m.RegisterOnDialogClick(DialogClickSelectTeam);
             m.RegisterOnDialogClick(DialogClickSelectClass);
             m.RegisterOnDialogClick(DialogClickSelectSubclass);
-            m.RenderHint(RenderHint.Nice);
             m.RegisterOnWeaponHit(Hit);
             m.RegisterOnSpecialKey(RespawnKey);
             m.RegisterOnSpecialKey(OnTabKey);
             m.RegisterOnDialogClick(OnTabResponse);
             m.RegisterOnSpecialKey(OnSelectTeamKey);
-            m.RegisterTimer(UpdateTab, 1);
-            m.DisablePrivilege("tp");
             m.RegisterChangedActiveMaterialSlot(UpdatePlayerModel);
-            m.RegisterTimer(UpdateRespawnTimer, 1);
             m.RegisterOnWeaponShot(Shot);
-            CurrentRespawnTime = DateTime.UtcNow;
-            m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
             m.RegisterOnPlayerChat(OnChat);
             m.RegisterOnCommand(OnCommand);
-            m.SetWorldDatabaseReadOnly(true); // WarMode.TeamDeathmatch
             m.RegisterOnBlockBuild(OnBuild);
             m.RegisterOnPlayerDeath(OnPlayerDeath);
+            
+            //Register timers
+            m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
+            m.RegisterTimer(UpdateRespawnTimer, 1);
+            m.RegisterTimer(UpdateTab, 1);
         }
         
         public enum WarMode
@@ -1086,19 +1090,19 @@ namespace ManicDigger.Mods
             }
             if (players[player].team == Team.Spectator)
             {
-                System.Console.WriteLine("[Spectator] " + sender + ": " + s);
+                Console.WriteLine("[Spectator] " + sender + ": " + s);
             }
             else
             {
                 if (toteam)
                 {
                     if (players[player].team == Team.Blue)
-                        System.Console.WriteLine("[Blue] " + sender + ": " + s);
+                        Console.WriteLine("[Blue] " + sender + ": " + s);
                     else
-                        System.Console.WriteLine("[Green] " + sender + ": " + s);
+                        Console.WriteLine("[Green] " + sender + ": " + s);
                 }
                 else
-                    System.Console.WriteLine("[Players] " + sender + ": " + s);
+                    Console.WriteLine("[Players] " + sender + ": " + s);
             }
             m.LogChat(senderColorString + sender + "&f: " + s);
             return null;

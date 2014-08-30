@@ -154,7 +154,9 @@
     <Compile Include="Server\Mods\Fortress\VandalFinder.cs" />
     <Compile Include="Server\Mods\Fortress\VegetationGrowth.cs" />
     <Compile Include="Server\Mods\Unused\BlockId.cs" />
-    <Compile Include="Server\Mods\War\Default.cs" />
+    <Compile Include="Server\Mods\War\Core.cs" />
+    <Compile Include="Server\Mods\War\CoreBlocks.cs" />
+    <Compile Include="Server\Mods\War\WarBlocks.cs" />
     <Compile Include="Server\Mods\War\Noise2DWorldGenerator.cs" />
     <Compile Include="Server\Mods\War\TreeGenerator.cs" />
     <Compile Include="Server\Mods\War\War.cs" />
