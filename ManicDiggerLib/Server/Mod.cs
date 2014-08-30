@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ManicDiggerServer;
 using ProtoBuf;
-using GameModeFortress;
 using Jint.Delegates;
 using System.Net;
 using System.Drawing;
@@ -105,7 +103,7 @@ namespace ManicDigger
         }
 
         private Server server;
-        internal void Start(ManicDiggerServer.Server server)
+        internal void Start(Server server)
         {
             this.server = server;
         }

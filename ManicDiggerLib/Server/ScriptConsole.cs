@@ -4,10 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Jint.Delegates;
 using ManicDigger;
-using ManicDiggerServer;
 
-namespace GameModeFortress
-{
     public class ScriptConsole
     {
         public ScriptConsole (Server s,int client_id)
@@ -386,4 +383,3 @@ namespace GameModeFortress
             Count = 0;
         }
     }
-}

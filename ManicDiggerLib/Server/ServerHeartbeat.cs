@@ -4,8 +4,6 @@ using System.Text;
 using System.IO;
 using System.Net;
 
-namespace GameModeFortress
-{
     public interface IServerHeartbeat
     {
         string Name { get; set; }
@@ -104,4 +102,3 @@ namespace GameModeFortress
             request.Abort();
         }
     }
-}

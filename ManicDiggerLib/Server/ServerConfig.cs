@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace GameModeFortress
-{
+
     [XmlRoot(ElementName = "ManicDiggerServerConfig")]
     public class ServerConfig
     {
@@ -48,7 +47,7 @@ namespace GameModeFortress
             return !string.IsNullOrEmpty(this.Password);
         }
 
-        public bool CanUserBuild(ManicDiggerServer.ClientOnServer client, int x, int y, int z)
+        public bool CanUserBuild(ClientOnServer client, int x, int y, int z)
         {
             bool canBuild = false;
             // TODO: fast tree datastructure
@@ -151,7 +150,7 @@ namespace GameModeFortress
                 return false;
             }
         }
-        public bool CanUserBuild(ManicDiggerServer.ClientOnServer client)
+        public bool CanUserBuild(ClientOnServer client)
         {
             if (this.Level != null)
             {
@@ -232,4 +231,3 @@ namespace GameModeFortress
             return defaultAreas;
         }
     }
-}

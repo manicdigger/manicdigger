@@ -1,15 +1,13 @@
 ﻿#region Using Statements
 using System;
 using System.IO;
-using GameModeFortress;
 using ManicDigger;
 using ProtoBuf;
 using System.Collections.Generic;
 using Jint.Delegates;
 #endregion
 
-namespace ManicDiggerServer
-{
+
     [ProtoContract()]
     public class Monster
     {
@@ -28,7 +26,7 @@ namespace ManicDiggerServer
         public float WalkProgress = 0;
     }
     [ProtoContract()]
-    public class Chunk
+    public class ServerChunk
     {
         [ProtoMember(1, IsRequired = false)]
         public byte[] dataOld;
@@ -68,7 +66,7 @@ namespace ManicDiggerServer
         internal Server server;
         internal IChunkDb d_ChunkDb;
         internal ICurrentTime d_CurrentTime;
-        internal Chunk[][] chunks;
+        internal ServerChunk[][] chunks;
         internal bool wasChunkGenerated;
 
         internal int MapSizeX;
@@ -79,12 +77,12 @@ namespace ManicDiggerServer
         public override int GetMapSizeZ() { return MapSizeZ; }
         public override int GetBlock(int x, int y, int z)
         {
-            Chunk chunk = GetChunk(x, y, z);
+            ServerChunk chunk = GetChunk(x, y, z);
             return chunk.data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
         }
         public override void SetBlock(int x, int y, int z, int tileType)
         {
-            Chunk chunk = GetChunk(x, y, z);
+            ServerChunk chunk = GetChunk(x, y, z);
             chunk.data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             chunk.LastChange = d_CurrentTime.GetSimulationCurrentFrame();
             chunk.DirtyForSaving = true;
@@ -106,7 +104,7 @@ namespace ManicDiggerServer
         }
         public void SetBlockNotMakingDirty(int x, int y, int z, int tileType)
         {
-            Chunk chunk = GetChunk(x, y, z);
+            ServerChunk chunk = GetChunk(x, y, z);
             chunk.data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             chunk.DirtyForSaving = true;
             UpdateColumnHeight(x, y);
@@ -114,18 +112,18 @@ namespace ManicDiggerServer
 
         public void LoadChunk(int cx, int cy, int cz)
         {
-            Chunk chunk = GetChunkValid(cx, cy, cz);
+            ServerChunk chunk = GetChunkValid(cx, cy, cz);
             if (chunk == null)
             {
                 GetChunk(cx * chunksize, cy * chunksize, cz * chunksize);
             }
         }
-        public Chunk GetChunk(int x, int y, int z)
+        public ServerChunk GetChunk(int x, int y, int z)
         {
             x = x / chunksize;
             y = y / chunksize;
             z = z / chunksize;
-            Chunk chunk = GetChunkValid(x, y, z);
+            ServerChunk chunk = GetChunkValid(x, y, z);
             if (chunk == null)
             {
                 wasChunkGenerated = true;
@@ -144,7 +142,7 @@ namespace ManicDiggerServer
                 {
                     server.modEventHandlers.getchunk[i](x, y, z, newchunk);
                 }
-                SetChunkValid(x, y, z, new Chunk() { data = newchunk });
+                SetChunkValid(x, y, z, new ServerChunk() { data = newchunk });
                 GetChunkValid(x, y, z).DirtyForSaving = true;
                 UpdateChunkHeight(x, y, z);
                 return GetChunkValid(x, y, z);
@@ -183,10 +181,10 @@ namespace ManicDiggerServer
             }
             return height;
         }
-        
-        Chunk DeserializeChunk(byte[] serializedChunk)
+
+        ServerChunk DeserializeChunk(byte[] serializedChunk)
         {
-            Chunk c = Serializer.Deserialize<Chunk>(new MemoryStream(serializedChunk));
+            ServerChunk c = Serializer.Deserialize<ServerChunk>(new MemoryStream(serializedChunk));
             //convert savegame to new format
             if (c.dataOld != null)
             {
@@ -205,7 +203,7 @@ namespace ManicDiggerServer
             MapSizeX = sizex;
             MapSizeY = sizey;
             MapSizeZ = sizez;
-            chunks = new Chunk[(sizex / chunksize) * (sizey / chunksize)][];
+            chunks = new ServerChunk[(sizex / chunksize) * (sizey / chunksize)][];
             d_Heightmap.Restart();
         }
 
@@ -226,9 +224,9 @@ namespace ManicDiggerServer
             return chunk;
         }
 
-        public Chunk GetChunkValid(int cx, int cy, int cz)
+        public ServerChunk GetChunkValid(int cx, int cy, int cz)
         {
-            Chunk[] column = chunks[MapUtilCi.Index2d(cx, cy, MapSizeX / chunksize)];
+            ServerChunk[] column = chunks[MapUtilCi.Index2d(cx, cy, MapSizeX / chunksize)];
             if (column == null)
             {
                 return null;
@@ -236,12 +234,12 @@ namespace ManicDiggerServer
             return column[cz];
         }
 
-        public void SetChunkValid(int cx, int cy, int cz, Chunk chunk)
+        public void SetChunkValid(int cx, int cy, int cz, ServerChunk chunk)
         {
-            Chunk[] column = chunks[MapUtilCi.Index2d(cx, cy, MapSizeX / chunksize)];
+            ServerChunk[] column = chunks[MapUtilCi.Index2d(cx, cy, MapSizeX / chunksize)];
             if (column == null)
             {
-                column = new Chunk[MapSizeZ / chunksize];
+                column = new ServerChunk[MapSizeZ / chunksize];
                 chunks[MapUtilCi.Index2d(cx, cy, MapSizeX / chunksize)] = column;
             }
             column[cz] = chunk;
@@ -252,4 +250,4 @@ namespace ManicDiggerServer
             Array.Clear(chunks, 0, chunks.Length);
         }
     }
-}
+

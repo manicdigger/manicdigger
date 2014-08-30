@@ -4,10 +4,8 @@ using System.Text;
 using System.Drawing;
 using ProtoBuf;
 using System.Runtime.Serialization;
-using ManicDiggerServer;
+using ManicDigger;
 
-namespace ManicDigger
-{
     //separate class because it's used by server and client.
     public class InventoryUtil
     {
@@ -531,4 +529,3 @@ namespace ManicDigger
             throw new NotImplementedException();
         }
     }
-}

@@ -9,7 +9,6 @@ using System.Windows.Forms;
 using System.Xml;
 using ManicDigger;
 using ManicDigger.Renderers;
-using ManicDiggerServer;
 using System.Text;
 using System.Net.Sockets;
 using Lidgren.Network;
@@ -17,8 +16,7 @@ using ManicDigger.ClientNative;
 using OpenTK.Graphics;
 #endregion
 
-namespace GameModeFortress
-{
+
     public class ManicDiggerProgram
     {
         [STAThread]
@@ -106,4 +104,4 @@ namespace GameModeFortress
             }
         }
     }
-}
+

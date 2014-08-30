@@ -4,8 +4,6 @@ using System.Text;
 using ProtoBuf;
 using ManicDigger;
 
-namespace GameModeFortress
-{
     [ProtoContract]
     public class PacketServerInventory
     {
@@ -32,4 +30,4 @@ namespace GameModeFortress
         [ProtoMember(4, IsRequired = false)]
         public int MaxOxygen = 10;
     }
-}
+

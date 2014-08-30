@@ -4,10 +4,7 @@ using System.Text;
 using System.Drawing;
 using ManicDigger.Renderers;
 using System.Runtime.InteropServices;
-using ManicDiggerServer;
 
-namespace ManicDigger
-{
     public class InfiniteMapChunked2dServer
     {
         public IMapStorage2 d_Map;
@@ -56,4 +53,3 @@ namespace ManicDigger
             chunks[MapUtil.Index2d(px, py, d_Map.GetMapSizeX() / chunksize)] = null;
         }
     }
-}

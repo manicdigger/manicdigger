@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace GameModeFortress
-{
+
     [XmlRoot(ElementName = "ManicDiggerServerBanlist")]
     public class ServerBanlist
     {
@@ -221,4 +220,4 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)]
         public string Reason  { get; set; }
     }
-}
+

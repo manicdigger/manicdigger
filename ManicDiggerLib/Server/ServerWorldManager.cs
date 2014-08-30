@@ -4,16 +4,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using ManicDigger;
-using Vector3iG = ManicDiggerServer.Vector3i;
-using Vector3iC = ManicDiggerServer.Vector3i;
+using Vector3iG = Vector3i;
+using Vector3iC = Vector3i;
 using PointG = System.Drawing.Point;
-using GameModeFortress;
 using System.Diagnostics;
 using ProtoBuf;
 using ManicDigger.ClientNative;
 
-namespace ManicDiggerServer
-{
     public partial class Server
     {
         //The main function for loading, unloading and sending chunks to players.
@@ -180,7 +177,7 @@ namespace ManicDiggerServer
         void SendChunk(int clientid, Vector3i v)
         {
             ClientOnServer c = clients[clientid];
-            Chunk chunk = d_Map.GetChunk(v.x, v.y, v.z);
+            ServerChunk chunk = d_Map.GetChunk(v.x, v.y, v.z);
             ClientSeenChunkSet(clientid, v.x, v.y, v.z, (int)simulationcurrentframe);
             //sent++;
             byte[] compressedchunk;
@@ -286,10 +283,10 @@ namespace ManicDiggerServer
                 x = x / chunksize;
                 y = y / chunksize;
                 z = z / chunksize;
-                Chunk c = d_Map.GetChunkValid(x,y,z);
+                ServerChunk c = d_Map.GetChunkValid(x, y, z);
                 if (c == null)
                 {
-                    c = new Chunk();
+                    c = new ServerChunk();
                 }
                 c.data = data;
                 c.DirtyForSaving = true;
@@ -319,10 +316,10 @@ namespace ManicDiggerServer
                 }
 
                 // TODO: check bounds.
-                Chunk c = d_Map.GetChunkValid(k.Key.X, k.Key.Y, k.Key.Z);
+                ServerChunk c = d_Map.GetChunkValid(k.Key.X, k.Key.Y, k.Key.Z);
                 if (c == null)
                 {
-                    c = new Chunk();
+                    c = new ServerChunk();
                 }
                 c.data = k.Value;
                 c.DirtyForSaving = true;
@@ -353,10 +350,10 @@ namespace ManicDiggerServer
                 }
 
                 // TODO: check bounds.
-                Chunk c = d_Map.GetChunkValid(k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ);
+                ServerChunk c = d_Map.GetChunkValid(k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ);
                 if (c == null)
                 {
-                    c = new Chunk();
+                    c = new ServerChunk();
                 }
                 c.data = k.Value;
                 c.DirtyForSaving = true;
@@ -454,7 +451,7 @@ namespace ManicDiggerServer
                 byte[] serializedChunk = ChunkDb.GetChunkFromFile(d_ChunkDb, x, y, z, finalFilename);
                 if (serializedChunk != null)
                 {
-                    Chunk c = DeserializeChunk(serializedChunk);
+                    ServerChunk c = DeserializeChunk(serializedChunk);
                     return c.data;
                 }
             }
@@ -483,7 +480,7 @@ namespace ManicDiggerServer
 
             foreach (var k in serializedChunks)
             {
-                Chunk c = null;
+                ServerChunk c = null;
                 if (k.Value != null)
                 {
                     c = DeserializeChunk(k.Value);
@@ -492,9 +489,9 @@ namespace ManicDiggerServer
             }
             return deserializedChunks;
         }
-        private Chunk DeserializeChunk(byte[] serializedChunk)
+        private ServerChunk DeserializeChunk(byte[] serializedChunk)
         {
-            Chunk c = Serializer.Deserialize<Chunk>(new MemoryStream(serializedChunk));
+            ServerChunk c = Serializer.Deserialize<ServerChunk>(new MemoryStream(serializedChunk));
             //convert savegame to new format
             if (c.dataOld != null)
             {
@@ -528,7 +525,7 @@ namespace ManicDiggerServer
                 int dy = pos.y / chunksize;
                 int dz = pos.z / chunksize;
 
-                Chunk cc = new Chunk() {data = this.GetChunk(pos.x, pos.y, pos.z)};
+                ServerChunk cc = new ServerChunk() { data = this.GetChunk(pos.x, pos.y, pos.z) };
                 MemoryStream ms = new MemoryStream();
                 Serializer.Serialize(ms, cc);
                 dbchunks.Add(new DbChunk() { Position = new Xyz() { X = dx, Y = dy, Z = dz }, Chunk = ms.ToArray() });
@@ -545,4 +542,4 @@ namespace ManicDiggerServer
             Console.WriteLine(string.Format("Saved {0} chunk(s) to database.", dbchunks.Count));
         }
     }
-}
+

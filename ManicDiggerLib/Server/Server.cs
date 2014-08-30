@@ -7,7 +7,6 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
-using GameModeFortress;
 using ManicDigger;
 using OpenTK;
 using ProtoBuf;
@@ -20,8 +19,8 @@ using Lidgren.Network;
 using System.Diagnostics;
 using ManicDigger.ClientNative;
 
-namespace ManicDiggerServer
-{
+
+
     public class ClientException : Exception
     {
         public ClientException(Exception innerException, int clientid)
@@ -729,7 +728,7 @@ namespace ManicDiggerServer
                 {
                     for (int cz = 0; cz < d_Map.MapSizeZ / chunksize; cz++)
                     {
-                        Chunk c = d_Map.GetChunkValid(cx, cy, cz);
+                        ServerChunk c = d_Map.GetChunkValid(cx, cy, cz);
                         if (c == null)
                         {
                             continue;
@@ -1344,7 +1343,7 @@ namespace ManicDiggerServer
                 foreach (var p in ChunksAroundPlayer(pos))
                 {
                     if (!MapUtil.IsValidPos(d_Map, p.x, p.y, p.z)) { continue; }
-                    Chunk c = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
+                    ServerChunk c = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
                     if (c == null) { continue; }
                     if (c.data == null) { continue; }
                     if (c.LastUpdate > simulationcurrentframe) { c.LastUpdate = simulationcurrentframe; }
@@ -1362,7 +1361,7 @@ namespace ManicDiggerServer
                 if (simulationcurrentframe - oldesttime > chunksimulation_every)
                 {
                     ChunkUpdate(oldestpos, oldesttime);
-                    Chunk c = d_Map.GetChunkValid(oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize);
+                    ServerChunk c = d_Map.GetChunkValid(oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize);
                     c.LastUpdate = (int)simulationcurrentframe;
                     return;
                 }
@@ -1384,7 +1383,7 @@ namespace ManicDiggerServer
             {
                 AddMonsters(p);
             }
-            Chunk chunk = d_Map.GetChunk(p.x, p.y, p.z);
+            ServerChunk chunk = d_Map.GetChunk(p.x, p.y, p.z);
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
@@ -1407,7 +1406,7 @@ namespace ManicDiggerServer
 
         private void AddMonsters(Vector3i p)
         {
-            Chunk chunk = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
+            ServerChunk chunk = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
             int tries = 0;
             while (chunk.Monsters.Count < 1)
             {
@@ -1461,7 +1460,7 @@ namespace ManicDiggerServer
             for (int i = 0; i < 100; i++)
             {
                 var v = MapUtil.Pos(CompressUnusedIteration, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
-                Chunk c = d_Map.GetChunkValid(v.x, v.y, v.z);
+                ServerChunk c = d_Map.GetChunkValid(v.x, v.y, v.z);
                 var vg = new Vector3i(v.x * chunksize, v.y * chunksize, v.z * chunksize);
                 bool stop = false;
                 if (c != null)
@@ -1516,7 +1515,7 @@ namespace ManicDiggerServer
             SaveGlobalData();
         }
 
-        private void DoSaveChunk(int x, int y, int z, Chunk c)
+        private void DoSaveChunk(int x, int y, int z, ServerChunk c)
         {
             MemoryStream ms = new MemoryStream();
             Serializer.Serialize(ms, c);
@@ -1670,7 +1669,7 @@ namespace ManicDiggerServer
                         {
                             continue;
                         }
-                        Chunk chunk = d_Map.GetChunkValid(cx, cy, cz);
+                        ServerChunk chunk = d_Map.GetChunkValid(cx, cy, cz);
                         if (chunk == null || chunk.Monsters == null)
                         {
                             continue;
@@ -1723,7 +1722,7 @@ namespace ManicDiggerServer
                         {
                             continue;
                         }
-                        Chunk chunk = d_Map.GetChunkValid(cx, cy, cz);
+                        ServerChunk chunk = d_Map.GetChunkValid(cx, cy, cz);
                         if (chunk == null || chunk.Monsters == null)
                         {
                             continue;
@@ -5034,4 +5033,4 @@ namespace ManicDiggerServer
         [ProtoMember(2)]
         public Ingredient output;
     }
-}
+

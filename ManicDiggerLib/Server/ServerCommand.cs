@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using GameModeFortress;
 using ManicDigger;
 
-namespace ManicDiggerServer
-{
     public partial class Server
     {
         public void CommandInterpreter(int sourceClientId, string command, string argument)
@@ -2581,4 +2578,4 @@ namespace ManicDiggerServer
             }
         }
     }
-}
+

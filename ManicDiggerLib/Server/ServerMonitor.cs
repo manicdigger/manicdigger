@@ -5,12 +5,9 @@ using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Serialization;
 using ManicDigger;
-using ManicDiggerServer;
 using System.Threading;
 using ManicDigger.ClientNative;
 
-namespace GameModeFortress
-{
     public class ServerMonitor
     {
         private ServerMonitorConfig config;
@@ -250,5 +247,3 @@ namespace GameModeFortress
             textWriter.Close();
         }
     }
-}
-

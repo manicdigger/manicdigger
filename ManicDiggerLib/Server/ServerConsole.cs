@@ -1,10 +1,7 @@
 using System;
 using ManicDigger;
-using ManicDiggerServer;
 using System.Threading;
 
-namespace GameModeFortress
-{
     public class ServerConsole
     {
         private Server server;
@@ -47,5 +44,5 @@ namespace GameModeFortress
             Console.WriteLine(message);
         }
     }
-}
+
 

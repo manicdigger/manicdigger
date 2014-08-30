@@ -7,8 +7,7 @@ using System.Text;
 using Jint;
 using Jint.Native;
 
-namespace GameModeFortress
-{
+
    public interface IScriptInterpreter {
       TimeSpan ExecutionTimeout { get; set; }
       bool Execute(string script);
@@ -78,4 +77,4 @@ namespace GameModeFortress
          m_engine.SetFunction(name, function);
       }
    }
-}
+

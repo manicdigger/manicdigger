@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 
-namespace ManicDigger
-{
     public interface IGetFileStream
     {
         Stream GetFile(string p);
@@ -89,4 +87,4 @@ namespace ManicDigger
             cache[name] = data;
         }
     }
-}
+

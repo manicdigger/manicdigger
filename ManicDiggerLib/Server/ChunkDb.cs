@@ -6,11 +6,8 @@ using System.Data.Common;
 using System.Data;
 using System.Data.SQLite;
 using System.IO;
-using ManicDiggerServer;
 using ManicDigger.ClientNative;
 
-namespace GameModeFortress
-{
     public struct Xyz
     {
         public int X;
@@ -605,4 +602,3 @@ namespace GameModeFortress
         public bool GetReadOnly() { return ReadOnly; }
         public void SetReadOnly(bool value) { ReadOnly = value; }
     }
-}
