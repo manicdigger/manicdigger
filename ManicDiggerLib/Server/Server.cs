@@ -65,6 +65,8 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemUnloadUnusedChunks();
         systems[systemsCount++] = new ServerSystemNotifyMap();
         systems[systemsCount++] = new ServerSystemNotifyMonsters();
+        systems[systemsCount++] = new ServerSystemNotifyPing();
+        systems[systemsCount++] = new ServerSystemChunksSimulation();
     }
     internal ServerCi server;
     internal ServerSystem[] systems;
@@ -241,46 +243,6 @@ public partial class Server : ICurrentTime, IDropItem
             //k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
             NotifyInventory(k.Key);
             NotifyPlayerStats(k.Key);
-        }
-
-        //Sends ping to all clients and disconnects timed-out players
-        pingtimer.Update(
-        delegate
-        {
-            if (exit.GetExit())
-            {
-                //Instantly return if server wants to exit
-                return;
-            }
-            List<int> keysToDelete = new List<int>();
-            foreach (var k in clients)
-            {
-                // Check if client is alive. Detect half-dropped connections.
-                if (!k.Value.Ping.Send(platform)/*&& k.Value.state == ClientStateOnServer.Playing*/)
-                {
-                    if (k.Value.Ping.Timeout(platform))
-                    {
-                        Console.WriteLine(k.Key + ": ping timeout. Disconnecting...");
-                        keysToDelete.Add(k.Key);
-                    }
-                }
-                else
-                {
-                    SendPacket(k.Key, ServerPackets.Ping());
-                }
-            }
-
-            foreach (int key in keysToDelete)
-            {
-                KillPlayer(key);
-            }
-        }
-        );
-
-        //Update all loaded chunks
-        for (int i = 0; i < ChunksSimulated; i++)
-        {
-            ChunkSimulation();
         }
 
         //Process Mod timers
@@ -1157,7 +1119,6 @@ public partial class Server : ICurrentTime, IDropItem
         SendPacket(recipientClientId, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.PlayerPing, PlayerPing = p }));
     }
 
-    Timer pingtimer = new Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
     private void NotifySeason(int clientid)
     {
         if (clients[clientid].state == ClientStateOnServer.Connecting)
@@ -1183,128 +1144,6 @@ public partial class Server : ICurrentTime, IDropItem
         long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS / (24 * HourDetail);
         long startframe = (everyframes * HourDetail * GameStartHour);
         return (int)(((frame + startframe) / everyframes) % (24 * HourDetail));
-    }
-
-    int ChunksSimulated = 1;
-    int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes
-
-    void ChunkSimulation()
-    {
-        foreach (var k in clients)
-        {
-            var pos = PlayerBlockPosition(k.Value);
-
-            long oldesttime = long.MaxValue;
-            Vector3i oldestpos = new Vector3i();
-
-            foreach (var p in ChunksAroundPlayer(pos))
-            {
-                if (!MapUtil.IsValidPos(d_Map, p.x, p.y, p.z)) { continue; }
-                ServerChunk c = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
-                if (c == null) { continue; }
-                if (c.data == null) { continue; }
-                if (c.LastUpdate > simulationcurrentframe) { c.LastUpdate = simulationcurrentframe; }
-                if (c.LastUpdate < oldesttime)
-                {
-                    oldesttime = c.LastUpdate;
-                    oldestpos = p;
-                }
-                if (!c.IsPopulated)
-                {
-                    PopulateChunk(p);
-                    c.IsPopulated = true;
-                }
-            }
-            if (simulationcurrentframe - oldesttime > chunksimulation_every)
-            {
-                ChunkUpdate(oldestpos, oldesttime);
-                ServerChunk c = d_Map.GetChunkValid(oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize);
-                c.LastUpdate = (int)simulationcurrentframe;
-                return;
-            }
-        }
-    }
-
-    private void PopulateChunk(Vector3i p)
-    {
-        for (int i = 0; i < modEventHandlers.populatechunk.Count; i++)
-        {
-            modEventHandlers.populatechunk[i](p.x / chunksize, p.y / chunksize, p.z / chunksize);
-        }
-        //d_Generator.PopulateChunk(d_Map, p.x / chunksize, p.y / chunksize, p.z / chunksize);
-    }
-
-    private void ChunkUpdate(Vector3i p, long lastupdate)
-    {
-        if (config.Monsters)
-        {
-            AddMonsters(p);
-        }
-        ServerChunk chunk = d_Map.GetChunk(p.x, p.y, p.z);
-        for (int xx = 0; xx < chunksize; xx++)
-        {
-            for (int yy = 0; yy < chunksize; yy++)
-            {
-                for (int zz = 0; zz < chunksize; zz++)
-                {
-                    int block = chunk.data[MapUtilCi.Index3d(xx, yy, zz, chunksize, chunksize)];
-
-                    for (int i = 0; i < modEventHandlers.blockticks.Count; i++)
-                    {
-                        modEventHandlers.blockticks[i](p.x + xx, p.y + yy, p.z + zz);
-                    }
-                }
-            }
-        }
-    }
-
-    public int[] MonsterTypesUnderground = new int[] { 1, 2 };
-    public int[] MonsterTypesOnGround = new int[] { 0, 3, 4 };
-
-    private void AddMonsters(Vector3i p)
-    {
-        ServerChunk chunk = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
-        int tries = 0;
-        while (chunk.Monsters.Count < 1)
-        {
-            int xx = rnd.Next(chunksize);
-            int yy = rnd.Next(chunksize);
-            int zz = rnd.Next(chunksize);
-            int px = p.x + xx;
-            int py = p.y + yy;
-            int pz = p.z + zz;
-            if ((!MapUtil.IsValidPos(d_Map, px, py, pz))
-                || (!MapUtil.IsValidPos(d_Map, px, py, pz + 1))
-                || (!MapUtil.IsValidPos(d_Map, px, py, pz - 1)))
-            {
-                continue;
-            }
-            int type;
-            int height = MapUtil.blockheight(d_Map, 0, px, py);
-            if (pz >= height)
-            {
-                type = MonsterTypesOnGround[rnd.Next(MonsterTypesOnGround.Length)];
-            }
-            else
-            {
-                type = MonsterTypesUnderground[rnd.Next(MonsterTypesUnderground.Length)];
-            }
-            if (d_Map.GetBlock(px, py, pz) == 0
-                && d_Map.GetBlock(px, py, pz + 1) == 0
-                && d_Map.GetBlock(px, py, pz - 1) != 0
-                && (!BlockTypes[d_Map.GetBlock(px, py, pz - 1)].IsFluid()))
-            {
-                chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(), Health = 20, MonsterType = type });
-            }
-            if (tries++ > 500)
-            {
-                break;
-            }
-        }
-    }
-    public int NewMonsterId()
-    {
-        return LastMonsterId++;
     }
 
     //on exit
@@ -3355,25 +3194,6 @@ public partial class Server : ICurrentTime, IDropItem
     public int drawdistance = 128;
     public const int chunksize = 32;
     internal int chunkdrawdistance { get { return drawdistance / chunksize; } }
-    IEnumerable<Vector3i> ChunksAroundPlayer(Vector3i playerpos)
-    {
-        playerpos.x = (playerpos.x / chunksize) * chunksize;
-        playerpos.y = (playerpos.y / chunksize) * chunksize;
-        for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
-        {
-            for (int y = -chunkdrawdistance; y <= chunkdrawdistance; y++)
-            {
-                for (int z = 0; z < d_Map.MapSizeZ / chunksize; z++)
-                {
-                    var p = new Vector3i(playerpos.x + x * chunksize, playerpos.y + y * chunksize, z * chunksize);
-                    if (MapUtil.IsValidPos(d_Map, p.x, p.y, p.z))
-                    {
-                        yield return p;
-                    }
-                }
-            }
-        }
-    }
     public byte[] CompressChunkNetwork(ushort[] chunk)
     {
         return d_NetworkCompression.Compress(Misc.UshortArrayToByteArray(chunk));
@@ -5030,4 +4850,198 @@ public class ServerSystemNotifyMonsters : ServerSystem
         m.WalkDirection = dir;
         m.WalkProgress = 0;
     }
+}
+
+public class ServerSystemChunksSimulation : ServerSystem
+{
+    public override void Update(Server server, float dt)
+    {
+        //Update all loaded chunks
+        for (int i = 0; i < ChunksSimulated; i++)
+        {
+            ChunkSimulation(server);
+        }
+    }
+    
+    int ChunksSimulated = 1;
+    int chunksimulation_every(Server server) {return (int)(1 / server.SIMULATION_STEP_LENGTH) * 60 * 10; }//10 minutes
+
+    void ChunkSimulation(Server server)
+    {
+        foreach (var k in server.clients)
+        {
+            var pos = server.PlayerBlockPosition(k.Value);
+
+            long oldesttime = long.MaxValue;
+            Vector3i oldestpos = new Vector3i();
+
+            foreach (var p in ChunksAroundPlayer(server, pos))
+            {
+                if (!MapUtil.IsValidPos(server.d_Map, p.x, p.y, p.z)) { continue; }
+                ServerChunk c = server.d_Map.GetChunkValid(p.x / Server.chunksize, p.y / Server.chunksize, p.z / Server.chunksize);
+                if (c == null) { continue; }
+                if (c.data == null) { continue; }
+                if (c.LastUpdate > server.simulationcurrentframe) { c.LastUpdate = server.simulationcurrentframe; }
+                if (c.LastUpdate < oldesttime)
+                {
+                    oldesttime = c.LastUpdate;
+                    oldestpos = p;
+                }
+                if (!c.IsPopulated)
+                {
+                    PopulateChunk(server, p);
+                    c.IsPopulated = true;
+                }
+            }
+            if (server.simulationcurrentframe - oldesttime > chunksimulation_every(server))
+            {
+                ChunkUpdate(server, oldestpos, oldesttime);
+                ServerChunk c = server.d_Map.GetChunkValid(oldestpos.x / Server.chunksize, oldestpos.y / Server.chunksize, oldestpos.z / Server.chunksize);
+                c.LastUpdate = (int)server.simulationcurrentframe;
+                return;
+            }
+        }
+    }
+
+    void PopulateChunk(Server server, Vector3i p)
+    {
+        for (int i = 0; i < server.modEventHandlers.populatechunk.Count; i++)
+        {
+            server.modEventHandlers.populatechunk[i](p.x / Server.chunksize, p.y / Server.chunksize, p.z / Server.chunksize);
+        }
+        //d_Generator.PopulateChunk(d_Map, p.x / chunksize, p.y / chunksize, p.z / chunksize);
+    }
+
+    void ChunkUpdate(Server server, Vector3i p, long lastupdate)
+    {
+        if (server.config.Monsters)
+        {
+            AddMonsters(server, p);
+        }
+        ServerChunk chunk = server.d_Map.GetChunk(p.x, p.y, p.z);
+        for (int xx = 0; xx < Server.chunksize; xx++)
+        {
+            for (int yy = 0; yy < Server.chunksize; yy++)
+            {
+                for (int zz = 0; zz < Server.chunksize; zz++)
+                {
+                    int block = chunk.data[MapUtilCi.Index3d(xx, yy, zz, Server.chunksize, Server.chunksize)];
+
+                    for (int i = 0; i < server.modEventHandlers.blockticks.Count; i++)
+                    {
+                        server.modEventHandlers.blockticks[i](p.x + xx, p.y + yy, p.z + zz);
+                    }
+                }
+            }
+        }
+    }
+    IEnumerable<Vector3i> ChunksAroundPlayer(Server server, Vector3i playerpos)
+    {
+        playerpos.x = (playerpos.x / Server.chunksize) * Server.chunksize;
+        playerpos.y = (playerpos.y / Server.chunksize) * Server.chunksize;
+        for (int x = -server.chunkdrawdistance; x <= server.chunkdrawdistance; x++)
+        {
+            for (int y = -server.chunkdrawdistance; y <= server.chunkdrawdistance; y++)
+            {
+                for (int z = 0; z < server.d_Map.MapSizeZ / Server.chunksize; z++)
+                {
+                    var p = new Vector3i(playerpos.x + x * Server.chunksize, playerpos.y + y * Server.chunksize, z * Server.chunksize);
+                    if (MapUtil.IsValidPos(server.d_Map, p.x, p.y, p.z))
+                    {
+                        yield return p;
+                    }
+                }
+            }
+        }
+    }
+
+    public int[] MonsterTypesUnderground = new int[] { 1, 2 };
+    public int[] MonsterTypesOnGround = new int[] { 0, 3, 4 };
+
+    public void AddMonsters(Server server, Vector3i p)
+    {
+        ServerChunk chunk = server.d_Map.GetChunkValid(p.x / Server.chunksize, p.y / Server.chunksize, p.z / Server.chunksize);
+        int tries = 0;
+        while (chunk.Monsters.Count < 1)
+        {
+            int xx = server.rnd.Next(Server.chunksize);
+            int yy = server.rnd.Next(Server.chunksize);
+            int zz = server.rnd.Next(Server.chunksize);
+            int px = p.x + xx;
+            int py = p.y + yy;
+            int pz = p.z + zz;
+            if ((!MapUtil.IsValidPos(server.d_Map, px, py, pz))
+                || (!MapUtil.IsValidPos(server.d_Map, px, py, pz + 1))
+                || (!MapUtil.IsValidPos(server.d_Map, px, py, pz - 1)))
+            {
+                continue;
+            }
+            int type;
+            int height = MapUtil.blockheight(server.d_Map, 0, px, py);
+            if (pz >= height)
+            {
+                type = MonsterTypesOnGround[server.rnd.Next(MonsterTypesOnGround.Length)];
+            }
+            else
+            {
+                type = MonsterTypesUnderground[server.rnd.Next(MonsterTypesUnderground.Length)];
+            }
+            if (server.d_Map.GetBlock(px, py, pz) == 0
+                && server.d_Map.GetBlock(px, py, pz + 1) == 0
+                && server.d_Map.GetBlock(px, py, pz - 1) != 0
+                && (!server.BlockTypes[server.d_Map.GetBlock(px, py, pz - 1)].IsFluid()))
+            {
+                chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(server), Health = 20, MonsterType = type });
+            }
+            if (tries++ > 500)
+            {
+                break;
+            }
+        }
+    }
+    public int NewMonsterId(Server server)
+    {
+        return server.LastMonsterId++;
+    }
+}
+
+//Sends ping to all clients and disconnects timed-out players
+public class ServerSystemNotifyPing : ServerSystem
+{
+    public override void Update(Server server, float dt)
+    {
+        pingtimer.Update(
+        delegate
+        {
+            if (server.exit.GetExit())
+            {
+                //Instantly return if server wants to exit
+                return;
+            }
+            List<int> keysToDelete = new List<int>();
+            foreach (var k in server.clients)
+            {
+                // Check if client is alive. Detect half-dropped connections.
+                if (!k.Value.Ping.Send(server.platform)/*&& k.Value.state == ClientStateOnServer.Playing*/)
+                {
+                    if (k.Value.Ping.Timeout(server.platform))
+                    {
+                        Console.WriteLine(k.Key + ": ping timeout. Disconnecting...");
+                        keysToDelete.Add(k.Key);
+                    }
+                }
+                else
+                {
+                    server.SendPacket(k.Key, ServerPackets.Ping());
+                }
+            }
+
+            foreach (int key in keysToDelete)
+            {
+                server.KillPlayer(key);
+            }
+        }
+        );
+    }
+    Timer pingtimer = new Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
 }
