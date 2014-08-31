@@ -7,5 +7,5 @@ mkdir CitoOutput/Cs
 mkdir CitoOutput/JsTa
 
 cd CitoOutput/Java
-mono ../../CiTo.exe -D CITO -D JAVA -l java -o ManicDigger.java -n ManicDigger.lib  $(ls ../../ManicDiggerLib/Client/*.ci.cs) ../../Packet.Serializer.ci.cs
+mono ../../CiTo.exe -D CITO -D JAVA -l java -o ManicDigger.java -n ManicDigger.lib  $(ls ../../ManicDiggerLib/Client/*.ci.cs) $(ls ../../ManicDiggerLib/Client/Mods/*.ci.cs) ../../Packet.Serializer.ci.cs
 cd ../..

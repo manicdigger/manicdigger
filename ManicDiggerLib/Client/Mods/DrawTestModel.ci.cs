@@ -1,0 +1,45 @@
+﻿public class ModDrawTestModel : ClientMod
+{
+    public override void OnNewFrameDraw3d(Game game, float deltaTime)
+    {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+
+        DrawTestModel(game, deltaTime);
+    }
+
+    void DrawTestModel(Game game, float deltaTime)
+    {
+        if (!game.ENABLE_DRAW_TEST_CHARACTER)
+        {
+            return;
+        }
+        if (testmodel == null)
+        {
+            testmodel = new AnimatedModelRenderer();
+            byte[] data = game.GetFile("player2.txt");
+            int dataLength = game.GetFileLength("player2.txt");
+            string dataString = game.platform.StringFromUtf8ByteArray(data, dataLength);
+            AnimatedModel model = AnimatedModelSerializer.Deserialize(game.platform, dataString);
+            testmodel.Start(game, model);
+        }
+        game.GLPushMatrix();
+        game.GLTranslate(game.MapSizeX / 2, game.blockheight(game.MapSizeX / 2, game.MapSizeY / 2 - 2, 128), game.MapSizeY / 2 - 2);
+        game.platform.BindTexture2d(game.GetTexture("mineplayer.png"));
+        testmodel.Render(deltaTime);
+        game.GLPopMatrix();
+    }
+    AnimatedModelRenderer testmodel;
+
+    public override bool OnClientCommand(Game game, ClientCommandArgs args)
+    {
+        if (args.command == "testmodel")
+        {
+            game.ENABLE_DRAW_TEST_CHARACTER = game.BoolCommandArgument(args.arguments);
+            return true;
+        }
+        return false;
+    }
+}
