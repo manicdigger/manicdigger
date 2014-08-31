@@ -267,7 +267,7 @@ public partial class Server : ICurrentTime, IDropItem
             {
                 if (!a.Value.IsBot)
                 {
-                    //continue;	//Excludes bots positions from being sent
+                    continue; //Excludes player positions from being sent (don't send them twice)
                 }
                 foreach (var b in clients)
                 {
