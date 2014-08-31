@@ -203,6 +203,7 @@
     <Compile Include="Server\Systems\BanList.cs" />
     <Compile Include="Server\Systems\ChunksSimulation.cs" />
     <Compile Include="Server\Systems\HttpServer.cs" />
+    <Compile Include="Server\Systems\NotifyMap.cs" />
     <Compile Include="Server\Systems\NotifyMonsters.cs" />
     <Compile Include="Server\Systems\NotifyPing.cs" />
     <Compile Include="Server\Systems\ServerHeartbeat.cs" />
