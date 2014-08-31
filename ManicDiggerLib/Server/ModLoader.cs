@@ -18,30 +18,59 @@ namespace ManicDigger
         Dictionary<string, string> javascriptScripts = new Dictionary<string, string>();
         public void CompileScripts(Dictionary<string, string> scripts, bool restart)
         {
+            CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v3.5" } });
+            var parms = new CompilerParameters
+            {
+                GenerateExecutable = false,
+                GenerateInMemory = true,
+                CompilerOptions = "/unsafe"
+            };
+            parms.ReferencedAssemblies.Add("System.dll");
+            parms.ReferencedAssemblies.Add("System.Drawing.dll");
+            parms.ReferencedAssemblies.Add("ScriptingApi.dll");
+            parms.ReferencedAssemblies.Add("LibNoise.dll");
+            parms.ReferencedAssemblies.Add("protobuf-net.dll");
+            parms.ReferencedAssemblies.Add("System.Xml.dll");
+
+            Dictionary<string, string> csharpScripts = new Dictionary<string, string>();
             foreach (var k in scripts)
             {
                 if (k.Key.EndsWith(".js"))
                 {
                     javascriptScripts[k.Key] = k.Value;
-                    continue;
                 }
-                if (restart)
+                else
                 {
-                    continue;
+                    csharpScripts[k.Key] = k.Value;
                 }
-                CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v3.5" } });
-                var parms = new CompilerParameters
+            }
+            if (restart)
+            {
+                // javascript only
+                return;
+            }
+
+            string[] csharpScriptsValues = new string[csharpScripts.Values.Count];
+            int i = 0;
+            foreach (var k in csharpScripts)
+            {
+                csharpScriptsValues[i++] = k.Value;
+            }
+
+            {
+                CompilerResults results = compiler.CompileAssemblyFromSource(parms, csharpScriptsValues);
+
+                if (results.Errors.Count == 0)
                 {
-                    GenerateExecutable = false,
-                    GenerateInMemory = true,
-                    CompilerOptions = "/unsafe"
-                };
-                parms.ReferencedAssemblies.Add("System.dll");
-                parms.ReferencedAssemblies.Add("System.Drawing.dll");
-                parms.ReferencedAssemblies.Add("ScriptingApi.dll");
-                parms.ReferencedAssemblies.Add("LibNoise.dll");
-                parms.ReferencedAssemblies.Add("protobuf-net.dll");
-                parms.ReferencedAssemblies.Add("System.Xml.dll");
+                    Use(results);
+                    return;
+                }
+            }
+
+            //Error. Load scripts separately.
+
+            foreach (var k in csharpScripts)
+            {
                 CompilerResults results = compiler.CompileAssemblyFromSource(parms, new string[] { k.Value });
                 if (results.Errors.Count != 0)
                 {
@@ -73,13 +102,18 @@ namespace ManicDigger
                     }
                     continue;
                 }
-                foreach (Type t in results.CompiledAssembly.GetTypes())
+                Use(results);
+            }
+        }
+
+        void Use(CompilerResults results)
+        {
+            foreach (Type t in results.CompiledAssembly.GetTypes())
+            {
+                if (typeof(IMod).IsAssignableFrom(t))
                 {
-                    if (typeof(IMod).IsAssignableFrom(t))
-                    {
-                        mods[t.Name] = (IMod)results.CompiledAssembly.CreateInstance(t.FullName);
-                        Console.WriteLine("Loaded mod: {0}", t.Name);
-                    }
+                    mods[t.Name] = (IMod)results.CompiledAssembly.CreateInstance(t.FullName);
+                    Console.WriteLine("Loaded mod: {0}", t.Name);
                 }
             }
         }
