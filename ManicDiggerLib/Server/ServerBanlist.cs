@@ -17,12 +17,6 @@ public class ServerBanlist
         {
             if (bannedip.IPAdress == ipAddress)
             {
-                if (bannedip.BannedUntil < DateTime.UtcNow)
-                {
-                    //Automatically unban if ban has elapsed
-                    UnbanIP(ipAddress);
-                    return false;
-                }
                 return true;
             }
         }
@@ -35,19 +29,13 @@ public class ServerBanlist
         {
             if (username.Equals(banneduser.UserName, StringComparison.InvariantCultureIgnoreCase))
             {
-                if (banneduser.BannedUntil < DateTime.UtcNow)
-                {
-                    //Automatically unban if ban has elapsed
-                    UnbanPlayer(username);
-                    return false;
-                }
                 return true;
             }
         }
         return false;
     }
 
-    public void ClearTimeBans()
+    public int ClearTimeBans()
     {
         int counter = 0;
         List<string> unbanUsers = new List<string>();
@@ -87,6 +75,7 @@ public class ServerBanlist
         {
             Console.WriteLine("Removed {0} expired timebans.", counter);
         }
+        return counter;
     }
 
     public bool BanPlayer(string username, string bannedby, string reason)
