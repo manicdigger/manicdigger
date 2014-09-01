@@ -243,8 +243,7 @@
         AddMod(new ModSendPosition());
         AddMod(new ModInterpolatePositions());
         AddMod(new ModRail());
-        AddMod(new ModDrawTestModel());
-        AddMod(new ModDrawPlayers());
+
         AddMod(new ModCompass());
         AddMod(new ModGrenade());
         AddMod(new ModBullet());
@@ -261,6 +260,8 @@
             AddMod(new ModSkySphereStatic());
         }
         AddMod(sunmoonrenderer);
+        AddMod(new ModDrawTestModel());
+        AddMod(new ModDrawPlayers());
         AddMod(new ModDrawLinesAroundSelectedBlock());
         AddMod(new ModDrawTerrain());
         AddMod(new ModDrawPlayerNames());

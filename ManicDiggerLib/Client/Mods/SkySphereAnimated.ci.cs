@@ -4,11 +4,16 @@ public class ModSkySphereAnimated : ClientMod
 {
     public ModSkySphereAnimated()
     {
+        stars = new ModSkySphereStatic();
     }
     ModelData skymodel;
+    ClientMod stars;
 
     public override void OnNewFrameDraw3d(Game game, float deltaTime)
     {
+        game.SkySphereNight = true;
+        stars.OnNewFrameDraw3d(game, deltaTime);
+
         game.platform.GlDisableFog();
         DrawSkySphere(game);
         game.SetFog();
@@ -30,7 +35,12 @@ public class ModSkySphereAnimated : ClientMod
             game.platform.BitmapDelete(skyBmp);
             game.platform.BitmapDelete(glowBmp);
         }
+
+        game.platform.GLDisableAlphaTest();
+        game.platform.GlDisableDepthTest();
         Draw(game, game.currentfov());
+        game.platform.GLEnableAlphaTest();
+        game.platform.GlEnableDepthTest();
     }
 
     int[] skyPixels;
@@ -110,7 +120,7 @@ public class ModSkySphereAnimated : ClientMod
                 float one = 1;
 
                 int skyColor = Texture2d(platform, skyPixels_, (sunYNormalized + 2) / 4, 1 - ((vertexYNormalized + 1) / 2));
-                
+
                 float skyColorA = one * Game.ColorA(skyColor) / 255;
                 float skyColorR = one * Game.ColorR(skyColor) / 255;
                 float skyColorG = one * Game.ColorG(skyColor) / 255;
