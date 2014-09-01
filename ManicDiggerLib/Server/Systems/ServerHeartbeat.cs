@@ -9,6 +9,7 @@ public class ServerSystemHeartbeat : ServerSystem
     public ServerSystemHeartbeat()
     {
         d_Heartbeat = new ServerHeartbeat();
+        elapsed = 60;
     }
     float elapsed;
     public override void Update(Server server, float dt)
@@ -28,6 +29,10 @@ public class ServerSystemHeartbeat : ServerSystem
 
     public void SendHeartbeat(Server server)
     {
+        if (server.config == null)
+        {
+            return;
+        }
         if (server.config.Key == null)
         {
             return;

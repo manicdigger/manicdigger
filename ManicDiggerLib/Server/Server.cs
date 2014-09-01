@@ -60,6 +60,7 @@ public partial class Server : ICurrentTime, IDropItem
 
         server = new ServerCi();
         systems = new ServerSystem[256];
+        systems[systemsCount++] = new ServerSystemLoadConfig();
         systems[systemsCount++] = new ServerSystemHeartbeat();
         systems[systemsCount++] = new ServerSystemHttpServer();
         systems[systemsCount++] = new ServerSystemUnloadUnusedChunks();
@@ -68,6 +69,7 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemNotifyPing();
         systems[systemsCount++] = new ServerSystemChunksSimulation();
         systems[systemsCount++] = new ServerSystemBanList();
+        systems[systemsCount++] = new ServerSystemModLoader();
     }
     internal ServerCi server;
     internal ServerSystem[] systems;
@@ -162,17 +164,18 @@ public partial class Server : ICurrentTime, IDropItem
     {
         try
         {
-            //Save data
-            ProcessSave();
-            //Do server stuff
-            ProcessMain();
             float dt = (float)stopwatchDt.Elapsed.TotalSeconds;
             stopwatchDt.Reset();
             stopwatchDt.Start();
+
             for (int i = 0; i < systemsCount; i++)
             {
                 systems[i].Update(this, dt);
             }
+            //Save data
+            ProcessSave();
+            //Do server stuff
+            ProcessMain();
         }
         catch (Exception e)
         {
@@ -298,15 +301,12 @@ public partial class Server : ICurrentTime, IDropItem
         }
     }
 
-    public void Start()
+    public void OnConfigLoaded()
     {
         //Load translations
         GamePlatform p = new GamePlatformNative();
         language.platform = p;
         language.LoadTranslations();
-
-        //Load config files
-        LoadConfig();
 
         //Initialize server map
         var map = new ServerMap();
@@ -353,8 +353,6 @@ public partial class Server : ICurrentTime, IDropItem
         }
 
         all_privileges.AddRange(ServerClientMisc.Privilege.All());
-        //Load all installed mods
-        LoadMods(false);
 
         //Load the savegame file
         {
@@ -454,69 +452,10 @@ public partial class Server : ICurrentTime, IDropItem
 
     public List<string> all_privileges = new List<string>();
 
-    ModLoader modloader = new ModLoader();
     public List<string> ModPaths = new List<string>();
-    ModManager1 modManager;
-    private void LoadMods(bool restart)
-    {
-        modManager = new ModManager1();
-        var m = modManager;
-        m.Start(this);
-        var scritps = GetScriptSources();
-        modloader.CompileScripts(scritps, restart);
-        modloader.Start(m, m.required);
-    }
+    public ModManager1 modManager;
 
     internal string gameMode = "Fortress";
-    Dictionary<string, string> GetScriptSources()
-    {
-        string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Server"), "Mods"), "Mods" };
-
-        for (int i = 0; i < modpaths.Length; i++)
-        {
-            if (File.Exists(Path.Combine(modpaths[i], "current.txt")))
-            {
-                gameMode = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
-            }
-            else if (Directory.Exists(modpaths[i]))
-            {
-                try
-                {
-                    File.WriteAllText(Path.Combine(modpaths[i], "current.txt"), gameMode);
-                }
-                catch
-                {
-                }
-            }
-            modpaths[i] = Path.Combine(modpaths[i], gameMode);
-        }
-        Dictionary<string, string> scripts = new Dictionary<string, string>();
-        foreach (string modpath in modpaths)
-        {
-            if (!Directory.Exists(modpath))
-            {
-                continue;
-            }
-            ModPaths.Add(modpath);
-            string[] files = Directory.GetFiles(modpath);
-            foreach (string s in files)
-            {
-                if (!GameStorePath.IsValidName(Path.GetFileNameWithoutExtension(s)))
-                {
-                    continue;
-                }
-                if (!(Path.GetExtension(s).Equals(".cs", StringComparison.InvariantCultureIgnoreCase)
-                    || Path.GetExtension(s).Equals(".js", StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    continue;
-                }
-                string scripttext = File.ReadAllText(s);
-                string filename = new FileInfo(s).Name;
-                scripts[filename] = scripttext;
-            }
-        }
-        return scripts;
-    }
 
     private ServerMonitor serverMonitor;
     private ServerConsole serverConsole;
@@ -700,218 +639,9 @@ public partial class Server : ICurrentTime, IDropItem
     }
     DateTime lastsave = DateTime.Now;
 
-    public void LoadConfig()
-    {
-        string filename = "ServerConfig.txt";
-        if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
-        {
-            Console.WriteLine(language.ServerConfigNotFound());
-            SaveConfig();
-            return;
-        }
-        try
-        {
-            using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
-            {
-                XmlSerializer deserializer = new XmlSerializer(typeof(ServerConfig));
-                config = (ServerConfig)deserializer.Deserialize(textReader);
-                textReader.Close();
-            }
-        }
-        catch //This if for the original format
-        {
-            try
-            {
-                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
-                {
-                    config = new ServerConfig();
-                    StreamReader sr = new StreamReader(s);
-                    XmlDocument d = new XmlDocument();
-                    d.Load(sr);
-                    config.Format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Format"));
-                    config.Name = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
-                    config.Motd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
-                    config.Port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
-                    string maxclients = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients");
-                    if (maxclients != null)
-                    {
-                        config.MaxClients = int.Parse(maxclients);
-                    }
-                    string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
-                    if (key != null)
-                    {
-                        config.Key = key;
-                    }
-                    config.IsCreative = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
-                    config.Public = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
-                    config.AllowGuests = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowGuests"));
-                    if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
-                    {
-                        config.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX"));
-                        config.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeY"));
-                        config.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeZ"));
-                    }
-                    config.BuildLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildLogging"));
-                    config.ServerEventLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerEventLogging"));
-                    config.ChatLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ChatLogging"));
-                    config.AllowScripting = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowScripting"));
-                    config.ServerMonitor = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerMonitor"));
-                    config.ClientConnectionTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientConnectionTimeout"));
-                    config.ClientPlayingTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientPlayingTimeout"));
-                }
-                //Save with new version.
-                SaveConfig();
-            }
-            catch
-            {
-                //ServerConfig is really messed up. Backup a copy, then create a new one.
-                try
-                {
-                    File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
-                    Console.WriteLine(language.ServerConfigCorruptBackup());
-                }
-                catch
-                {
-                    Console.WriteLine(language.ServerConfigCorruptNoBackup());
-                }
-                config = null;
-                SaveConfig();
-            }
-        }
-        language.OverrideLanguage = config.ServerLanguage;  //Switch to user-defined language.
-        Console.WriteLine(language.ServerConfigLoaded());
-    }
-
     public ServerConfig config;
     public ServerBanlist banlist;
-
-    public void SaveConfig()
-    {
-        //Verify that we have a directory to place the file into.
-        if (!Directory.Exists(GameStorePath.gamepathconfig))
-        {
-            Directory.CreateDirectory(GameStorePath.gamepathconfig);
-        }
-
-        XmlSerializer serializer = new XmlSerializer(typeof(ServerConfig));
-        TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.txt"));
-
-        //Check to see if config has been initialized
-        if (config == null)
-        {
-            config = new ServerConfig();
-            //Set default language to user's locale
-            config.ServerLanguage = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-            //Ask for config parameters the first time the server is started
-            string line;
-            bool wantsconfig = false;
-            Console.WriteLine(language.ServerSetupFirstStart());
-            Console.WriteLine(language.ServerSetupQuestion());
-            line = Console.ReadLine();
-            if (!string.IsNullOrEmpty(line))
-            {
-                if (line.Equals(language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
-                    wantsconfig = true;
-                else
-                    wantsconfig = false;
-            }
-            //Only ask these questions if user wants to
-            if (wantsconfig)
-            {
-                Console.WriteLine(language.ServerSetupPublic());
-                line = Console.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    bool choice;
-                    if (line.Equals(language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
-                        choice = true;
-                    else
-                        choice = false;
-                    config.Public = choice;
-                }
-                Console.WriteLine(language.ServerSetupName());
-                line = Console.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    config.Name = line;
-                }
-                Console.WriteLine(language.ServerSetupMOTD());
-                line = Console.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    config.Motd = line;
-                }
-                Console.WriteLine(language.ServerSetupWelcomeMessage());
-                line = Console.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    config.WelcomeMessage = line;
-                }
-                Console.WriteLine(language.ServerSetupPort());
-                line = Console.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    int port;
-                    try
-                    {
-                        port = int.Parse(line);
-                        if (port > 0 && port <= 65565)
-                        {
-                            config.Port = port;
-                        }
-                        else
-                        {
-                            Console.WriteLine(language.ServerSetupPortInvalidValue());
-                        }
-                    }
-                    catch
-                    {
-                        Console.WriteLine(language.ServerSetupPortInvalidInput());
-                    }
-                }
-                Console.WriteLine(language.ServerSetupMaxClients());
-                line = Console.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    int players;
-                    try
-                    {
-                        players = int.Parse(line);
-                        if (players > 0)
-                        {
-                            config.MaxClients = players;
-                        }
-                        else
-                        {
-                            Console.WriteLine(language.ServerSetupMaxClientsInvalidValue());
-                        }
-                    }
-                    catch
-                    {
-                        Console.WriteLine(language.ServerSetupMaxClientsInvalidInput());
-                    }
-                }
-                Console.WriteLine(language.ServerSetupEnableHTTP());
-                line = Console.ReadLine();
-                if (!string.IsNullOrEmpty(line))
-                {
-                    bool choice;
-                    if (line.Equals(language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
-                        choice = true;
-                    else
-                        choice = false;
-                    config.EnableHTTPServer = choice;
-                }
-            }
-        }
-        if (config.Areas.Count == 0)
-        {
-            config.Areas = ServerConfigMisc.getDefaultAreas();
-        }
-        //Serialize the ServerConfig class to XML
-        serializer.Serialize(textWriter, config);
-        textWriter.Close();
-    }
+    public bool configNeedsSaving;
 
     public void Dispose()
     {

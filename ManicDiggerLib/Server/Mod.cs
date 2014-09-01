@@ -527,7 +527,7 @@ namespace ManicDigger
             area.Level = permissionLevel;
             area.Coords = string.Format("{0},{1},{2},{3},{4},{5}", x1, y1, z1, x2, y2, z2);
             server.config.Areas.Add(area);
-            server.SaveConfig();
+            server.configNeedsSaving = true;
         }
 
         public void RemovePermissionArea(int x1, int y1, int z1, int x2, int y2, int z2)
@@ -538,7 +538,7 @@ namespace ManicDigger
                 if (server.config.Areas[i].Coords == coords)
                 {
                     server.config.Areas.RemoveAt(i);
-                    server.SaveConfig();
+                    server.configNeedsSaving = true;
                 }
             }
         }

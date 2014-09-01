@@ -87,7 +87,6 @@ using OpenTK.Graphics;
                 netServer.SetPlatform(new GamePlatformNative());
                 netServer.SetNetwork(dummyNetwork);
                 server.mainSocket0 = netServer;
-                server.Start();
                 for (; ; )
                 {
                     server.Process();

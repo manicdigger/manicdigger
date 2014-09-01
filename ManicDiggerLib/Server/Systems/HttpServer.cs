@@ -36,11 +36,11 @@ public class ServerSystemHttpServer : ServerSystem
         for (int i = 0; i < server.httpModules.Count; i++)
         {
             ActiveHttpModule m = server.httpModules[i];
-            if (!m.installed)
+            if (httpServer != null)
             {
-                m.installed = true;
-                if (httpServer != null)
+                if (!m.installed)
                 {
+                    m.installed = true;
                     httpServer.Install(m.module);
                 }
             }

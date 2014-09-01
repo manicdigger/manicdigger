@@ -4,16 +4,119 @@ using System.Text;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.IO;
+using ManicDigger.ClientNative;
 
 namespace ManicDigger
 {
-    public class ModLoader
+    public class ServerSystemModLoader : ServerSystem
     {
-        public ModLoader()
+        public ServerSystemModLoader()
         {
             jintEngine.DisableSecurity();
             jintEngine.AllowClr = true;
         }
+
+        bool started;
+        public override void Update(Server server, float dt)
+        {
+            if (!started)
+            {
+                started = true;
+                LoadMods(server, false);
+            }
+        }
+
+        public override bool OnCommand(Server server, int sourceClientId, string command, string argument)
+        {
+            if (command == "mods")
+            {
+                RestartMods(server, sourceClientId);
+                return true;
+            }
+            return false;
+        }
+
+        public bool RestartMods(Server server, int sourceClientId)
+        {
+            if (!server.PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.restart))
+            {
+                server.SendMessage(sourceClientId, string.Format(server.language.Get("Server_CommandInsufficientPrivileges"), server.colorError));
+                return false;
+            }
+            server.SendMessageToAll(string.Format(server.language.Get("Server_CommandRestartModsSuccess"), server.colorImportant, server.GetClient(sourceClientId).ColoredPlayername(server.colorImportant)));
+            server.ServerEventLog(string.Format("{0} restarts mods.", server.GetClient(sourceClientId).playername));
+
+            server.modEventHandlers = new ModEventHandlers();
+            for (int i = 0; i < server.systemsCount; i++)
+            {
+                if (server.systems[i] == null) { continue; }
+                server.systems[i].OnRestart(server);
+            }
+
+            LoadMods(server, true);
+            return true;
+        }
+
+        void LoadMods(Server server, bool restart)
+        {
+            server.modManager = new ModManager1();
+            var m = server.modManager;
+            m.Start(server);
+            var scritps = GetScriptSources(server);
+            CompileScripts(scritps, restart);
+            Start(m, m.required);
+        }
+
+        Dictionary<string, string> GetScriptSources(Server server)
+        {
+            string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Server"), "Mods"), "Mods" };
+
+            for (int i = 0; i < modpaths.Length; i++)
+            {
+                if (File.Exists(Path.Combine(modpaths[i], "current.txt")))
+                {
+                    server.gameMode = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
+                }
+                else if (Directory.Exists(modpaths[i]))
+                {
+                    try
+                    {
+                        File.WriteAllText(Path.Combine(modpaths[i], "current.txt"), server.gameMode);
+                    }
+                    catch
+                    {
+                    }
+                }
+                modpaths[i] = Path.Combine(modpaths[i], server.gameMode);
+            }
+            Dictionary<string, string> scripts = new Dictionary<string, string>();
+            foreach (string modpath in modpaths)
+            {
+                if (!Directory.Exists(modpath))
+                {
+                    continue;
+                }
+                server.ModPaths.Add(modpath);
+                string[] files = Directory.GetFiles(modpath);
+                foreach (string s in files)
+                {
+                    if (!GameStorePath.IsValidName(Path.GetFileNameWithoutExtension(s)))
+                    {
+                        continue;
+                    }
+                    if (!(Path.GetExtension(s).Equals(".cs", StringComparison.InvariantCultureIgnoreCase)
+                        || Path.GetExtension(s).Equals(".js", StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        continue;
+                    }
+                    string scripttext = File.ReadAllText(s);
+                    string filename = new FileInfo(s).Name;
+                    scripts[filename] = scripttext;
+                }
+            }
+            return scripts;
+        }
+
         Jint.JintEngine jintEngine = new Jint.JintEngine();
         Dictionary<string, string> javascriptScripts = new Dictionary<string, string>();
         public void CompileScripts(Dictionary<string, string> scripts, bool restart)

@@ -162,7 +162,8 @@
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
-    <Compile Include="Server\ModLoader.cs" />
+    <Compile Include="Server\Systems\LoadConfig.cs" />
+    <Compile Include="Server\Systems\ModLoader.cs" />
     <Compile Include="Server\Mods\Fortress\BuildLog.cs" />
     <Compile Include="Server\Mods\Fortress\Core.cs" />
     <Compile Include="Server\Mods\Fortress\CoreCrafting.cs" />

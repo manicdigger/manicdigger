@@ -356,9 +356,6 @@ public partial class Server
             case "shutdown":
                 this.ShutdownServer(sourceClientId);
                 break;
-            case "mods":
-                this.RestartMods(sourceClientId);
-                break;
             //case "crashserver": for (; ; ) ;
             case "stats":
                 double seconds = (DateTime.UtcNow - statsupdate).TotalSeconds;
@@ -1013,7 +1010,7 @@ public partial class Server
         config.WelcomeMessage = welcomeMessage;
         SendMessageToAll(string.Format(language.Get("Server_CommandWelcomeChanged"), colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), welcomeMessage));
         ServerEventLog(string.Format("{0} changes welcome message to {1}.", GetClient(sourceClientId).playername, welcomeMessage));
-        SaveConfig();
+        configNeedsSaving = true;
         return true;
     }
 
@@ -1036,7 +1033,7 @@ public partial class Server
                 if (option.Equals("on"))
                 {
                     config.BuildLogging = true;
-                    SaveConfig();
+                    configNeedsSaving = true;
                     SendMessage(sourceClientId, string.Format("{0}Build logging enabled.", colorSuccess));
                     ServerEventLog(string.Format("{0} enables build logging.", GetClient(sourceClientId).playername));
                     return true;
@@ -1044,7 +1041,7 @@ public partial class Server
                 if (option.Equals("off"))
                 {
                     config.BuildLogging = false;
-                    SaveConfig();
+                    configNeedsSaving = true;
                     SendMessage(sourceClientId, string.Format("{0}Build logging disabled.", colorSuccess));
                     ServerEventLog(string.Format("{0} disables build logging.", GetClient(sourceClientId).playername));
                     return true;
@@ -1055,7 +1052,7 @@ public partial class Server
                 if (option.Equals("on"))
                 {
                     config.ServerEventLogging = true;
-                    SaveConfig();
+                    configNeedsSaving = true;
                     SendMessage(sourceClientId, string.Format("{0}Server event logging enabled.", colorSuccess));
                     ServerEventLog(string.Format("{0} enables server event logging.", GetClient(sourceClientId).playername));
                     return true;
@@ -1064,7 +1061,7 @@ public partial class Server
                 {
                     ServerEventLog(string.Format("{0} disables server event logging.", GetClient(sourceClientId).playername));
                     config.ServerEventLogging = false;
-                    SaveConfig();
+                    configNeedsSaving = true;
                     SendMessage(sourceClientId, string.Format("{0}Server event logging disabled.", colorSuccess));
                     return true;
                 }
@@ -1074,7 +1071,7 @@ public partial class Server
                 if (option.Equals("on"))
                 {
                     config.ChatLogging = true;
-                    SaveConfig();
+                    configNeedsSaving = true;
                     SendMessage(sourceClientId, string.Format("{0}Chat logging enabled.", colorSuccess));
                     ServerEventLog(string.Format("{0} enables chat logging.", GetClient(sourceClientId).playername));
                     return true;
@@ -1082,7 +1079,7 @@ public partial class Server
                 if (option.Equals("off"))
                 {
                     config.ChatLogging = false;
-                    SaveConfig();
+                    configNeedsSaving = true;
                     SendMessage(sourceClientId, string.Format("{0}Chat logging disabled.", colorSuccess));
                     ServerEventLog(string.Format("{0} disables chat logging.", GetClient(sourceClientId).playername));
                     return true;
@@ -1449,7 +1446,7 @@ public partial class Server
             return false;
         }
         config.Monsters = option.Equals("off") ? false : true;
-        SaveConfig();
+        configNeedsSaving = true;
         if (!config.Monsters)
         {
             foreach (var k in clients)
@@ -1500,7 +1497,7 @@ public partial class Server
         }
 
         config.Areas.Add(newArea);
-        SaveConfig();
+        configNeedsSaving = true;
         SendMessage(sourceClientId, string.Format(language.Get("Server_CommandAreaAddSuccess"), colorSuccess, newArea.ToString()));
         ServerEventLog(string.Format("{0} adds area: {1}.", GetClient(sourceClientId), newArea.ToString()));
         return true;
@@ -1520,7 +1517,7 @@ public partial class Server
             return false;
         }
         config.Areas.Remove(targetArea);
-        SaveConfig();
+        configNeedsSaving = true;
         SendMessage(sourceClientId, string.Format(language.Get("Server_CommandAreaDeleteSuccess"), colorSuccess));
         ServerEventLog(string.Format("{0} deletes area: {1}.", GetClient(sourceClientId).playername, id));
         return true;
@@ -1846,27 +1843,6 @@ public partial class Server
         SendMessageToAll(string.Format(language.Get("Server_CommandShutdownSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
         ServerEventLog(string.Format("{0} shuts down server.", GetClient(sourceClientId).playername));
         Exit();
-        return true;
-    }
-
-    public bool RestartMods(int sourceClientId)
-    {
-        if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.restart))
-        {
-            SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
-            return false;
-        }
-        SendMessageToAll(string.Format(language.Get("Server_CommandRestartModsSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
-        ServerEventLog(string.Format("{0} restarts mods.", GetClient(sourceClientId).playername));
-
-        modEventHandlers = new ModEventHandlers();
-        for (int i = 0; i < systemsCount; i++)
-        {
-            if (systems[i] == null) { continue; }
-            systems[i].OnRestart(this);
-        }
-
-        LoadMods(true);
         return true;
     }
 

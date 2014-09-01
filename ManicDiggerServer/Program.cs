@@ -90,13 +90,15 @@ namespace ManicDiggerServer
             Server server = new Server();
             server.exit = new GameExit();
             server.Public = true;
-            server.Start();
-            autoRestartCycle = server.config.AutoRestartCycle;
-            port = server.config.Port;
             for (; ; )
             {
                 server.Process();
                 Thread.Sleep(1);
+
+                if (server.config != null)
+                {
+                    autoRestartCycle = server.config.AutoRestartCycle;
+                }
                 
                 //Check if server wants to exit
                 if (server.exit != null && server.exit.GetExit())
@@ -151,7 +153,6 @@ namespace ManicDiggerServer
         Stopwatch parentCheckStopwatch;
         Stopwatch stopwatch = new Stopwatch();
         Process ServerProcess;
-        int port;
         
         void ConsoleOutput()
         {
