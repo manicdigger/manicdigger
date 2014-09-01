@@ -20,6 +20,7 @@ public class ModSkySphereAnimated : ClientMod
     }
 
     internal bool started;
+    const int textureSize = 512;
 
     internal void DrawSkySphere(Game game)
     {
@@ -28,8 +29,8 @@ public class ModSkySphereAnimated : ClientMod
             started = true;
             BitmapCi skyBmp = game.platform.BitmapCreateFromPng(game.GetFile("sky.png"), game.GetFileLength("sky.png"));
             BitmapCi glowBmp = game.platform.BitmapCreateFromPng(game.GetFile("glow.png"), game.GetFileLength("glow.png"));
-            skyPixels = new int[256 * 256 * 4];
-            glowPixels = new int[256 * 256 * 4];
+            skyPixels = new int[textureSize * textureSize * 4];
+            glowPixels = new int[textureSize * textureSize * 4];
             game.platform.BitmapGetPixelsArgb(skyBmp, skyPixels);
             game.platform.BitmapGetPixelsArgb(glowBmp, glowPixels);
             game.platform.BitmapDelete(skyBmp);
@@ -51,7 +52,7 @@ public class ModSkySphereAnimated : ClientMod
         int size = 1000;
         //if (skymodel == null)
         {
-            skymodel = GetSphereModelData2(game.platform, size, size, 20, 20, skyPixels, glowPixels, game.sunPositionX, game.sunPositionY, game.sunPositionZ);
+            skymodel = GetSphereModelData2(game.platform, size, size, 64, 64, skyPixels, glowPixels, game.sunPositionX, game.sunPositionY, game.sunPositionZ);
         }
         game.Set3dProjection(size * 2, fov);
         game.GLMatrixModeModelView();
@@ -163,11 +164,11 @@ public class ModSkySphereAnimated : ClientMod
 
     static int Texture2d(GamePlatform platform, int[] pixelsArgb, float x, float y)
     {
-        int px = platform.FloatToInt(x * 255);
-        int py = platform.FloatToInt(y * 255);
-        px = positive_modulo(px, 255);
-        py = positive_modulo(py, 255);
-        return pixelsArgb[MapUtilCi.Index2d(px, py, 256)];
+        int px = platform.FloatToInt(x * (textureSize - 1));
+        int py = platform.FloatToInt(y * (textureSize - 1));
+        px = positive_modulo(px, (textureSize - 1));
+        py = positive_modulo(py, (textureSize - 1));
+        return pixelsArgb[MapUtilCi.Index2d(px, py, textureSize)];
     }
 
     static int positive_modulo(int i, int n)
