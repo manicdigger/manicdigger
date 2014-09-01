@@ -52,7 +52,7 @@ public class ModSkySphereAnimated : ClientMod
         int size = 1000;
         //if (skymodel == null)
         {
-            skymodel = GetSphereModelData2(game.platform, size, size, 64, 64, skyPixels, glowPixels, game.sunPositionX, game.sunPositionY, game.sunPositionZ);
+            skymodel = GetSphereModelData2(skymodel, game.platform, size, size, 64, 64, skyPixels, glowPixels, game.sunPositionX, game.sunPositionY, game.sunPositionZ);
         }
         game.Set3dProjection(size * 2, fov);
         game.GLMatrixModeModelView();
@@ -66,7 +66,7 @@ public class ModSkySphereAnimated : ClientMod
         game.Set3dProjection(game.zfar(), fov);
     }
 
-    public ModelData GetSphereModelData2(
+    public ModelData GetSphereModelData2(ModelData data,
     GamePlatform platform,
     float radius, float height, int segments, int rings,
     int[] skyPixels_, int[] glowPixels_,
@@ -74,11 +74,18 @@ public class ModSkySphereAnimated : ClientMod
     {
         int i = 0;
 
+        if (data == null)
+        {
+            data = new ModelData();
+            data.xyz = new float[rings * segments * 3];
+            data.uv = new float[rings * segments * 2];
+            data.rgba = new byte[rings * segments * 4];
+            data.SetVerticesCount(segments * rings);
+            data.SetIndicesCount(segments * rings * 6);
+            data.setIndices(SphereModelData.CalculateElements(radius, height, segments, rings));
+        }
+        
         // Load data into a vertex buffer or a display list afterwards.
-
-        float[] xyz = new float[rings * segments * 3];
-        float[] uv = new float[rings * segments * 2];
-        byte[] rgba = new byte[rings * segments * 4];
 
         for (int y = 0; y < rings; y++)
         {
@@ -93,11 +100,11 @@ public class ModSkySphereAnimated : ClientMod
                 float vz = radius * Platform.Sin(phiFloat) * Platform.Sin(theta);
                 float u = xFloat / (segments - 1);
                 float v = yFloat / (rings - 1);
-                xyz[i * 3 + 0] = vx;
-                xyz[i * 3 + 1] = vy;
-                xyz[i * 3 + 2] = vz;
-                uv[i * 2 + 0] = u;
-                uv[i * 2 + 1] = v;
+                data.xyz[i * 3 + 0] = vx;
+                data.xyz[i * 3 + 1] = vy;
+                data.xyz[i * 3 + 2] = vz;
+                data.uv[i * 2 + 0] = u;
+                data.uv[i * 2 + 1] = v;
 
                 float vertexLength = platform.MathSqrt(vx * vx + vy * vy + vz * vz);
                 float vertexXNormalized = vx / vertexLength;
@@ -144,20 +151,13 @@ public class ModSkySphereAnimated : ClientMod
                 if (colorB > 1) { colorB = 1; }
                 if (colorA > 1) { colorA = 1; }
 
-                rgba[i * 4 + 0] = Game.IntToByte(platform.FloatToInt(colorR * 255));
-                rgba[i * 4 + 1] = Game.IntToByte(platform.FloatToInt(colorG * 255));
-                rgba[i * 4 + 2] = Game.IntToByte(platform.FloatToInt(colorB * 255));
-                rgba[i * 4 + 3] = Game.IntToByte(platform.FloatToInt(colorA * 255));
+                data.rgba[i * 4 + 0] = Game.IntToByte(platform.FloatToInt(colorR * 255));
+                data.rgba[i * 4 + 1] = Game.IntToByte(platform.FloatToInt(colorG * 255));
+                data.rgba[i * 4 + 2] = Game.IntToByte(platform.FloatToInt(colorB * 255));
+                data.rgba[i * 4 + 3] = Game.IntToByte(platform.FloatToInt(colorA * 255));
                 i++;
             }
         }
-        ModelData data = new ModelData();
-        data.SetVerticesCount(segments * rings);
-        data.SetIndicesCount(segments * rings * 6);
-        data.setXyz(xyz);
-        data.setUv(uv);
-        data.setRgba(rgba);
-        data.setIndices(SphereModelData.CalculateElements(radius, height, segments, rings));
         //data.setMode(DrawModeEnum.Triangles);
         return data;
     }
