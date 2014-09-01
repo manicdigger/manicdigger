@@ -125,6 +125,7 @@
     <Compile Include="Client\Mods\SendActiveMaterial.ci.cs" />
     <Compile Include="Client\Mods\SendPosition.ci.cs" />
     <Compile Include="Client\Mods\SetPlayers.ci.cs" />
+    <Compile Include="Client\Mods\SkySphereAnimated.ci.cs" />
     <Compile Include="Client\Mods\SlipperyWalk.ci.cs" />
     <Compile Include="Client\Mods\Trampoline.ci.cs" />
     <Compile Include="Client\Mods\WalkSound.ci.cs" />
@@ -152,7 +153,7 @@
     <Compile Include="Client\Mods\ParticleEffectBlockBreak.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="Client\Shadows.ci.cs" />
-    <Compile Include="Client\Mods\SkySphere.ci.cs" />
+    <Compile Include="Client\Mods\SkySphereStatic.ci.cs" />
     <Compile Include="Client\Mods\SunMoonRenderer.ci.cs" />
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\TerrainRenderer.ci.cs" />

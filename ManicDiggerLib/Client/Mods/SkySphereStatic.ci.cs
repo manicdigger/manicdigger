@@ -1,6 +1,6 @@
-﻿public class SkySphere : ClientMod
+﻿public class ModSkySphereStatic : ClientMod
 {
-    public SkySphere()
+    public ModSkySphereStatic()
     {
         SkyTexture = -1;
         skyspheretexture = -1;

@@ -35,27 +35,46 @@
             suntexture = game.GetTexture("sun.png");
             moontexture = game.GetTexture("moon.png");
         }
-        t += dt * 2 * Game.GetPi() / day_length_in_seconds;
-        bool night = (t + 2 * Game.GetPi()) % (2 * Game.GetPi()) > Game.GetPi();
-        float tt = t;
-        if (night)
+        UpdateSunMoonPosition(game, dt);
+
+        float posX;
+        float posY;
+        float posZ;
+        if (!game.isNight)
         {
-            tt = -t;
-            //tt -= Math.PI;
+            posX = game.sunPositionX;
+            posY = game.sunPositionY;
+            posZ = game.sunPositionZ;
         }
-        float posX = platform.MathCos(tt) * 20;
-        float posY = platform.MathSin(tt) * 20;
-        float posZ = platform.MathSin(t) * 20;
+        else
+        {
+            posX = game.moonPositionX;
+            posY = game.moonPositionY;
+            posZ = game.moonPositionZ;
+        }
         posX += game.player.playerposition.X;
         posY += game.player.playerposition.Y;
         posZ += game.player.playerposition.Z;
+        
         game.GLPushMatrix();
         game.GLTranslate(posX, posY, posZ);
         game.GLRotate(-game.player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
         game.GLRotate(-game.player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
         game.GLScale(one * 2 / 100, one * 2 / 100, one * 2 / 100);
         //GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
-        game.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+        game.Draw2dTexture(game.isNight ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
         game.GLPopMatrix();
+    }
+
+    void UpdateSunMoonPosition(Game game, float dt)
+    {
+        t += dt * 2 * Game.GetPi() / day_length_in_seconds;
+        game.isNight = (t + 2 * Game.GetPi()) % (2 * Game.GetPi()) > Game.GetPi();
+        game.sunPositionX = game.platform.MathCos(t) * 20;
+        game.sunPositionY = game.platform.MathSin(t) * 20;
+        game.sunPositionZ = game.platform.MathSin(t) * 20;
+        game.moonPositionX = game.platform.MathCos(-t) * 20;
+        game.moonPositionY = game.platform.MathSin(-t) * 20;
+        game.moonPositionZ = game.platform.MathSin(t) * 20;
     }
 }

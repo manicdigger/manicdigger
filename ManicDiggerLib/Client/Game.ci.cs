@@ -252,7 +252,14 @@
         AddMod(new ModSetPlayers());
         AddMod(new ModReloadAmmo());
         AddMod(new ModPush());
-        AddMod(new SkySphere());
+        if (platform.IsFastSystem())
+        {
+            AddMod(new ModSkySphereAnimated());
+        }
+        else
+        {
+            AddMod(new ModSkySphereStatic());
+        }
         AddMod(sunmoonrenderer);
         AddMod(new ModDrawLinesAroundSelectedBlock());
         AddMod(new ModDrawTerrain());
@@ -2294,7 +2301,7 @@
     public const string playertexturedefaultfilename = "mineplayer.png";
     internal bool ENABLE_DRAW_TEST_CHARACTER;
     internal AnimationState a;
-    internal SkySphere skysphere;
+    internal ModSkySphereStatic skysphere;
     internal int reloadblock;
     internal int reloadstartMilliseconds;
     internal int lastOxygenTickMilliseconds;
@@ -2934,9 +2941,13 @@
         terrainRenderer.RedrawAllBlocks();
     }
 
-    public const int clearcolorR = 171;
-    public const int clearcolorG = 202;
-    public const int clearcolorB = 228;
+    //public const int clearcolorR = 171;
+    //public const int clearcolorG = 202;
+    //public const int clearcolorB = 228;
+    //public const int clearcolorA = 255;
+    public const int clearcolorR = 0;
+    public const int clearcolorG = 0;
+    public const int clearcolorB = 0;
     public const int clearcolorA = 255;
 
     internal void SetFog()
@@ -6078,6 +6089,14 @@
     {
         GuiTyping = TypingState.None;
     }
+
+    internal float sunPositionX;
+    internal float sunPositionY;
+    internal float sunPositionZ;
+    internal float moonPositionX;
+    internal float moonPositionY;
+    internal float moonPositionZ;
+    internal bool isNight;
 }
 
 public class DictionaryStringAudioSample
