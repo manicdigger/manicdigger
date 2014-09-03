@@ -815,7 +815,7 @@ public partial class Server
             {
                 clientConfig.Group = newGroup.Name;
             }
-            SaveServerClient();
+            serverClientNeedsSaving = true;
             SendMessageToAll(string.Format(language.Get("Server_CommandSetGroupTo"), colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), targetClient.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
             ServerEventLog(String.Format("{0} sets group of {1} to {2}.", GetClient(sourceClientId).playername, targetClient.playername, newGroupName));
             targetClient.AssignGroup(newGroup);
@@ -904,7 +904,7 @@ public partial class Server
             clientConfig.Group = newGroup.Name;
         }
 
-        SaveServerClient();
+        serverClientNeedsSaving = true;
         SendMessageToAll(string.Format(language.Get("Server_CommandSetOfflineGroupTo"), colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), target, newGroup.GroupColorString() + newGroupName));
         ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", GetClient(sourceClientId).playername, target, newGroupName));
         return true;
@@ -948,7 +948,7 @@ public partial class Server
             }
             // Remove target's entry.
             serverClient.Clients.Remove(targetClient);
-            this.SaveServerClient();
+            serverClientNeedsSaving = true;
             // If client is online, change his group
             if (GetClient(target) != null)
             {
@@ -1581,7 +1581,7 @@ public partial class Server
             case "-default":
             case "-d":
                 serverClient.DefaultSpawn = new ManicDigger.Spawn() { x = x, y = y, z = z };
-                SaveServerClient();
+                serverClientNeedsSaving = true;
                 // Inform related players.
                 bool hasEntry = false;
                 foreach (var k in clients)
@@ -1633,7 +1633,7 @@ public partial class Server
                     y = y,
                     z = z,
                 };
-                SaveServerClient();
+                serverClientNeedsSaving = true;
                 // Inform related players.
                 hasEntry = false;
                 foreach (var k in clients)
@@ -1690,7 +1690,7 @@ public partial class Server
                     y = y,
                     z = z,
                 };
-                SaveServerClient();
+                serverClientNeedsSaving = true;
                 // Inform player if he's online.
                 if (targetClientId != null)
                 {
@@ -1757,7 +1757,7 @@ public partial class Server
             y = y,
             z = z,
         };
-        SaveServerClient();
+        serverClientNeedsSaving = true;
         // Send player new spawn position.
         this.SendPlayerSpawnPosition(sourceClientId, x, y, rZ);
         return true;
@@ -1948,7 +1948,7 @@ public partial class Server
             case "-default":
             case "-d":
                 serverClient.DefaultFillLimit = maxFill;
-                SaveServerClient();
+                serverClientNeedsSaving = true;
                 // Inform related players.
                 bool hasEntry = false;
                 foreach (var k in clients)
@@ -1995,7 +1995,7 @@ public partial class Server
                     return false;
                 }
                 targetGroup.FillLimit = maxFill;
-                SaveServerClient();
+                serverClientNeedsSaving = true;
                 // Inform related players.
                 hasEntry = false;
                 foreach (var k in clients)
@@ -2047,7 +2047,7 @@ public partial class Server
                 }
                 // Change or add spawn entry of client.
                 clientEntry.FillLimit = maxFill;
-                SaveServerClient();
+                serverClientNeedsSaving = true;
                 // Inform player if he's online.
                 if (targetClientId != null)
                 {

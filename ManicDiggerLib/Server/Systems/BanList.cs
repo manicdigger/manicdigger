@@ -524,7 +524,7 @@ public class ServerSystemBanList : ServerSystem
 
             // Remove target's entry.
             server.serverClient.Clients.Remove(targetClient);
-            server.SaveServerClient();
+            server.serverClientNeedsSaving = true;
         }
 
         // Finally ban user.

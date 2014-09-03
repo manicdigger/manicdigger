@@ -70,6 +70,7 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemChunksSimulation();
         systems[systemsCount++] = new ServerSystemBanList();
         systems[systemsCount++] = new ServerSystemModLoader();
+        systems[systemsCount++] = new ServerSystemLoadServerClient();
     }
     internal ServerCi server;
     internal ServerSystem[] systems;
@@ -373,9 +374,6 @@ public partial class Server : ICurrentTime, IDropItem
             config.Port = singleplayerport;
         }
         Start(config.Port);
-
-        //Load server groups and spawnpoints
-        LoadServerClient();
 
         for (int i = 0; i < modEventHandlers.onloadworld.Count; i++)
         {
@@ -938,24 +936,10 @@ public partial class Server : ICurrentTime, IDropItem
         ClientOnServer c = clients[clientid];
         if (c.IsPlayerStatsDirty && c.playername != invalidplayername)
         {
-            Packet_ServerPlayerStats p = ConvertPlayerStats(GetPlayerStats(c.playername));
-            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.PlayerStats, PlayerStats = p }));
+            PacketServerPlayerStats stats = GetPlayerStats(c.playername);
+            SendPacket(clientid, ServerPackets.PlayerStats(stats.CurrentHealth, stats.MaxHealth, stats.CurrentOxygen, stats.MaxOxygen));
             c.IsPlayerStatsDirty = false;
         }
-    }
-
-    Packet_ServerPlayerStats ConvertPlayerStats(PacketServerPlayerStats stats)
-    {
-        if (stats == null)
-        {
-            return null;
-        }
-        Packet_ServerPlayerStats p = new Packet_ServerPlayerStats();
-        p.CurrentHealth = stats.CurrentHealth;
-        p.MaxHealth = stats.MaxHealth;
-        p.CurrentOxygen = stats.CurrentOxygen;
-        p.MaxOxygen = stats.MaxOxygen;
-        return p;
     }
 
     private void HitMonsters(int clientid, int health)
@@ -2774,10 +2758,9 @@ public partial class Server : ICurrentTime, IDropItem
     //SendPositionAndOrientationUpdate //delta
     //SendPositionUpdate //delta
     //SendOrientationUpdate
-    private void SendDespawnPlayer(int clientid, int playerid)
+    void SendDespawnPlayer(int clientid, int playerid)
     {
-        Packet_ServerDespawnPlayer p = new Packet_ServerDespawnPlayer() { PlayerId = playerid };
-        SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.DespawnPlayer, DespawnPlayer = p }));
+        SendPacket(clientid, ServerPackets.DespawnPlayer(playerid));
     }
 
     public void SendMessage(int clientid, string message, MessageType color)
@@ -2793,12 +2776,7 @@ public partial class Server : ICurrentTime, IDropItem
             return;
         }
 
-        string truncated = message; //.Substring(0, Math.Min(64, message.Length));
-
-        Packet_ServerMessage p = new Packet_ServerMessage();
-        p.PlayerId = clientid;
-        p.Message = truncated;
-        SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Message, Message = p }));
+        SendPacket(clientid, ServerPackets.Message(message));
     }
 
     int StatTotalPackets = 0;
@@ -3164,6 +3142,7 @@ public partial class Server : ICurrentTime, IDropItem
         return null;
     }
 
+    internal bool serverClientNeedsSaving;
     public ServerClient serverClient;
     public ManicDigger.Group defaultGroupGuest;
     public ManicDigger.Group defaultGroupRegistered;
@@ -3192,117 +3171,6 @@ public partial class Server : ICurrentTime, IDropItem
             }
         }
         return new Vector3i(x * 32, z * 32, y * 32);
-    }
-
-    public void LoadServerClient()
-    {
-        string filename = "ServerClient.txt";
-        if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
-        {
-            Console.WriteLine(language.ServerClientConfigNotFound());
-            SaveServerClient();
-        }
-        else
-        {
-            try
-            {
-                using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
-                {
-                    XmlSerializer deserializer = new XmlSerializer(typeof(ServerClient));
-                    serverClient = (ServerClient)deserializer.Deserialize(textReader);
-                    textReader.Close();
-                    serverClient.Groups.Sort();
-                    SaveServerClient();
-                }
-            }
-            catch //This if for the original format
-            {
-                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
-                {
-                    serverClient = new ServerClient();
-                    StreamReader sr = new StreamReader(s);
-                    XmlDocument d = new XmlDocument();
-                    d.Load(sr);
-                    serverClient.Format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerClient/Format"));
-                    serverClient.DefaultGroupGuests = XmlTool.XmlVal(d, "/ManicDiggerServerClient/DefaultGroupGuests");
-                    serverClient.DefaultGroupRegistered = XmlTool.XmlVal(d, "/ManicDiggerServerClient/DefaultGroupRegistered");
-                }
-                //Save with new version.
-                SaveServerClient();
-            }
-        }
-        if (serverClient.DefaultSpawn == null)
-        {
-            // server sets a default spawn (middle of map)
-            int x = d_Map.MapSizeX / 2;
-            int y = d_Map.MapSizeY / 2;
-            this.defaultPlayerSpawn = DontSpawnPlayerInWater(new Vector3i(x, y, MapUtil.blockheight(d_Map, 0, x, y)));
-        }
-        else
-        {
-            int z;
-            if (serverClient.DefaultSpawn.z == null)
-            {
-                z = MapUtil.blockheight(d_Map, 0, serverClient.DefaultSpawn.x, serverClient.DefaultSpawn.y);
-            }
-            else
-            {
-                z = serverClient.DefaultSpawn.z.Value;
-            }
-            this.defaultPlayerSpawn = new Vector3i(serverClient.DefaultSpawn.x, serverClient.DefaultSpawn.y, z);
-        }
-
-        this.defaultGroupGuest = serverClient.Groups.Find(
-            delegate(ManicDigger.Group grp)
-            {
-                return grp.Name.Equals(serverClient.DefaultGroupGuests);
-            }
-        );
-        if (this.defaultGroupGuest == null)
-        {
-            throw new Exception(language.ServerClientConfigGuestGroupNotFound());
-        }
-        this.defaultGroupRegistered = serverClient.Groups.Find(
-            delegate(ManicDigger.Group grp)
-            {
-                return grp.Name.Equals(serverClient.DefaultGroupRegistered);
-            }
-        );
-        if (this.defaultGroupRegistered == null)
-        {
-            throw new Exception(language.ServerClientConfigRegisteredGroupNotFound());
-        }
-        Console.WriteLine(language.ServerClientConfigLoaded());
-    }
-
-    public void SaveServerClient()
-    {
-        //Verify that we have a directory to place the file into.
-        if (!Directory.Exists(GameStorePath.gamepathconfig))
-        {
-            Directory.CreateDirectory(GameStorePath.gamepathconfig);
-        }
-
-        XmlSerializer serializer = new XmlSerializer(typeof(ServerClient));
-        TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerClient.txt"));
-
-        //Check to see if config has been initialized
-        if (serverClient == null)
-        {
-            serverClient = new ServerClient();
-        }
-        if (serverClient.Groups.Count == 0)
-        {
-            serverClient.Groups = ServerClientMisc.getDefaultGroups();
-        }
-        if (serverClient.Clients.Count == 0)
-        {
-            serverClient.Clients = ServerClientMisc.getDefaultClients();
-        }
-        serverClient.Clients.Sort();
-        //Serialize the ServerConfig class to XML
-        serializer.Serialize(textWriter, serverClient);
-        textWriter.Close();
     }
 
     public int dumpmax = 30;

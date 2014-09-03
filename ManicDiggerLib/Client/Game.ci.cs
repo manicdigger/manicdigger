@@ -9875,6 +9875,15 @@ public class ServerPackets
         p.QueryAnswer = answer;
         return p;
     }
+
+    internal static Packet_Server DespawnPlayer(int playerid)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.DespawnPlayer;
+        p.DespawnPlayer = new Packet_ServerDespawnPlayer();
+        p.DespawnPlayer.PlayerId = playerid;
+        return p;
+    }
 }
 
 public class TextureAtlas

@@ -18,7 +18,7 @@ public partial class Server
     internal int mapsizezchunks() { return d_Map.MapSizeZ / chunksize; }
 
     // generates a new spawn near initial spawn if initial spawn is in water
-    private Vector3i DontSpawnPlayerInWater(Vector3i initialSpawn)
+    public Vector3i DontSpawnPlayerInWater(Vector3i initialSpawn)
     {
         if (IsPlayerPositionDry(initialSpawn.x, initialSpawn.y, initialSpawn.z))
         {

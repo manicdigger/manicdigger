@@ -581,7 +581,7 @@ package Packet;
     
     message ServerMessage
     {
-        optional int32 playerId = 1;
+        // optional int32 playerId = 1;
         optional string message = 2;
     }
     
