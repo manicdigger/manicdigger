@@ -71,12 +71,20 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemBanList();
         systems[systemsCount++] = new ServerSystemModLoader();
         systems[systemsCount++] = new ServerSystemLoadServerClient();
+
+        //Load translations
+        gameplatform = new GamePlatformNative();
+        language.platform = gameplatform;
+        language.LoadTranslations();
     }
+    
+
     internal ServerCi server;
     internal ServerSystem[] systems;
     internal int systemsCount;
     internal ServerPlatform serverPlatform;
 
+    GamePlatform gameplatform;
     public GameExit exit;
     public ServerMap d_Map;
     public GameData d_Data;
@@ -304,11 +312,6 @@ public partial class Server : ICurrentTime, IDropItem
 
     public void OnConfigLoaded()
     {
-        //Load translations
-        GamePlatform p = new GamePlatformNative();
-        language.platform = p;
-        language.LoadTranslations();
-
         //Initialize server map
         var map = new ServerMap();
         map.server = this;
@@ -346,7 +349,7 @@ public partial class Server : ICurrentTime, IDropItem
         d_DataItems = new GameDataItemsBlocks() { d_Data = data };
         if (mainSocket0 == null)
         {
-            mainSocket0 = new EnetNetServer() { platform = p };
+            mainSocket0 = new EnetNetServer() { platform = gameplatform };
             if (mainSocket1 == null)
             {
                 mainSocket1 = new TcpNetServer();
