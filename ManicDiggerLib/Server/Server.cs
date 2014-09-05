@@ -193,12 +193,12 @@ public partial class Server : ICurrentTime, IDropItem
     }
     public void ProcessSave()
     {
-        if ((DateTime.Now - lastsave).TotalMinutes > 2)
+        if ((DateTime.UtcNow - lastsave).TotalMinutes > 2)
         {
             DateTime start = DateTime.UtcNow;
             SaveGlobalData();
             Console.WriteLine(language.ServerGameSaved(), (DateTime.UtcNow - start));
-            lastsave = DateTime.Now;
+            lastsave = DateTime.UtcNow;
         }
     }
     public void ProcessMain()
@@ -638,7 +638,7 @@ public partial class Server : ICurrentTime, IDropItem
         SaveGame(ms);
         d_ChunkDb.SetGlobalData(ms.ToArray());
     }
-    DateTime lastsave = DateTime.Now;
+    DateTime lastsave = DateTime.UtcNow;
 
     public ServerConfig config;
     public ServerBanlist banlist;
@@ -656,7 +656,7 @@ public partial class Server : ICurrentTime, IDropItem
     double starttime = gettime();
     static double gettime()
     {
-        return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
+        return (double)DateTime.UtcNow.Ticks / (10 * 1000 * 1000);
     }
     internal int simulationcurrentframe;
     double oldtime;
@@ -3914,7 +3914,7 @@ public class Timer
     }
     static double gettime()
     {
-        return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
+        return (double)DateTime.UtcNow.Ticks / (10 * 1000 * 1000);
     }
 }
 public struct Vector2i

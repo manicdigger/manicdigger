@@ -15,7 +15,7 @@ public class ServerSystemNotifyMap : ServerSystem
         int mapsizeZchunks = server.d_Map.MapSizeZ / Server.chunksize;
         int[] retNearest = new int[3];
         bool loaded = true;
-        while ((s.ElapsedMilliseconds < 10) && (loaded))
+        while ((loaded) && (s.ElapsedMilliseconds < 10))
         {
             loaded = false;
             foreach (var k in server.clients)

@@ -1,20 +1,25 @@
 ﻿//Unload chunks currently not seen by players
 public class ServerSystemUnloadUnusedChunks : ServerSystem
 {
+    public ServerSystemUnloadUnusedChunks()
+    {
+        v = new Vector3IntRef();
+    }
+    Vector3IntRef v;
     public override void Update(Server server, float dt)
     {
-        int sizex = server.mapsizexchunks();
-        int sizey = server.mapsizeychunks();
-        int sizez = server.mapsizezchunks();
+        int sizexchunks = server.mapsizexchunks();
+        int sizeychunks = server.mapsizeychunks();
+        int sizezchunks = server.mapsizezchunks();
 
         for (int i = 0; i < 100; i++)
         {
-            var v = MapUtil.Pos(CompressUnusedIteration, server.d_Map.MapSizeX / Server.chunksize, server.d_Map.MapSizeY / Server.chunksize);
-            ServerChunk c = server.d_Map.GetChunkValid(v.x, v.y, v.z);
-            var vg = new Vector3i(v.x * Server.chunksize, v.y * Server.chunksize, v.z * Server.chunksize);
+            MapUtilCi.PosInt(CompressUnusedIteration, sizexchunks, sizeychunks, v);
+            ServerChunk c = server.d_Map.GetChunkValid(v.X, v.Y, v.Z);
             bool stop = false;
             if (c != null)
             {
+                var vg = new Vector3i(v.X * Server.chunksize, v.Y * Server.chunksize, v.Z * Server.chunksize);
                 bool unload = true;
                 foreach (var k in server.clients)
                 {
@@ -28,14 +33,14 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
                 {
                     if (c.DirtyForSaving)
                     {
-                        server.DoSaveChunk(v.x, v.y, v.z, c);
+                        server.DoSaveChunk(v.X, v.Y, v.Z, c);
                     }
-                    server.d_Map.SetChunkValid(v.x, v.y, v.z, null);
+                    server.d_Map.SetChunkValid(v.X, v.Y, v.Z, null);
                     stop = true;
                 }
             }
             CompressUnusedIteration++;
-            if (CompressUnusedIteration >= sizex * sizey * sizez)
+            if (CompressUnusedIteration >= sizexchunks * sizeychunks * sizezchunks)
             {
                 CompressUnusedIteration = 0;
             }
