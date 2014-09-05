@@ -5616,14 +5616,14 @@
             {
                 int xx = menustartx + 20 + ii * 130;
                 int yy = menustarty + i * 80;
-                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 30, 30, IntRef.Create(TextureIdForInventory[r.Ingredients[ii].Type]), terrainTexture, Game.ColorFromArgb(255, 255, 255, 255), false);
+                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(TextureIdForInventory[r.Ingredients[ii].Type]), texturesPacked(), Game.ColorFromArgb(255, 255, 255, 255), false);
                 Draw2dText1(platform.StringFormat2("{0} {1}", platform.IntToString(r.Ingredients[ii].Amount), blocktypes[r.Ingredients[ii].Type].Name), xx + 50, yy, 12,
                    IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
             }
             {
                 int xx = menustartx + 20 + 400;
                 int yy = menustarty + i * 80;
-                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 40, 40, IntRef.Create(TextureIdForInventory[r.Output.Type]), terrainTexture, Game.ColorFromArgb(255, 255, 255, 255), false);
+                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(TextureIdForInventory[r.Output.Type]), texturesPacked(), Game.ColorFromArgb(255, 255, 255, 255), false);
                 Draw2dText1(platform.StringFormat2("{0} {1}", platform.IntToString(r.Output.Amount), blocktypes[r.Output.Type].Name), xx + 50, yy, 12,
                   IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
             }
