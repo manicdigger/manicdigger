@@ -1260,7 +1260,7 @@ public partial class Server : ICurrentTime, IDropItem
                     clients[clientid].playername = username;
 
                     // Assign group to new client
-                    //Check if client is in ServerClient.xml and assign corresponding group.
+                    //Check if client is in ServerClient.txt and assign corresponding group.
                     bool exists = false;
                     foreach (ManicDigger.Client client in serverClient.Clients)
                     {
@@ -1280,7 +1280,12 @@ public partial class Server : ICurrentTime, IDropItem
                     }
                     if (!exists)
                     {
-                        if (clients[clientid].playername.StartsWith("~"))
+                        //Assign admin group if client connected from localhost
+                        if (isClientLocalhost)
+                        {
+                            clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
+                        }
+                        else if (clients[clientid].playername.StartsWith("~"))
                         {
                             clients[clientid].AssignGroup(this.defaultGroupGuest);
                         }
@@ -1288,10 +1293,6 @@ public partial class Server : ICurrentTime, IDropItem
                         {
                             clients[clientid].AssignGroup(this.defaultGroupRegistered);
                         }
-                    }
-                    if (isClientLocalhost)
-                    {
-                        clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
                     }
                     this.SetFillAreaLimit(clientid);
                     this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
