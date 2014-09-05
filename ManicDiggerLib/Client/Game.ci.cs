@@ -301,6 +301,9 @@
         networkProcessTask.game = this;
         QueueTaskReadOnlyBackgroundPerFrame(networkProcessTask);
 
+        //Prevent loding screen from immediately displaying lag symbol
+        LastReceivedMilliseconds = platform.TimeMillisecondsFromStart();
+
         ENABLE_DRAW_TEST_CHARACTER = platform.IsDebuggerAttached();
     }
 
