@@ -5100,6 +5100,11 @@
         }
         if (guistate == GuiState.MapLoading)
         {
+            //Return to main menu when ESC key is pressed while loading
+            if (eKey == GetKey(GlKeys.Escape))
+            {
+                ExitToMainMenu();
+            }
         }
         if (guistate == GuiState.CraftingRecipes)
         {
