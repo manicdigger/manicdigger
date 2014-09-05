@@ -50,9 +50,15 @@ public class ModSkySphereAnimated : ClientMod
     public void Draw(Game game, float fov)
     {
         int size = 1000;
-        //if (skymodel == null)
+        if (game.fancySkysphere)
         {
+            //Fancy skysphere with higher resolution
             skymodel = GetSphereModelData2(skymodel, game.platform, size, size, 64, 64, skyPixels, glowPixels, game.sunPositionX, game.sunPositionY, game.sunPositionZ);
+        }
+        else
+        {
+            //Normal resolution. Far more FPS
+            skymodel = GetSphereModelData2(skymodel, game.platform, size, size, 20, 20, skyPixels, glowPixels, game.sunPositionX, game.sunPositionY, game.sunPositionZ);
         }
         game.Set3dProjection(size * 2, fov);
         game.GLMatrixModeModelView();

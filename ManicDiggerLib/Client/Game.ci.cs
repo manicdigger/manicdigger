@@ -6098,6 +6098,7 @@
     internal float moonPositionY;
     internal float moonPositionZ;
     internal bool isNight;
+    internal bool fancySkysphere;
 }
 
 public class DictionaryStringAudioSample
