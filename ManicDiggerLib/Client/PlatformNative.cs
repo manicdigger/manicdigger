@@ -1571,6 +1571,11 @@ public class GamePlatformNative : GamePlatform
             {
                 return;
             }
+            if (!mouseCursorVisible)
+            {
+                //Cursor already hidden. Do nothing.
+                return;
+            }
             if (!IsMac)
             {
                 System.Windows.Forms.Cursor.Hide();
@@ -1583,6 +1588,11 @@ public class GamePlatformNative : GamePlatform
         }
         else
         {
+            if (mouseCursorVisible)
+            {
+                //Cursor already visible. Do nothing.
+                return;
+            }
             if (!IsMac)
             {
                 System.Windows.Forms.Cursor.Show();

@@ -52,7 +52,6 @@
         if (b == buttonMainExit)
         {
             game.SendLeave(Packet_LeaveReasonEnum.Leave);
-            game.platform.ExitMousePointerLock();
             game.ExitToMainMenu();
         }
     }

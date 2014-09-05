@@ -1304,7 +1304,7 @@
     public void MapLoadingStart()
     {
         guistate = GuiState.MapLoading;
-        platform.ExitMousePointerLock();
+        SetFreeMouse(true);
         maploadingprogress = new MapLoadingProgressEventArgs();
         fontMapLoading = FontCi.Create("Arial", 14, 0);
     }
@@ -1625,7 +1625,7 @@
         if (type == CameraType.Fpp)
         {
             cameratype = CameraType.Fpp;
-            platform.RequestMousePointerLock();
+            SetFreeMouse(false);
             ENABLE_TPP_VIEW = false;
             overheadcamera = false;
         }
@@ -1638,7 +1638,7 @@
         {
             cameratype = CameraType.Overhead;
             overheadcamera = true;
-            platform.ExitMousePointerLock();
+            SetFreeMouse(true);
             ENABLE_TPP_VIEW = true;
             playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
         }
@@ -2876,7 +2876,7 @@
     internal void GuiStateBackToGame()
     {
         guistate = GuiState.Normal;
-        platform.RequestMousePointerLock();
+        SetFreeMouse(false);
     }
 
     internal float overheadcameradistance;
@@ -5158,14 +5158,14 @@
     {
         guistate = GuiState.EscapeMenu;
         menustate = new MenuState();
-        platform.ExitMousePointerLock();
+        SetFreeMouse(true);
     }
 
     public void ShowInventory()
     {
         guistate = GuiState.Inventory;
         menustate = new MenuState();
-        platform.ExitMousePointerLock();
+        SetFreeMouse(true);
     }
 
     public void CameraChange()
@@ -5184,14 +5184,14 @@
         {
             cameratype = CameraType.Overhead;
             overheadcamera = true;
-            platform.ExitMousePointerLock();
+            SetFreeMouse(true);
             ENABLE_TPP_VIEW = true;
             playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
         }
         else if (cameratype == CameraType.Overhead)
         {
             cameratype = CameraType.Fpp;
-            platform.RequestMousePointerLock();
+            SetFreeMouse(false);
             ENABLE_TPP_VIEW = false;
             overheadcamera = false;
         }
@@ -5558,7 +5558,7 @@
         craftingTableposz = posz;
         guistate = GuiState.CraftingRecipes;
         menustate = new MenuState();
-        platform.ExitMousePointerLock();
+        SetFreeMouse(true);
     }
 
     internal int[] okrecipes;
