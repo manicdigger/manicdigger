@@ -3606,7 +3606,6 @@
         }
         redirectTo = newServer;
         exitToMainMenu = true;
-        platform.MouseCursorSetVisible(true);
     }
     
     internal Packet_ServerRedirect GetRedirect()
@@ -3622,8 +3621,6 @@
         }
         redirectTo = null;
         exitToMainMenu = true;
-        platform.MouseCursorSetVisible(true);
-        platform.ExitMousePointerLock();
     }
 
     internal void ClientCommand(string s_)
@@ -5717,7 +5714,6 @@
         platform.GlEnableColorMaterial();
         platform.GlColorMaterialFrontAndBackAmbientAndDiffuse();
         platform.GlShadeModelSmooth();
-        platform.MouseCursorSetVisible(false);
     }
 
     internal void Connect__()
