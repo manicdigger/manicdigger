@@ -1279,9 +1279,9 @@ public partial class Server
                 Inventory inventory = GetPlayerInventory(targetName).Inventory;
                 InventoryUtil util = GetInventoryUtil(inventory);
 
-                for (int xx = 0; xx < util.CellCountX; xx++)
+                for (int yy = 0; yy < util.CellCountY; yy++)
                 {
-                    for (int yy = 0; yy < util.CellCountY; yy++)
+                    for (int xx = 0; xx < util.CellCountX; xx++)
                     {
                         if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
                         {
@@ -1297,9 +1297,9 @@ public partial class Server
                         }
                     }
                 }
-                for (int xx = 0; xx < util.CellCountX; xx++)
+                for (int yy = 0; yy < util.CellCountY; yy++)
                 {
-                    for (int yy = 0; yy < util.CellCountY; yy++)
+                    for (int xx = 0; xx < util.CellCountX; xx++)
                     {
                         Item newItem = new Item();
                         newItem.ItemClass = ItemClass.Block;
