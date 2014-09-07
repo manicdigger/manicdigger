@@ -376,11 +376,6 @@ package Packet;
         SetBlock = 6;
         FillArea = 61;
         FillAreaLimit = 62;
-        SpawnPlayer = 7;
-        PlayerPositionAndOrientation = 8;
-        PositionUpdate = 10;
-        OrientationUpdate = 11;
-        DespawnPlayer = 12;
         Message = 13;
         DisconnectPlayer = 14;
         Chunk_ = 15;
@@ -410,9 +405,11 @@ package Packet;
         Explosion = 58;
         Projectile = 59;
         Translation = 60;
-        ChunkEntity = 63;
         QueryAnswer = 64;
         ServerRedirect = 65;
+        EntitySpawn = 66;
+        EntityPosition = 67;
+        EntityDespawn = 68;
         ExtendedPacketCommand = 100;
         ExtendedPacketTick = 101;
 	}
@@ -561,33 +558,10 @@ package Packet;
         optional int32 isEnabled = 1;
     }
     
-    message ServerSpawnPlayer
-    {
-        optional int32 playerId = 1;
-        optional string playerName = 2;
-        optional PositionAndOrientation positionAndOrientation = 3;
-        optional string model_ = 4;
-        optional string texture_ = 5;
-        optional int32 eyeHeightFloat = 6;
-        optional int32 modelHeightFloat = 7;
-    }
-
-    
-    message ServerPositionAndOrientation
-    {
-        optional int32 playerId = 1;
-        optional PositionAndOrientation positionAndOrientation = 2;
-    }
-    
     message ServerMessage
     {
         // optional int32 playerId = 1;
         optional string message = 2;
-    }
-    
-    message ServerDespawnPlayer
-    {
-        optional int32 playerId = 1;
     }
     
     message ServerDisconnectPlayer
@@ -643,25 +617,6 @@ package Packet;
         optional int32 timeFloat = 6;
     }
     
-    message ServerChunkEntity
-    {
-		optional int32 chunkX = 1;
-		optional int32 chunkY = 2;
-		optional int32 chunkZ = 3;
-		optional int32 id = 4;
-		optional ServerChunkEntityEntity chunkEntity_ = 5;
-    }
-    
-    message ServerChunkEntityEntity
-    {
-		optional ServerChunkEntityScript script_ = 1;
-    }
-    
-    message ServerChunkEntityScript
-    {
-		optional string text = 1;
-    }
-    
     message ServerQueryAnswer
     {
         optional string Name = 1;
@@ -697,9 +652,6 @@ package Packet;
         optional ServerFillArea fillArea = 51;
         optional ServerFillAreaLimit fillAreaLimit = 52;
         optional ServerFreemove freemove = 53;
-        optional ServerSpawnPlayer spawnPlayer = 6;
-        optional ServerPositionAndOrientation positionAndOrientation = 7;
-        optional ServerDespawnPlayer despawnPlayer = 8;
         optional ServerMessage message = 9;
         optional ServerDisconnectPlayer disconnectPlayer = 10;
         optional ServerChunk chunk_ = 11;
@@ -730,7 +682,71 @@ package Packet;
         optional ServerTranslatedString translation = 35;
         optional ServerQueryAnswer queryAnswer = 36;
         optional ServerRedirect redirect = 37;
-        optional ServerChunkEntity chunkEntity_ = 38;
+        optional ServerEntitySpawn entitySpawn = 39;
+        optional ServerEntityPositionAndOrientation entityPosition = 40;
+        optional ServerEntityDespawn entityDespawn = 41;
+    }
+    
+    message ServerEntitySpawn
+    {
+		optional int32 id = 1;
+		optional ServerEntity entity_ = 2;
+    }
+    
+    message ServerEntityPositionAndOrientation
+    {
+        optional int32 id = 1;
+        optional PositionAndOrientation positionAndOrientation = 2;
+    }
+    
+    message ServerEntityDespawn
+    {
+		optional int32 id = 1;
+    }
+    
+    message ServerEntity
+    {
+		optional PositionAndOrientation position = 1;
+		optional ServerEntityAnimatedModel drawModel = 2;
+		optional ServerEntityDrawName drawName_ = 3;
+		optional ServerEntityDrawText drawText = 4;
+		optional ServerEntityDrawBlock drawBlock = 5;
+		optional ServerEntityPush push = 6;
+    }
+    
+    message ServerEntityAnimatedModel
+    {
+        optional string model_ = 1;
+		optional string texture_ = 2;
+		optional int32 eyeHeight = 3;
+		optional int32 modelHeight = 4;
+		optional int32 downloadSkin = 5;
+    }
+    
+    message ServerEntityDrawName
+    {
+		optional string name = 1;
+    }
+    
+    message ServerEntityDrawText
+    {
+		optional string text = 1;
+		optional int32 dx = 2;
+		optional int32 dy = 3;
+		optional int32 dz = 4;
+		optional int32 rotx = 5;
+		optional int32 roty = 6;
+		optional int32 rotz = 7;
+    }
+    
+    message ServerEntityDrawBlock
+    {
+		optional int32 blockType = 1;
+    }
+    
+    message ServerEntityPush
+    {
+		optional int32 rangeFloat = 1;
     }
     
     message IntInt

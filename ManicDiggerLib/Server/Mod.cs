@@ -459,17 +459,11 @@ namespace ManicDigger
 
         public void SetPlayerPosition(int player, float x, float y, float z)
         {
-            //if (server.clients[player].IsBot)
-            {
-                server.clients[player].PositionMul32GlX = (int)(x * 32);
-                server.clients[player].PositionMul32GlY = (int)(z * 32);
-                server.clients[player].PositionMul32GlZ = (int)(y * 32);
-            }
-            foreach (var k in server.clients)
-            {
-                server.SendPlayerTeleport(k.Key, player, (int)(x * 32), (int)(z * 32), (int)(y * 32),
-                    (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch, server.GetClient(player).stance);
-            }
+            ServerEntityPositionAndOrientation pos = server.clients[player].entity.position.Clone();
+            pos.x = x;
+            pos.y = z;
+            pos.z = y;
+            server.clients[player].positionOverride = pos;
         }
 
         public int GetPlayerHeading(int player)
@@ -489,14 +483,11 @@ namespace ManicDigger
 
         public void SetPlayerOrientation(int player, int heading, int pitch, int stance)
         {
-            server.clients[player].positionheading = heading;
-            server.clients[player].positionpitch = pitch;
-            server.clients[player].stance = (byte)stance;
-            foreach (var k in server.clients)
-            {
-                server.SendPlayerTeleport(k.Key, player, server.clients[player].PositionMul32GlX, server.clients[player].PositionMul32GlY, server.clients[player].PositionMul32GlZ,
-                    (byte)heading, (byte)pitch, (byte)stance);
-            }
+            var pos = server.clients[player].entity.position.Clone();
+            pos.heading = (byte)heading;
+            pos.pitch = (byte)pitch;
+            pos.stance = (byte)stance;
+            server.clients[player].positionOverride = pos;
         }
 
         public int[] AllPlayers()
@@ -602,7 +593,7 @@ namespace ManicDigger
         {
             server.clients[player].Model = model;
             server.clients[player].Texture = texture;
-            server.SendPlayerSpawnToAll(player);
+            server.PlayerEntitySetDirty(player);
         }
         public void RenderHint(RenderHint hint)
         {
@@ -768,7 +759,7 @@ namespace ManicDigger
             c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
                 * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
             c.AssignGroup(server.defaultGroupRegistered);
-            server.SendPlayerSpawnToAll(id);
+            server.PlayerEntitySetDirty(id);
             return id;
         }
 
@@ -781,7 +772,7 @@ namespace ManicDigger
         {
             server.clients[player].EyeHeight = eyeheight;
             server.clients[player].ModelHeight = modelheight;
-            server.SendPlayerSpawnToAll(player);
+            server.PlayerEntitySetDirty(player);
         }
 
         public void DisablePrivilege(string privilege)
@@ -941,7 +932,7 @@ namespace ManicDigger
                 color.Equals("&c") || color.Equals("&d") || color.Equals("&e") || color.Equals("&f"))
             {
                 server.clients[player].displayColor = color;
-                server.SendPlayerSpawnToAll(player);
+                server.PlayerEntitySetDirty(player);
             }
         }
 

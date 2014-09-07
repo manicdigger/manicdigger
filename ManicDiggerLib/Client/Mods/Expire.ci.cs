@@ -21,9 +21,9 @@
 
     void GrenadeExplosion(Game game, int grenadeEntityId)
     {
-        float LocalPlayerPositionX = game.player.playerposition.X;
-        float LocalPlayerPositionY = game.player.playerposition.Y;
-        float LocalPlayerPositionZ = game.player.playerposition.Z;
+        float LocalPlayerPositionX = game.player.position.x;
+        float LocalPlayerPositionY = game.player.position.y;
+        float LocalPlayerPositionZ = game.player.position.z;
 
         Entity grenadeEntity = game.entities[grenadeEntityId];
         Sprite grenadeSprite = grenadeEntity.sprite;

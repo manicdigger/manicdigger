@@ -34,9 +34,9 @@
         if (railriding)
         {
             Minecart m = localMinecart.minecart;
-            m.positionX = game.player.playerposition.X;
-            m.positionY = game.player.playerposition.Y;
-            m.positionZ = game.player.playerposition.Z;
+            m.positionX = game.player.position.x;
+            m.positionY = game.player.position.y;
+            m.positionZ = game.player.position.z;
             m.direction = currentdirection;
             m.lastdirection = lastdirection;
             m.progress = currentrailblockprogress;
@@ -55,9 +55,9 @@
             game.ENABLE_FREEMOVE = true;
             game.enable_move = false;
             Vector3Ref railPos = CurrentRailPos(game);
-            game.player.playerposition.X = railPos.X;
-            game.player.playerposition.Y = railPos.Y;
-            game.player.playerposition.Z = railPos.Z;
+            game.player.position.x = railPos.X;
+            game.player.position.y = railPos.Y;
+            game.player.position.z = railPos.Z;
             currentrailblockprogress += currentvehiclespeed * dt;
             if (currentrailblockprogress >= 1)
             {
@@ -119,9 +119,9 @@
         }
         if (!wasepressed && game.keyboardState[game.GetKey(GlKeys.E)] && !railriding && !game.ENABLE_FREEMOVE && game.GuiTyping != TypingState.Typing)
         {
-            currentrailblockX = game.platform.FloatToInt(game.player.playerposition.X);
-            currentrailblockY = game.platform.FloatToInt(game.player.playerposition.Z);
-            currentrailblockZ = game.platform.FloatToInt(game.player.playerposition.Y) - 1;
+            currentrailblockX = game.platform.FloatToInt(game.player.position.x);
+            currentrailblockY = game.platform.FloatToInt(game.player.position.z);
+            currentrailblockZ = game.platform.FloatToInt(game.player.position.y) - 1;
             if (!game.IsValidPos(currentrailblockX, currentrailblockY, currentrailblockZ))
             {
                 ExitVehicle(game);
@@ -167,7 +167,7 @@
         else if (!wasepressed && game.keyboardState[game.GetKey(GlKeys.E)] && railriding && game.GuiTyping != TypingState.Typing)
         {
             ExitVehicle(game);
-            game.player.playerposition.Y += one * 7 / 10;
+            game.player.position.y += one * 7 / 10;
         }
         wasqpressed = game.keyboardState[game.GetKey(GlKeys.Q)] && game.GuiTyping != TypingState.Typing;
         wasepressed = game.keyboardState[game.GetKey(GlKeys.E)] && game.GuiTyping != TypingState.Typing;

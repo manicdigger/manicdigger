@@ -10,8 +10,6 @@
         playerPositionSpawnY = 64;
         playerPositionSpawnZ = 15 + one / 2;
 
-        player = new CharacterPhysicsState();
-
         TextureId = new int[MaxBlockTypes][];
         for (int i = 0; i < MaxBlockTypes; i++)
         {
@@ -123,6 +121,10 @@
         soundnow = new BoolRef();
         acceleration = new Acceleration();
         camera = Mat4.Create();
+        packetHandlers = new ClientPacketHandler[256];
+        player = new Entity();
+        player.position = new EntityPosition_();
+        player.physicsState = new CharacterPhysicsState();
     }
     ScreenTextEditor screenTextEditor;
 
@@ -248,7 +250,6 @@
         AddMod(new ModGrenade());
         AddMod(new ModBullet());
         AddMod(new ModExpire());
-        AddMod(new ModSetPlayers());
         AddMod(new ModReloadAmmo());
         AddMod(new ModPush());
         if (platform.IsFastSystem())
@@ -279,6 +280,7 @@
         AddMod(new ModCharacterPhysics());
         AddMod(new ModSendActiveMaterial());
         AddMod(new ModCamera());
+        AddMod(new ModNetworkEntity());
         s = new BlockOctreeSearcher();
         s.platform = platform;
 
@@ -338,7 +340,7 @@
     internal const int chunksize = 16;
     internal const int chunksizebits = 4;
 
-    internal CharacterPhysicsState player;
+    internal Entity player;
 
     public bool IsFluid(Packet_BlockType block)
     {
@@ -1273,7 +1275,7 @@
     internal void Respawn()
     {
         SendPacketClient(ClientPackets.SpecialKeyRespawn());
-        player.movedz = 0;
+        player.physicsState.movedz = 0;
     }
 
     public static bool IsTransparentForLight(Packet_BlockType b)
@@ -1584,15 +1586,15 @@
 
     internal int BlockUnderPlayer()
     {
-        if (!IsValidPos(platform.FloatToInt(player.playerposition.X),
-            platform.FloatToInt(player.playerposition.Z),
-            platform.FloatToInt(player.playerposition.Y) - 1))
+        if (!IsValidPos(platform.FloatToInt(player.position.x),
+            platform.FloatToInt(player.position.z),
+            platform.FloatToInt(player.position.y) - 1))
         {
             return -1;
         }
-        int blockunderplayer = GetBlock(platform.FloatToInt(player.playerposition.X),
-            platform.FloatToInt(player.playerposition.Z),
-            platform.FloatToInt(player.playerposition.Y) - 1);
+        int blockunderplayer = GetBlock(platform.FloatToInt(player.position.x),
+            platform.FloatToInt(player.position.z),
+            platform.FloatToInt(player.position.y) - 1);
         return blockunderplayer;
     }
 
@@ -1643,7 +1645,7 @@
             overheadcamera = true;
             SetFreeMouse(true);
             ENABLE_TPP_VIEW = true;
-            playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
+            playerdestination = Vector3Ref.Create(player.position.x, player.position.y, player.position.z);
         }
     }
     internal float basemovespeed;
@@ -1850,17 +1852,17 @@
 
     internal float GetCharacterEyesHeight()
     {
-        return entities[LocalPlayerId].player.EyeHeight;
+        return entities[LocalPlayerId].drawModel.eyeHeight;
     }
 
     internal void SetCharacterEyesHeight(float value)
     {
-        entities[LocalPlayerId].player.EyeHeight = value;
+        entities[LocalPlayerId].drawModel.eyeHeight = value;
     }
 
-    public float EyesPosX() { return player.playerposition.X; }
-    public float EyesPosY() { return player.playerposition.Y + GetCharacterEyesHeight(); }
-    public float EyesPosZ() { return player.playerposition.Z; }
+    public float EyesPosX() { return player.position.x; }
+    public float EyesPosY() { return player.position.y + GetCharacterEyesHeight(); }
+    public float EyesPosZ() { return player.position.z; }
 
     public void AudioPlay(string file)
     {
@@ -1994,15 +1996,15 @@
     
     public int GetPlayerEyesBlockX()
     {
-        return platform.FloatToInt(MathFloor(player.playerposition.X));
+        return platform.FloatToInt(MathFloor(player.position.x));
     }
     public int GetPlayerEyesBlockY()
     {
-        return platform.FloatToInt(MathFloor(player.playerposition.Z));
+        return platform.FloatToInt(MathFloor(player.position.z));
     }
     public int GetPlayerEyesBlockZ()
     {
-        return platform.FloatToInt(MathFloor(player.playerposition.Y + entities[LocalPlayerId].player.EyeHeight));
+        return platform.FloatToInt(MathFloor(player.position.y + entities[LocalPlayerId].drawModel.eyeHeight));
     }
 
     public int MathFloor(float a)
@@ -2223,62 +2225,6 @@
     internal GameDataMonsters d_DataMonsters;
     internal int ReceivedMapLength;
 
-    internal void ReadAndUpdatePlayerPosition(Packet_PositionAndOrientation positionAndOrientation, int playerid)
-    {
-        float x = (one * positionAndOrientation.X / 32);
-        float y = (one * positionAndOrientation.Y / 32);
-        float z = (one * positionAndOrientation.Z / 32);
-        byte heading = Game.IntToByte(positionAndOrientation.Heading);
-        byte pitch = Game.IntToByte(positionAndOrientation.Pitch);
-        bool leanleft = false;
-        bool leanright = false;
-        if (positionAndOrientation.Stance == 1)
-        {
-            leanleft = true;
-        }
-        if (positionAndOrientation.Stance == 2)
-        {
-            leanright = true;
-        }
-        float realposX = x;
-        float realposY = y;
-        float realposZ = z;
-        if (playerid == this.LocalPlayerId)
-        {
-            if (!EnablePlayerUpdatePositionContainsKey(playerid) || EnablePlayerUpdatePosition(playerid))
-            {
-                player.playerposition.X = realposX;
-                player.playerposition.Y = realposY;
-                player.playerposition.Z = realposZ;
-                // LocalPlayerOrientation = HeadingPitchToOrientation(heading, pitch);
-                localstance = Game.IntToByte(positionAndOrientation.Stance);
-            }
-            spawned = true;
-        }
-        else
-        {
-            if (entities[playerid] == null)
-            {
-                entities[playerid] = new Entity();
-                entities[playerid].player = new Player();
-                entities[playerid].player.Name = "invalid";
-                InvalidPlayerWarning(playerid);
-            }
-            if (!EnablePlayerUpdatePositionContainsKey(playerid) || EnablePlayerUpdatePosition(playerid))
-            {
-                entities[playerid].player.NetworkX = realposX;
-                entities[playerid].player.NetworkY = realposY;
-                entities[playerid].player.NetworkZ = realposZ;
-                entities[playerid].player.PositionLoaded = true;
-            }
-            entities[playerid].player.NetworkHeading = heading;
-            entities[playerid].player.NetworkPitch = pitch;
-            entities[playerid].player.AnimationHint_.leanleft = leanleft;
-            entities[playerid].player.AnimationHint_.leanright = leanright;
-            entities[playerid].player.LastUpdateMilliseconds = platform.TimeMillisecondsFromStart();
-        }
-    }
-
     void InvalidPlayerWarning(int playerid)
     {
         platform.ConsoleWriteLine(platform.StringFormat("Position update of nonexistent player {0}.", platform.IntToString(playerid)));
@@ -2411,21 +2357,21 @@
             {
                 continue;
             }
-            if (entities[i].player == null)
+            if (entities[i].drawModel == null)
             {
                 continue;
             }
-            Player p = entities[i].player;
-            if (p.PositionLoaded)
+            Entity p = entities[i];
+            if (p.networkPosition == null || (p.networkPosition != null && p.networkPosition.PositionLoaded))
             {
-                if (IsPlayerInPos(p.PositionX, p.PositionY, p.PositionZ,
+                if (IsPlayerInPos(p.position.x, p.position.y, p.position.z,
                     blockposX, blockposY, blockposZ))
                 {
                     return true;
                 }
             }
         }
-        return IsPlayerInPos(player.playerposition.X, player.playerposition.Y, player.playerposition.Z,
+        return IsPlayerInPos(player.position.x, player.position.y, player.position.z,
             blockposX, blockposY, blockposZ);
     }
 
@@ -2467,14 +2413,14 @@
     {
         if (!overheadcamera)
         {
-            player.playerorientation.Y += mouseDeltaX * rotationspeed * (one / 75);
-            player.playerorientation.X += mouseDeltaY * rotationspeed * (one / 75);
-            player.playerorientation.X = Game.ClampFloat(player.playerorientation.X,
+            player.position.roty += mouseDeltaX * rotationspeed * (one / 75);
+            player.position.rotx += mouseDeltaY * rotationspeed * (one / 75);
+            player.position.rotx = Game.ClampFloat(player.position.rotx,
                 Game.GetPi() / 2 + (one * 15 / 1000),
                 (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
 
-            player.playerorientation.X += touchOrientationDy * rotation_speed * (one / 75);
-            player.playerorientation.Y += touchOrientationDx * rotation_speed * (one / 75);
+            player.position.rotx += touchOrientationDy * rotation_speed * (one / 75);
+            player.position.roty += touchOrientationDx * rotation_speed * (one / 75);
             touchOrientationDx = 0;
             touchOrientationDy = 0;
         }
@@ -2497,11 +2443,11 @@
             {
                 continue;
             }
-            if (entities[i].player == null)
+            if (entities[i].drawName == null)
             {
                 continue;
             }
-            Player p = entities[i].player;
+            DrawName p = entities[i].drawName;
             if (p.Name == Follow)
             {
                 return IntRef.Create(i);
@@ -2719,10 +2665,10 @@
 
     internal int GetPlayerEyesBlock()
     {
-        float pX = player.playerposition.X;
-        float pY = player.playerposition.Y;
-        float pZ = player.playerposition.Z;
-        pY += entities[LocalPlayerId].player.EyeHeight;
+        float pX = player.position.x;
+        float pY = player.position.y;
+        float pZ = player.position.z;
+        pY += entities[LocalPlayerId].drawModel.eyeHeight;
         int bx = MathFloor(pX);
         int by = MathFloor(pZ);
         int bz = MathFloor(pY);
@@ -3237,9 +3183,9 @@
         materialSlots = d_Data.DefaultMaterialSlots();
         GuiStateBackToGame();
 
-        playerPositionSpawnX = player.playerposition.X;
-        playerPositionSpawnY = player.playerposition.Y;
-        playerPositionSpawnZ = player.playerposition.Z;
+        playerPositionSpawnX = player.position.x;
+        playerPositionSpawnY = player.position.y;
+        playerPositionSpawnZ = player.position.z;
     }
     internal int[] materialSlots;
 
@@ -3308,15 +3254,11 @@
                     {
                         continue;
                     }
-                    if (entities[i].player == null)
+                    if (entities[i].drawName == null)
                     {
                         continue;
                     }
-                    Player p = entities[i].player;
-                    if (p.Type != PlayerType.Player)
-                    {
-                        continue;
-                    }
+                    DrawName p = entities[i].drawName;
                     //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
                     if (platform.StringStartsWithIgnoreCase(StringTools.StringSubstringToEnd(platform, p.Name, 2), d_HudChat.GuiTypingBuffer))
                     {
@@ -3720,11 +3662,11 @@
                         {
                             continue;
                         }
-                        if (entities[i].player == null)
+                        if (entities[i].drawName == null)
                         {
                             continue;
                         }
-                        Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].player.Name));
+                        Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].drawName.Name));
                     }
                 }
                 else if (cmd == "movespeed")
@@ -3924,6 +3866,10 @@
     string serverGameVersion;
     internal void ProcessPacket(Packet_Server packet)
     {
+        if (packetHandlers[packet.Id] != null)
+        {
+            packetHandlers[packet.Id].Handle(this, packet);
+        }
         switch (packet.Id)
         {
             case Packet_ServerIdEnum.ServerIdentification:
@@ -3953,23 +3899,7 @@
                 break;
             case Packet_ServerIdEnum.PlayerPing:
                 {
-                    for (int i = 0; i < this.ServerInfo.Players.count; i++)
-                    {
-                        ConnectedPlayer k = ServerInfo.Players.items[i];
-                        if (k == null)
-                        {
-                            continue;
-                        }
-                        if (k.id == packet.PlayerPing.ClientId)
-                        {
-                            if (k.id == this.LocalPlayerId)
-                            {
-                                this.ServerInfo.ServerPing.Receive(platform);
-                            }
-                            k.ping = packet.PlayerPing.Ping;
-                            break;
-                        }
-                    }
+                    this.ServerInfo.ServerPing.Receive(platform);
                 }
                 break;
             case Packet_ServerIdEnum.LevelInitialize:
@@ -3994,7 +3924,7 @@
                     //    MyStream.ReadAllLines(d_GetFile.GetFile("lightlevels.csv")));
                     //d_CraftingRecipes.Load(MyStream.ReadAllLines(d_GetFile.GetFile("craftingrecipes.csv")));
 
-                    MapLoaded();
+                    //MapLoaded();
                 }
                 break;
             case Packet_ServerIdEnum.SetBlock:
@@ -4084,124 +4014,6 @@
                     this.playerPositionSpawnY = z;
                     this.playerPositionSpawnZ = y;
                     Log(platform.StringFormat(language.SpawnPositionSetTo(), platform.StringFormat3("{0},{1},{2}", platform.IntToString(x), platform.IntToString(y), platform.IntToString(z))));
-                }
-                break;
-            case Packet_ServerIdEnum.SpawnPlayer:
-                {
-                    int playerid = packet.SpawnPlayer.PlayerId;
-                    string playername = packet.SpawnPlayer.PlayerName;
-                    bool isnewplayer = true;
-                    for (int i = 0; i < ServerInfo.Players.count; i++)
-                    {
-                        ConnectedPlayer p = ServerInfo.Players.items[i];
-                        if (p == null)
-                        {
-                            continue;
-                        }
-                        if (p.id == playerid)
-                        {
-                            isnewplayer = false;
-                            p.name = playername;
-                        }
-                    }
-                    if (isnewplayer)
-                    {
-                        ConnectedPlayer p = new ConnectedPlayer();
-                        p.name = playername;
-                        p.id = playerid;
-                        p.ping = -1;
-                        this.ServerInfo.Players.Add(p);
-                    }
-                    if (!platform.StringStartsWithIgnoreCase(playername, "&"))
-                    {
-                        playername = platform.StringFormat("&f{0}", playername);
-                    }
-                    entities[playerid] = new Entity();
-                    Player player_ = new Player();
-                    entities[playerid].player = player_;
-                    player_.Name = playername;
-                    player_.Model = packet.SpawnPlayer.Model_;
-                    if (player_.Model == null)
-                    {
-                        player_.Model = "player.txt";
-                    }
-                    player_.Texture = packet.SpawnPlayer.Texture_;
-                    player_.EyeHeight = DeserializeFloat(packet.SpawnPlayer.EyeHeightFloat);
-                    if (player_.EyeHeight == 0)
-                    {
-                        player_.EyeHeight = player_.DefaultEyeHeight();
-                    }
-                    player_.ModelHeight = DeserializeFloat(packet.SpawnPlayer.ModelHeightFloat);
-                    if (player_.ModelHeight == 0)
-                    {
-                        player_.ModelHeight = player_.DefaultModelHeight();
-                    }
-                    ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
-                    if (playerid == this.LocalPlayerId)
-                    {
-                        spawned = true;
-                    }
-                }
-                break;
-            case Packet_ServerIdEnum.PlayerPositionAndOrientation:
-                {
-                    int playerid = packet.PositionAndOrientation.PlayerId;
-                    ReadAndUpdatePlayerPosition(packet.PositionAndOrientation.PositionAndOrientation, playerid);
-                }
-                break;
-            case Packet_ServerIdEnum.Monster:
-                {
-                    if (packet.Monster.Monsters == null)
-                    {
-                        break;
-                    }
-                    for (int i = 0; i < packet.Monster.MonstersCount; i++)
-                    {
-                        Packet_ServerMonster k = packet.Monster.Monsters[i];
-                        int id = k.Id + entityMonsterIdStart;
-                        if (entities[id] == null)
-                        {
-                            entities[id] = new Entity();
-                            entities[id].player = new Player();
-                            entities[id].player.Name = d_DataMonsters.MonsterName[k.MonsterType];
-                        }
-                        ReadAndUpdatePlayerPosition(k.PositionAndOrientation, id);
-                        entities[id].player.Type = PlayerType.Monster;
-                        entities[id].player.Health = k.Health;
-                        entities[id].player.MonsterType = k.MonsterType;
-                    }
-                    //remove all old monsters that were not sent by server now.
-
-                    //this causes monster flicker on chunk boundaries,
-                    //commented out
-                    //foreach (int id in new List<int>(players.Keys))
-                    //{
-                    //    if (id >= MonsterIdFirst)
-                    //    {
-                    //        if (!updatedMonsters.ContainsKey(id))
-                    //        {
-                    //            players.Remove(id);
-                    //        }
-                    //    }
-                    //}
-                }
-                break;
-            case Packet_ServerIdEnum.DespawnPlayer:
-                {
-                    int playerid = packet.DespawnPlayer.PlayerId;
-                    for (int i = 0; i < this.ServerInfo.Players.count; i++)
-                    {
-                        ConnectedPlayer p = ServerInfo.Players.items[i];
-                        if (p == null)
-                        {
-                            continue;
-                        }
-                        if (p.id == playerid)
-                        {
-                            this.ServerInfo.Players.RemoveAt(i);
-                        }
-                    }
-                    entities[playerid] = null;
                 }
                 break;
             case Packet_ServerIdEnum.Message:
@@ -4371,7 +4183,7 @@
                 if (packet.Follow.Tpp != 0)
                 {
                     SetCamera(CameraType.Overhead);
-                    player.playerorientation.X = Game.GetPi();
+                    player.position.rotx = Game.GetPi();
                     GuiStateBackToGame();
                 }
                 else
@@ -4495,15 +4307,6 @@
                 handRedraw = true;
                 RedrawAllBlocks();
                 break;
-            case Packet_ServerIdEnum.ChunkEntity:
-                {
-                    int chunkX = packet.ChunkEntity_.ChunkX;
-                    int chunkY = packet.ChunkEntity_.ChunkY;
-                    int chunkZ = packet.ChunkEntity_.ChunkZ;
-                    int id = packet.ChunkEntity_.Id;
-                    Packet_ServerChunkEntityEntity entity = packet.ChunkEntity_.ChunkEntity_;
-                }
-                break;
             case Packet_ServerIdEnum.ServerRedirect:
                 ChatLog("[GAME] Received server redirect");
                 //Leave current server
@@ -4513,6 +4316,7 @@
                 break;
         }
     }
+    internal ClientPacketHandler[] packetHandlers;
 
     void CacheAsset(Asset asset)
     {
@@ -4932,7 +4736,7 @@
                     Log(strFreemoveNotAllowed);
                     return;
                 }
-                player.movedz = 0;
+                player.physicsState.movedz = 0;
                 if (!ENABLE_FREEMOVE)
                 {
                     ENABLE_FREEMOVE = true;
@@ -4954,8 +4758,8 @@
             {
                 drawblockinfo = !drawblockinfo;
             }
-            int playerx = platform.FloatToInt(player.playerposition.X);
-            int playery = platform.FloatToInt(player.playerposition.Z);
+            int playerx = platform.FloatToInt(player.position.x);
+            int playery = platform.FloatToInt(player.position.z);
             if ((playerx >= 0 && playerx < MapSizeX)
                 && (playery >= 0 && playery < MapSizeY))
             {
@@ -5025,9 +4829,9 @@
                     {
                         if (d_Data.IsRailTile(blocktype))
                         {
-                            player.playerposition.X = posX + (one / 2);
-                            player.playerposition.Y = posZ + 1;
-                            player.playerposition.Z = posY + (one / 2);
+                            player.position.x = posX + (one / 2);
+                            player.position.y = posZ + 1;
+                            player.position.z = posY + (one / 2);
                             ENABLE_FREEMOVE = false;
                         }
                         else
@@ -5049,13 +4853,13 @@
             {
                 SendPacketClient(ClientPackets.SpecialKeySetSpawn());
 
-                playerPositionSpawnX = player.playerposition.X;
-                playerPositionSpawnY = player.playerposition.Y;
-                playerPositionSpawnZ = player.playerposition.Z;
+                playerPositionSpawnX = player.position.x;
+                playerPositionSpawnY = player.position.y;
+                playerPositionSpawnZ = player.position.z;
 
-                player.playerposition.X = platform.FloatToInt(player.playerposition.X) + one / 2;
+                player.position.x = platform.FloatToInt(player.position.x) + one / 2;
                 //player.playerposition.Y = player.playerposition.Y;
-                player.playerposition.Z = platform.FloatToInt(player.playerposition.Z) + one / 2;
+                player.position.z = platform.FloatToInt(player.position.z) + one / 2;
             }
             if (eKey == GetKey(GlKeys.F))
             {
@@ -5194,7 +4998,7 @@
             overheadcamera = true;
             SetFreeMouse(true);
             ENABLE_TPP_VIEW = true;
-            playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
+            playerdestination = Vector3Ref.Create(player.position.x, player.position.y, player.position.z);
         }
         else if (cameratype == CameraType.Overhead)
         {
@@ -5317,13 +5121,13 @@
         //d_The3d.OrthoMode(Width, Height);
         if (ENABLE_DRAWPOSITION)
         {
-            float heading = one * HeadingByte(player.playerorientation.X, player.playerorientation.Y, player.playerorientation.Z);
-            float pitch = one * PitchByte(player.playerorientation.X, player.playerorientation.Y, player.playerorientation.Z);
-            string postext = platform.StringFormat("X: {0}", platform.IntToString(MathFloor(player.playerposition.X)));
+            float heading = one * HeadingByte(player.position.rotx, player.position.roty, player.position.rotz);
+            float pitch = one * PitchByte(player.position.rotx, player.position.roty, player.position.rotz);
+            string postext = platform.StringFormat("X: {0}", platform.IntToString(MathFloor(player.position.x)));
             postext = StringTools.StringAppend(platform, postext, ",\tY: ");
-            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.playerposition.Z)));
+            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.position.z)));
             postext = StringTools.StringAppend(platform, postext, ",\tZ: ");
-            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.playerposition.Y)));
+            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.position.y)));
             postext = StringTools.StringAppend(platform, postext, "\nHeading: ");
             postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(heading)));
             postext = StringTools.StringAppend(platform, postext, "\nPitch: ");
@@ -5406,20 +5210,20 @@
         {
         }
 
-        float orientationX = platform.MathSin(player.playerorientation.Y);
+        float orientationX = platform.MathSin(player.position.roty);
         float orientationY = 0;
-        float orientationZ = -platform.MathCos(player.playerorientation.Y);
+        float orientationZ = -platform.MathCos(player.position.roty);
         platform.AudioUpdateListener(EyesPosX(), EyesPosY(), EyesPosZ(), orientationX, orientationY, orientationZ);
 
-        playervelocity.X = player.playerposition.X - lastplayerpositionX;
-        playervelocity.Y = player.playerposition.Y - lastplayerpositionY;
-        playervelocity.Z = player.playerposition.Z - lastplayerpositionZ;
+        playervelocity.X = player.position.x - lastplayerpositionX;
+        playervelocity.Y = player.position.y - lastplayerpositionY;
+        playervelocity.Z = player.position.z - lastplayerpositionZ;
         playervelocity.X *= 75;
         playervelocity.Y *= 75;
         playervelocity.Z *= 75;
-        lastplayerpositionX = player.playerposition.X;
-        lastplayerpositionY = player.playerposition.Y;
-        lastplayerpositionZ = player.playerposition.Z;
+        lastplayerpositionX = player.position.x;
+        lastplayerpositionY = player.position.y;
+        lastplayerpositionZ = player.position.z;
         if (guistate == GuiState.CraftingRecipes)
         {
             CraftingMouse();
@@ -6103,6 +5907,17 @@
     internal float moonPositionZ;
     internal bool isNight;
     internal bool fancySkysphere;
+
+    internal static float Angle256ToRad(int value)
+    {
+        float one_ = 1;
+        return ((one_ * value) / 255) * GetPi() * 2;
+    }
+
+    internal static float RadToAngle256(float value)
+    {
+        return (value / (2 * GetPi())) * 255;
+    }
 }
 
 public class DictionaryStringAudioSample
@@ -7318,7 +7133,7 @@ public class PlayerDrawInfo
     public PlayerDrawInfo()
     {
         anim = new AnimationState();
-        interpolation = new NetworkInterpolation();
+        AnimationHint_ = new AnimationHint();
     }
     internal AnimationState anim;
     internal NetworkInterpolation interpolation;
@@ -7328,11 +7143,14 @@ public class PlayerDrawInfo
     internal float lastcurposX;
     internal float lastcurposY;
     internal float lastcurposZ;
-    internal byte lastnetworkheading;
-    internal byte lastnetworkpitch;
+    internal float lastnetworkrotx;
+    internal float lastnetworkroty;
+    internal float lastnetworkrotz;
     internal float velocityX;
     internal float velocityY;
     internal float velocityZ;
+    internal bool moves;
+    internal AnimationHint AnimationHint_;
 }
 
 public class PlayerInterpolate : IInterpolation
@@ -7346,9 +7164,20 @@ public class PlayerInterpolate : IInterpolation
         cc.positionX = aa.positionX + (bb.positionX - aa.positionX) * progress;
         cc.positionY = aa.positionY + (bb.positionY - aa.positionY) * progress;
         cc.positionZ = aa.positionZ + (bb.positionZ - aa.positionZ) * progress;
-        cc.heading = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress));
-        cc.pitch = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress));
+        //cc.heading = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress));
+        //cc.pitch = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress));
+        cc.rotx = DegToRad(AngleInterpolation.InterpolateAngle360(platform, RadToDeg(aa.rotx), RadToDeg(bb.rotx), progress));
+        cc.roty = DegToRad(AngleInterpolation.InterpolateAngle360(platform, RadToDeg(aa.roty), RadToDeg(bb.roty), progress));
+        cc.rotz = DegToRad(AngleInterpolation.InterpolateAngle360(platform, RadToDeg(aa.rotz), RadToDeg(bb.rotz), progress));
         return cc;
+    }
+    static float RadToDeg(float rad)
+    {
+        return (rad / (2 * Game.GetPi())) * 360;
+    }
+    static float DegToRad(float deg)
+    {
+        return (deg / 360) * 2 * Game.GetPi();
     }
 }
 
@@ -7357,6 +7186,9 @@ public class PlayerInterpolationState : InterpolatedObject
     internal float positionX;
     internal float positionY;
     internal float positionZ;
+    internal float rotx;
+    internal float roty;
+    internal float rotz;
     internal byte heading;
     internal byte pitch;
 }
@@ -7404,9 +7236,54 @@ public class Entity
     internal Sprite sprite;
     internal Grenade_ grenade;
     internal Bullet_ bullet;
-    internal Player player;
     internal DrawName drawName;
     internal Minecart minecart;
+    internal EntityPosition_ networkPosition;
+    internal EntityPosition_ position;
+    internal EntityDrawModel drawModel;
+    
+    internal PlayerDrawInfo playerDrawInfo;
+    internal CharacterPhysicsState physicsState;
+}
+
+public class EntityPosition_
+{
+    internal float x;
+    internal float y;
+    internal float z;
+    internal float rotx;
+    internal float roty;
+    internal float rotz;
+
+    internal bool PositionLoaded;
+    internal int LastUpdateMilliseconds;
+}
+
+public class EntityDrawModel
+{
+    public EntityDrawModel()
+    {
+        CurrentTexture = -1;
+    }
+    internal float eyeHeight;
+    internal string Model_;
+    internal float ModelHeight;
+    internal string Texture_;
+    internal bool DownloadSkin;
+
+    internal int CurrentTexture;
+    internal HttpResponseCi SkinDownloadResponse;
+}
+
+public class EntityDrawText
+{
+    internal float dx;
+    internal float dy;
+    internal float dz;
+    internal float rotx;
+    internal float roty;
+    internal float rotz;
+    internal string text;
 }
 
 public class DictionaryVector3Float
@@ -8238,46 +8115,46 @@ public class ClientModManager1 : ClientModManager
 
     public override void SetLocalPosition(float glx, float gly, float glz)
     {
-        game.player.playerposition.X = glx;
-        game.player.playerposition.Y = gly;
-        game.player.playerposition.Z = glz;
+        game.player.position.x = glx;
+        game.player.position.y = gly;
+        game.player.position.z = glz;
     }
 
     public override float GetLocalPositionX()
     {
-        return game.player.playerposition.X;
+        return game.player.position.x;
     }
 
     public override float GetLocalPositionY()
     {
-        return game.player.playerposition.Y;
+        return game.player.position.y;
     }
 
     public override float GetLocalPositionZ()
     {
-        return game.player.playerposition.Z;
+        return game.player.position.z;
     }
 
     public override void SetLocalOrientation(float glx, float gly, float glz)
     {
-        game.player.playerorientation.X = glx;
-        game.player.playerorientation.Y = gly;
-        game.player.playerorientation.Z = glz;
+        game.player.position.rotx = glx;
+        game.player.position.roty = gly;
+        game.player.position.rotz = glz;
     }
 
     public override float GetLocalOrientationX()
     {
-        return game.player.playerorientation.X;
+        return game.player.position.rotx;
     }
 
     public override float GetLocalOrientationY()
     {
-        return game.player.playerorientation.Y;
+        return game.player.position.roty;
     }
 
     public override float GetLocalOrientationZ()
     {
-        return game.player.playerorientation.Z;
+        return game.player.position.rotz;
     }
 
     public override void DisplayNotification(string message)
@@ -9702,8 +9579,8 @@ public class ClientPackets
             p.X = game.platform.FloatToInt(positionX * 32);
             p.Y = game.platform.FloatToInt(positionY * 32);
             p.Z = game.platform.FloatToInt(positionZ * 32);
-            p.Heading = game.HeadingByte(orientationX, orientationY, orientationZ);
-            p.Pitch = game.PitchByte(orientationX, orientationY, orientationZ);
+            p.Heading = game.platform.FloatToInt(Game.RadToAngle256(orientationY));
+            p.Pitch = game.platform.FloatToInt(Game.RadToAngle256(orientationX));
             p.Stance = stance;
         }
         Packet_Client pp = new Packet_Client();
@@ -9789,17 +9666,6 @@ public class ServerPackets
         return p;
     }
 
-    public static Packet_Server Spawn(int id, string name, Packet_PositionAndOrientation pos)
-    {
-        Packet_Server p = new Packet_Server();
-        p.Id = Packet_ServerIdEnum.SpawnPlayer;
-        p.SpawnPlayer = new Packet_ServerSpawnPlayer();
-        p.SpawnPlayer.PlayerId = id;
-        p.SpawnPlayer.PlayerName = name;
-        p.SpawnPlayer.PositionAndOrientation = pos;
-        return p;
-    }
-
     public static Packet_Server Chunk_(int x, int y, int z, int chunksize)
     {
         Packet_Server p = new Packet_Server();
@@ -9881,12 +9747,32 @@ public class ServerPackets
         return p;
     }
 
-    internal static Packet_Server DespawnPlayer(int playerid)
+    internal static Packet_Server EntitySpawn(int id, Packet_ServerEntity entity)
     {
         Packet_Server p = new Packet_Server();
-        p.Id = Packet_ServerIdEnum.DespawnPlayer;
-        p.DespawnPlayer = new Packet_ServerDespawnPlayer();
-        p.DespawnPlayer.PlayerId = playerid;
+        p.Id = Packet_ServerIdEnum.EntitySpawn;
+        p.EntitySpawn = new Packet_ServerEntitySpawn();
+        p.EntitySpawn.Id = id;
+        p.EntitySpawn.Entity_ = entity;
+        return p;
+    }
+
+    internal static Packet_Server EntityPositionAndOrientation(int id, Packet_PositionAndOrientation positionAndOrientation)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.EntityPosition;
+        p.EntityPosition = new Packet_ServerEntityPositionAndOrientation();
+        p.EntityPosition.Id = id;
+        p.EntityPosition.PositionAndOrientation = positionAndOrientation;
+        return p;
+    }
+
+    internal static Packet_Server EntityDespawn(int id)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.EntityDespawn;
+        p.EntityDespawn = new Packet_ServerEntityDespawn();
+        p.EntityDespawn.Id = id;
         return p;
     }
 }
@@ -9903,4 +9789,14 @@ public class TextureAtlas
         r.h = one / texturesPacked;
         return r;
     }
+}
+
+public abstract class ClientPacketHandler
+{
+    public ClientPacketHandler()
+    {
+        one = 1;
+    }
+    internal float one;
+    public abstract void Handle(Game game, Packet_Server packet);
 }

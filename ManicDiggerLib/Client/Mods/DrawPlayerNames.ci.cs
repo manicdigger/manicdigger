@@ -4,25 +4,35 @@
     {
         for (int i = 0; i < game.entitiesCount; i++)
         {
-            if (game.entities[i] == null)
+            Entity e = game.entities[i];
+            if (e == null)
             {
                 continue;
             }
-            if (game.entities[i].drawName == null)
+            if (e.drawName == null)
+            {
+                continue;
+            }
+            if (i == game.LocalPlayerId)
+            {
+                continue;
+            }
+            if (e.networkPosition != null && (!e.networkPosition.PositionLoaded))
             {
                 continue;
             }
             int kKey = i;
             DrawName p = game.entities[i].drawName;
+            float posX = p.TextX + e.position.x;
+            float posY = p.TextY + e.position.y + e.drawModel.ModelHeight + game.one * 7 / 10;
+            float posZ = p.TextZ + e.position.z;
             //todo if picking
-            if ((game.Dist(game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z, p.TextX, p.TextY, p.TextZ) < 20)
+            if ((game.Dist(game.player.position.x, game.player.position.y, game.player.position.z, posX, posY, posZ) < 20)
                 || game.keyboardState[Game.KeyAltLeft] || game.keyboardState[Game.KeyAltRight])
             {
                 string name = p.Name;
                 {
-                    float posX = p.TextX;
-                    float posY = p.TextY;
-                    float posZ = p.TextZ;
+
                     float shadow = (game.one * game.MaybeGetLight(game.platform.FloatToInt(posX), game.platform.FloatToInt(posZ), game.platform.FloatToInt(posY))) / Game.maxlight;
                     //do not interpolate player position if player is controlled by game world
                     //if (EnablePlayerUpdatePositionContainsKey(kKey) && !EnablePlayerUpdatePosition(kKey))
@@ -37,8 +47,8 @@
                     //{
                     //    GLTranslate(0, 1, 0);
                     //}
-                    game.GLRotate(-game.player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
-                    game.GLRotate(-game.player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+                    game.GLRotate(-game.player.position.roty * 360 / (2 * Game.GetPi()), 0, 1, 0);
+                    game.GLRotate(-game.player.position.rotx * 360 / (2 * Game.GetPi()), 1, 0, 0);
                     float scale = game.one * 2 / 100;
                     game.GLScale(scale, scale, scale);
 

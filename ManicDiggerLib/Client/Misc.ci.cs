@@ -572,14 +572,12 @@ public class ServerInformation
         ServerName = "";
         ServerMotd = "";
         connectdata = new ConnectData();
-        Players = new ListConnectedPlayer();
         ServerPing = new Ping_();
     }
 
     internal string ServerName;
     internal string ServerMotd;
     internal ConnectData connectdata;
-    internal ListConnectedPlayer Players;
     internal Ping_ ServerPing;
 }
 

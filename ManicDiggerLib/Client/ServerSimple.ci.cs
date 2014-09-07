@@ -204,7 +204,7 @@
                         pos.X = platform.FloatToInt(32 * clients[i].glX);
                         pos.Y = platform.FloatToInt(32 * clients[i].glY);
                         pos.Z = platform.FloatToInt(32 * clients[i].glZ);
-                        SendPacket(client, ServerPackets.Spawn(i, clients[i].Name, pos));
+                        //SendPacket(client, ServerPackets.Spawn(i, clients[i].Name, pos));
                         SendPacket(client, ServerPackets.PlayerStats(100, 100, 100, 100));
                     }
                     for (int i = 0; i < modsCount; i++)

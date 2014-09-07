@@ -127,7 +127,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
             animstate.bodyrotation = headingdeg;
         }
         //keep track of how far neck is turned
-        if (!moves)
+        //if (!moves)
         {
             if (headingdeg > animstate.lastheading && !(Game.AbsFloat(headingdeg - animstate.lastheading) > 180))
             {

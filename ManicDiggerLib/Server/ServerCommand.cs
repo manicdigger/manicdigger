@@ -1854,8 +1854,8 @@ public partial class Server
             return false;
         }
         ClientOnServer t = clients[clientTo];
-        SendPlayerTeleport(sourceClientId, sourceClientId, t.PositionMul32GlX,
-            t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch, t.stance);
+        ServerEntityPositionAndOrientation pos = t.entity.position.Clone();
+        clients[sourceClientId].positionOverride = pos;
         return true;
     }
 
@@ -1889,7 +1889,11 @@ public partial class Server
         }
 
         ClientOnServer client = GetClient(sourceClientId);
-        SendPlayerTeleport(client.Id, client.Id, x * chunksize, rZ * chunksize, y * chunksize, (byte)client.positionheading, (byte)client.positionpitch, client.stance);
+        ServerEntityPositionAndOrientation pos = client.entity.position.Clone();
+        pos.x = x;
+        pos.y = rZ;
+        pos.z = y;
+        client.positionOverride = pos;
         SendMessage(client.Id, string.Format(language.Get("Server_CommandTeleportSuccess"), colorSuccess, x, y, rZ));
         return true;
     }
@@ -1925,7 +1929,11 @@ public partial class Server
         ClientOnServer targetClient = GetClient(target);
         if (targetClient != null)
         {
-            SendPlayerTeleport(targetClient.Id, targetClient.Id, x * chunksize, rZ * chunksize, y * chunksize, (byte)targetClient.positionheading, (byte)targetClient.positionpitch, targetClient.stance);
+            ServerEntityPositionAndOrientation pos = clients[targetClient.Id].entity.position;
+            pos.x = x;
+            pos.y = rZ;
+            pos.z = y;
+            clients[targetClient.Id].positionOverride = pos;
             SendMessage(targetClient.Id, string.Format(language.Get("Server_CommandTeleportTargetMessage"), colorImportant, x, y, rZ, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
             SendMessage(sourceClientId, string.Format(language.Get("Server_CommandTeleportSourceMessage"), colorSuccess, targetClient.ColoredPlayername(colorSuccess), x, y, rZ));
             ServerEventLog(string.Format("{0} teleports {1} to {2} {3} {4}.", GetClient(sourceClientId).playername, targetClient.playername, x, y, rZ));

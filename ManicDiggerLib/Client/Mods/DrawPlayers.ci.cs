@@ -20,26 +20,26 @@
             {
                 continue;
             }
-            if (game.entities[i].player == null)
+            if (game.entities[i].drawModel == null)
             {
                 continue;
             }
-            Player p_ = game.entities[i].player;
-            if (i == game.LocalPlayerId)
+            Entity p_ = game.entities[i];
+            if (i == game.LocalPlayerId && (!game.ENABLE_TPP_VIEW))
             {
                 continue;
             }
-            if (!p_.PositionLoaded)
+            if ((p_.networkPosition != null) && (!p_.networkPosition.PositionLoaded))
             {
                 continue;
             }
-            if (!game.d_FrustumCulling.SphereInFrustum(p_.PositionX, p_.PositionY, p_.PositionZ, 3))
+            if (!game.d_FrustumCulling.SphereInFrustum(p_.position.x, p_.position.y, p_.position.z, 3))
             {
                 continue;
             }
-            int cx = game.platform.FloatToInt(p_.PositionX) / Game.chunksize;
-            int cy = game.platform.FloatToInt(p_.PositionZ) / Game.chunksize;
-            int cz = game.platform.FloatToInt(p_.PositionY) / Game.chunksize;
+            int cx = game.platform.FloatToInt(p_.position.x) / Game.chunksize;
+            int cy = game.platform.FloatToInt(p_.position.z) / Game.chunksize;
+            int cz = game.platform.FloatToInt(p_.position.y) / Game.chunksize;
             if (game.IsValidChunkPos(cx, cy, cz, Game.chunksize))
             {
                 if (!game.terrainRenderer.IsChunkRendered(cx, cy, cz))
@@ -47,73 +47,43 @@
                     continue;
                 }
             }
-            float shadow = (one * game.MaybeGetLight(game.platform.FloatToInt(p_.PositionX), game.platform.FloatToInt(p_.PositionZ), game.platform.FloatToInt(p_.PositionY))) / Game.maxlight;
+            float shadow = (one * game.MaybeGetLight(game.platform.FloatToInt(p_.position.x), game.platform.FloatToInt(p_.position.z), game.platform.FloatToInt(p_.position.y))) / Game.maxlight;
             if (p_.playerDrawInfo == null)
             {
-                continue;
+                p_.playerDrawInfo = new PlayerDrawInfo();
             }
             p_.playerDrawInfo.anim.light = shadow;
-            float FeetPosX = p_.PositionX;
-            float FeetPosY = p_.PositionY;
-            float FeetPosZ = p_.PositionZ;
-            AnimationHint animHint = game.entities[i].player.AnimationHint_;
-            float playerspeed = (game.Length(p_.playerDrawInfo.velocityX, p_.playerDrawInfo.velocityY, p_.playerDrawInfo.velocityZ) / dt) * (one * 4 / 100);
-            if (p_.Type == PlayerType.Player)
+            float FeetPosX = p_.position.x;
+            float FeetPosY = p_.position.y;
+            float FeetPosZ = p_.position.z;
+            AnimationHint animHint = game.entities[i].playerDrawInfo.AnimationHint_;
+
+            float playerspeed_;
+            if (i == game.LocalPlayerId)
             {
-                ICharacterRenderer r = game.GetCharacterRenderer(p_.Model);
-                r.SetAnimation("walk");
-                r.DrawCharacter(p_.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch, p_.moves, dt, game.entities[i].player.CurrentTexture, animHint, playerspeed);
-                //DrawCharacter(info.anim, FeetPos,
-                //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
+                if (game.player.playerDrawInfo == null)
+                {
+                    game.player.playerDrawInfo = new PlayerDrawInfo();
+                }
+                Vector3Ref playerspeed = Vector3Ref.Create(game.playervelocity.X / 60, game.playervelocity.Y / 60, game.playervelocity.Z / 60);
+                float playerspeedf = playerspeed.Length() * (one * 15 / 10);
+                game.player.playerDrawInfo.moves = playerspeedf != 0;
+                playerspeed_ = playerspeedf;
             }
             else
             {
-                //fix crash on monster spawn
-                ICharacterRenderer r = game.GetCharacterRenderer(game.d_DataMonsters.MonsterCode[p_.MonsterType]);
-                //var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
+                playerspeed_ = (game.Length(p_.playerDrawInfo.velocityX, p_.playerDrawInfo.velocityY, p_.playerDrawInfo.velocityZ) / dt) * (one * 4 / 100);
+            }
+
+            {
+                ICharacterRenderer r = game.GetCharacterRenderer(p_.drawModel.Model_);
                 r.SetAnimation("walk");
-                //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
-                r.DrawCharacter(p_.playerDrawInfo.anim, p_.PositionX, p_.PositionY, p_.PositionZ,
-                    Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch,
-                    p_.moves, dt, game.entities[i].player.CurrentTexture, animHint, playerspeed);
+                r.DrawCharacter(p_.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ,
+                Game.IntToByte(-game.HeadingByte(p_.position.rotx, p_.position.roty, p_.position.rotz) - 256 / 4),
+                game.PitchByte(p_.position.rotx, p_.position.roty, p_.position.rotz),
+                    p_.playerDrawInfo.moves,
+                    dt, game.entities[i].drawModel.CurrentTexture, animHint, playerspeed_);
             }
         }
-        if (game.ENABLE_TPP_VIEW)
-        {
-            float LocalPlayerPositionX = game.player.playerposition.X;
-            float LocalPlayerPositionY = game.player.playerposition.Y;
-            float LocalPlayerPositionZ = game.player.playerposition.Z;
-            float LocalPlayerOrientationX = game.player.playerorientation.X;
-            float LocalPlayerOrientationY = game.player.playerorientation.Y;
-            float LocalPlayerOrientationZ = game.player.playerorientation.Z;
-            float velocityX = lastlocalplayerposX - LocalPlayerPositionX;
-            float velocityY = lastlocalplayerposY - LocalPlayerPositionY;
-            float velocityZ = lastlocalplayerposZ - LocalPlayerPositionZ;
-            bool moves = (lastlocalplayerposX != LocalPlayerPositionX
-                || lastlocalplayerposY != LocalPlayerPositionY
-                || lastlocalplayerposZ != LocalPlayerPositionZ); //bool moves = velocity.Length > 0.08;
-            float shadow = (one * game.MaybeGetLight(
-                game.platform.FloatToInt(LocalPlayerPositionX),
-                game.platform.FloatToInt(LocalPlayerPositionZ),
-                game.platform.FloatToInt(LocalPlayerPositionY)))
-                / Game.maxlight;
-            game.localplayeranim.light = shadow;
-            ICharacterRenderer r = game.GetCharacterRenderer(game.entities[game.LocalPlayerId].player.Model);
-            r.SetAnimation("walk");
-            Vector3Ref playerspeed = Vector3Ref.Create(game.playervelocity.X / 60, game.playervelocity.Y / 60, game.playervelocity.Z / 60);
-            float playerspeedf = playerspeed.Length() * (one * 15 / 10);
-            r.DrawCharacter
-                (game.localplayeranim, LocalPlayerPositionX, LocalPlayerPositionY,
-                LocalPlayerPositionZ,
-                Game.IntToByte(-game.HeadingByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ) - 256 / 4),
-                game.PitchByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ),
-                moves, dt, game.entities[game.LocalPlayerId].player.CurrentTexture, game.localplayeranimationhint, playerspeedf);
-            lastlocalplayerposX = LocalPlayerPositionX;
-            lastlocalplayerposY = LocalPlayerPositionY;
-            lastlocalplayerposZ = LocalPlayerPositionZ;
-        }
     }
-    internal float lastlocalplayerposX;
-    internal float lastlocalplayerposY;
-    internal float lastlocalplayerposZ;
 }

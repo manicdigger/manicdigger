@@ -24,10 +24,10 @@
     //TODO server side?
     internal void UpdateBlockDamageToPlayer(Game game, float dt)
     {
-        float pX = game.player.playerposition.X;
-        float pY = game.player.playerposition.Y;
-        float pZ = game.player.playerposition.Z;
-        pY += game.entities[game.LocalPlayerId].player.EyeHeight;
+        float pX = game.player.position.x;
+        float pY = game.player.position.y;
+        float pZ = game.player.position.z;
+        pY += game.entities[game.LocalPlayerId].drawModel.eyeHeight;
         int block1 = 0;
         int block2 = 0;
         if (game.IsValidPos(game.MathFloor(pX), game.MathFloor(pZ), game.MathFloor(pY)))

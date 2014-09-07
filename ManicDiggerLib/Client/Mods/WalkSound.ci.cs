@@ -16,7 +16,7 @@
             {
                 UpdateWalkSound(game, -1);
             }
-            if (game.player.isplayeronground && game.movedx != 0 || game.movedy != 0)
+            if (game.player.physicsState.isplayeronground && game.movedx != 0 || game.movedy != 0)
             {
                 UpdateWalkSound(game, args.GetDt());
             }

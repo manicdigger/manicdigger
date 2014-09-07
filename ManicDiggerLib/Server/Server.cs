@@ -71,6 +71,9 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemBanList();
         systems[systemsCount++] = new ServerSystemModLoader();
         systems[systemsCount++] = new ServerSystemLoadServerClient();
+        systems[systemsCount++] = new ServerSystemNotifyEntities();
+        systems[systemsCount++] = new ServerSystemSign();
+        systems[systemsCount++] = new ServerSystemMonsterWalk();
 
         //Load translations
         gameplatform = new GamePlatformNative();
@@ -270,35 +273,6 @@ public partial class Server : ICurrentTime, IDropItem
             statsupdate = DateTime.UtcNow;
             StatTotalPackets = 0;
             StatTotalPacketsLength = 0;
-        }
-
-        //Send player position updates to every other player
-        if ((DateTime.UtcNow - botpositionupdate).TotalSeconds >= 0.1)
-        {
-            foreach (var a in clients)
-            {
-                if (!a.Value.IsBot)
-                {
-                    continue; //Excludes player positions from being sent (don't send them twice)
-                }
-                foreach (var b in clients)
-                {
-                    if (b.Key != a.Key)
-                    {
-                        if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= config.PlayerDrawDistance * config.PlayerDrawDistance)
-                        {
-                            SendPlayerTeleport(b.Key, a.Key,
-                                a.Value.PositionMul32GlX,
-                                a.Value.PositionMul32GlY,
-                                a.Value.PositionMul32GlZ,
-                                (byte)a.Value.positionheading,
-                                (byte)a.Value.positionpitch,
-                                a.Value.stance);
-                        }
-                    }
-                }
-            }
-            botpositionupdate = DateTime.UtcNow;
         }
 
         //Determine how long it took all operations to finish
@@ -757,7 +731,6 @@ public partial class Server : ICurrentTime, IDropItem
     }
 
     DateTime statsupdate;
-    DateTime botpositionupdate = DateTime.UtcNow;
 
     public Dictionary<Timer, Timer.Tick> timers = new Dictionary<Timer, Timer.Tick>();
 
@@ -1141,10 +1114,10 @@ public partial class Server : ICurrentTime, IDropItem
         {
             this.serverMonitor.RemoveMonitorClient(clientid);
         }
-        foreach (var kk in clients)
-        {
-            SendDespawnPlayer(kk.Key, clientid);
-        }
+        //foreach (var kk in clients)
+        //{
+        //    SendDespawnPlayer(kk.Key, clientid);
+        //}
         if (name != "invalid")
         {
             SendMessageToAll(string.Format(language.ServerPlayerDisconnect(), coloredName));
@@ -1297,6 +1270,7 @@ public partial class Server : ICurrentTime, IDropItem
                     this.SetFillAreaLimit(clientid);
                     this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
                     c.queryClient = false;
+                    clients[clientid].entity.drawName.name = username;
                 }
                 break;
             case Packet_ClientIdEnum.RequestBlob:
@@ -1333,17 +1307,6 @@ public partial class Server : ICurrentTime, IDropItem
                         }
                     }
 
-                    //notify all players about new player spawn
-                    SendPlayerSpawnToAll(clientid);
-
-                    //send all players spawn to new player
-                    foreach (var k in clients)
-                    {
-                        if (k.Key != clientid)
-                        {
-                            SendPlayerSpawn(clientid, k.Key);
-                        }
-                    }
                     SendPacket(clientid, ServerPackets.LevelFinalize());
                     clients[clientid].state = ClientStateOnServer.Playing;
                     NotifySeason(clientid);
@@ -1442,16 +1405,6 @@ public partial class Server : ICurrentTime, IDropItem
                     clients[clientid].positionheading = p.Heading;
                     clients[clientid].positionpitch = p.Pitch;
                     clients[clientid].stance = (byte)p.Stance;
-                    foreach (var k in clients)
-                    {
-                        if (k.Key != clientid)
-                        {
-                            if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= config.PlayerDrawDistance * config.PlayerDrawDistance)
-                            {
-                                SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch, (byte)p.Stance);
-                            }
-                        }
-                    }
                 }
                 break;
             case Packet_ClientIdEnum.Message:
@@ -1952,48 +1905,6 @@ public partial class Server : ICurrentTime, IDropItem
             position = this.SpawnToVector3i(playerSpawn);
         }
         return position;
-    }
-
-    public void SendPlayerSpawnToAll(int clientid)
-    {
-        foreach (var k in clients)
-        {
-            SendPlayerSpawn(k.Key, clientid);
-        }
-    }
-
-    public void SendPlayerSpawn(int clientid, int spawnedplayer)
-    {
-        if (!clients[clientid].IsBot)	//Bots don't need to be sent packets with other player's positions
-        {
-            ClientOnServer c = clients[spawnedplayer];
-            Packet_ServerSpawnPlayer p = new Packet_ServerSpawnPlayer()
-            {
-                PlayerId = spawnedplayer,
-                PlayerName = c.displayColor + c.playername,
-                PositionAndOrientation = new Packet_PositionAndOrientation()
-                {
-                    X = c.PositionMul32GlX,
-                    Y = c.PositionMul32GlY,
-                    Z = c.PositionMul32GlZ,
-                    Heading = (byte)c.positionheading,
-                    Pitch = (byte)c.positionpitch,
-                    Stance = 0,
-                },
-                Model_ = c.Model,
-                Texture_ = c.Texture,
-                EyeHeightFloat = SerializeFloat(c.EyeHeight),
-                ModelHeightFloat = SerializeFloat(c.ModelHeight),
-            };
-            if (clients[spawnedplayer].IsSpectator && (!clients[clientid].IsSpectator))
-            {
-                p.PositionAndOrientation.X = -1000 * 32;
-                p.PositionAndOrientation.Y = -1000 * 32;
-                p.PositionAndOrientation.Z = 0;
-            }
-            Packet_Server pp = new Packet_Server() { Id = Packet_ServerIdEnum.SpawnPlayer, SpawnPlayer = p };
-            SendPacket(clientid, Serialize(pp));
-        }
     }
 
     private void RunInClientSandbox(string script, int clientid)
@@ -2724,49 +2635,7 @@ public partial class Server : ICurrentTime, IDropItem
             PlayerSpawnPosition = p,
         }));
     }
-    public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch, byte stance)
-    {
-        int[] sentpos = new int[3]
-            {
-                x,
-                y,
-                z,
-            };
-        //spectators invisible to players
-        if (clients[playerid].IsSpectator && (!clients[clientid].IsSpectator))
-        {
-            //Set spectator position to some fake value
-            sentpos[0] = -1000 * 32;
-            sentpos[1] = -1000 * 32;
-            sentpos[2] = 0;
-        }
-        Packet_ServerPositionAndOrientation p = new Packet_ServerPositionAndOrientation()
-        {
-            PlayerId = playerid,
-            PositionAndOrientation = new Packet_PositionAndOrientation()
-            {
-                X = sentpos[0],
-                Y = sentpos[1],
-                Z = sentpos[2],
-                Heading = heading,
-                Pitch = pitch,
-                Stance = stance,
-            }
-        };
-        SendPacket(clientid, Serialize(new Packet_Server()
-        {
-            Id = Packet_ServerIdEnum.PlayerPositionAndOrientation,
-            PositionAndOrientation = p,
-        }));
-    }
-    //SendPositionAndOrientationUpdate //delta
-    //SendPositionUpdate //delta
-    //SendOrientationUpdate
-    void SendDespawnPlayer(int clientid, int playerid)
-    {
-        SendPacket(clientid, ServerPackets.DespawnPlayer(playerid));
-    }
-
+    
     public void SendMessage(int clientid, string message, MessageType color)
     {
         SendMessage(clientid, MessageTypeToString(color) + message);
@@ -3482,6 +3351,14 @@ public partial class Server : ICurrentTime, IDropItem
     {
         return simulationcurrentframe;
     }
+
+    internal void PlayerEntitySetDirty(int player)
+    {
+        foreach (var k in clients.Values)
+        {
+            k.playersDirty[player] = true;
+        }
+    }
 }
 
 public class ClientOnServer
@@ -3489,6 +3366,11 @@ public class ClientOnServer
     public ClientOnServer()
     {
         float one = 1;
+        entity = new ServerEntity();
+        entity.drawName = new ServerEntityDrawName();
+        entity.position = new ServerEntityPositionAndOrientation();
+        entity.drawModel = new ServerEntityAnimatedModel();
+        entity.drawModel.downloadSkin = true;
         Id = -1;
         state = ClientStateOnServer.Connecting;
         queryClient = true;
@@ -3506,6 +3388,11 @@ public class ClientOnServer
         EyeHeight = one * 15 / 10;
         ModelHeight = one * 17 / 10;
         WindowSize = new int[] { 800, 600 };
+        playersDirty = new bool[128];
+        for (int i = 0; i < 128; i++)
+        {
+            playersDirty[i] = true;
+        }
     }
     internal int Id;
     internal int state; // ClientStateOnServer
@@ -3515,15 +3402,15 @@ public class ClientOnServer
     internal List<byte> received;
     internal Ping_ Ping;
     internal float LastPing;
-    internal string playername;
-    internal int PositionMul32GlX;
-    internal int PositionMul32GlY;
-    internal int PositionMul32GlZ;
-    internal int positionheading;
-    internal int positionpitch;
-    internal byte stance = 0;
-    internal string Model;
-    internal string Texture;
+    internal string playername { get { return entity.drawName.name; } set { entity.drawName.name = value; } }
+    internal int PositionMul32GlX { get { return (int)(entity.position.x * 32); } set { entity.position.x = (float)value / 32; } }
+    internal int PositionMul32GlY { get { return (int)(entity.position.y * 32); } set { entity.position.y = (float)value / 32; } }
+    internal int PositionMul32GlZ { get { return (int)(entity.position.z * 32); } set { entity.position.z = (float)value / 32; } }
+    internal int positionheading { get { return (entity.position.heading); } set { entity.position.heading = (byte)value; } }
+    internal int positionpitch { get { return (entity.position.pitch); } set { entity.position.pitch = (byte)value; } }
+    internal byte stance { get { return entity.position.stance; } set { entity.position.stance = (byte)value; } }
+    internal string Model { get { return entity.drawModel.model; } set { entity.drawModel.model = value; } }
+    internal string Texture { get { return entity.drawModel.texture; } set { entity.drawModel.texture = value; } }
     internal Dictionary<int, int> chunksseenTime;
     internal bool[] chunksseen;
     internal Dictionary<Vector2i, int> heightmapchunksseen;
@@ -3563,12 +3450,16 @@ public class ClientOnServer
         return string.Format("{0}:{1}:{2} {3}", this.playername, this.clientGroup.Name,
             ServerClientMisc.PrivilegesString(this.privileges), ip);
     }
-    internal float EyeHeight;
-    internal float ModelHeight;
+    internal float EyeHeight { get { return entity.drawModel.eyeHeight; } set { entity.drawModel.eyeHeight = value; } }
+    internal float ModelHeight { get { return entity.drawModel.modelHeight; } set { entity.drawModel.modelHeight = value; } }
     internal int ActiveMaterialSlot;
     internal bool IsSpectator;
     internal bool usingFill;
     internal int[] WindowSize;
+    internal float notifyPlayerPositionsAccum;
+    internal bool[] playersDirty;
+    internal ServerEntity entity;
+    internal ServerEntityPositionAndOrientation positionOverride;
 }
 
 public class ModEventHandlers
@@ -4024,6 +3915,11 @@ public class CraftingRecipe
 
 public abstract class ServerSystem
 {
+    public ServerSystem()
+    {
+        one = 1;
+    }
+    internal float one;
     public virtual void Update(Server server, float dt) { }
     public virtual void OnRestart(Server server) { }
     public virtual bool OnCommand(Server server, int sourceClientId, string command, string argument) { return false; }
@@ -4032,6 +3928,7 @@ public abstract class ServerSystem
 public abstract class ServerPlatform
 {
     public abstract void QueueUserWorkItem(Action_ action);
+    public abstract int FloatToInt(float value);
 }
 
 public class ServerPlatformNative : ServerPlatform
@@ -4040,5 +3937,9 @@ public class ServerPlatformNative : ServerPlatform
     {
         ThreadPool.QueueUserWorkItem((a) => { action.Run(); });
     }
-}
 
+    public override int FloatToInt(float value)
+    {
+        return (int)value;
+    }
+}

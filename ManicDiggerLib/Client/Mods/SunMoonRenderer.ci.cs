@@ -52,14 +52,14 @@
             posY = game.moonPositionY;
             posZ = game.moonPositionZ;
         }
-        posX += game.player.playerposition.X;
-        posY += game.player.playerposition.Y;
-        posZ += game.player.playerposition.Z;
+        posX += game.player.position.x;
+        posY += game.player.position.y;
+        posZ += game.player.position.z;
         
         game.GLPushMatrix();
         game.GLTranslate(posX, posY, posZ);
-        game.GLRotate(-game.player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
-        game.GLRotate(-game.player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+        game.GLRotate(-game.player.position.roty * 360 / (2 * Game.GetPi()), 0, 1, 0);
+        game.GLRotate(-game.player.position.rotx * 360 / (2 * Game.GetPi()), 1, 0, 0);
         game.GLScale(one * 2 / 100, one * 2 / 100, one * 2 / 100);
         //GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
         game.Draw2dTexture(game.isNight ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);

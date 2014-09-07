@@ -6,16 +6,16 @@
         game.pushY = 0;
         game.pushZ = 0;
 
-        float LocalPlayerPositionX = game.player.playerposition.X;
-        float LocalPlayerPositionY = game.player.playerposition.Y;
-        float LocalPlayerPositionZ = game.player.playerposition.Z;
+        float LocalPlayerPositionX = game.player.position.x;
+        float LocalPlayerPositionY = game.player.position.y;
+        float LocalPlayerPositionZ = game.player.position.z;
         for (int i = 0; i < game.entitiesCount; i++)
         {
             Entity entity = game.entities[i];
             if (entity == null) { continue; }
             if (entity.push == null) { continue; }
             //Prevent players that aren't displayed from pushing
-            if (entity.player != null && !entity.player.PositionLoaded) { continue; }
+            if (entity.networkPosition != null && !entity.networkPosition.PositionLoaded) { continue; }
             float kposX = game.DeserializeFloat(entity.push.XFloat);
             float kposY = game.DeserializeFloat(entity.push.ZFloat);
             float kposZ = game.DeserializeFloat(entity.push.YFloat);

@@ -32,14 +32,14 @@
                     if (game.keyboardState[game.GetKey(GlKeys.D)]) { game.overheadcameraK.TurnLeft(dt * overheadcameraspeed); }
                     if (game.keyboardState[game.GetKey(GlKeys.W)]) { angleup = true; }
                     if (game.keyboardState[game.GetKey(GlKeys.S)]) { angledown = true; }
-                    game.overheadcameraK.Center.X = game.player.playerposition.X;
-                    game.overheadcameraK.Center.Y = game.player.playerposition.Y;
-                    game.overheadcameraK.Center.Z = game.player.playerposition.Z;
+                    game.overheadcameraK.Center.X = game.player.position.x;
+                    game.overheadcameraK.Center.Y = game.player.position.y;
+                    game.overheadcameraK.Center.Z = game.player.position.z;
                     m.Distance = game.overheadcameradistance;
                     m.AngleUp = angleup;
                     m.AngleDown = angledown;
                     game.overheadcameraK.Move(m, dt);
-                    float toDest = game.Dist(game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
+                    float toDest = game.Dist(game.player.position.x, game.player.position.y, game.player.position.z,
                     game.playerdestination.X + one / 2, game.playerdestination.Y - one / 2, game.playerdestination.Z + one / 2);
                     if (toDest >= 1)
                     {
@@ -49,12 +49,12 @@
                             game.wantsjump = true;
                         }
                         //player orientation
-                        float qX = game.playerdestination.X - game.player.playerposition.X;
-                        float qY = game.playerdestination.Y - game.player.playerposition.Y;
-                        float qZ = game.playerdestination.Z - game.player.playerposition.Z;
+                        float qX = game.playerdestination.X - game.player.position.x;
+                        float qY = game.playerdestination.Y - game.player.position.y;
+                        float qZ = game.playerdestination.Z - game.player.position.z;
                         float angle = game.VectorAngleGet(qX, qY, qZ);
-                        game.player.playerorientation.Y = Game.GetPi() / 2 + angle;
-                        game.player.playerorientation.X = Game.GetPi();
+                        game.player.position.roty = Game.GetPi() / 2 + angle;
+                        game.player.position.rotx = Game.GetPi();
                     }
                 }
                 else if (game.enable_move)

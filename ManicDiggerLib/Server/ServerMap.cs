@@ -44,22 +44,77 @@ public class ServerChunk
     [ProtoMember(7, IsRequired = false)]
     public int EntitiesCount;
     [ProtoMember(8, IsRequired = false)]
-    public ServerChunkEntity[] Entities;
+    public ServerEntity[] Entities;
 }
 
 [ProtoContract()]
-public class ServerChunkEntity
+public class ServerEntity
 {
-    [ProtoMember(1, IsRequired = false)]
-    public ServerChunkEntityScript script;
+    internal ServerEntityPositionAndOrientation position;
+    internal ServerEntityDrawName drawName;
+    internal ServerEntityAnimatedModel drawModel;
+    internal ServerEntityDrawText drawText;
+    internal ServerEntityDrawBlock drawBlock;
+    internal ServerEntityPush push;
 }
 
-[ProtoContract()]
-public class ServerChunkEntityScript
+public class ServerEntityDrawName
 {
-    [ProtoMember(1, IsRequired = false)]
-    public string Text;
+    internal string name;
 }
+
+public class ServerEntityAnimatedModel
+{
+    internal string model;
+    internal string texture;
+    internal float eyeHeight;
+    internal float modelHeight;
+    internal bool downloadSkin;
+}
+
+public class ServerEntityPositionAndOrientation
+{
+    internal float x;
+    internal float y;
+    internal float z;
+    internal byte heading;
+    internal byte pitch;
+    internal byte stance;
+
+    internal ServerEntityPositionAndOrientation Clone()
+    {
+        ServerEntityPositionAndOrientation ret = new ServerEntityPositionAndOrientation();
+        ret.x = x;
+        ret.y = y;
+        ret.z = z;
+        ret.heading = heading;
+        ret.pitch = pitch;
+        ret.stance = stance;
+        return ret;
+    }
+}
+
+public class ServerEntityDrawText
+{
+    internal string text;
+    internal float dx;
+    internal float dy;
+    internal float dz;
+    internal float rotx;
+    internal float roty;
+    internal float rotz;
+}
+    
+public class ServerEntityDrawBlock
+{
+    internal int blockType;
+}
+
+public class ServerEntityPush
+{
+    internal float range;
+}
+
 
 public class ServerMap : IMapStorage2
 {

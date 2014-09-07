@@ -41,57 +41,57 @@
         {
             Entity e = game.entities[i];
             if (e == null) { continue; }
-            if (e.player == null) { continue; }
-            if (e.player.CurrentTexture != -1)
+            if (e.drawModel == null) { continue; }
+            if (e.drawModel.CurrentTexture != -1)
             {
                 continue;
             }
             // a) download skin
-            if (!game.issingleplayer && e.player.Type == PlayerType.Player && e.player.Texture == null)
+            if (!game.issingleplayer && e.drawModel.DownloadSkin && e.drawModel.Texture_ == null)
             {
-                if (e.player.SkinDownloadResponse == null)
+                if (e.drawModel.SkinDownloadResponse == null)
                 {
-                    e.player.SkinDownloadResponse = new HttpResponseCi();
-                    string url = StringTools.StringAppend(game.platform, skinserver, StringTools.StringSubstringToEnd(game.platform, e.player.Name, 2));
+                    e.drawModel.SkinDownloadResponse = new HttpResponseCi();
+                    string url = StringTools.StringAppend(game.platform, skinserver, StringTools.StringSubstringToEnd(game.platform, e.drawName.Name, 2));
                     url = StringTools.StringAppend(game.platform, url, ".png");
-                    game.platform.WebClientDownloadDataAsync(url, e.player.SkinDownloadResponse);
+                    game.platform.WebClientDownloadDataAsync(url, e.drawModel.SkinDownloadResponse);
                     continue;
                 }
-                if (!e.player.SkinDownloadResponse.error)
+                if (!e.drawModel.SkinDownloadResponse.error)
                 {
-                    if (!e.player.SkinDownloadResponse.done)
+                    if (!e.drawModel.SkinDownloadResponse.done)
                     {
                         continue;
                     }
-                    BitmapCi bmp_ = game.platform.BitmapCreateFromPng(e.player.SkinDownloadResponse.value, e.player.SkinDownloadResponse.valueLength);
+                    BitmapCi bmp_ = game.platform.BitmapCreateFromPng(e.drawModel.SkinDownloadResponse.value, e.drawModel.SkinDownloadResponse.valueLength);
                     if (bmp_ != null)
                     {
-                        e.player.CurrentTexture = game.GetTextureOrLoad(e.player.Name, bmp_);
+                        e.drawModel.CurrentTexture = game.GetTextureOrLoad(e.drawName.Name, bmp_);
                         game.platform.BitmapDelete(bmp_);
                         continue;
                     }
                 }
             }
             // b) file skin
-            if (e.player.Texture == null)
+            if (e.drawModel.Texture_ == null)
             {
-                e.player.CurrentTexture = game.GetTexture("mineplayer.png");
+                e.drawModel.CurrentTexture = game.GetTexture("mineplayer.png");
                 continue;
             }
 
-            byte[] file = game.GetFile(e.player.Texture);
+            byte[] file = game.GetFile(e.drawModel.Texture_);
             if (file == null)
             {
-                e.player.CurrentTexture = 0;
+                e.drawModel.CurrentTexture = 0;
                 continue;
             }
             BitmapCi bmp = game.platform.BitmapCreateFromPng(file, game.platform.ByteArrayLength(file));
             if (bmp == null)
             {
-                e.player.CurrentTexture = 0;
+                e.drawModel.CurrentTexture = 0;
                 continue;
             }
-            e.player.CurrentTexture = game.GetTextureOrLoad(e.player.Texture, bmp);
+            e.drawModel.CurrentTexture = game.GetTextureOrLoad(e.drawModel.Texture_, bmp);
             game.platform.BitmapDelete(bmp);
         }
     }

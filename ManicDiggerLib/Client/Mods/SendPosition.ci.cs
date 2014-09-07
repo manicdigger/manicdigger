@@ -7,8 +7,8 @@
             game.lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
 
             game.SendPacketClient(ClientPackets.PositionAndOrientation(game, game.LocalPlayerId,
-                game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
-                game.player.playerorientation.X, game.player.playerorientation.Y, game.player.playerorientation.Z,
+                game.player.position.x, game.player.position.y, game.player.position.z,
+                game.player.position.rotx, game.player.position.roty, game.player.position.rotz,
                 game.localstance));
         }
     }

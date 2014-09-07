@@ -8,7 +8,7 @@
         }
 
         float one = 1;
-        if (!game.player.isplayeronground)
+        if (!game.player.physicsState.isplayeronground)
         {
             game.acceleration = new Acceleration();
             {

@@ -21,7 +21,7 @@
     {
         //fallspeed 4 is 10 blocks high
         //fallspeed 5.5 is 20 blocks high
-        float fallspeed = game.player.movedz / (-game.basemovespeed);
+        float fallspeed = game.player.physicsState.movedz / (-game.basemovespeed);
 
         //test = false;
         //if (fallspeed > 5.5f)

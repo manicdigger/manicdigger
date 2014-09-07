@@ -71,8 +71,10 @@
     const int maxlight = 15;
     public float Light()
     {
-        Vector3Ref pos = game.player.playerposition;
-        int light = game.MaybeGetLight(game.platform.FloatToInt(pos.X), game.platform.FloatToInt(pos.Z), game.platform.FloatToInt(pos.Y));
+        float posx = game.player.position.x;
+        float posy = game.player.position.y;
+        float posz = game.player.position.z;
+        int light = game.MaybeGetLight(game.platform.FloatToInt(posx), game.platform.FloatToInt(posz), game.platform.FloatToInt(posy));
         return (one * light) / maxlight;
     }
     public bool IsTorch()
@@ -184,12 +186,12 @@
         game.GLRotate(60 + zzzy, 0, 1, 0);
         game.GLScale(one * 8 / 10, one * 8 / 10, one * 8 / 10);
 
-        bool move = !(oldplayerposX == game.player.playerposition.X
-            && oldplayerposY == game.player.playerposition.Y
-            && oldplayerposZ == game.player.playerposition.Z);
-        oldplayerposX = game.player.playerposition.X;
-        oldplayerposY = game.player.playerposition.Y;
-        oldplayerposZ = game.player.playerposition.Z;
+        bool move = !(oldplayerposX == game.player.position.x
+            && oldplayerposY == game.player.position.y
+            && oldplayerposZ == game.player.position.z);
+        oldplayerposX = game.player.position.x;
+        oldplayerposY = game.player.position.y;
+        oldplayerposZ = game.player.position.z;
         if (move)
         {
             t_ += dt;

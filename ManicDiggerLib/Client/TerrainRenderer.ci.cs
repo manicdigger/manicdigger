@@ -157,9 +157,9 @@
         nearestpos[0] = -1;
         nearestpos[1] = -1;
         nearestpos[2] = -1;
-        int px = game.platform.FloatToInt(game.player.playerposition.X) / chunksize;
-        int py = game.platform.FloatToInt(game.player.playerposition.Z) / chunksize;
-        int pz = game.platform.FloatToInt(game.player.playerposition.Y) / chunksize;
+        int px = game.platform.FloatToInt(game.player.position.x) / chunksize;
+        int py = game.platform.FloatToInt(game.player.position.z) / chunksize;
+        int pz = game.platform.FloatToInt(game.player.position.y) / chunksize;
 
         int chunksxy = this.mapAreaSize() / chunksize / 2;
         int chunksz = this.mapAreaSizeZ() / chunksize / 2;
@@ -210,7 +210,7 @@
 
     public void DrawTerrain()
     {
-        game.d_Batcher.Draw(game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z);
+        game.d_Batcher.Draw(game.player.position.x, game.player.position.y, game.player.position.z);
     }
 
     public bool IsChunkRendered(int cx, int cy, int cz)
@@ -640,9 +640,9 @@ public class UnloadRendererChunks : Task
         mapsizeychunks = game.MapSizeY / chunksize;
         mapsizezchunks = game.MapSizeZ / chunksize;
 
-        int px = game.platform.FloatToInt(game.player.playerposition.X) / chunksize;
-        int py = game.platform.FloatToInt(game.player.playerposition.Z) / chunksize;
-        int pz = game.platform.FloatToInt(game.player.playerposition.Y) / chunksize;
+        int px = game.platform.FloatToInt(game.player.position.x) / chunksize;
+        int py = game.platform.FloatToInt(game.player.position.z) / chunksize;
+        int pz = game.platform.FloatToInt(game.player.position.y) / chunksize;
 
         int chunksxy = this.mapAreaSize() / chunksize / 2;
         int chunksz = this.mapAreaSizeZ() / chunksize / 2;

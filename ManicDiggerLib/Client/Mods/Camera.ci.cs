@@ -37,12 +37,12 @@
     internal float[] FppCamera(Game game)
     {
         Vector3Ref forward = new Vector3Ref();
-        VectorTool.ToVectorInFixedSystem(0, 0, 1, game.player.playerorientation.X, game.player.playerorientation.Y, forward);
+        VectorTool.ToVectorInFixedSystem(0, 0, 1, game.player.position.rotx, game.player.position.roty, forward);
         Vector3Ref cameraEye = new Vector3Ref();
         Vector3Ref cameraTarget = new Vector3Ref();
-        float playerEyeX = game.player.playerposition.X;
-        float playerEyeY = game.player.playerposition.Y + game.GetCharacterEyesHeight();
-        float playerEyeZ = game.player.playerposition.Z;
+        float playerEyeX = game.player.position.x;
+        float playerEyeY = game.player.position.y + game.GetCharacterEyesHeight();
+        float playerEyeZ = game.player.position.z;
         if (!game.ENABLE_TPP_VIEW)
         {
             cameraEye.X = playerEyeX;

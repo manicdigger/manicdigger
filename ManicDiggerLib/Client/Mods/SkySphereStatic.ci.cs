@@ -53,9 +53,9 @@
         game.Set3dProjection(size * 2, fov);
         game.GLMatrixModeModelView();
         game.GLPushMatrix();
-        game.GLTranslate(game.player.playerposition.X,
-            game.player.playerposition.Y,
-            game.player.playerposition.Z);
+        game.GLTranslate(game.player.position.x,
+            game.player.position.y,
+            game.player.position.z);
         game.platform.BindTexture2d(SkyTexture);
         game.DrawModel(skymodel);
         game.GLPopMatrix();

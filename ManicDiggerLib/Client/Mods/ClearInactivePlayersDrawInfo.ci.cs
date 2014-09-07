@@ -10,16 +10,20 @@
             {
                 continue;
             }
-            if (game.entities[i].player == null)
+            if (game.entities[i].playerDrawInfo == null)
+            {
+                continue;
+            }
+            if (game.entities[i].networkPosition == null)
             {
                 continue;
             }
             int kKey = i;
-            Player p = game.entities[i].player;
-            if ((one * (now - p.LastUpdateMilliseconds) / 1000) > 2)
+            Entity p = game.entities[i];
+            if ((one * (now - p.networkPosition.LastUpdateMilliseconds) / 1000) > 2)
             {
                 p.playerDrawInfo = null;
-                p.PositionLoaded = false;
+                p.networkPosition.PositionLoaded = false;
             }
         }
     }

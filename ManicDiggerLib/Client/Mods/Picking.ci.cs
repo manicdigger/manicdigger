@@ -143,13 +143,13 @@
         }
         bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
         bool playertileempty = game.IsTileEmptyForPhysics(
-                  game.platform.FloatToInt(game.player.playerposition.X),
-                  game.platform.FloatToInt(game.player.playerposition.Z),
-                  game.platform.FloatToInt(game.player.playerposition.Y + (one / 2)));
+                  game.platform.FloatToInt(game.player.position.x),
+                  game.platform.FloatToInt(game.player.position.z),
+                  game.platform.FloatToInt(game.player.position.y + (one / 2)));
         bool playertileemptyclose = game.IsTileEmptyForPhysicsClose(
-                  game.platform.FloatToInt(game.player.playerposition.X),
-                  game.platform.FloatToInt(game.player.playerposition.Z),
-                  game.platform.FloatToInt(game.player.playerposition.Y + (one / 2)));
+                  game.platform.FloatToInt(game.player.position.x),
+                  game.platform.FloatToInt(game.player.position.z),
+                  game.platform.FloatToInt(game.player.position.y + (one / 2)));
         BlockPosSide pick0 = new BlockPosSide();
         if (pick2count.value > 0 &&
             ((pickdistanceok && (playertileempty || (playertileemptyclose)))
@@ -252,22 +252,22 @@
                     {
                         continue;
                     }
-                    if (game.entities[i].player == null)
+                    if (game.entities[i].drawModel == null)
                     {
                         continue;
                     }
-                    Player p_ = game.entities[i].player;
-                    if (!p_.PositionLoaded)
+                    Entity p_ = game.entities[i];
+                    if (!p_.networkPosition.PositionLoaded)
                     {
                         continue;
                     }
-                    float feetposX = p_.PositionX;
-                    float feetposY = p_.PositionY;
-                    float feetposZ = p_.PositionZ;
+                    float feetposX = p_.position.x;
+                    float feetposY = p_.position.y;
+                    float feetposZ = p_.position.z;
                     //var p = PlayerPositionSpawn;
                     Box3D bodybox = new Box3D();
-                    float headsize = (p_.ModelHeight - p_.EyeHeight) * 2; //0.4f;
-                    float h = p_.ModelHeight - headsize;
+                    float headsize = (p_.drawModel.ModelHeight - p_.drawModel.eyeHeight) * 2; //0.4f;
+                    float h = p_.drawModel.ModelHeight - headsize;
                     float r = one * 35 / 100;
 
                     bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ - r);
@@ -416,8 +416,8 @@
                 }
 
                 //recoil
-                game.player.playerorientation.X -= game.rnd.NextFloat() * game.CurrentRecoil();
-                game.player.playerorientation.Y += game.rnd.NextFloat() * game.CurrentRecoil() * 2 - game.CurrentRecoil();
+                game.player.position.rotx -= game.rnd.NextFloat() * game.CurrentRecoil();
+                game.player.position.roty += game.rnd.NextFloat() * game.CurrentRecoil() * 2 - game.CurrentRecoil();
 
                 PickingEnd(left, right, middle, ispistol);
                 return;

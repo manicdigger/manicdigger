@@ -4,15 +4,11 @@
     {
         float one = 1;
         movedz = 0;
-        playerposition = Vector3Ref.Create(15 + one / 2, 40, 15 + one / 2);
-        playerorientation = Vector3Ref.Create(GetPi(), 0, 0);
         curspeed = new Vector3Ref();
         jumpacceleration = 0;
         isplayeronground = false;
     }
     internal float movedz;
-    internal Vector3Ref playerposition;
-    internal Vector3Ref playerorientation;
     internal Vector3Ref curspeed;
     internal float jumpacceleration;
     internal bool isplayeronground;
@@ -147,7 +143,7 @@ public class ModCharacterPhysics : ClientMod
         game.soundnow = new BoolRef();
         if (game.FollowId() == null)
         {
-            game.d_Physics.Move(game.player, move, dt, game.soundnow, Vector3Ref.Create(game.pushX, game.pushY, game.pushZ), game.entities[game.LocalPlayerId].player.ModelHeight);
+            game.d_Physics.Move(game.player.physicsState, game.player.position, move, dt, game.soundnow, Vector3Ref.Create(game.pushX, game.pushY, game.pushZ), game.entities[game.LocalPlayerId].drawModel.ModelHeight);
         }
         else
         {
@@ -156,7 +152,7 @@ public class ModCharacterPhysics : ClientMod
                 move.movedx = 0;
                 move.movedy = 0;
                 move.wantsjump = false;
-                game.d_Physics.Move(game.player, move, dt, game.soundnow, Vector3Ref.Create(game.pushX, game.pushY, game.pushZ), game.entities[game.LocalPlayerId].player.ModelHeight);
+                game.d_Physics.Move(game.player.physicsState, game.player.position, move, dt, game.soundnow, Vector3Ref.Create(game.pushX, game.pushY, game.pushZ), game.entities[game.LocalPlayerId].drawModel.ModelHeight);
             }
         }
     }
@@ -225,7 +221,7 @@ public class CharacterPhysicsCi
             || game.IsRail(blocktype);
     }
 
-    public void Move(CharacterPhysicsState state, MoveInfo move, float dt, BoolRef soundnow, Vector3Ref push, float modelheight)
+    public void Move(CharacterPhysicsState state, EntityPosition_ stateplayerposition, MoveInfo move, float dt, BoolRef soundnow, Vector3Ref push, float modelheight)
     {
         soundnow.value = false;
         shiftkeypressed = move.shiftkeydown;
@@ -233,7 +229,7 @@ public class CharacterPhysicsCi
         VectorTool.ToVectorInFixedSystem
             (move.movedx * move.movespeednow * dt,
             0,
-            move.movedy * move.movespeednow * dt, state.playerorientation.X, state.playerorientation.Y, diff1ref);
+            move.movedy * move.movespeednow * dt, stateplayerposition.rotx, stateplayerposition.roty, diff1ref);
         Vector3Ref diff1 = new Vector3Ref();
         diff1.X = diff1ref.X;
         diff1.Y = diff1ref.Y;
@@ -250,9 +246,9 @@ public class CharacterPhysicsCi
         diff1.Z += push.Z * dt;
 
         bool loaded = false;
-        int cx = game.platform.FloatToInt(game.player.playerposition.X / Game.chunksize);
-        int cy = game.platform.FloatToInt(game.player.playerposition.Z / Game.chunksize);
-        int cz = game.platform.FloatToInt(game.player.playerposition.Y / Game.chunksize);
+        int cx = game.platform.FloatToInt(game.player.position.x / Game.chunksize);
+        int cy = game.platform.FloatToInt(game.player.position.z / Game.chunksize);
+        int cz = game.platform.FloatToInt(game.player.position.y / Game.chunksize);
         if (game.IsValidChunkPos(cx, cy, cz, Game.chunksize))
         {
             if (game.chunks[MapUtilCi.Index3d(cx, cy, cz,
@@ -311,17 +307,17 @@ public class CharacterPhysicsCi
         Vector3Ref newposition = Vector3Ref.Create(0, 0, 0);
         if (!(move.ENABLE_FREEMOVE))
         {
-            newposition.X = state.playerposition.X + state.curspeed.X;
-            newposition.Y = state.playerposition.Y + state.curspeed.Y;
-            newposition.Z = state.playerposition.Z + state.curspeed.Z;
+            newposition.X = stateplayerposition.x + state.curspeed.X;
+            newposition.Y = stateplayerposition.y + state.curspeed.Y;
+            newposition.Z = stateplayerposition.z + state.curspeed.Z;
             if (!move.Swimming)
             {
-                newposition.Y = state.playerposition.Y;
+                newposition.Y = stateplayerposition.y;
             }
             //fast move when looking at the ground.
-            float diffx = newposition.X - state.playerposition.X;
-            float diffy = newposition.Y - state.playerposition.Y;
-            float diffz = newposition.Z - state.playerposition.Z;
+            float diffx = newposition.X - stateplayerposition.x;
+            float diffy = newposition.Y - stateplayerposition.y;
+            float diffz = newposition.Z - stateplayerposition.z;
             float difflength = Length(diffx, diffy, diffz);
             if (difflength > 0)
             {
@@ -332,18 +328,18 @@ public class CharacterPhysicsCi
                 diffy *= state.curspeed.Length();
                 diffz *= state.curspeed.Length();
             }
-            newposition.X = state.playerposition.X + diffx * dt;
-            newposition.Y = state.playerposition.Y + diffy * dt;
-            newposition.Z = state.playerposition.Z + diffz * dt;
+            newposition.X = stateplayerposition.x + diffx * dt;
+            newposition.Y = stateplayerposition.y + diffy * dt;
+            newposition.Z = stateplayerposition.z + diffz * dt;
         }
         else
         {
-            newposition.X = state.playerposition.X + (state.curspeed.X) * dt;
-            newposition.Y = state.playerposition.Y + (state.curspeed.Y) * dt;
-            newposition.Z = state.playerposition.Z + (state.curspeed.Z) * dt;
+            newposition.X = stateplayerposition.x + (state.curspeed.X) * dt;
+            newposition.Y = stateplayerposition.y + (state.curspeed.Y) * dt;
+            newposition.Z = stateplayerposition.z + (state.curspeed.Z) * dt;
         }
         newposition.Y += state.movedz * dt;
-        Vector3Ref previousposition = Vector3Ref.Create(state.playerposition.X, state.playerposition.Y, state.playerposition.Z);
+        Vector3Ref previousposition = Vector3Ref.Create(stateplayerposition.x, stateplayerposition.y, stateplayerposition.z);
         if (!move.ENABLE_NOCLIP)
         {
             swimmingtop = move.wantsjump && !move.Swimming;
@@ -352,12 +348,12 @@ public class CharacterPhysicsCi
             //try
             {
                 float[] v = WallSlide(state,
-                    Vec3.FromValues(state.playerposition.X, state.playerposition.Y, state.playerposition.Z),
+                    Vec3.FromValues(stateplayerposition.x, stateplayerposition.y, stateplayerposition.z),
                     Vec3.FromValues(newposition.X, newposition.Y, newposition.Z),
                     modelheight);
-                state.playerposition.X = v[0];
-                state.playerposition.Y = v[1];
-                state.playerposition.Z = v[2];
+                stateplayerposition.x = v[0];
+                stateplayerposition.y = v[1];
+                stateplayerposition.z = v[2];
             }
             //catch
             {
@@ -366,13 +362,13 @@ public class CharacterPhysicsCi
         }
         else
         {
-            state.playerposition.X = newposition.X;
-            state.playerposition.Y = newposition.Y;
-            state.playerposition.Z = newposition.Z;
+            stateplayerposition.x = newposition.X;
+            stateplayerposition.y = newposition.Y;
+            stateplayerposition.z = newposition.Z;
         }
         if (!(move.ENABLE_FREEMOVE || move.Swimming))
         {
-            state.isplayeronground = state.playerposition.Y == previousposition.Y;
+            state.isplayeronground = stateplayerposition.y == previousposition.Y;
             {
                 if (standingontheground && state.isplayeronground)
                 {

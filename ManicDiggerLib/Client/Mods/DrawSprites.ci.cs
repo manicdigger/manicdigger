@@ -12,8 +12,8 @@
             game.GLMatrixModeModelView();
             game.GLPushMatrix();
             game.GLTranslate(b.positionX, b.positionY, b.positionZ);
-            game.GLRotate(0 - game.player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
-            game.GLRotate(0 - game.player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+            game.GLRotate(0 - game.player.position.roty * 360 / (2 * Game.GetPi()), 0, 1, 0);
+            game.GLRotate(0 - game.player.position.rotx * 360 / (2 * Game.GetPi()), 1, 0, 0);
             game.GLScale((one * 2 / 100), (one * 2 / 100), (one * 2 / 100));
             game.GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
             //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
