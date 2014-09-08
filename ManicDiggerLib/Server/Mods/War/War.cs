@@ -972,6 +972,11 @@ namespace ManicDigger.Mods.War
                 for (int i = 0; i < allplayers.Length; i++)
                 {
                     int p = allplayers[i];
+                    if (!players.ContainsKey(p))
+                    {
+                        //Skip this player as he hasn't joined yet
+                        continue;
+                    }
                     if (players[p].isdead)
                     {
                         m.SendDialog(p, "RespawnCountdown" + p, null);
@@ -986,6 +991,11 @@ namespace ManicDigger.Mods.War
             for (int i = 0; i < allplayers.Length; i++)
             {
                 int p = allplayers[i];
+                if (!players.ContainsKey(p))
+                {
+                    //Skip this player as he hasn't joined yet
+                    continue;
+                }
                 if (players[p].isdead)
                 {
                     Dialog d = new Dialog();
