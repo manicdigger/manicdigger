@@ -41,9 +41,9 @@
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadModelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadTextureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.loadModelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog2 = new System.Windows.Forms.OpenFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
@@ -54,9 +54,9 @@
             // glControl1
             // 
             this.glControl1.BackColor = System.Drawing.Color.Black;
-            this.glControl1.Location = new System.Drawing.Point(37, 27);
+            this.glControl1.Location = new System.Drawing.Point(12, 27);
             this.glControl1.Name = "glControl1";
-            this.glControl1.Size = new System.Drawing.Size(480, 361);
+            this.glControl1.Size = new System.Drawing.Size(502, 361);
             this.glControl1.TabIndex = 0;
             this.glControl1.VSync = false;
             this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
@@ -103,18 +103,18 @@
             // 
             // richTextBox1
             // 
-            this.richTextBox1.Location = new System.Drawing.Point(37, 394);
+            this.richTextBox1.Location = new System.Drawing.Point(12, 394);
             this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(645, 224);
+            this.richTextBox1.Size = new System.Drawing.Size(968, 224);
             this.richTextBox1.TabIndex = 7;
             this.richTextBox1.Text = "";
             this.richTextBox1.TextChanged += new System.EventHandler(this.richTextBox1_TextChanged);
             // 
             // richTextBox2
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(37, 624);
+            this.richTextBox2.Location = new System.Drawing.Point(12, 624);
             this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(645, 54);
+            this.richTextBox2.Size = new System.Drawing.Size(968, 54);
             this.richTextBox2.TabIndex = 8;
             this.richTextBox2.Text = "";
             // 
@@ -161,7 +161,7 @@
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(794, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(992, 24);
             this.menuStrip1.TabIndex = 13;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -173,6 +173,13 @@
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(35, 20);
             this.fileToolStripMenuItem.Text = "File";
+            // 
+            // loadModelToolStripMenuItem
+            // 
+            this.loadModelToolStripMenuItem.Name = "loadModelToolStripMenuItem";
+            this.loadModelToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
+            this.loadModelToolStripMenuItem.Text = "Load model...";
+            this.loadModelToolStripMenuItem.Click += new System.EventHandler(this.loadModelToolStripMenuItem_Click);
             // 
             // loadTextureToolStripMenuItem
             // 
@@ -186,13 +193,6 @@
             this.openFileDialog1.DefaultExt = "png";
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // loadModelToolStripMenuItem
-            // 
-            this.loadModelToolStripMenuItem.Name = "loadModelToolStripMenuItem";
-            this.loadModelToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
-            this.loadModelToolStripMenuItem.Text = "Load model...";
-            this.loadModelToolStripMenuItem.Click += new System.EventHandler(this.loadModelToolStripMenuItem_Click);
-            // 
             // openFileDialog2
             // 
             this.openFileDialog2.DefaultExt = "txt";
@@ -202,7 +202,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(794, 700);
+            this.ClientSize = new System.Drawing.Size(992, 742);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.label3);

@@ -23,10 +23,9 @@ namespace MdMonsterEditor
         IGetFileStream getfile;
         private void Form1_Load(object sender, EventArgs e)
         {
-            d = new AnimatedModelRenderer();
-            d.Start(new Game(), new AnimatedModel());
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             getfile = new GetFileStream(datapaths);
+            richTextBox1.Text = new StreamReader(getfile.GetFile("player2.txt")).ReadToEnd();
             RichTextBoxContextMenu(richTextBox1);
             RichTextBoxContextMenu(richTextBox2);
             UpdateLabels();
@@ -36,6 +35,7 @@ namespace MdMonsterEditor
             loaded = true;
             GL.ClearColor(Color.SkyBlue);
             overheadcameraK.SetDistance(3);
+            overheadcameraK.SetT((float)Math.PI);
             SetupViewport();
             Application.Idle += new EventHandler(Application_Idle);
             sw.Start();
@@ -137,10 +137,13 @@ namespace MdMonsterEditor
             float speed = 1.0f;
             //d.SetAnimPeriod(1.0f / (trackBar3.Value * 0.1f));
             //progressBar1.Value = (int)((animstate.GetInterp() % (d.GetAnimPeriod())) / d.GetAnimPeriod() * 100);
+
             try
             {
-                //d.DrawCharacter(animstate, 0, 0, 0,
-                //   headingbyte, pitchbyte, true, dt, playertexture, new AnimationHint(), speed);
+                game.GLMatrixModeModelView();
+                game.GLLoadMatrix(m);
+                GL.BindTexture(TextureTarget.Texture2D, playertexture);
+                d.Render(dt, PitchDeg(), true, true);
             }
             catch (Exception ee)
             {
@@ -163,7 +166,7 @@ namespace MdMonsterEditor
         private void DrawAxisLine(Vector3 v, float myheadingdeg, float mypitchdeg)
         {
             GL.Disable(EnableCap.Texture2D);
-            
+
             //GL.Rotate(HeadingByteToOrientationY(headingbyte), 0, 1, 0);
             //GL.Rotate(PitchByteToOrientationX(pitchbyte), 1, 0, 0);
             GL.PushMatrix();
@@ -171,7 +174,7 @@ namespace MdMonsterEditor
             GL.Rotate(myheadingdeg, 0, 1, 0);
             GL.Rotate(mypitchdeg, 0, 0, 1);
 
-            GL.Begin(BeginMode.Lines);            
+            GL.Begin(BeginMode.Lines);
             GL.Color3(Color.Red);
             GL.Vertex3(0, 0.1, 0);
             GL.Vertex3(2, 0.1, 0);
@@ -270,8 +273,16 @@ namespace MdMonsterEditor
             Vector3 center_ = new Vector3(center.GetX(), center.GetY(), center.GetZ());
 
             Matrix4 camera = Matrix4.LookAt(position_, center_, up);
+            m = new float[]
+            {
+                camera.M11, camera.M12, camera.M13, camera.M14,
+                camera.M21, camera.M22, camera.M23, camera.M24,
+                camera.M31, camera.M32, camera.M33, camera.M34,
+                camera.M41, camera.M42, camera.M43, camera.M44
+            };
             GL.LoadMatrix(ref camera);
         }
+        float[] m;
         float znear = 0.1f;
         float zfar { get { return ENABLE_ZFAR ? config3d.GetViewDistance() * 3f / 4 : 99999; } }
         bool ENABLE_ZFAR = false;
@@ -317,6 +328,7 @@ namespace MdMonsterEditor
         }
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
+            LoadModel();
             //string[] lines = richTextBox1.Lines;
             //d.Load(lines, lines.Length);
             //listBox1.Items.Clear();
@@ -326,6 +338,26 @@ namespace MdMonsterEditor
             //{
             //    listBox1.Items.Add(animations[i]);
             //}
+        }
+        Game game;
+        void LoadModel()
+        {
+            game = new Game();
+            game.SetPlatform(new GamePlatformNative());
+            d = new AnimatedModelRenderer();
+            AnimatedModel model = new AnimatedModel();
+            try
+            {
+                model = AnimatedModelSerializer.Deserialize(game.GetPlatform(), richTextBox1.Text);
+            }
+            catch
+            {
+
+            }
+            if (model != null)
+            {
+                d.Start(game, model);
+            }
         }
         private void trackBar3_ValueChanged(object sender, EventArgs e)
         {
