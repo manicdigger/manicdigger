@@ -204,7 +204,15 @@
                         pos.X = platform.FloatToInt(32 * clients[i].glX);
                         pos.Y = platform.FloatToInt(32 * clients[i].glY);
                         pos.Z = platform.FloatToInt(32 * clients[i].glZ);
+                        pos.Pitch = 255 / 2;
                         //SendPacket(client, ServerPackets.Spawn(i, clients[i].Name, pos));
+                        Packet_ServerEntity e = new Packet_ServerEntity();
+                        e.DrawModel = new Packet_ServerEntityAnimatedModel();
+                        e.DrawModel.Model_ = "player.txt";
+                        e.DrawModel.ModelHeight = platform.FloatToInt((one * 17 / 10) * 32);
+                        e.DrawModel.EyeHeight = platform.FloatToInt((one * 15 / 10) * 32);
+                        e.Position = pos;
+                        SendPacket(client, ServerPackets.EntitySpawn(0, e));
                         SendPacket(client, ServerPackets.PlayerStats(100, 100, 100, 100));
                     }
                     for (int i = 0; i < modsCount; i++)
