@@ -76,13 +76,23 @@
             }
 
             {
-                ICharacterRenderer r = game.GetCharacterRenderer(p_.drawModel.Model_);
-                r.SetAnimation("walk");
-                r.DrawCharacter(p_.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ,
-                Game.IntToByte(-game.HeadingByte(p_.position.rotx, p_.position.roty, p_.position.rotz) - 256 / 4),
-                game.PitchByte(p_.position.rotx, p_.position.roty, p_.position.rotz),
-                    p_.playerDrawInfo.moves,
-                    dt, game.entities[i].drawModel.CurrentTexture, animHint, playerspeed_);
+                if (p_.drawModel.renderer == null)
+                {
+                    p_.drawModel.renderer = new AnimatedModelRenderer();
+                    byte[] data = game.GetFile(p_.drawModel.Model_);
+                    int dataLength = game.GetFileLength(p_.drawModel.Model_);
+                    string dataString = game.platform.StringFromUtf8ByteArray(data, dataLength);
+                    AnimatedModel model = AnimatedModelSerializer.Deserialize(game.platform, dataString);
+                    p_.drawModel.renderer.Start(game, model);
+                }
+                game.GLPushMatrix();
+                game.GLTranslate(FeetPosX, FeetPosY, FeetPosZ);
+                //game.GLRotate(PlayerInterpolate.RadToDeg(p_.position.rotx), 1, 0, 0);
+                game.GLRotate(PlayerInterpolate.RadToDeg(-p_.position.roty + Game.GetPi()), 0, 1, 0);
+                //game.GLRotate(PlayerInterpolate.RadToDeg(p_.position.rotz), 0, 0, 1);
+                game.platform.BindTexture2d(game.entities[i].drawModel.CurrentTexture);
+                p_.drawModel.renderer.Render(dt, PlayerInterpolate.RadToDeg(p_.position.rotx + Game.GetPi()), true, p_.playerDrawInfo.moves);
+                game.GLPopMatrix();
             }
         }
     }

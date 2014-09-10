@@ -23,8 +23,8 @@ namespace MdMonsterEditor
         IGetFileStream getfile;
         private void Form1_Load(object sender, EventArgs e)
         {
-            d = new CharacterRendererMonsterCode();
-            d.SetGame(new Game());
+            d = new AnimatedModelRenderer();
+            d.Start(new Game(), new AnimatedModel());
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             getfile = new GetFileStream(datapaths);
             RichTextBoxContextMenu(richTextBox1);
@@ -135,12 +135,12 @@ namespace MdMonsterEditor
             byte headingbyte = (byte)(HeadingDeg() / 360 * 256);
             byte pitchbyte = (byte)(PitchDeg() / 360 * 256);
             float speed = 1.0f;
-            d.SetAnimPeriod(1.0f / (trackBar3.Value * 0.1f));
-            progressBar1.Value = (int)((animstate.GetInterp() % (d.GetAnimPeriod())) / d.GetAnimPeriod() * 100);
+            //d.SetAnimPeriod(1.0f / (trackBar3.Value * 0.1f));
+            //progressBar1.Value = (int)((animstate.GetInterp() % (d.GetAnimPeriod())) / d.GetAnimPeriod() * 100);
             try
             {
-                d.DrawCharacter(animstate, 0, 0, 0,
-                   headingbyte, pitchbyte, true, dt, playertexture, new AnimationHint(), speed);
+                //d.DrawCharacter(animstate, 0, 0, 0,
+                //   headingbyte, pitchbyte, true, dt, playertexture, new AnimationHint(), speed);
             }
             catch (Exception ee)
             {
@@ -233,7 +233,7 @@ namespace MdMonsterEditor
             GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, z1, y1);
             GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, z1, y2);
         }
-        CharacterRendererMonsterCode d;
+        AnimatedModelRenderer d;
         //CharacterDrawerBlock d = new CharacterDrawerBlock();
         AnimationState animstate = new AnimationState();
         Config3d config3d = new Config3d();
@@ -317,15 +317,15 @@ namespace MdMonsterEditor
         }
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
-            string[] lines = richTextBox1.Lines;
-            d.Load(lines, lines.Length);
-            listBox1.Items.Clear();
-            IntRef animationsCount = new IntRef();
-            string[] animations = d.Animations(animationsCount);
-            for (int i = 0; i < animationsCount.GetValue(); i++)
-            {
-                listBox1.Items.Add(animations[i]);
-            }
+            //string[] lines = richTextBox1.Lines;
+            //d.Load(lines, lines.Length);
+            //listBox1.Items.Clear();
+            //IntRef animationsCount = new IntRef();
+            //string[] animations = d.Animations(animationsCount);
+            //for (int i = 0; i < animationsCount.GetValue(); i++)
+            //{
+            //    listBox1.Items.Add(animations[i]);
+            //}
         }
         private void trackBar3_ValueChanged(object sender, EventArgs e)
         {
@@ -336,7 +336,7 @@ namespace MdMonsterEditor
         }
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            d.SetAnimation((string)listBox1.SelectedItem);
+            //d.SetAnimation((string)listBox1.SelectedItem);
         }
         private void listBox1_SelectedValueChanged(object sender, EventArgs e)
         {

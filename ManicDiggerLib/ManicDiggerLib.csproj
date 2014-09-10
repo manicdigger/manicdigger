@@ -134,7 +134,6 @@
     <Compile Include="Client\Server.ci.cs" />
     <Compile Include="Client\ServerSimple.ci.cs" />
     <Compile Include="Client\TextEditor.ci.cs" />
-    <Compile Include="Client\CharacterRenderer.ci.cs" />
     <Compile Include="Client\FrustumCulling.ci.cs" />
     <Compile Include="Client\HudChat.ci.cs" />
     <Compile Include="Client\Interpolation.ci.cs" />

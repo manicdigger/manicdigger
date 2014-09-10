@@ -47,8 +47,6 @@ public class ModDrawMinecarts : ClientMod
         //double rot = lastrot + (currot - lastrot) * progress;
         float rot = AngleInterpolation.InterpolateAngle360(game.platform, lastrot, currot, progress);
         game.GLRotate(-rot - 90, 0, 1, 0);
-        CharacterRendererMonsterCode c = new CharacterRendererMonsterCode();
-        c.game = game;
         RectangleFloat[] cc = CuboidRenderer.CuboidNet(8, 8, 8, 0, 0);
         CuboidRenderer.CuboidNetNormalize(cc, 32, 16);
         game.platform.BindTexture2d(minecarttexture);

@@ -69,7 +69,7 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
             old.drawModel.Model_ = entity.DrawModel.Model_;
             if (old.drawModel.Model_ == null)
             {
-                old.drawModel.Model_ = "player.txt";
+                old.drawModel.Model_ = "player2.txt";
             }
             old.drawModel.DownloadSkin = entity.DrawModel.DownloadSkin != 0;
         }

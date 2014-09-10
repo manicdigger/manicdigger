@@ -3378,7 +3378,7 @@ public class ClientOnServer
         received = new List<byte>();
         Ping = new Ping_();
         playername = Server.invalidplayername;
-        Model = "player.txt";
+        Model = "player2.txt";
         chunksseenTime = new Dictionary<int, int>();
         heightmapchunksseen = new Dictionary<Vector2i, int>();
         IsInventoryDirty = true;

@@ -90,7 +90,6 @@
         NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
         localplayeranim = new AnimationState();
         localplayeranimationhint = new AnimationHint();
-        MonsterRenderers = new DictionaryStringCharacterRenderer();
         enable_move = true;
         escapeMenu = new GuiStateEscapeMenu();
         handTexture = -1;
@@ -174,8 +173,6 @@
         d_DataMonsters = new GameDataMonsters();
         d_Config3d = config3d;
 
-        CharacterRendererMonsterCode playerrenderer = new CharacterRendererMonsterCode();
-        playerrenderer.game = this;
         ModDrawParticleEffectBlockBreak particle = new ModDrawParticleEffectBlockBreak();
         this.particleEffectBlockBreak = particle;
         this.d_Data = gamedata;
@@ -4545,22 +4542,6 @@
     internal AnimationState localplayeranim;
     internal AnimationHint localplayeranimationhint;
 
-    public ICharacterRenderer GetCharacterRenderer(string key)
-    {
-        if (!MonsterRenderers.ContainsKey(key))
-        {
-            IntRef linesCount = new IntRef();
-            byte[] file = GetFile(key);
-            string[] lines = platform.ReadAllLines(platform.StringFromUtf8ByteArray(file, platform.ByteArrayLength(file)), linesCount);
-            CharacterRendererMonsterCode renderer = new CharacterRendererMonsterCode();
-            renderer.game = this;
-            renderer.Load(lines, linesCount.value);
-            MonsterRenderers.Set(key, renderer);
-        }
-        return MonsterRenderers.Get(key);
-    }
-    DictionaryStringCharacterRenderer MonsterRenderers;
-
     internal bool enable_move;
 
     public const int DISCONNECTED_ICON_AFTER_SECONDS = 10;
@@ -6914,67 +6895,6 @@ public class UpDown
     public const int Down = 2;
 }
 
-class DictionaryStringCharacterRenderer
-{
-    public DictionaryStringCharacterRenderer()
-    {
-        itemsCount = 512;
-        items = new StringCharacterRenderer[itemsCount];
-    }
-    StringCharacterRenderer[] items;
-    int itemsCount;
-
-    internal bool ContainsKey(string key)
-    {
-        return GetIndex(key) != -1;
-    }
-
-    int GetIndex(string key)
-    {
-        for (int i = 0; i < itemsCount; i++)
-        {
-            if (items[i] == null) { continue; }
-            if (items[i].key == key)
-            {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    internal ICharacterRenderer Get(string key)
-    {
-        return items[GetIndex(key)].value;
-    }
-
-    internal void Set(string key, ICharacterRenderer r)
-    {
-        if (GetIndex(key) != -1)
-        {
-            items[GetIndex(key)].value = r;
-        }
-        else
-        {
-            for (int i = 0; i < itemsCount; i++)
-            {
-                if (items[i] == null)
-                {
-                    items[i] = new StringCharacterRenderer();
-                    items[i].key = key;
-                    items[i].value = r;
-                    return;
-                }
-            }
-        }
-    }
-}
-
-class StringCharacterRenderer
-{
-    internal string key;
-    internal ICharacterRenderer value;
-}
-
 class StringByteArray
 {
     internal string name;
@@ -7171,11 +7091,11 @@ public class PlayerInterpolate : IInterpolation
         cc.rotz = DegToRad(AngleInterpolation.InterpolateAngle360(platform, RadToDeg(aa.rotz), RadToDeg(bb.rotz), progress));
         return cc;
     }
-    static float RadToDeg(float rad)
+    public static float RadToDeg(float rad)
     {
         return (rad / (2 * Game.GetPi())) * 360;
     }
-    static float DegToRad(float deg)
+    public static float DegToRad(float deg)
     {
         return (deg / 360) * 2 * Game.GetPi();
     }
@@ -7273,6 +7193,7 @@ public class EntityDrawModel
 
     internal int CurrentTexture;
     internal HttpResponseCi SkinDownloadResponse;
+    internal AnimatedModelRenderer renderer;
 }
 
 public class EntityDrawText
@@ -7823,7 +7744,7 @@ public class Player
     public Player()
     {
         AnimationHint_ = new AnimationHint();
-        Model = "player.txt";
+        Model = "player2.txt";
         EyeHeight = DefaultEyeHeight();
         ModelHeight = DefaultModelHeight();
         CurrentTexture = -1;
