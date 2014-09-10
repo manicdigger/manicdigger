@@ -58,6 +58,8 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         if (entity.Position != null)
         {
             old.networkPosition = ToClientEntityPosition(entity.Position);
+            old.networkPosition.PositionLoaded = true;
+            old.networkPosition.LastUpdateMilliseconds = game.platform.TimeMillisecondsFromStart();
             old.position = ToClientEntityPosition(entity.Position);
         }
         if (entity.DrawModel != null)
@@ -84,6 +86,12 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         }
         if (entity.DrawText != null)
         {
+            old.drawText = new EntityDrawText();
+            old.drawText.text = entity.DrawText.Text;
+            float one_ = 1;
+            old.drawText.dx = one_ * entity.DrawText.Dx / 32;
+            old.drawText.dy = one_ * entity.DrawText.Dy / 32;
+            old.drawText.dz = one_ * entity.DrawText.Dz / 32;
         }
         if (entity.DrawBlock != null)
         {

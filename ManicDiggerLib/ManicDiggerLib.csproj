@@ -111,6 +111,7 @@
     <Compile Include="Client\Mods\DrawSprites.ci.cs" />
     <Compile Include="Client\Mods\DrawTerrain.ci.cs" />
     <Compile Include="Client\Mods\DrawTestModel.ci.cs" />
+    <Compile Include="Client\Mods\DrawText.ci.cs" />
     <Compile Include="Client\Mods\Expire.ci.cs" />
     <Compile Include="Client\Mods\FallDamageToPlayer.ci.cs" />
     <Compile Include="Client\Mods\Grenade.ci.cs" />
@@ -161,6 +162,7 @@
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
+    <Compile Include="Server\Mods\Fortress\Sign.cs" />
     <Compile Include="Server\Systems\LoadConfig.cs" />
     <Compile Include="Server\Systems\LoadServerClient.cs" />
     <Compile Include="Server\Systems\ModLoader.cs" />
@@ -208,7 +210,6 @@
     <Compile Include="Server\Systems\MonsterWalk.cs" />
     <Compile Include="Server\Systems\NotifyEntities.cs" />
     <Compile Include="Server\Systems\NotifyMap.cs" />
-    <Compile Include="Server\Systems\NotifyMonsters.cs" />
     <Compile Include="Server\Systems\NotifyPing.cs" />
     <Compile Include="Server\Systems\ServerHeartbeat.cs" />
     <Compile Include="Server\ServerMap.cs" />

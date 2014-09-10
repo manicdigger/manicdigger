@@ -37,6 +37,10 @@
             {
                 continue;
             }
+            if (p_.drawModel.CurrentTexture == -1)
+            {
+                continue;
+            }
             int cx = game.platform.FloatToInt(p_.position.x) / Game.chunksize;
             int cy = game.platform.FloatToInt(p_.position.z) / Game.chunksize;
             int cz = game.platform.FloatToInt(p_.position.y) / Game.chunksize;

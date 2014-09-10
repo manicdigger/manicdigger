@@ -263,6 +263,7 @@
         AddMod(new ModDrawLinesAroundSelectedBlock());
         AddMod(new ModDrawTerrain());
         AddMod(new ModDrawPlayerNames());
+        AddMod(new ModDrawText());
         AddMod(new ModDrawParticleEffectBlockBreak());
         AddMod(new ModDrawSprites());
         AddMod(new ModDrawMinecarts());
@@ -7152,18 +7153,20 @@ public class DrawName
 public class Entity
 {
     internal Expires expires;
-    internal Packet_ServerExplosion push;
     internal Sprite sprite;
     internal Grenade_ grenade;
     internal Bullet_ bullet;
-    internal DrawName drawName;
     internal Minecart minecart;
-    internal EntityPosition_ networkPosition;
-    internal EntityPosition_ position;
-    internal EntityDrawModel drawModel;
-    
     internal PlayerDrawInfo playerDrawInfo;
     internal CharacterPhysicsState physicsState;
+
+    // network
+    internal EntityPosition_ networkPosition;
+    internal EntityPosition_ position;
+    internal DrawName drawName;
+    internal EntityDrawModel drawModel;
+    internal EntityDrawText drawText;
+    internal Packet_ServerExplosion push;
 }
 
 public class EntityPosition_

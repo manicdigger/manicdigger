@@ -65,7 +65,6 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemHttpServer();
         systems[systemsCount++] = new ServerSystemUnloadUnusedChunks();
         systems[systemsCount++] = new ServerSystemNotifyMap();
-        systems[systemsCount++] = new ServerSystemNotifyMonsters();
         systems[systemsCount++] = new ServerSystemNotifyPing();
         systems[systemsCount++] = new ServerSystemChunksSimulation();
         systems[systemsCount++] = new ServerSystemBanList();
@@ -3394,6 +3393,8 @@ public class ClientOnServer
         {
             playersDirty[i] = true;
         }
+        spawnedEntities = new ServerEntityId[64];
+        spawnedEntitiesCount = 64;
     }
     internal int Id;
     internal int state; // ClientStateOnServer
@@ -3461,6 +3462,27 @@ public class ClientOnServer
     internal bool[] playersDirty;
     internal ServerEntity entity;
     internal ServerEntityPositionAndOrientation positionOverride;
+    internal float notifyEntitiesAccum;
+    internal ServerEntityId[] spawnedEntities;
+    internal int spawnedEntitiesCount;
+}
+
+public class ServerEntityId
+{
+    internal int chunkx;
+    internal int chunky;
+    internal int chunkz;
+    internal int id;
+
+    internal ServerEntityId Clone()
+    {
+        ServerEntityId ret = new ServerEntityId();
+        ret.chunkx = chunkx;
+        ret.chunky = chunky;
+        ret.chunkz = chunkz;
+        ret.id = id;
+        return ret;
+    }
 }
 
 public class ModEventHandlers

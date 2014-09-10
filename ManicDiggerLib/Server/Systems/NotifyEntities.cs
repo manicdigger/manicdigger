@@ -16,7 +16,7 @@ public class ServerSystemNotifyEntities : ServerSystem
             }
             NotifyPlayers(server, k.Key);
             NotifyPlayerPositions(server, k.Key, dt);
-            NotifyEntities(server, k.Key);
+            NotifyEntities(server, k.Key, dt);
         }
     }
 
@@ -87,12 +87,155 @@ public class ServerSystemNotifyEntities : ServerSystem
         }
     }
 
-    void NotifyEntities(Server server, int clientid)
+    int EntityPositionUpdatesPerSecond = 10;
+    int SpawnMaxEntities = 32;
+
+    void NotifyEntities(Server server, int clientid, float dt)
     {
         ClientOnServer c = server.clients[clientid];
-        int mapx = c.PositionMul32GlX / 32;
-        int mapy = c.PositionMul32GlZ / 32;
-        int mapz = c.PositionMul32GlY / 32;
+        c.notifyEntitiesAccum += dt;
+        if (c.notifyEntitiesAccum < (one / EntityPositionUpdatesPerSecond))
+        {
+            return;
+        }
+        c.notifyEntitiesAccum = 0;
+        
+        // find nearest entities
+        int max = SpawnMaxEntities;
+        ServerEntityId[] nearestEntities = new ServerEntityId[max];
+        FindNearEntities(server, c, max, nearestEntities);
+
+        // despawn old entities
+        for (int i = 0; i < c.spawnedEntitiesCount; i++)
+        {
+            ServerEntityId e = c.spawnedEntities[i];
+            if (e == null) { continue; }
+            if (!Contains(nearestEntities, max, e))
+            {
+                int onClientId = i;
+                c.spawnedEntities[onClientId] = null;
+                server.SendPacket(clientid, ServerPackets.EntityDespawn(64 + onClientId));
+            }
+        }
+
+        // spawn new entities
+        for (int i = 0; i < max; i++)
+        {
+            ServerEntityId e = nearestEntities[i];
+            if (e == null) { continue; }
+            if (!Contains(c.spawnedEntities, max, e))
+            {
+                int onClientId = IndexOfNull(c.spawnedEntities, c.spawnedEntitiesCount);
+                c.spawnedEntities[onClientId] = e.Clone();
+                ServerChunk chunk = server.d_Map.GetChunk(e.chunkx * Server.chunksize, e.chunky * Server.chunksize, e.chunkz * Server.chunksize);
+                ServerEntity ee = chunk.Entities[e.id];
+                Packet_ServerEntity ne = ToNetworkEntity(server.serverPlatform, ee);
+                server.SendPacket(clientid, ServerPackets.EntitySpawn(64 + onClientId, ne));
+            }
+        }
+    }
+
+    int IndexOfNull(ServerEntityId[] list, int listCount)
+    {
+        for (int i = 0; i < listCount; i++)
+        {
+            ServerEntityId s = list[i];
+            if (s == null)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    bool Contains(ServerEntityId[] list, int listCount, ServerEntityId value)
+    {
+        for (int i = 0; i < listCount; i++)
+        {
+            ServerEntityId s = list[i];
+            if (s == null)
+            {
+                continue;
+            }
+            if (s.chunkx == value.chunkx
+                && s.chunky == value.chunky
+                && s.chunkz == value.chunkz
+                && s.id == value.id)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void FindNearEntities(Server server, ClientOnServer c, int maxCount, ServerEntityId[] ret)
+    {
+        List<ServerEntityId> list = new List<ServerEntityId>();
+        int playerx = c.PositionMul32GlX / 32;
+        int playery = c.PositionMul32GlZ / 32;
+        int playerz = c.PositionMul32GlY / 32;
+        // Find all entities in 3x3x3 chunks around player.
+        for (int xx = -1; xx < 2; xx++)
+        {
+            for (int yy = -1; yy < 2; yy++)
+            {
+                for (int zz = -1; zz < 2; zz++)
+                {
+                    int chunkx = playerx / Server.chunksize + xx;
+                    int chunky = playery / Server.chunksize + yy;
+                    int chunkz = playerz / Server.chunksize + zz;
+                    if (!MapUtil.IsValidChunkPos(server.d_Map, chunkx, chunky, chunkz, Server.chunksize))
+                    {
+                        continue;
+                    }
+                    ServerChunk chunk = server.d_Map.GetChunk(chunkx * Server.chunksize, chunky * Server.chunksize, chunkz * Server.chunksize);
+                    if (chunk == null)
+                    {
+                        continue;
+                    }
+                    if (chunk.Entities == null)
+                    {
+                        continue;
+                    }
+                    for (int i = 0; i < chunk.EntitiesCount; i++)
+                    {
+                        if (chunk.Entities[i] == null)
+                        {
+                            continue;
+                        }
+                        ServerEntityId id = new ServerEntityId();
+                        id.chunkx = chunkx;
+                        id.chunky = chunky;
+                        id.chunkz = chunkz;
+                        id.id = i;
+                        list.Add(id);
+                    }
+                }
+            }
+        }
+        // Return maxCount of entities nearest to player.
+
+        list.Sort((a, b) =>
+        {
+            var entityA = server.d_Map.GetChunk(a.chunkx * Server.chunksize, a.chunky * Server.chunksize, a.chunkz * Server.chunksize).Entities[a.id];
+            var entityB = server.d_Map.GetChunk(b.chunkx * Server.chunksize, b.chunky * Server.chunksize, b.chunkz * Server.chunksize).Entities[b.id];
+
+            Vector3i posA = new Vector3i((int)entityA.position.x, (int)entityA.position.y, (int)entityA.position.z);
+            Vector3i posB = new Vector3i((int)entityB.position.x, (int)entityB.position.y, (int)entityB.position.z);
+            Vector3i posPlayer = new Vector3i(c.PositionMul32GlX / 32, c.PositionMul32GlY / 32, c.PositionMul32GlZ / 32);
+            return server.DistanceSquared(posA, posPlayer).CompareTo(server.DistanceSquared(posB, posPlayer));
+        }
+        );
+
+        int retCount = maxCount;
+        if (list.Count < maxCount)
+        {
+            retCount = list.Count;
+        }
+        for (int i = 0; i < retCount; i++)
+        {
+            ret[i] = list[i];
+        }
     }
 
     Packet_PositionAndOrientation ToNetworkEntityPosition(ServerPlatform platform, ServerEntityPositionAndOrientation position)
@@ -139,16 +282,21 @@ public class ServerSystemNotifyEntities : ServerSystem
             p.DrawText.Rotz = platform.FloatToInt(entity.drawText.rotz);
             p.DrawText.Text = entity.drawText.text;
         }
-        if (entity.drawBlock != null)
-        {
-            p.DrawBlock = new Packet_ServerEntityDrawBlock();
-            p.DrawBlock.BlockType = entity.drawBlock.blockType;
-        }
         if (entity.push != null)
         {
             p.Push = new Packet_ServerEntityPush();
             p.Push.RangeFloat = platform.FloatToInt(entity.push.range * 32);
         }
+
+
+        if (entity.sign != null)
+        {
+            p.DrawText = new Packet_ServerEntityDrawText();
+            p.DrawText.Text = entity.sign.text;
+            p.DrawText.Dy = 36;
+            p.DrawText.Dz = 3;
+        }
+
         return p;
     }
 }

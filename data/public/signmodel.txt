@@ -1,0 +1,17 @@
+section=nodes
+name	paren	x	y	z	sizex	sizey	sizez	u	v	rotx	roty	rotz	pivx	pivy	pivz	scalx	scaly	scalz	head
+torso	root	0	6	0	2	12	2	0	10	0	0	0	0	0	0	1	1	1	0
+head	torso	0	10	0	16	8	2	0	0	0	0	0	0	0	0	0	0	0	0
+
+
+section=keyframes
+anim	node	frame	type	x	y	z
+
+section=animations
+name	len
+walk	40
+
+section=global
+texw	texh
+64	32
+
