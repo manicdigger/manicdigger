@@ -3369,6 +3369,7 @@ public class ClientOnServer
         entity = new ServerEntity();
         entity.drawName = new ServerEntityDrawName();
         entity.position = new ServerEntityPositionAndOrientation();
+        entity.position.pitch = 2 * 255 / 4;
         entity.drawModel = new ServerEntityAnimatedModel();
         entity.drawModel.downloadSkin = true;
         Id = -1;
