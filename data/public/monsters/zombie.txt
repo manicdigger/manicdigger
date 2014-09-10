@@ -1,85 +1,34 @@
-set,legsheight,0.9
-set,armsheight,1.8
-set,minuslegsheight,-0.8
-set,minusarmsheight,-1.8
+section=nodes
+name	paren	x	y	z	sizex	sizey	sizez	u	v	rotx	roty	rotz	pivx	pivy	pivz	scalx	scaly	scalz	head
+torso	root	0	18	0	8	12	4	16	16	0	0	0	0	0	0	0.83	0.83	0.83	0
+head	torso	0	6	0	8	8	8	0	0	0	0	0	0	4	0	0	0	0	1
+head	torso	0	6	0	8	8	8	32	0	0	0	0	0	4	0	1.1	1.1	1.1	1
+legl	torso	-2	-6	0	4	12	4	0	16	0	0	0	0	-6	0	0	0	0	0
+legr	torso	2	-6	0	4	12	4	0	16	0	0	0	0	-6	0	0	0	0	0
+arml	torso	-6	6	0	4	12	4	40	16	-90	0	0	0	-6	0	0	0	0	0
+armr	torso	6	6	0	4	12	4	40	16	-90	0	0	0	-6	0	0	0	0	0
 
-set,mainrotation,heading
-mul,mainrotation,0.00390625
-mul,mainrotation,-360
-add,mainrotation,-90
-rotate,mainrotation,0,1,0
+section=keyframes
+anim	node	frame	type	x	y	z
+walk	legl	10	rot	-20	0	0
+walk	legl	30	rot	20	0	0
+walk	legr	10	rot	20	0	0
+walk	legr	30	rot	-20	0	0
+walk	arml	10	rot	-90	0	5
+walk	arml	30	rot	-80	0	10
+walk	armr	10	rot	-80	0	-10
+walk	armr	30	rot	-90	0	-5
+walk	torso	0	pos	0	18	0
+walk	torso	10	pos	0	19	0
+walk	torso	20	pos	0	18	0
+walk	torso	30	pos	0	19	0
+walk	head	15	rot	0	10	10
+walk	head	35	rot	5	5	5
 
-scale,0.7,0.7,0.7
-translate,-0.15,-0.07,-0.3
-translate,0,updown,0
+section=animations
+name	len
+walk	40
 
-
-//torso
-makecoords,coords,8,12,4,16,16
-drawcuboid,0,legsheight,0,0.4,.8,0.6,skin,coords
-
-
-//head
-pushmatrix
-translate,0,armsheight,-0
-
-set,headrotation,pitch
-div,headrotation,256
-mul,headrotation,360
-rotate,headrotation,0,0,1
-if,hintleanleft
-rotate,30,0,1,0
-endif
-if,hintleanright
-rotate,-90,0,3,6
-endif
-translate,0,minusarmsheight,0
-makecoords,coords,8,8,8,0,0
-drawcuboid,-0.15,armsheight,0,0.6,0.6,0.6,skin,coords
-popmatrix
-
-
-//left leg
-pushmatrix
-translate,0.15,legsheight,0
-rotate,limbrotation1, 0, 0, 1
-translate,-0.15, minuslegsheight, 0
-
-makecoords, coords, 4, 8, 4, 0, 16
-drawcuboid, 0, 0, 0, 0.3, 0.9, 0.3, skin, coords
-
-popmatrix
-
-//right leg
-pushmatrix
-translate,0.15,legsheight,0
-rotate,limbrotation2, 0,0, 1
-translate,-0.15, minuslegsheight, 0
-
-drawcuboid, 0, 0, 0.3, 0.3, 0.9, 0.3, skin, coords
-
-popmatrix
-
-
-//left arm
-pushmatrix
-translate,0.15, armsheight, 0
-rotate,limbrotation1,-0, 0, 1
-translate,-0.15, minusarmsheight, 0
-
-makecoords, coords, 4, 8, 4, 40, 16
-drawcuboid, 0, legsheight, -0.3, 0.3, 0.9, 0.3, skin, coords
-
-popmatrix
-
-//right arm
-pushmatrix
-translate,0.15, armsheight, 0
-rotate,limbrotation1,0,-0,-1
-translate,-0.15, minusarmsheight, 0
-
-drawcuboid, 0, legsheight, 0.6, 0.3, 0.9, 0.3, skin, coords
-
-popmatrix
-
-popmatrix
+section=global
+texw	texh
+64	32
