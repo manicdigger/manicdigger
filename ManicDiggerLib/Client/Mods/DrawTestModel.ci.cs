@@ -28,7 +28,7 @@
         game.GLPushMatrix();
         game.GLTranslate(game.MapSizeX / 2, game.blockheight(game.MapSizeX / 2, game.MapSizeY / 2 - 2, 128), game.MapSizeY / 2 - 2);
         game.platform.BindTexture2d(game.GetTexture("mineplayer.png"));
-        testmodel.Render(deltaTime, 0, true, true);
+        testmodel.Render(deltaTime, 0, true, true, 1);
         game.GLPopMatrix();
     }
     AnimatedModelRenderer testmodel;

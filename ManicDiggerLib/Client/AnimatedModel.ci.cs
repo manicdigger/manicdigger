@@ -322,7 +322,7 @@ public class AnimatedModelRenderer
     int anim;
     const int fps = 60;
     float frame;
-    public void Render(float dt, float headDeg, bool walkAnimation, bool moves)
+    public void Render(float dt, float headDeg, bool walkAnimation, bool moves, float light)
     {
         float length = m.animations[anim].length;
         if (moves)
@@ -355,11 +355,11 @@ public class AnimatedModelRenderer
                 }
             }
         }
-        DrawNode("root", headDeg);
+        DrawNode("root", headDeg, light);
     }
 
     float[] tempVec3;
-    void DrawNode(string parent, float headDeg)
+    void DrawNode(string parent, float headDeg, float light)
     {
         for (int i = 0; i < m.nodesCount; i++)
         {
@@ -415,8 +415,8 @@ public class AnimatedModelRenderer
             tempVec3[0] /= 16;
             tempVec3[1] /= 16;
             tempVec3[2] /= 16;
-            CuboidRenderer.DrawCuboid2(game, -tempVec3[0] / 2, -tempVec3[1] / 2, -tempVec3[2] / 2, tempVec3[0], tempVec3[1], tempVec3[2], r, 1);
-            DrawNode(n.name, headDeg);
+            CuboidRenderer.DrawCuboid2(game, -tempVec3[0] / 2, -tempVec3[1] / 2, -tempVec3[2] / 2, tempVec3[0], tempVec3[1], tempVec3[2], r, light);
+            DrawNode(n.name, headDeg, light);
             game.GLPopMatrix();
         }
     }
