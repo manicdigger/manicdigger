@@ -293,6 +293,7 @@ public class ServerSystemNotifyEntities : ServerSystem
         {
             p.DrawText = new Packet_ServerEntityDrawText();
             p.DrawText.Text = entity.sign.text;
+            p.DrawText.Dx = 3;
             p.DrawText.Dy = 36;
             p.DrawText.Dz = 3;
         }
