@@ -105,6 +105,17 @@ public class ServerSystemNotifyEntities : ServerSystem
         ServerEntityId[] nearestEntities = new ServerEntityId[max];
         FindNearEntities(server, c, max, nearestEntities);
 
+        // update entities
+        for (int i = 0; i < max; i++)
+        {
+            ServerEntityId e = nearestEntities[i];
+            if (e == null) { continue; }
+            for (int k = 0; k < server.modEventHandlers.onupdateentity.Count; k++)
+            {
+                server.modEventHandlers.onupdateentity[k](e.chunkx, e.chunky, e.chunkz, e.id);
+            }
+        }
+
         // despawn old entities
         for (int i = 0; i < c.spawnedEntitiesCount; i++)
         {
@@ -131,6 +142,19 @@ public class ServerSystemNotifyEntities : ServerSystem
                 ServerEntity ee = chunk.Entities[e.id];
                 Packet_ServerEntity ne = ToNetworkEntity(server.serverPlatform, ee);
                 server.SendPacket(clientid, ServerPackets.EntitySpawn(64 + onClientId, ne));
+            }
+        }
+
+        for (int i = 0; i < max; i++)
+        {
+            if (c.updateEntity[i])
+            {
+                c.updateEntity[i] = false;
+                ServerEntityId e = c.spawnedEntities[i];
+                ServerChunk chunk = server.d_Map.GetChunk(e.chunkx * Server.chunksize, e.chunky * Server.chunksize, e.chunkz * Server.chunksize);
+                ServerEntity ee = chunk.Entities[e.id];
+                Packet_ServerEntity ne = ToNetworkEntity(server.serverPlatform, ee);
+                server.SendPacket(clientid, ServerPackets.EntitySpawn(64 + i, ne));
             }
         }
     }
@@ -203,6 +227,10 @@ public class ServerSystemNotifyEntities : ServerSystem
                         {
                             continue;
                         }
+                        if (chunk.Entities[i].position == null)
+                        {
+                            continue;
+                        }
                         ServerEntityId id = new ServerEntityId();
                         id.chunkx = chunkx;
                         id.chunky = chunky;
@@ -270,6 +298,7 @@ public class ServerSystemNotifyEntities : ServerSystem
         {
             p.DrawName_ = new Packet_ServerEntityDrawName();
             p.DrawName_.Name = entity.drawName.name;
+            p.DrawName_.OnlyWhenSelected = entity.drawName.onlyWhenSelected;
         }
         if (entity.drawText != null)
         {
@@ -287,15 +316,9 @@ public class ServerSystemNotifyEntities : ServerSystem
             p.Push = new Packet_ServerEntityPush();
             p.Push.RangeFloat = platform.FloatToInt(entity.push.range * 32);
         }
-
-
-        if (entity.sign != null)
+        if (entity.usable != null)
         {
-            p.DrawText = new Packet_ServerEntityDrawText();
-            p.DrawText.Text = entity.sign.text;
-            p.DrawText.Dx = 3;
-            p.DrawText.Dy = 36;
-            p.DrawText.Dz = 3;
+            p.Usable = new Packet_ServerEntityUsable();
         }
 
         return p;

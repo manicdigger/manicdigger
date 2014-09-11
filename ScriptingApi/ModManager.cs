@@ -623,8 +623,22 @@ namespace ManicDigger
         public delegate void SpecialKey1(int player, SpecialKey key);
         public delegate void ChangedActiveMaterialSlot(int player);
         public delegate void LoadWorld();
+        public delegate void UpdateEntity(int chunkx, int chunky, int chunkz, int id);
+        public delegate void UseEntity(int player, int chunkx, int chunky, int chunkz, int id);
+
+        public delegate void DialogClick2(DialogClickArgs args);
     }
 
+    public class DialogClickArgs
+    {
+        internal int player;
+        public int GetPlayer() { return player; } public void SetPlayer(int value) { player = value; }
+        internal string widgetId;
+        public string GetWidgetId() { return widgetId; }public void SetWidgetId(string value) { widgetId = value; }
+        internal string[] textBoxValue;
+        public string[] GetTextBoxValue() { return textBoxValue; }public void SetTextBoxValue(string[] value) { textBoxValue = value; }
+    }
+    
     public enum ItemClass
     {
         Block,
@@ -875,12 +889,27 @@ namespace ManicDigger
             w.Color = textColor;
             return w;
         }
+
+        public static Widget MakeTextBox(string text, DialogFont Font, float x, float y, float width, float height, int textColor)
+        {
+            Widget w = new Widget();
+            w.Type = WidgetType.TextBox;
+            w.Text = text;
+            w.X = (int)x;
+            w.Y = (int)y;
+            w.Width = (int)width;
+            w.Height = (int)height;
+            w.Font = Font;
+            w.Color = textColor;
+            return w;
+        }
     }
 
     public enum WidgetType
     {
         Image,
         Text,
+        TextBox,
     }
 
     public class ModInfo

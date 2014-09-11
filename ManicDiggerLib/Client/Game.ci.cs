@@ -124,6 +124,7 @@
         player = new Entity();
         player.position = new EntityPosition_();
         player.physicsState = new CharacterPhysicsState();
+        currentlyAttackedEntity = -1;
     }
     ScreenTextEditor screenTextEditor;
 
@@ -269,6 +270,7 @@
         AddMod(new ModDrawMinecarts());
         AddMod(new ModDrawHand2d());
         AddMod(new ModDrawHand3d());
+        AddMod(new ModDialog());
         AddMod(new ModPicking());
         AddMod(new ModClearInactivePlayersDrawInfo());
         AddMod(new ModCameraKeys());
@@ -1542,6 +1544,7 @@
     internal int SelectedBlockPositionX;
     internal int SelectedBlockPositionY;
     internal int SelectedBlockPositionZ;
+    internal int SelectedEntityId;
 
     internal bool IsWater(int blockType)
     {
@@ -2144,57 +2147,13 @@
         return d_Data.Strength()[blocktype];
     }
 
-    internal void DrawDialogs()
-    {
-        for (int i = 0; i < dialogsCount; i++)
-        {
-            if (dialogs[i] == null)
-            {
-                continue;
-            }
-            VisibleDialog d = dialogs[i];
-            int x = Width() / 2 - d.value.Width / 2;
-            int y = Height() / 2 - d.value.Height_ / 2;
-            for (int k = 0; k < d.value.WidgetsCount; k++)
-            {
-                Packet_Widget w = d.value.Widgets[k];
-                if (w == null)
-                {
-                    continue;
-                }
-                if (w.Text != null)
-                {
-                    w.Text = platform.StringReplace(w.Text, "!SERVER_IP!", ServerInfo.connectdata.Ip);
-                    w.Text = platform.StringReplace(w.Text, "!SERVER_PORT!", platform.IntToString(ServerInfo.connectdata.Port));
-                    if (w.Font != null)
-                    {
-                        FontCi font = FontCi.Create(ValidFont(w.Font.FamilyName), DeserializeFloat(w.Font.SizeFloat), w.Font.FontStyle);
-                        Draw2dText(w.Text, font, w.X + x, w.Y + y, IntRef.Create(w.Color), false);
-                    }
-                    else
-                    {
-                        FontCi font = FontCi.Create("Arial", 12, 0);
-                        Draw2dText(w.Text, font, w.X + x, w.Y + y, IntRef.Create(w.Color), false);
-                    }
-                }
-                if (w.Image == "Solid")
-                {
-                    Draw2dTexture(WhiteTexture(), w.X + x, w.Y + y, w.Width, w.Height_, null, 0, w.Color, false);
-                }
-                else if (w.Image != null)
-                {
-                    Draw2dBitmapFile(StringTools.StringAppend(platform, w.Image, ".png"), w.X + x, w.Y + y, w.Width, w.Height_);
-                }
-            }
-        }
-    }
-
     internal void DrawEnemyHealthCommon(string name, float progress)
     {
         DrawEnemyHealthUseInfo(name, 1, false);
     }
 
     internal Vector3IntRef currentAttackedBlock;
+    internal int currentlyAttackedEntity;
 
     internal void DrawEnemyHealthBlock()
     {
@@ -2211,6 +2170,33 @@
                 DrawEnemyHealthUseInfo(language.Get(StringTools.StringAppend(platform, "Block_", blocktypes[blocktype].Name)), progress, true);
             }
             DrawEnemyHealthCommon(language.Get(StringTools.StringAppend(platform, "Block_", blocktypes[blocktype].Name)), progress);
+        }
+        if (currentlyAttackedEntity != -1)
+        {
+            Entity e = entities[currentlyAttackedEntity];
+            if (e == null)
+            {
+                return;
+            }
+            float health;
+            if (e.health != null)
+            {
+                health = one * e.health.CurrentHealth / e.health.MaxHealth;
+            }
+            else
+            {
+                health = 1;
+            }
+            string name = "Unknown";
+            if (e.drawName != null)
+            {
+                name = e.drawName.Name;
+            }
+            if (e.usable != null)
+            {
+                DrawEnemyHealthUseInfo(language.Get(name), health, true);
+            }
+            DrawEnemyHealthCommon(language.Get(name), health);
         }
     }
 
@@ -3217,6 +3203,19 @@
                 }
             }
         }
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            if (clientmods[i] != null)
+            {
+                KeyPressEventArgs args_ = new KeyPressEventArgs();
+                args_.SetKeyChar(eKeyChar);
+                clientmods[i].OnKeyPress(this, args_);
+                if (args_.GetHandled())
+                {
+                    return;
+                }
+            }
+        }
         int chart = 116;
         int charT = 84;
         int chary = 121;
@@ -3266,33 +3265,9 @@
                 }
             }
         }
-        for (int k = 0; k < dialogsCount; k++)
-        {
-            if (dialogs[k] == null)
-            {
-                continue;
-            }
-            VisibleDialog d = dialogs[k];
-            for (int i = 0; i < d.value.WidgetsCount; i++)
-            {
-                Packet_Widget w = d.value.Widgets[i];
-                if (w == null)
-                {
-                    continue;
-                }
-                string valid = (StringTools.StringAppend(platform, "abcdefghijklmnopqrstuvwxyz1234567890\t ", CharToString(27)));
-                if (platform.StringContains(valid, CharToString(w.ClickKey)))
-                {
-                    if (eKeyChar == w.ClickKey)
-                    {
-                        SendPacketClient(ClientPackets.DialogClick(w.Id));
-                        return;
-                    }
-                }
-            }
-        }
     }
-    string CharToString(int c)
+
+    public string CharToString(int c)
     {
         int[] arr = new int[1];
         arr[0] = c;
@@ -4131,50 +4106,6 @@
                 d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
                 d_CraftingRecipesCount = packet.CraftingRecipes.CraftingRecipesCount;
                 break;
-            case Packet_ServerIdEnum.Dialog:
-                Packet_ServerDialog d = packet.Dialog;
-                if (d.Dialog == null)
-                {
-                    if (GetDialogId(d.DialogId) != -1 && dialogs[GetDialogId(d.DialogId)].value.IsModal != 0)
-                    {
-                        GuiStateBackToGame();
-                    }
-                    if (GetDialogId(d.DialogId) != -1)
-                    {
-                        dialogs[GetDialogId(d.DialogId)] = null;
-                    }
-                    if (DialogsCount() == 0)
-                    {
-                        SetFreeMouse(false);
-                    }
-                }
-                else
-                {
-                    VisibleDialog d2 = new VisibleDialog();
-                    d2.key = d.DialogId;
-                    d2.value = d.Dialog;
-                    if (GetDialogId(d.DialogId) == -1)
-                    {
-                        for (int i = 0; i < dialogsCount; i++)
-                        {
-                            if (dialogs[i] == null)
-                            {
-                                dialogs[i] = d2;
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        dialogs[GetDialogId(d.DialogId)] = d2;
-                    }
-                    if (d.Dialog.IsModal != 0)
-                    {
-                        guistate = GuiState.ModalDialog;
-                        SetFreeMouse(true);
-                    }
-                }
-                break;
             case Packet_ServerIdEnum.Follow:
                 IntRef oldFollowId = FollowId();
                 Follow = packet.Follow.Client;
@@ -4553,6 +4484,10 @@
             KeyEventArgs args_ = new KeyEventArgs();
             args_.SetKeyCode(eKey);
             clientmods[i].OnKeyDown(this, args_);
+            if (args_.GetHandled())
+            {
+                return;
+            }
         }
         for (int i = 0; i < screensMax; i++)
         {
@@ -4583,24 +4518,6 @@
         }
         if (guistate == GuiState.Normal)
         {
-            if (keyboardState[GetKey(GlKeys.Escape)])
-            {
-                for (int i = 0; i < dialogsCount; i++)
-                {
-                    if (dialogs[i] == null)
-                    {
-                        continue;
-                    }
-                    VisibleDialog d = dialogs[i];
-                    if (d.value.IsModal != 0)
-                    {
-                        dialogs[i] = null;
-                        return;
-                    }
-                }
-                ShowEscapeMenu();
-                return;
-            }
             if (eKey == GetKey(GlKeys.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
             {
                 GuiTyping = TypingState.Typing;
@@ -4822,6 +4739,13 @@
                         }
                     }
                 }
+                if (currentlyAttackedEntity != -1)
+                {
+                    if (entities[currentlyAttackedEntity].usable != null)
+                    {
+                        SendPacketClient(ClientPackets.UseEntity(currentlyAttackedEntity));
+                    }
+                }
             }
             if (eKey == GetKey(GlKeys.O))
             {
@@ -4857,20 +4781,6 @@
             HandleMaterialKeys(eKey);
         }
         if (guistate == GuiState.Inventory)
-        {
-            if (eKey == GetKey(GlKeys.B)
-                || eKey == GetKey(GlKeys.Escape))
-            {
-                GuiStateBackToGame();
-            }
-            if (eKey == GetKey(GlKeys.F12))
-            {
-                platform.SaveScreenshot();
-                screenshotflash = 5;
-            }
-            return;
-        }
-        if (guistate == GuiState.ModalDialog)
         {
             if (eKey == GetKey(GlKeys.B)
                 || eKey == GetKey(GlKeys.Escape))
@@ -5054,17 +4964,10 @@
                         d_HudChat.DrawTypingBuffer();
                     }
                     DrawAmmo();
-                    DrawDialogs();
-                    for (int i = 0; i < clientmodsCount; i++)
-                    {
-                        if (clientmods[i] == null) { continue; }
-                        clientmods[i].OnNewFrameDraw2d(this, dt);
-                    }
                 }
                 break;
             case GuiState.Inventory:
                 {
-                    DrawDialogs();
                     //d_The3d.ResizeGraphics(Width, Height);
                     //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
                     d_HudInventory.Draw();
@@ -5078,7 +4981,6 @@
                 break;
             case GuiState.ModalDialog:
                 {
-                    DrawDialogs();
                 }
                 break;
             case GuiState.EscapeMenu:
@@ -5089,7 +4991,6 @@
                         return;
                     }
                     d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
-                    DrawDialogs();
                     escapeMenu.EscapeMenuDraw();
                 }
                 break;
@@ -5098,6 +4999,11 @@
                     DrawCraftingRecipes();
                 }
                 break;
+        }
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnNewFrameDraw2d(this, dt);
         }
 
         //d_The3d.OrthoMode(Width, Height);
@@ -5974,7 +5880,7 @@ public class GameScreen
     public virtual void OnMouseUp(MouseEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
     public virtual void OnMouseMove(MouseEventArgs e) { MouseMove(e); }
     public virtual void OnBackPressed() { }
-
+    
     void KeyPress(KeyPressEventArgs e)
     {
         for (int i = 0; i < WidgetCount; i++)
@@ -6028,12 +5934,12 @@ public class GameScreen
             {
                 if (w.type == WidgetType.Button)
                 {
-                    w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+                    w.pressed = pointInRect(x, y, screenx + w.x, screeny + w.y, w.sizex, w.sizey);
                     if (w.pressed) { handled = true; }
                 }
                 if (w.type == WidgetType.Textbox)
                 {
-                    w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+                    w.pressed = pointInRect(x, y, screenx + w.x, screeny + w.y, w.sizex, w.sizey);
                     if (w.pressed) { handled = true; }
                     bool wasEditing = w.editing;
                     w.editing = w.pressed;
@@ -6069,7 +5975,7 @@ public class GameScreen
             {
                 if (w.type == WidgetType.Button)
                 {
-                    if (pointInRect(x, y, w.x, w.y, w.sizex, w.sizey))
+                    if (pointInRect(x, y, screenx + w.x, screeny + w.y, w.sizex, w.sizey))
                     {
                         OnButton(w);
                     }
@@ -6087,7 +5993,7 @@ public class GameScreen
             MenuWidget w = widgets[i];
             if (w != null)
             {
-                w.hover = pointInRect(e.GetX(), e.GetY(), w.x, w.y, w.sizex, w.sizey);
+                w.hover = pointInRect(e.GetX(), e.GetY(), screenx + w.x, screeny + w.y, w.sizex, w.sizey);
             }
         }
     }
@@ -6126,7 +6032,11 @@ public class GameScreen
                     {
                         if (w.image != null)
                         {
-                            game.Draw2dBitmapFile(w.image, w.x, w.y, w.sizex, w.sizey);
+                            game.Draw2dBitmapFile(w.image, screenx + w.x, screeny + w.y, w.sizex, w.sizey);
+                        }
+                        else
+                        {
+                            game.Draw2dTexture(game.WhiteTexture(), screenx + w.x, screeny + w.y, w.sizex, w.sizey, null, 0, w.color, false);
                         }
                         //menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.hover);
                     }
@@ -6141,14 +6051,18 @@ public class GameScreen
                     {
                         text = StringTools.StringAppend(game.platform, text, "_");
                     }
-                    if (w.buttonStyle == ButtonStyle.Text)
+                    //if (w.buttonStyle == ButtonStyle.Text)
                     {
-                        //menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
+                        game.Draw2dText(text, w.font, screenx + w.x, screeny + w.y, null, false);//, TextAlign.Left, TextBaseline.Top);
                     }
-                    else
+                    //else
                     {
                         //menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing));
                     }
+                }
+                if (w.type == WidgetType.Label)
+                {
+                    game.Draw2dText(text, w.font, screenx + w.x, screeny + w.y, null, false);
                 }
                 if (w.description != null)
                 {
@@ -6173,6 +6087,8 @@ public class GameScreen
         }
         return game.platform.CharArrayToString(charArray, length);
     }
+    internal int screenx;
+    internal int screeny;
 }
 
 public class ScreenTouchButtons : GameScreen
@@ -7148,6 +7064,7 @@ public class DrawName
     internal string Name;
     internal bool DrawHealth;
     internal float Health;
+    internal bool OnlyWhenSelected;
 }
 
 public class Entity
@@ -7167,6 +7084,8 @@ public class Entity
     internal EntityDrawModel drawModel;
     internal EntityDrawText drawText;
     internal Packet_ServerExplosion push;
+    internal EntityUsable usable;
+    internal Packet_ServerPlayerStats health;
 }
 
 public class EntityPosition_
@@ -7208,6 +7127,10 @@ public class EntityDrawText
     internal float roty;
     internal float rotz;
     internal string text;
+}
+
+public class EntityUsable
+{
 }
 
 public class DictionaryVector3Float
@@ -7314,6 +7237,7 @@ public class VisibleDialog
 {
     internal string key;
     internal Packet_Dialog value;
+    internal GameScreen screen;
 }
 
 public class RailMapUtil
@@ -8251,6 +8175,7 @@ public abstract class ClientMod
     public virtual void OnNewFrameDraw3d(Game game, float deltaTime) { }
     public virtual void OnNewFrameReadOnlyMainThread(Game game, float deltaTime) { }
     public virtual void OnKeyDown(Game game, KeyEventArgs args) { }
+    public virtual void OnKeyPress(Game game, KeyPressEventArgs args) { }
     public virtual void OnKeyUp(Game game, KeyEventArgs args) { }
     public virtual void OnMouseUp(Game game, MouseEventArgs args) { }
     public virtual void OnMouseDown(Game game, MouseEventArgs args) { }
@@ -9423,12 +9348,13 @@ public class ClientPackets
         return p;
     }
 
-    public static Packet_Client DialogClick(string widgetId)
+    public static Packet_Client DialogClick(string widgetId, string[] textValues, int textValuesCount)
     {
         Packet_Client p = new Packet_Client();
         p.Id = Packet_ClientIdEnum.DialogClick;
         p.DialogClick_ = new Packet_ClientDialogClick();
         p.DialogClick_.WidgetId = widgetId;
+        p.DialogClick_.SetTextBoxValue(textValues, textValuesCount, textValuesCount);
         return p;
     }
 
@@ -9520,6 +9446,15 @@ public class ClientPackets
         pp.Id = Packet_ClientIdEnum.ServerQuery;
         pp.Query = p1;
         return pp;
+    }
+
+    internal static Packet_Client UseEntity(int entityId)
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.UseEntity;
+        p.UseEntity = new Packet_ClientUseEntity();
+        p.UseEntity.EntityId = entityId;
+        return p;
     }
 }
 

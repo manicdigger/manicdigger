@@ -11,6 +11,10 @@
 
     public override void OnNewFrameDraw2d(Game game, float dt)
     {
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
         DrawCompass(game);
     }
 

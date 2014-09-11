@@ -23,6 +23,10 @@
             }
             int kKey = i;
             DrawName p = game.entities[i].drawName;
+            if (p.OnlyWhenSelected)
+            {
+                continue;
+            }
             float posX = p.TextX + e.position.x;
             float posY = p.TextY + e.position.y + e.drawModel.ModelHeight + game.one * 7 / 10;
             float posZ = p.TextZ + e.position.z;

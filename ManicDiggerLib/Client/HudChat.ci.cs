@@ -179,10 +179,10 @@
         }
         font.size = ChatFontSize * game.Scale();
         float dx = 20;
-        if (!game.platform.IsMousePointerLocked())
-        {
-            dx += 100;
-        }
+        //if (!game.platform.IsMousePointerLocked())
+        //{
+        //    dx += 100;
+        //}
         for (int i = 0; i < chatlines2Count; i++)
         {
             if (chatlines2[i].clickable)

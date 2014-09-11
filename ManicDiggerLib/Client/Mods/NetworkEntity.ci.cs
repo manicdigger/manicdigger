@@ -83,6 +83,7 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
             {
                 old.drawName.Name = game.platform.StringFormat("&f{0}", old.drawName.Name);
             }
+            old.drawName.OnlyWhenSelected = entity.DrawName_.OnlyWhenSelected;
         }
         if (entity.DrawText != null)
         {
@@ -100,6 +101,10 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         {
             old.push = new Packet_ServerExplosion();
             old.push.RangeFloat = entity.Push.RangeFloat;
+        }
+        if (entity.Usable != null)
+        {
+            old.usable = new EntityUsable();
         }
         return old;
     }

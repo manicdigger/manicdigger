@@ -1533,6 +1533,23 @@ public partial class Server : ICurrentTime, IDropItem
                         Console.WriteLine(ex.StackTrace);
                     }
                 }
+                for (int i = 0; i < modEventHandlers.ondialogclick2.Count; i++)
+                {
+                    try
+                    {
+                        DialogClickArgs args = new DialogClickArgs();
+                        args.SetPlayer(clientid);
+                        args.SetWidgetId(packet.DialogClick_.WidgetId);
+                        args.SetTextBoxValue(packet.DialogClick_.TextBoxValue);
+                        modEventHandlers.ondialogclick2[i](args);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Mod exception: OnDialogClick2");
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(ex.StackTrace);
+                    }
+                }
                 break;
             case Packet_ClientIdEnum.Shot:
                 int shootSoundIndex = pistolcycle++ % BlockTypes[packet.Shot.WeaponBlock].Sounds.ShootEnd.Length;	//Cycle all given ShootEnd sounds
@@ -1765,6 +1782,13 @@ public partial class Server : ICurrentTime, IDropItem
                 //Update client information
                 clients[clientid].WindowSize = new int[] { packet.GameResolution.Width, packet.GameResolution.Height };
                 //Console.WriteLine("client:{0} --> {1}x{2}", clientid, clients[clientid].WindowSize[0], clients[clientid].WindowSize[1]);
+                break;
+            case Packet_ClientIdEnum.UseEntity:
+                for (int i = 0; i < modEventHandlers.onuseentity.Count; i++)
+                {
+                    ServerEntityId id = c.spawnedEntities[packet.UseEntity.EntityId - 64];
+                    modEventHandlers.onuseentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
+                }
                 break;
             default:
                 Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.Id, clientid);
@@ -3358,6 +3382,39 @@ public partial class Server : ICurrentTime, IDropItem
             k.playersDirty[player] = true;
         }
     }
+
+    internal ServerEntity GetEntity(int chunkx, int chunky, int chunkz, int id)
+    {
+        ServerChunk c = d_Map.GetChunk(chunkx * chunksize, chunky * chunksize, chunkz * chunksize);
+        return c.Entities[id];
+    }
+
+    internal void SetEntityDirty(ServerEntityId id)
+    {
+        foreach (var k in clients)
+        {
+            for (int i = 0; i < k.Value.spawnedEntities.Length; i++)
+            {
+                ServerEntityId s = k.Value.spawnedEntities[i];
+                if (s == null)
+                {
+                    continue;
+                }
+                if (s.chunkx == id.chunkx
+                    && s.chunky == id.chunky
+                    && s.chunkz == id.chunkz
+                    && s.id == id.id)
+                {
+                    k.Value.updateEntity[i] = true;
+                }
+            }
+        }
+    }
+
+    internal void DespawnEntity(ServerEntityId id)
+    {
+        d_Map.GetChunk(id.chunkx * Server.chunksize, id.chunky * Server.chunksize, id.chunkz * Server.chunksize).Entities[id.id] = null;
+    }
 }
 
 public class ClientOnServer
@@ -3395,6 +3452,7 @@ public class ClientOnServer
         }
         spawnedEntities = new ServerEntityId[64];
         spawnedEntitiesCount = 64;
+        updateEntity = new bool[spawnedEntitiesCount];
     }
     internal int Id;
     internal int state; // ClientStateOnServer
@@ -3465,6 +3523,8 @@ public class ClientOnServer
     internal float notifyEntitiesAccum;
     internal ServerEntityId[] spawnedEntities;
     internal int spawnedEntitiesCount;
+    internal ServerEntityId editingSign;
+    internal bool[] updateEntity;
 }
 
 public class ServerEntityId
@@ -3505,7 +3565,10 @@ public class ModEventHandlers
     public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
     public List<ModDelegates.PlayerDeath> onplayerdeath = new List<ModDelegates.PlayerDeath>();
     public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
+    public List<ModDelegates.DialogClick2> ondialogclick2 = new List<ModDelegates.DialogClick2>();
     public List<ModDelegates.LoadWorld> onloadworld = new List<ModDelegates.LoadWorld>();
+    public List<ModDelegates.UpdateEntity> onupdateentity = new List<ModDelegates.UpdateEntity>();
+    public List<ModDelegates.UseEntity> onuseentity = new List<ModDelegates.UseEntity>();
 }
 public class GameTime
 {

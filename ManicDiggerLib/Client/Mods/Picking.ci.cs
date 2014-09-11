@@ -171,6 +171,7 @@
             pick0.blockPos[1] = -1;
             pick0.blockPos[2] = -1;
         }
+        PickEntity(game, pick, pick2, pick2count);
         if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
         {
             int ntileX = game.platform.FloatToInt(pick0.Current()[0]);
@@ -579,6 +580,84 @@
             }
         }
         PickingEnd(left, right, middle, ispistol);
+    }
+
+    void PickEntity(Game game, Line3D pick, BlockPosSide[] pick2, IntRef pick2count)
+    {
+        game.SelectedEntityId = -1;
+        game.currentlyAttackedEntity = -1;
+        float one = 1;
+        for (int i = 0; i < game.entitiesCount; i++)
+        {
+            if (game.entities[i] == null)
+            {
+                continue;
+            }
+            if (i == game.LocalPlayerId)
+            {
+                continue;
+            }
+            if (game.entities[i].drawModel == null)
+            {
+                continue;
+            }
+            Entity p_ = game.entities[i];
+            if (p_.networkPosition == null)
+            {
+                continue;
+            }
+            if (!p_.networkPosition.PositionLoaded)
+            {
+                continue;
+            }
+            if (p_.usable == null)
+            {
+                continue;
+            }
+            float feetposX = p_.position.x;
+            float feetposY = p_.position.y;
+            float feetposZ = p_.position.z;
+
+            float dist = game.Dist(feetposX, feetposY, feetposZ, game.player.position.x, game.player.position.y, game.player.position.z);
+            if (dist > 5)
+            {
+                continue;
+            }
+
+            //var p = PlayerPositionSpawn;
+            Box3D bodybox = new Box3D();
+            float h = p_.drawModel.ModelHeight;
+            float r = one * 35 / 100;
+
+            bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ - r);
+            bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ + r);
+            bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ - r);
+            bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ + r);
+
+            bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
+            bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
+            bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
+            bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
+
+            float[] p;
+            float localeyeposX = game.EyesPosX();
+            float localeyeposY = game.EyesPosY();
+            float localeyeposZ = game.EyesPosZ();
+            p = Intersection.CheckLineBoxExact(pick, bodybox);
+            if (p != null)
+            {
+                //do not allow to shoot through terrain
+                if (pick2count.value == 0 || (game.Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
+                    > game.Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
+                {
+                    game.SelectedEntityId = i;
+                    if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
+                    {
+                        game.currentlyAttackedEntity = i;
+                    }
+                }
+            }
+        }
     }
 
     internal bool fastclicking;

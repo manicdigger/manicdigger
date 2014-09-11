@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using ManicDigger;
 
 public class ServerSystemSign : ServerSystem
 {
@@ -11,6 +12,9 @@ public class ServerSystemSign : ServerSystem
         {
             started = true;
             server_.modManager.RegisterOnBlockUseWithTool(OnUseWithTool);
+            server_.modEventHandlers.onupdateentity.Add(UpdateEntity);
+            server_.modEventHandlers.onuseentity.Add(OnUseEntity);
+            server.modEventHandlers.ondialogclick2.Add(OnDialogClick);
         }
     }
     bool started;
@@ -31,9 +35,6 @@ public class ServerSystemSign : ServerSystem
             e.position.y = z;
             e.position.z = y + one / 2;
             e.position.heading = GetHeading(server.modManager.GetPlayerPositionX(player), server.modManager.GetPlayerPositionY(player), e.position.x, e.position.z);
-            e.drawModel = new ServerEntityAnimatedModel();
-            e.drawModel.model = "signmodel.txt";
-            e.drawModel.texture = "signmodel.png";
             e.sign = new ServerEntitySign();
             e.sign.text = "Hello world!";
             if (c.Entities == null)
@@ -48,12 +49,94 @@ public class ServerSystemSign : ServerSystem
         }
     }
 
+    void UpdateEntity(int chunkx, int chunky, int chunkz, int id)
+    {
+        ServerEntity e = server.GetEntity(chunkx, chunky, chunkz, id);
+        if (e.sign == null)
+        {
+            return;
+        }
+        if (e.drawModel == null)
+        {
+            e.drawModel = new ServerEntityAnimatedModel();
+        }
+        e.drawModel.model = "signmodel.txt";
+        e.drawModel.texture = "signmodel.png";
+        e.drawModel.modelHeight = one * 13 / 10;
+
+        if (e.drawText == null)
+        {
+            e.drawText = new ServerEntityDrawText();
+        }
+        e.drawText.text = e.sign.text;
+        e.drawText.dx = one * 3 / 32;
+        e.drawText.dy = one * 36 / 32;
+        e.drawText.dz = one * 3 / 32;
+        if (e.usable == null)
+        {
+            e.usable = new ServerEntityUsable();
+        }
+        if (e.drawName == null)
+        {
+            e.drawName = new ServerEntityDrawName();
+            e.drawName.name = "Sign";
+            e.drawName.onlyWhenSelected = true;
+        }
+    }
+
+    void OnUseEntity(int player, int chunkx, int chunky, int chunkz, int id)
+    {
+        ServerEntity e = server.GetEntity(chunkx, chunky, chunkz, id);
+        if (e.sign == null)
+        {
+            return;
+        }
+        ManicDigger.Dialog d = new ManicDigger.Dialog();
+        d.Width = 400;
+        d.Height = 200;
+        d.IsModal = true;
+        d.Widgets = new ManicDigger.Widget[4];
+        int widgetCount = 0;
+        var font = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
+        d.Widgets[widgetCount++] = Widget.MakeSolid(0, 0, 300, 200, Game.ColorFromArgb(255, 50, 50, 50));
+        d.Widgets[widgetCount++] = Widget.MakeTextBox(e.sign.text, font, 50, 50, 200, 50, Game.ColorFromArgb(255, 0, 0, 0));
+        d.Widgets[widgetCount++] = Widget.MakeSolid(100, 100, 100, 50, Game.ColorFromArgb(255, 100, 100, 100));
+        d.Widgets[widgetCount - 1].ClickKey = (char)13;
+        d.Widgets[widgetCount++] = Widget.MakeText("OK", font, 100, 100, Game.ColorFromArgb(255, 0, 0, 0));
+        ServerEntityId id_ = new ServerEntityId();
+        id_.chunkx = chunkx;
+        id_.chunky = chunky;
+        id_.chunkz = chunkz;
+        id_.id = id;
+        server.clients[player].editingSign = id_;
+        server.SendDialog(player, "UseSign", d);
+    }
+
+    void OnDialogClick(DialogClickArgs args)
+    {
+        var c = server.clients[args.GetPlayer()];
+        string newText = args.GetTextBoxValue()[1];
+        ServerEntityId id = c.editingSign;
+        if (newText != "")
+        {
+            c.editingSign = null;
+            ServerEntity e = server.GetEntity(id.chunkx, id.chunky, id.chunkz, id.id);
+            e.sign.text = newText;
+            server.SetEntityDirty(id);
+        }
+        else
+        {
+            server.DespawnEntity(id);
+        }
+        server.SendDialog(args.GetPlayer(), "UseSign", null);
+    }
+
     byte GetHeading(float posx, float posy, float targetx, float targety)
     {
         float deltaX = targetx - posx;
         float deltaY = targety - posy;
         //Angle to x-axis: cos(beta) = x / |length|
-        double headingDeg =  (360.0 / (2.0 * Math.PI)) * Math.Acos(deltaX / Math.Sqrt(deltaX * deltaX + deltaY * deltaY)) + 90.0;
+        double headingDeg = (360.0 / (2.0 * Math.PI)) * Math.Acos(deltaX / Math.Sqrt(deltaX * deltaX + deltaY * deltaY)) + 90.0;
         //Add 2 Pi if value is negative
         if (deltaY < 0)
         {

@@ -21,6 +21,7 @@ package Packet;
         Reload = 58;
         Oxygen = 59;
         Death = 60;
+        UseEntity = 61;
         ServerQuery = 64;
         GameResolution = 10;
         ExtendedPacketCommand = 100;
@@ -165,6 +166,7 @@ package Packet;
     message ClientDialogClick
     {
         optional string widgetId = 1;
+        repeated string textBoxValue = 3;
     }
     
     message ClientPingReply
@@ -258,9 +260,14 @@ package Packet;
         optional ClientDeath death = 18;
         optional ClientServerQuery query = 19;
         optional ClientGameResolution gameResolution = 20;
+        optional ClientUseEntity useEntity = 21;
 	}
     
     
+    message ClientUseEntity
+    {
+		optional int32 entityId = 1;
+    }
     
     
     
@@ -712,6 +719,12 @@ package Packet;
 		optional ServerEntityDrawText drawText = 4;
 		optional ServerEntityDrawBlock drawBlock = 5;
 		optional ServerEntityPush push = 6;
+		optional ServerEntityUsable usable = 7;
+		optional ServerPlayerStats health = 8;
+    }
+    
+    message ServerEntityUsable
+    {
     }
     
     message ServerEntityAnimatedModel
@@ -726,6 +739,7 @@ package Packet;
     message ServerEntityDrawName
     {
 		optional string name = 1;
+		optional bool onlyWhenSelected = 2;
     }
     
     message ServerEntityDrawText
@@ -910,6 +924,7 @@ package Packet;
     {
         Image = 0;
         Text = 1;
+        TextBox = 2;
     }
     
     message DialogFont

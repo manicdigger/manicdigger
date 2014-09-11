@@ -2395,6 +2395,10 @@ public class MenuWidget
     internal string image;
     internal int nextWidget;
     internal bool hasKeyboardFocus;
+    internal int color;
+    internal string id;
+    internal bool isbutton;
+    internal FontCi font;
 }
 
 public enum ButtonStyle
