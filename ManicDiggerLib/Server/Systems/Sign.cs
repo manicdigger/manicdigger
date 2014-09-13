@@ -100,8 +100,10 @@ public class ServerSystemSign : ServerSystem
         var font = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
         d.Widgets[widgetCount++] = Widget.MakeSolid(0, 0, 300, 200, Game.ColorFromArgb(255, 50, 50, 50));
         d.Widgets[widgetCount++] = Widget.MakeTextBox(e.sign.text, font, 50, 50, 200, 50, Game.ColorFromArgb(255, 0, 0, 0));
-        d.Widgets[widgetCount++] = Widget.MakeSolid(100, 100, 100, 50, Game.ColorFromArgb(255, 100, 100, 100));
-        d.Widgets[widgetCount - 1].ClickKey = (char)13;
+        Widget okHandler = Widget.MakeSolid(100, 100, 100, 50, Game.ColorFromArgb(255, 100, 100, 100));
+        okHandler.ClickKey = (char)13;
+        okHandler.Id = "UseSign_OK";
+        d.Widgets[widgetCount++] = okHandler;
         d.Widgets[widgetCount++] = Widget.MakeText("OK", font, 100, 100, Game.ColorFromArgb(255, 0, 0, 0));
         ServerEntityId id_ = new ServerEntityId();
         id_.chunkx = chunkx;
@@ -114,6 +116,11 @@ public class ServerSystemSign : ServerSystem
 
     void OnDialogClick(DialogClickArgs args)
     {
+        if (args.GetWidgetId() != "UseSign_OK")
+        {
+            //Return when dialog is not a sign
+            return;
+        }
         var c = server.clients[args.GetPlayer()];
         string newText = args.GetTextBoxValue()[1];
         ServerEntityId id = c.editingSign;
