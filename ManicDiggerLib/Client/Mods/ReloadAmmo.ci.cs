@@ -17,6 +17,11 @@
     }
     public override void OnKeyDown(Game game, KeyEventArgs args)
     {
+        if (!(game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None))
+        {
+            //Do nothing when in dialog or chat
+            return;
+        }
         int eKey = args.GetKeyCode();
         if (eKey == game.GetKey(GlKeys.R))
         {

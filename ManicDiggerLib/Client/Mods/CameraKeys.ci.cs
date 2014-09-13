@@ -11,8 +11,8 @@
         bool angledown = false;
         float overheadcameraanglemovearea = one * 5 / 100;
         float overheadcameraspeed = 3;
-        game.wantsjump = game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)];
-        game.shiftkeydown = game.keyboardState[game.GetKey(GlKeys.ShiftLeft)];
+        game.wantsjump = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)];
+        game.shiftkeydown = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.ShiftLeft)];
         game.movedx = 0;
         game.movedy = 0;
         game.moveup = false;
