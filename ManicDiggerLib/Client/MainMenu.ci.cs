@@ -875,6 +875,10 @@ public class Screen
                     else if (w.buttonStyle == ButtonStyle.Button)
                     {
                         menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
+                        if (w.description != null)
+                        {
+                            menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                        }
                     }
                     else
                     {
