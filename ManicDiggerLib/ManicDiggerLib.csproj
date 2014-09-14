@@ -91,12 +91,14 @@
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
     <Compile Include="Client\AnimatedModel.ci.cs" />
-    <Compile Include="Client\EscapeMenu.ci.cs" />
+    <Compile Include="Client\Mods\Draw2dMisc.ci.cs" />
+    <Compile Include="Client\Mods\GuiCrafting.ci.cs" />
+    <Compile Include="Client\Mods\GuiEscapeMenu.ci.cs" />
     <Compile Include="ClientNative\Audio.cs" />
     <Compile Include="ClientNative\AviWriter.cs" />
     <Compile Include="ClientNative\Misc.cs" />
     <Compile Include="ClientNative\Screenshot.cs" />
-    <Compile Include="Client\HudInventory.ci.cs" />
+    <Compile Include="Client\Mods\GuiInventory.ci.cs" />
     <Compile Include="Client\Mods\BlockDamageToPlayer.ci.cs" />
     <Compile Include="Client\Mods\Bullet.ci.cs" />
     <Compile Include="Client\Mods\Camera.ci.cs" />
@@ -115,6 +117,7 @@
     <Compile Include="Client\Mods\Expire.ci.cs" />
     <Compile Include="Client\Mods\FallDamageToPlayer.ci.cs" />
     <Compile Include="Client\Mods\Grenade.ci.cs" />
+    <Compile Include="Client\Mods\GuiMapLoading.ci.cs" />
     <Compile Include="Client\Mods\InterpolatePositions.ci.cs" />
     <Compile Include="Client\Mods\LoadPlayerTextures.ci.cs" />
     <Compile Include="Client\Mods\MinecartRenderer.ci.cs" />
@@ -125,19 +128,21 @@
     <Compile Include="Client\Mods\Push.ci.cs" />
     <Compile Include="Client\Mods\Rail.ci.cs" />
     <Compile Include="Client\Mods\ReloadAmmo.ci.cs" />
+    <Compile Include="Client\Mods\Screenshot.ci.cs" />
     <Compile Include="Client\Mods\SendActiveMaterial.ci.cs" />
     <Compile Include="Client\Mods\SendPosition.ci.cs" />
     <Compile Include="Client\Mods\SkySphereAnimated.ci.cs" />
     <Compile Include="Client\Mods\SlipperyWalk.ci.cs" />
+    <Compile Include="Client\Mods\GuiTouchButtons.ci.cs" />
     <Compile Include="Client\Mods\Trampoline.ci.cs" />
     <Compile Include="Client\Mods\WalkSound.ci.cs" />
     <Compile Include="Client\NetworkTcp.ci.cs" />
     <Compile Include="Client\QueryClient.ci.cs" />
     <Compile Include="Client\Server.ci.cs" />
     <Compile Include="Client\ServerSimple.ci.cs" />
-    <Compile Include="Client\TextEditor.ci.cs" />
+    <Compile Include="Client\Mods\GuiTextEditor.ci.cs" />
     <Compile Include="Client\FrustumCulling.ci.cs" />
-    <Compile Include="Client\HudChat.ci.cs" />
+    <Compile Include="Client\Mods\GuiChat.ci.cs" />
     <Compile Include="Client\Interpolation.ci.cs" />
     <Compile Include="Client\Inventory.ci.cs" />
     <Compile Include="Client\Language.ci.cs" />

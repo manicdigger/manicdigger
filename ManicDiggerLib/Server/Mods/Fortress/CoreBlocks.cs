@@ -613,6 +613,7 @@ namespace ManicDigger.Mods
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
+                               IsUsable = true,
                            });
             m.SetBlockType(113, "Minecart", new BlockType()
                            {

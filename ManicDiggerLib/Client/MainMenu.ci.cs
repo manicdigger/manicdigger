@@ -1723,7 +1723,7 @@ public class ScreenGame : Screen
 
     public override void OnMouseWheel(MouseWheelEventArgs e)
     {
-        game.MouseWheelChanged(e.GetDeltaPrecise());
+        game.MouseWheelChanged(e);
     }
 
     public override void OnTouchStart(TouchEventArgs e)

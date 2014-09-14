@@ -38,7 +38,7 @@
         for (int i = 0; i < game.dialogsCount; i++)
         {
             if (game.dialogs[i] == null) { continue; }
-            game.dialogs[i].screen.OnKeyPress(args);
+            game.dialogs[i].screen.OnKeyPress(game, args);
         }
         for (int k = 0; k < game.dialogsCount; k++)
         {
@@ -72,7 +72,7 @@
         for (int i = 0; i < game.dialogsCount; i++)
         {
             if (game.dialogs[i] == null) { continue; }
-            game.dialogs[i].screen.OnKeyDown(args);
+            game.dialogs[i].screen.OnKeyDown(game, args);
         }
         if (game.guistate == GuiState.Normal)
         {
@@ -112,12 +112,6 @@
                 game.GuiStateBackToGame();
                 args.SetHandled(true);
             }
-            if (args.GetKeyCode() == game.GetKey(GlKeys.F12))
-            {
-                game.platform.SaveScreenshot();
-                game.screenshotflash = 5;
-                args.SetHandled(true);
-            }
             return;
         }
     }
@@ -126,7 +120,7 @@
         for (int i = 0; i < game.dialogsCount; i++)
         {
             if (game.dialogs[i] == null) { continue; }
-            game.dialogs[i].screen.OnKeyUp(args);
+            game.dialogs[i].screen.OnKeyUp(game, args);
         }
     }
 
@@ -135,7 +129,7 @@
         for (int i = 0; i < game.dialogsCount; i++)
         {
             if (game.dialogs[i] == null) { continue; }
-            game.dialogs[i].screen.OnMouseDown(args);
+            game.dialogs[i].screen.OnMouseDown(game, args);
         }
     }
 
@@ -144,7 +138,7 @@
         for (int i = 0; i < game.dialogsCount; i++)
         {
             if (game.dialogs[i] == null) { continue; }
-            game.dialogs[i].screen.OnMouseUp(args);
+            game.dialogs[i].screen.OnMouseUp(game, args);
         }
     }
 }

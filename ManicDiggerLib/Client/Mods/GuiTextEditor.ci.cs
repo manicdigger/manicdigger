@@ -1,6 +1,6 @@
-﻿public class ScreenTextEditor : GameScreen
+﻿public class ModGuiTextEditor : GameScreen
 {
-    public ScreenTextEditor()
+    public ModGuiTextEditor()
     {
         buffer = new int[maxLines][];
         for (int i = 0; i < maxLines; i++)
@@ -21,8 +21,9 @@
     int startX;
     int startY;
     int charSize;
-    public override void Render(float dt)
+    public override void OnNewFrameDraw2d(Game game, float deltaTime)
     {
+        float dt = deltaTime;
         if (!visible)
         {
             return;
@@ -44,7 +45,7 @@
     int[][] buffer;
     int cursorColumn;
     int cursorLine;
-    public override void OnKeyDown(KeyEventArgs e)
+    public override void OnKeyDown(Game game_, KeyEventArgs e)
     {
         if (e.GetKeyCode() == game.GetKey(GlKeys.F9))
         {
@@ -93,7 +94,7 @@
         }
         e.SetHandled(true);
     }
-    public override void OnKeyPress(KeyPressEventArgs e)
+    public override void OnKeyPress(Game game_, KeyPressEventArgs e)
     {
         if (!visible)
         {

@@ -91,11 +91,8 @@
         localplayeranim = new AnimationState();
         localplayeranimationhint = new AnimationHint();
         enable_move = true;
-        escapeMenu = new GuiStateEscapeMenu();
         handTexture = -1;
         modelViewInverted = new float[16];
-        touchIdMove = -1;
-        touchIdRotate = -1;
         GLScaleTempVec3 = Vec3.Create();
         GLRotateTempVec3 = Vec3.Create();
         GLTranslateTempVec3 = Vec3.Create();
@@ -109,13 +106,6 @@
             mLightLevels[i] = one * i / 15;
         }
         scheduler = new TaskScheduler_();
-        screens = new GameScreen[screensMax];
-        ScreenTouchButtons screenTouchButtons = new ScreenTouchButtons();
-        screenTouchButtons.game = this;
-        screens[0] = screenTouchButtons;
-        screenTextEditor = new ScreenTextEditor();
-        screenTextEditor.game = this;
-        screens[1] = screenTextEditor;
         audiosamples = new DictionaryStringAudioSample();
         soundnow = new BoolRef();
         acceleration = new Acceleration();
@@ -125,8 +115,10 @@
         player.position = new EntityPosition_();
         player.physicsState = new CharacterPhysicsState();
         currentlyAttackedEntity = -1;
+        ChatLinesMax = 1;
+        ChatLines = new Chatline[ChatLinesMax];
+        ChatLineLength = 64;
     }
-    ScreenTextEditor screenTextEditor;
 
     internal AssetList assets;
     internal FloatRef assetsLoadProgress;
@@ -177,9 +169,6 @@
         ModDrawParticleEffectBlockBreak particle = new ModDrawParticleEffectBlockBreak();
         this.particleEffectBlockBreak = particle;
         this.d_Data = gamedata;
-        this.d_CraftingTableTool = new CraftingTableTool();
-        this.d_CraftingTableTool.d_Map = MapStorage2.Create(this);
-        this.d_CraftingTableTool.d_Data = gamedata;
         d_TerrainTextures = terrainTextures;
 
         this.Reset(10 * 1000, 10 * 1000, 128);
@@ -208,25 +197,15 @@
         inventory.RightHand = new Packet_Item[10];
         terrainRenderer = new TerrainRenderer();
         terrainRenderer.game = this;
-        d_HudChat = new HudChat();
-        d_HudChat.game = this;
         GameDataItemsClient dataItems = new GameDataItemsClient();
         dataItems.game = this;
-        ClientInventoryController inventoryController = ClientInventoryController.Create(this);
         InventoryUtilClient inventoryUtil = new InventoryUtilClient();
-        HudInventory hudInventory = new HudInventory();
-        hudInventory.game = this;
-        hudInventory.dataItems = dataItems;
-        hudInventory.inventoryUtil = inventoryUtil;
-        hudInventory.controller = inventoryController;
         d_Inventory = inventory;
         d_InventoryUtil = inventoryUtil;
         inventoryUtil.d_Inventory = inventory;
         inventoryUtil.d_Items = dataItems;
         d_Physics.game = this;
         d_Inventory = inventory;
-        d_HudInventory = hudInventory;
-        escapeMenu.game = this;
         platform.AddOnCrash(OnCrashHandlerLeave.Create(this));
 
         rnd = platform.RandomCreate();
@@ -270,6 +249,7 @@
         AddMod(new ModDrawMinecarts());
         AddMod(new ModDrawHand2d());
         AddMod(new ModDrawHand3d());
+        AddMod(new ModGuiCrafting());
         AddMod(new ModDialog());
         AddMod(new ModPicking());
         AddMod(new ModClearInactivePlayersDrawInfo());
@@ -281,6 +261,14 @@
         AddMod(new ModSendActiveMaterial());
         AddMod(new ModCamera());
         AddMod(new ModNetworkEntity());
+        AddMod(new ModGuiChat());
+        AddMod(new ModGuiInventory());
+        AddMod(new ModGuiTouchButtons());
+        AddMod(new ModGuiEscapeMenu());
+        AddMod(new ModGuiMapLoading());
+        AddMod(new ModDraw2dMisc());
+        AddMod(new ModScreenshot());
+
         s = new BlockOctreeSearcher();
         s.platform = platform;
 
@@ -1221,12 +1209,11 @@
         SendPacket(packet, packetLen.value);
     }
 
+    internal bool IsTeamchat;
     internal void SendChat(string s)
     {
-        SendPacketClient(ClientPackets.Chat(s,d_HudChat.IsTeamchat ? 1 : 0));
+        SendPacketClient(ClientPackets.Chat(s, IsTeamchat ? 1 : 0));
     }
-
-    internal HudChat d_HudChat;
 
     internal void SendPingReply()
     {
@@ -1261,9 +1248,93 @@
 
     internal DictionaryStringString performanceinfo;
 
-    internal void AddChatline(string message)
+
+    internal Chatline[] ChatLines;
+    internal int ChatLinesMax;
+    internal int ChatLinesCount;
+    internal int ChatLineLength;
+    internal string GuiTypingBuffer;
+    internal bool IsTyping;
+
+    public void AddChatline(string s)
     {
-        d_HudChat.AddChatline(message);
+        Game game = this;
+        if (game.platform.StringEmpty(s))
+        {
+            return;
+        }
+        //Check for links in chatline
+        bool containsLink = false;
+        string linkTarget = "";
+        //Normal HTTP links
+        if (game.platform.StringContains(s, "http://"))
+        {
+            containsLink = true;
+            IntRef r = new IntRef();
+            string[] temp = game.platform.StringSplit(s, " ", r);
+            for (int i = 0; i < r.value; i++)
+            {
+                if (game.platform.StringIndexOf(temp[i], "http://") != -1)
+                {
+                    linkTarget = temp[i];
+                    break;
+                }
+            }
+        }
+        //Secure HTTPS links
+        if (game.platform.StringContains(s, "https://"))
+        {
+            containsLink = true;
+            IntRef r = new IntRef();
+            string[] temp = game.platform.StringSplit(s, " ", r);
+            for (int i = 0; i < r.value; i++)
+            {
+                if (game.platform.StringIndexOf(temp[i], "https://") != -1)
+                {
+                    linkTarget = temp[i];
+                    break;
+                }
+            }
+        }
+        int now = game.platform.TimeMillisecondsFromStart();
+        //Display message in multiple lines if it's longer than one line
+        if (s.Length > ChatLineLength)
+        {
+            for (int i = 0; i <= s.Length / ChatLineLength; i++)
+            {
+                int displayLength = ChatLineLength;
+                if (s.Length - (i * ChatLineLength) < ChatLineLength)
+                {
+                    displayLength = s.Length - (i * ChatLineLength);
+                }
+                if (containsLink)
+                    ChatLinesAdd(Chatline.CreateClickable(StringTools.StringSubstring(game.platform, s, i * ChatLineLength, displayLength), now, linkTarget));
+                else
+                    ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, i * ChatLineLength, displayLength), now));
+            }
+        }
+        else
+        {
+            if (containsLink)
+                ChatLinesAdd(Chatline.CreateClickable(s, now, linkTarget));
+            else
+                ChatLinesAdd(Chatline.Create(s, now));
+        }
+    }
+
+    void ChatLinesAdd(Chatline chatline)
+    {
+        if (ChatLinesCount >= ChatLinesMax)
+        {
+            Chatline[] lines2 = new Chatline[ChatLinesMax * 2];
+            for (int i = 0; i < ChatLinesMax; i++)
+            {
+                lines2[i] = ChatLines[i];
+            }
+            ChatLines = lines2;
+            ChatLinesMax *= 2;
+        }
+        ChatLines[ChatLinesCount++] = chatline;
     }
 
     internal bool ENABLE_DRAW2D;
@@ -1314,83 +1385,10 @@
         fontMapLoading = FontCi.Create("Arial", 14, 0);
     }
 
-    FontCi fontMapLoading;
+    internal FontCi fontMapLoading;
 
     internal string invalidVersionDrawMessage;
     internal Packet_Server invalidVersionPacketIdentification;
-
-    public void MapLoadingDraw()
-    {
-        int Width = platform.GetCanvasWidth();
-        int Height = platform.GetCanvasHeight();
-
-        Draw2dTexture(GetTexture("background.png"), 0, 0, 1024 * (one * Width / 800), 1024 * (one * Height / 600), null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
-        string connecting = language.Connecting();
-        if (issingleplayer && (!platform.SinglePlayerServerLoaded()))
-        {
-            connecting = "Starting game...";
-        }
-        if (maploadingprogress.ProgressStatus != null)
-        {
-            connecting = maploadingprogress.ProgressStatus;
-        }
-
-        if (invalidVersionDrawMessage != null)
-        {
-            Draw2dText(invalidVersionDrawMessage, fontMapLoading, xcenter(TextSizeWidth(invalidVersionDrawMessage, 14)), Height / 2 - 50, null, false);
-            string connect = "Click to connect";
-            Draw2dText(connect, fontMapLoading, xcenter(TextSizeWidth(connect, 14)), Height / 2 + 50, null, false);
-            return;
-        }
-
-        IntRef serverNameWidth = new IntRef();
-        IntRef serverNameHeight = new IntRef();
-        platform.TextSize(this.ServerInfo.ServerName, 14, serverNameWidth, serverNameHeight);
-        Draw2dText(this.ServerInfo.ServerName, fontMapLoading, xcenter(serverNameWidth.value), Height / 2 - 150, null, false);
-
-        if (ServerInfo.ServerMotd != null)
-        {
-            IntRef serverMotdWidth = new IntRef();
-            IntRef serverMotdHeight = new IntRef();
-            platform.TextSize(this.ServerInfo.ServerMotd, 14, serverMotdWidth, serverMotdHeight);
-            Draw2dText(this.ServerInfo.ServerMotd, fontMapLoading, xcenter(serverMotdWidth.value), Height / 2 - 100, null, false);
-        }
-        
-        IntRef connectingWidth = new IntRef();
-        IntRef connectingHeight = new IntRef();
-        platform.TextSize(connecting, 14, connectingWidth, connectingHeight);
-        Draw2dText(connecting, fontMapLoading, xcenter(connectingWidth.value), Height / 2 - 50, null, false);
-
-        string progress = platform.StringFormat(language.ConnectingProgressPercent(), platform.IntToString(maploadingprogress.ProgressPercent));
-        string progress1 = platform.StringFormat(language.ConnectingProgressKilobytes(), platform.IntToString(maploadingprogress.ProgressBytes / 1024));
-
-        if (maploadingprogress.ProgressPercent > 0)
-        {
-            IntRef progressWidth = new IntRef();
-            IntRef progressHeight = new IntRef();
-            platform.TextSize(progress, 14, progressWidth, progressHeight);
-            Draw2dText(progress, fontMapLoading, xcenter(progressWidth.value), Height / 2 - 20, null, false);
-
-            IntRef progress1Width = new IntRef();
-            IntRef progress1Height = new IntRef();
-            platform.TextSize(progress1, 14, progress1Width, progress1Height);
-            Draw2dText(progress1, fontMapLoading, xcenter(progress1Width.value), Height / 2 + 10, null, false);
-
-            float progressratio = one * maploadingprogress.ProgressPercent / 100;
-            int sizex = 400;
-            int sizey = 40;
-            Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, sizex, sizey, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-            int red = Game.ColorFromArgb(255, 255, 0, 0);
-            int yellow = Game.ColorFromArgb(255, 255, 255, 0);
-            int green = Game.ColorFromArgb(255, 0, 255, 0);
-            int[] colors = new int[3];
-            colors[0] = red;
-            colors[1] = yellow;
-            colors[2] = green;
-            int c = InterpolationCi.InterpolateColor(platform, progressratio, colors, 3);
-            Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, 0, c, false);
-        }
-    }
 
     DictionaryStringInt1024 textures;
     internal int GetTexture(string p)
@@ -1427,7 +1425,6 @@
     }
 
     internal ServerInformation ServerInfo;
-    internal EscapeMenuState escapemenustate;
     internal bool AudioEnabled;
     internal bool AutoJumpEnabled;
     internal MenuState menustate;
@@ -1438,19 +1435,6 @@
     internal bool mouserightdeclick;
     internal bool wasmouseright;
     internal int ENABLE_LAG;
-
-    internal void DrawScreenshotFlash()
-    {
-        Draw2dTexture(WhiteTexture(), 0, 0, platform.GetCanvasWidth(), platform.GetCanvasHeight(), null, 0, ColorFromArgb(255, 255, 255, 255), false);
-        string screenshottext = "&0Screenshot";
-        IntRef textWidth = new IntRef();
-        IntRef textHeight = new IntRef();
-        platform.TextSize(screenshottext, 50, textWidth, textHeight);
-        FontCi font = new FontCi();
-        font.family = "Arial";
-        font.size = 50;
-        Draw2dText(screenshottext, font, xcenter(textWidth.value), ycenter(textHeight.value), null, false);
-    }
 
     public int Width()
     {
@@ -1488,40 +1472,6 @@
     }
 
     internal Packet_ServerPlayerStats PlayerStats;
-
-    //Size of Health/Oxygen bar
-    const int barSizeX = 20;
-    const int barSizeY = 120;
-    const int barOffset = 30;
-    const int barDistanceToMargin = 40;
-
-    public void DrawPlayerHealth()
-    {
-        if (PlayerStats != null)
-        {
-            float progress = one * PlayerStats.CurrentHealth / PlayerStats.MaxHealth;
-            int posX = platform.FloatToInt(barDistanceToMargin * Scale());
-            int posY = platform.FloatToInt(Height() - barDistanceToMargin * Scale());
-            Draw2dTexture(WhiteTexture(), posX, posY - barSizeY * Scale(), barSizeX * Scale(), barSizeY * Scale(), null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-            Draw2dTexture(WhiteTexture(), posX, posY - (progress * barSizeY * Scale()), barSizeX * Scale(), (progress) * barSizeY * Scale(), null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
-        }
-        //if (test) { d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 50, 50, 200, 200, null, Color.Red); }
-    }
-
-    public void DrawPlayerOxygen()
-    {
-        if (PlayerStats != null)
-        {
-            if (PlayerStats.CurrentOxygen < PlayerStats.MaxOxygen)
-            {
-                float progress = one * PlayerStats.CurrentOxygen / PlayerStats.MaxOxygen;
-                int posX = barDistanceToMargin + barOffset;
-                int posY = Height() - barDistanceToMargin;
-                Draw2dTexture(WhiteTexture(), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-                Draw2dTexture(WhiteTexture(), posX, posY - (progress * barSizeY), barSizeX, (progress) * barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 255), false);
-            }
-        }
-    }
 
     internal int[] TotalAmmo;
     internal int[] LoadedAmmo;
@@ -1597,29 +1547,6 @@
             platform.FloatToInt(player.position.z),
             platform.FloatToInt(player.position.y) - 1);
         return blockunderplayer;
-    }
-
-    internal void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
-    {
-        int y = useInfo ? 55 : 35;
-        Draw2dTexture(WhiteTexture(), xcenter(300), 40, 300, y, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-        Draw2dTexture(WhiteTexture(), xcenter(300), 40, 300 * progress, y, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
-        FontCi font = new FontCi();
-        font.family = "Arial";
-        font.size = 14;
-        IntRef w = new IntRef();
-        IntRef h = new IntRef();
-        platform.TextSize(name, 14, w, h);
-        Draw2dText(name, font, xcenter(w.value), 40, null, false);
-        if (useInfo)
-        {
-            name = platform.StringFormat(language.PressToUse(), "E");
-            platform.TextSize(name, 10, w, h);
-            FontCi font2 = new FontCi();
-            font2.family = "Arial";
-            font2.size = 10;
-            Draw2dText(name, font2, xcenter(w.value), 70, null, false);
-        }
     }
 
     internal CameraType cameratype;
@@ -2147,58 +2074,8 @@
         return d_Data.Strength()[blocktype];
     }
 
-    internal void DrawEnemyHealthCommon(string name, float progress)
-    {
-        DrawEnemyHealthUseInfo(name, 1, false);
-    }
-
     internal Vector3IntRef currentAttackedBlock;
     internal int currentlyAttackedEntity;
-
-    internal void DrawEnemyHealthBlock()
-    {
-        if (currentAttackedBlock != null)
-        {
-            int x = currentAttackedBlock.X;
-            int y = currentAttackedBlock.Y;
-            int z = currentAttackedBlock.Z;
-            int blocktype = GetBlock(x, y, z);
-            float health = GetCurrentBlockHealth(x, y, z);
-            float progress = health / d_Data.Strength()[blocktype];
-            if (IsUsableBlock(blocktype))
-            {
-                DrawEnemyHealthUseInfo(language.Get(StringTools.StringAppend(platform, "Block_", blocktypes[blocktype].Name)), progress, true);
-            }
-            DrawEnemyHealthCommon(language.Get(StringTools.StringAppend(platform, "Block_", blocktypes[blocktype].Name)), progress);
-        }
-        if (currentlyAttackedEntity != -1)
-        {
-            Entity e = entities[currentlyAttackedEntity];
-            if (e == null)
-            {
-                return;
-            }
-            float health;
-            if (e.health != null)
-            {
-                health = one * e.health.CurrentHealth / e.health.MaxHealth;
-            }
-            else
-            {
-                health = 1;
-            }
-            string name = "Unknown";
-            if (e.drawName != null)
-            {
-                name = e.drawName.Name;
-            }
-            if (e.usable != null)
-            {
-                DrawEnemyHealthUseInfo(language.Get(name), health, true);
-            }
-            DrawEnemyHealthCommon(language.Get(name), health);
-        }
-    }
 
     internal void SendRequestBlob(string[] required, int requiredCount)
     {
@@ -2230,7 +2107,6 @@
     internal int MapLoadingPercentComplete;
     internal string MapLoadingStatus;
     internal int LastReceivedMilliseconds;
-    internal int screenshotflash;
     internal int playertexturedefault;
     public const string playertexturedefaultfilename = "mineplayer.png";
     internal bool ENABLE_DRAW_TEST_CHARACTER;
@@ -2251,7 +2127,6 @@
     {
         SendPacketClient(ClientPackets.Leave(reason));
     }
-    internal HudInventory d_HudInventory;
     internal IFrustumCulling d_FrustumCulling;
     internal CharacterPhysicsCi d_Physics;
     internal ClientModManager1 modmanager;
@@ -2372,15 +2247,6 @@
         }
         return false;
     }
-
-    internal void CraftingRecipeSelected(int x, int y, int z, IntRef recipe)
-    {
-        if (recipe == null)
-        {
-            return;
-        }
-        SendPacketClient(ClientPackets.Craft(x, y, z, recipe.value));
-    }
     internal float PICK_DISTANCE;
     internal bool leftpressedpicking;
     internal int selectedmodelid;
@@ -2448,25 +2314,6 @@
         return platform.MathSqrt(dx * dx + dy * dy + dz * dz);
     }
 
-    public void DrawBlockInfo()
-    {
-        int x = SelectedBlockPositionX;
-        int y = SelectedBlockPositionZ;
-        int z = SelectedBlockPositionY;
-        //string info = "None";
-        if (!IsValidPos(x, y, z))
-        {
-            return;
-        }
-        int blocktype = GetBlock(x, y, z);
-        if (!IsValid(blocktype))
-        {
-            return;
-        }
-        currentAttackedBlock = Vector3IntRef.Create(x, y, z);
-        DrawEnemyHealthBlock();
-    }
-
     internal bool IsValid(int blocktype)
     {
         return blocktypes[blocktype].Name != null;
@@ -2486,32 +2333,6 @@
         IntRef height = new IntRef();
         platform.TextSize(s, size, width, height);
         return height.value;
-    }
-
-    internal void DrawAmmo()
-    {
-        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
-        if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
-        {
-            if (blocktypes[item.BlockId].IsPistol)
-            {
-                int loaded = LoadedAmmo[item.BlockId];
-                int total = TotalAmmo[item.BlockId];
-                string s = platform.StringFormat2("{0}/{1}", platform.IntToString(loaded), platform.IntToString(total - loaded));
-                FontCi font = new FontCi();
-                font.family = "Arial";
-                font.size = 18;
-                Draw2dText(s, font, Width() - TextSizeWidth(s, 18) - 50,
-                    Height() - TextSizeHeight(s, 18) - 50, loaded == 0 ? IntRef.Create(Game.ColorFromArgb(255, 255, 0, 0)) : IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), false);
-                if (loaded == 0)
-                {
-                    font.size = 14;
-                    string pressR = "Press R to reload";
-                    Draw2dText(pressR, font, Width() - TextSizeWidth(pressR, 14) - 50,
-                        Height() - TextSizeHeight(s, 14) - 80, IntRef.Create(Game.ColorFromArgb(255, 255, 0, 0)), false);
-                }
-            }
-        }
     }
 
     ModelData circleModelData;
@@ -2558,19 +2379,6 @@
         DrawModelData(circleModelData);
 
         GLPopMatrix();
-    }
-
-    internal void DrawAim()
-    {
-        int aimwidth = 32;
-        int aimheight = 32;
-
-        if (CurrentAimRadius() > 1)
-        {
-            float fov_ = this.currentfov();
-            Circle3i(Width() / 2, Height() / 2, CurrentAimRadius() * this.fov / fov_);
-        }
-        Draw2dBitmapFile("target.png", Width() / 2 - aimwidth / 2, Height() / 2 - aimheight / 2, aimwidth, aimheight);
     }
 
     internal int totaltimeMilliseconds;
@@ -2816,8 +2624,9 @@
     internal float tppcameradistance;
     internal int TPP_CAMERA_DISTANCE_MIN;
     internal int TPP_CAMERA_DISTANCE_MAX;
-    internal void MouseWheelChanged(float eDeltaPrecise)
+    internal void MouseWheelChanged(MouseWheelEventArgs e)
     {
+        float eDeltaPrecise = e.GetDeltaPrecise();
         if (keyboardState[GetKey(GlKeys.LControl)])
         {
             if (cameratype == CameraType.Overhead)
@@ -2833,19 +2642,13 @@
                 if (tppcameradistance > TPP_CAMERA_DISTANCE_MAX) { tppcameradistance = TPP_CAMERA_DISTANCE_MAX; }
             }
         }
-        if (d_HudInventory.IsMouseOverCells() && guistate == GuiState.Inventory)
+        for (int i = 0; i < clientmodsCount; i++)
         {
-            float delta = eDeltaPrecise;
-            if (delta > 0)
-            {
-                d_HudInventory.ScrollUp();
-            }
-            if (delta < 0)
-            {
-                d_HudInventory.ScrollDown();
-            }
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnMouseWheelChanged(this, e);
         }
-        else if (!keyboardState[GetKey(GlKeys.LControl)])
+        if ((guistate != GuiState.Inventory)
+            && (!keyboardState[GetKey(GlKeys.LControl)]))
         {
             ActiveMaterial -= platform.FloatToInt(eDeltaPrecise);
             ActiveMaterial = ActiveMaterial % 10;
@@ -3136,18 +2939,9 @@
             KeyEventArgs args_ = new KeyEventArgs();
             args_.SetKeyCode(eKey);
             clientmods[i].OnKeyUp(this, args_);
-        }
-        for (int i = 0; i < screensMax; i++)
-        {
-            if (screens[i] != null)
+            if (args_.GetHandled())
             {
-                KeyEventArgs args_ = new KeyEventArgs();
-                args_.SetKeyCode(eKey);
-                screens[i].OnKeyUp(args_);
-                if (args_.GetHandled())
-                {
-                    return;
-                }
+                return;
             }
         }
         keyboardState[eKey] = false;
@@ -3190,79 +2984,15 @@
 
     internal void KeyPress(int eKeyChar)
     {
-        for (int i = 0; i < screensMax; i++)
-        {
-            if (screens[i] != null)
-            {
-                KeyPressEventArgs args_ = new KeyPressEventArgs();
-                args_.SetKeyChar(eKeyChar);
-                screens[i].OnKeyPress(args_);
-                if (args_.GetHandled())
-                {
-                    return;
-                }
-            }
-        }
         for (int i = 0; i < clientmodsCount; i++)
         {
-            if (clientmods[i] != null)
+            if (clientmods[i] == null) { continue; }
+            KeyPressEventArgs args_ = new KeyPressEventArgs();
+            args_.SetKeyChar(eKeyChar);
+            clientmods[i].OnKeyPress(this, args_);
+            if (args_.GetHandled())
             {
-                KeyPressEventArgs args_ = new KeyPressEventArgs();
-                args_.SetKeyChar(eKeyChar);
-                clientmods[i].OnKeyPress(this, args_);
-                if (args_.GetHandled())
-                {
-                    return;
-                }
-            }
-        }
-        int chart = 116;
-        int charT = 84;
-        int chary = 121;
-        int charY = 89;
-        if ((eKeyChar == chart || eKeyChar == charT) && GuiTyping == TypingState.None)
-        {
-            GuiTyping = TypingState.Typing;
-            d_HudChat.GuiTypingBuffer = "";
-            d_HudChat.IsTeamchat = false;
-            return;
-        }
-        if ((eKeyChar == chary || eKeyChar == charY) && GuiTyping == TypingState.None)
-        {
-            GuiTyping = TypingState.Typing;
-            d_HudChat.GuiTypingBuffer = "";
-            d_HudChat.IsTeamchat = true;
-            return;
-        }
-        if (GuiTyping == TypingState.Typing)
-        {
-            int c = eKeyChar;
-            if (platform.IsValidTypingChar(c))
-            {
-                d_HudChat.GuiTypingBuffer = StringTools.StringAppend(platform, d_HudChat.GuiTypingBuffer, CharToString(c));
-            }
-            int charTab = 9;
-            //Handles player name autocomplete in chat
-            if (c == charTab && platform.StringTrim(d_HudChat.GuiTypingBuffer) != "")
-            {
-                for (int i = 0; i < entitiesCount; i++)
-                {
-                    if (entities[i] == null)
-                    {
-                        continue;
-                    }
-                    if (entities[i].drawName == null)
-                    {
-                        continue;
-                    }
-                    DrawName p = entities[i].drawName;
-                    //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
-                    if (platform.StringStartsWithIgnoreCase(StringTools.StringSubstringToEnd(platform, p.Name, 2), d_HudChat.GuiTypingBuffer))
-                    {
-                        d_HudChat.GuiTypingBuffer = StringTools.StringAppend(platform, StringTools.StringSubstringToEnd(platform, p.Name, 2), ": ");
-                        break;
-                    }
-                }
+                return;
             }
         }
     }
@@ -3272,14 +3002,6 @@
         int[] arr = new int[1];
         arr[0] = c;
         return platform.CharArrayToString(arr, 1);
-    }
-
-    internal void DrawMouseCursor()
-    {
-        if (!platform.MouseCursorIsVisible())
-        {
-            Draw2dBitmapFile("mousecursor.png", mouseCurrentX, mouseCurrentY, 32, 32);
-        }
     }
 
     internal Speculative[] speculative;
@@ -3717,7 +3439,7 @@
                         args.command = cmd;
                         clientmods[i].OnClientCommand(this, args);
                     }
-                    string chatline = StringTools.StringSubstring(platform, d_HudChat.GuiTypingBuffer, 0, MinInt(d_HudChat.GuiTypingBuffer.Length, 256));
+                    string chatline = StringTools.StringSubstring(platform, GuiTypingBuffer, 0, MinInt(GuiTypingBuffer.Length, 256));
                     SendChat(chatline);
                 }
             }
@@ -3725,7 +3447,7 @@
         }
         else
         {
-            string chatline = StringTools.StringSubstring(platform, d_HudChat.GuiTypingBuffer, 0, Game.MinInt(StringTools.StringLength(platform, d_HudChat.GuiTypingBuffer), 4096));
+            string chatline = StringTools.StringSubstring(platform, GuiTypingBuffer, 0, Game.MinInt(StringTools.StringLength(platform, GuiTypingBuffer), 4096));
             SendChat(chatline);
         }
     }
@@ -4102,10 +3824,6 @@
                     mLightLevels[i] = DeserializeFloat(packet.LightLevels.Lightlevels[i]);
                 }
                 break;
-            case Packet_ServerIdEnum.CraftingRecipes:
-                d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
-                d_CraftingRecipesCount = packet.CraftingRecipes.CraftingRecipesCount;
-                break;
             case Packet_ServerIdEnum.Follow:
                 IntRef oldFollowId = FollowId();
                 Follow = packet.Follow.Client;
@@ -4306,8 +4024,6 @@
     internal int handTexture;
 
     bool ammostarted;
-    internal Packet_CraftingRecipe[] d_CraftingRecipes;
-    internal int d_CraftingRecipesCount;
     internal Packet_BlockType[] NewBlockTypes;
     internal string blobdownloadname;
     internal string blobdownloadmd5;
@@ -4489,19 +4205,6 @@
                 return;
             }
         }
-        for (int i = 0; i < screensMax; i++)
-        {
-            if (screens[i] != null)
-            {
-                KeyEventArgs args_ = new KeyEventArgs();
-                args_.SetKeyCode(eKey);
-                screens[i].OnKeyDown(args_);
-                if (args_.GetHandled())
-                {
-                    return;
-                }
-            }
-        }
         keyboardState[eKey] = true;
         InvalidVersionAllow();
         if (eKey == GetKey(GlKeys.F6))
@@ -4518,94 +4221,6 @@
         }
         if (guistate == GuiState.Normal)
         {
-            if (eKey == GetKey(GlKeys.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
-            {
-                GuiTyping = TypingState.Typing;
-                d_HudChat.IsTyping = true;
-                d_HudChat.GuiTypingBuffer = "";
-                d_HudChat.IsTeamchat = false;
-                return;
-            }
-            if (eKey == GetKey(GlKeys.PageUp) && GuiTyping == TypingState.Typing)
-            {
-                d_HudChat.ChatPageScroll++;
-            }
-            if (eKey == GetKey(GlKeys.PageDown) && GuiTyping == TypingState.Typing)
-            {
-                d_HudChat.ChatPageScroll--;
-            }
-            d_HudChat.ChatPageScroll = Game.ClampInt(d_HudChat.ChatPageScroll, 0, d_HudChat.ChatLinesCount / d_HudChat.ChatLinesMaxToDraw);
-            if (eKey == GetKey(GlKeys.Enter) || eKey == GetKey(GlKeys.KeypadEnter))
-            {
-                if (GuiTyping == TypingState.Typing)
-                {
-                    typinglog[typinglogCount++] = d_HudChat.GuiTypingBuffer;
-                    typinglogpos = typinglogCount;
-                    ClientCommand(d_HudChat.GuiTypingBuffer);
-
-                    d_HudChat.GuiTypingBuffer = "";
-                    d_HudChat.IsTyping = false;
-
-                    GuiTyping = TypingState.None;
-                    platform.ShowKeyboard(false);
-                }
-                else if (GuiTyping == TypingState.None)
-                {
-                    StartTyping();
-                }
-                else if (GuiTyping == TypingState.Ready)
-                {
-                    platform.ConsoleWriteLine("Keyboard_KeyDown ready");
-                }
-                return;
-            }
-            if (GuiTyping == TypingState.Typing)
-            {
-                int key = eKey;
-                if (key == GetKey(GlKeys.BackSpace))
-                {
-                    if (StringTools.StringLength(platform, d_HudChat.GuiTypingBuffer) > 0)
-                    {
-                        d_HudChat.GuiTypingBuffer = StringTools.StringSubstring(platform, d_HudChat.GuiTypingBuffer, 0, StringTools.StringLength(platform, d_HudChat.GuiTypingBuffer) - 1);
-                    }
-                    return;
-                }
-                if (keyboardState[GetKey(GlKeys.ControlLeft)] || keyboardState[GetKey(GlKeys.ControlRight)])
-                {
-                    if (key == GetKey(GlKeys.V))
-                    {
-                        if (platform.ClipboardContainsText())
-                        {
-                            d_HudChat.GuiTypingBuffer = StringTools.StringAppend(platform, d_HudChat.GuiTypingBuffer, platform.ClipboardGetText());
-                        }
-                        return;
-                    }
-                }
-                if (key == GetKey(GlKeys.Up))
-                {
-                    typinglogpos--;
-                    if (typinglogpos < 0) { typinglogpos = 0; }
-                    if (typinglogpos >= 0 && typinglogpos < typinglogCount)
-                    {
-                        d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
-                    }
-                }
-                if (key == GetKey(GlKeys.Down))
-                {
-                    typinglogpos++;
-                    if (typinglogpos > typinglogCount) { typinglogpos = typinglogCount; }
-                    if (typinglogpos >= 0 && typinglogpos < typinglogCount)
-                    {
-                        d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
-                    }
-                    if (typinglogpos == typinglogCount)
-                    {
-                        d_HudChat.GuiTypingBuffer = "";
-                    }
-                }
-                return;
-            }
-
             string strFreemoveNotAllowed = "You are not allowed to enable freemove.";
 
             if (eKey == GetKey(GlKeys.F1))
@@ -4707,11 +4322,6 @@
                 if (ENABLE_LAG == 1) { Log(language.FrameRateUnlimited()); }
                 if (ENABLE_LAG == 2) { Log(language.FrameRateLagSimulation()); }
             }
-            if (eKey == GetKey(GlKeys.F12))
-            {
-                platform.SaveScreenshot();
-                screenshotflash = 5;
-            }
             if (eKey == GetKey(GlKeys.Tab))
             {
                 SendPacketClient(ClientPackets.SpecialKeyTabPlayerList());
@@ -4787,11 +4397,6 @@
             {
                 GuiStateBackToGame();
             }
-            if (eKey == GetKey(GlKeys.F12))
-            {
-                platform.SaveScreenshot();
-                screenshotflash = 5;
-            }
             return;
         }
         if (guistate == GuiState.MapLoading)
@@ -4809,53 +4414,23 @@
                 GuiStateBackToGame();
             }
         }
-        if (eKey == GetKey(GlKeys.F11))
-        {
-            if (platform.GetWindowState() == WindowState.Fullscreen)
-            {
-                platform.SetWindowState(WindowState.Normal);
-                escapeMenu.RestoreResolution();
-                escapeMenu.SaveOptions();
-            }
-            else
-            {
-                platform.SetWindowState(WindowState.Fullscreen);
-                escapeMenu.UseResolution();
-                escapeMenu.SaveOptions();
-            }
-        }
-        if (eKey == (GetKey(GlKeys.C)) && GuiTyping == TypingState.None)
-        {
-            if (!(SelectedBlockPositionX == -1 && SelectedBlockPositionY == -1 && SelectedBlockPositionZ == -1))
-            {
-                int posx = SelectedBlockPositionX;
-                int posy = SelectedBlockPositionZ;
-                int posz = SelectedBlockPositionY;
-                if (GetBlock(posx, posy, posz) == d_Data.BlockIdCraftingTable())
-                {
-                    //draw crafting recipes list.
-                    IntRef tableCount = new IntRef();
-                    Vector3IntRef[] table = d_CraftingTableTool.GetTable(posx, posy, posz, tableCount);
-                    IntRef onTableCount = new IntRef();
-                    int[] onTable = d_CraftingTableTool.GetOnTable(table, tableCount.value, onTableCount);
-                    CraftingRecipesStart(d_CraftingRecipes, d_CraftingRecipesCount, onTable, onTableCount.value, posx, posy, posz);
-                }
-            }
-        }
-
         if (guistate == GuiState.Normal)
         {
             if (eKey == GetKey(GlKeys.Escape))
             {
-                escapeMenu.EscapeMenuStart();
+                EscapeMenuStart();
                 return;
             }
         }
-        if (guistate == GuiState.EscapeMenu)
-        {
-            escapeMenu.EscapeMenuKeyDown(eKey);
-            return;
-        }
+    }
+
+    internal bool escapeMenuRestart;
+    public void EscapeMenuStart()
+    {
+        guistate = GuiState.EscapeMenu;
+        menustate = new MenuState();
+        platform.ExitMousePointerLock();
+        escapeMenuRestart = true;
     }
 
     public void ShowEscapeMenu()
@@ -4904,7 +4479,6 @@
             platform.ThrowException("");
         }
     }
-    internal GuiStateEscapeMenu escapeMenu;
     internal bool drawblockinfo;
 
     internal void UpdateTitleFps(float dt)
@@ -4935,48 +4509,20 @@
                 {
                     if (!ENABLE_DRAW2D)
                     {
-                        if (GuiTyping == TypingState.Typing)
-                        {
-                            d_HudChat.DrawChatLines(true);
-                            d_HudChat.DrawTypingBuffer();
-                        }
                         PerspectiveMode();
                         return;
                     }
-                    if (cameratype != CameraType.Overhead)
-                    {
-                        DrawAim();
-                    }
-                    d_HudInventory.DrawMaterialSelector();
-                    DrawPlayerHealth();
-                    DrawPlayerOxygen();
-                    DrawEnemyHealthBlock();
-                    for (int i = 0; i < screensMax; i++)
-                    {
-                        if (screens[i] != null)
-                        {
-                            screens[i].Render(dt);
-                        }
-                    }
-                    d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
-                    if (GuiTyping == TypingState.Typing)
-                    {
-                        d_HudChat.DrawTypingBuffer();
-                    }
-                    DrawAmmo();
                 }
                 break;
             case GuiState.Inventory:
                 {
                     //d_The3d.ResizeGraphics(Width, Height);
                     //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
-                    d_HudInventory.Draw();
                     //d_The3d.PerspectiveMode();
                 }
                 break;
             case GuiState.MapLoading:
                 {
-                    MapLoadingDraw();
                 }
                 break;
             case GuiState.ModalDialog:
@@ -4990,13 +4536,10 @@
                         PerspectiveMode();
                         return;
                     }
-                    d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
-                    escapeMenu.EscapeMenuDraw();
                 }
                 break;
             case GuiState.CraftingRecipes:
                 {
-                    DrawCraftingRecipes();
                 }
                 break;
         }
@@ -5007,51 +4550,11 @@
         }
 
         //d_The3d.OrthoMode(Width, Height);
-        if (ENABLE_DRAWPOSITION)
-        {
-            float heading = one * HeadingByte(player.position.rotx, player.position.roty, player.position.rotz);
-            float pitch = one * PitchByte(player.position.rotx, player.position.roty, player.position.rotz);
-            string postext = platform.StringFormat("X: {0}", platform.IntToString(MathFloor(player.position.x)));
-            postext = StringTools.StringAppend(platform, postext, ",\tY: ");
-            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.position.z)));
-            postext = StringTools.StringAppend(platform, postext, ",\tZ: ");
-            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.position.y)));
-            postext = StringTools.StringAppend(platform, postext, "\nHeading: ");
-            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(heading)));
-            postext = StringTools.StringAppend(platform, postext, "\nPitch: ");
-            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(pitch)));
-            FontCi font = new FontCi();
-            font.family = "Arial";
-            font.size = d_HudChat.ChatFontSize;
-            Draw2dText(postext, font, 100, 460, null, false);
-        }
-        if (drawblockinfo)
-        {
-            DrawBlockInfo();
-        }
-        if (GetFreeMouse())
-        {
-            DrawMouseCursor();
-        }
-        if (screenshotflash > 0)
-        {
-            DrawScreenshotFlash();
-            screenshotflash--;
-        }
-        float lagSeconds = one * (platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
-        if ((lagSeconds >= Game.DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
-            && invalidVersionDrawMessage == null && !(issingleplayer && (!platform.SinglePlayerServerLoaded())))
-        {
-            Draw2dBitmapFile("disconnected.png", Width() - 100, 50, 50, 50);
-            FontCi font = new FontCi();
-            font.family = "Arial";
-            font.size = 12;
-            Draw2dText(platform.IntToString(platform.FloatToInt(lagSeconds)), font, Width() - 100, 50 + 50 + 10, null, false);
-            Draw2dText("Press F6 to reconnect", font, Width() / 2 - 200 / 2, 50, null, false);
-        }
 
         PerspectiveMode();
     }
+
+    public const int ChatFontSize = 11;
 
     internal BoolRef soundnow;
 
@@ -5112,10 +4615,6 @@
         lastplayerpositionX = player.position.x;
         lastplayerpositionY = player.position.y;
         lastplayerpositionZ = player.position.z;
-        if (guistate == GuiState.CraftingRecipes)
-        {
-            CraftingMouse();
-        }
     }
 
     public void Update(float dt)
@@ -5204,14 +4703,6 @@
             if (clientmods[i] == null) { continue; }
             clientmods[i].OnMouseDown(this, args);
         }
-        if (guistate == GuiState.Inventory)
-        {
-            d_HudInventory.Mouse_ButtonDown(args);
-        }
-        if (guistate == GuiState.EscapeMenu)
-        {
-            d_HudChat.OnMouseDown(args);
-        }
         InvalidVersionAllow();
     }
 
@@ -5233,134 +4724,7 @@
             if (clientmods[i] == null) { continue; }
             clientmods[i].OnMouseUp(this, args);
         }
-        if (guistate == GuiState.Inventory)
-        {
-            d_HudInventory.Mouse_ButtonUp(args);
-        }
     }
-
-    internal int craftingTableposx;
-    internal int craftingTableposy;
-    internal int craftingTableposz;
-    internal Packet_CraftingRecipe[] craftingrecipes2;
-    internal int craftingrecipes2Count;
-    internal int[] craftingblocks;
-    internal int craftingblocksCount;
-    internal int craftingselectedrecipe;
-    internal void CraftingRecipesStart(Packet_CraftingRecipe[] recipes, int recipesCount, int[] blocks, int blocksCount, int posx, int posy, int posz)
-    {
-        this.craftingrecipes2 = recipes;
-        this.craftingrecipes2Count = recipesCount;
-        this.craftingblocks = blocks;
-        this.craftingblocksCount = blocksCount;
-        craftingTableposx = posx;
-        craftingTableposy = posy;
-        craftingTableposz = posz;
-        guistate = GuiState.CraftingRecipes;
-        menustate = new MenuState();
-        SetFreeMouse(true);
-    }
-
-    internal int[] okrecipes;
-    internal int okrecipesCount;
-    internal void DrawCraftingRecipes()
-    {
-        okrecipes = new int[1024];
-        okrecipesCount = 0;
-        for (int i = 0; i < craftingrecipes2Count; i++)
-        {
-            Packet_CraftingRecipe r = craftingrecipes2[i];
-            if (r == null)
-            {
-                continue;
-            }
-            bool next = false;
-            //can apply recipe?
-            for (int k = 0; k < r.IngredientsCount; k++)
-            {
-                Packet_Ingredient ingredient = r.Ingredients[k];
-                if (ingredient == null)
-                {
-                    continue;
-                }
-                if (craftingblocksFindAllCount(craftingblocks, craftingblocksCount, ingredient.Type) < ingredient.Amount)
-                {
-                    next = true;
-                    break;
-                }
-            }
-            if (!next)
-            {
-                okrecipes[okrecipesCount++] = i;
-            }
-        }
-        int menustartx = xcenter(600);
-        int menustarty = ycenter(okrecipesCount * 80);
-        if (okrecipesCount == 0)
-        {
-            Draw2dText1(language.NoMaterialsForCrafting(), xcenter(200), ycenter(20), 12, null, false);
-            return;
-        }
-        for (int i = 0; i < okrecipesCount; i++)
-        {
-            Packet_CraftingRecipe r = craftingrecipes2[okrecipes[i]];
-            for (int ii = 0; ii < r.IngredientsCount; ii++)
-            {
-                int xx = menustartx + 20 + ii * 130;
-                int yy = menustarty + i * 80;
-                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(TextureIdForInventory[r.Ingredients[ii].Type]), texturesPacked(), Game.ColorFromArgb(255, 255, 255, 255), false);
-                Draw2dText1(platform.StringFormat2("{0} {1}", platform.IntToString(r.Ingredients[ii].Amount), blocktypes[r.Ingredients[ii].Type].Name), xx + 50, yy, 12,
-                   IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
-            }
-            {
-                int xx = menustartx + 20 + 400;
-                int yy = menustarty + i * 80;
-                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(TextureIdForInventory[r.Output.Type]), texturesPacked(), Game.ColorFromArgb(255, 255, 255, 255), false);
-                Draw2dText1(platform.StringFormat2("{0} {1}", platform.IntToString(r.Output.Amount), blocktypes[r.Output.Type].Name), xx + 50, yy, 12,
-                  IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
-            }
-        }
-    }
-    int craftingblocksFindAllCount(int[] craftingblocks_, int craftingblocksCount_, int p)
-    {
-        int count = 0;
-        for (int i = 0; i < craftingblocksCount_; i++)
-        {
-            if (craftingblocks_[i] == p)
-            {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    internal void CraftingMouse()
-    {
-        if (okrecipes == null)
-        {
-            return;
-        }
-        int menustartx = xcenter(600);
-        int menustarty = ycenter(okrecipesCount * 80);
-        if (mouseCurrentY >= menustarty && mouseCurrentY < menustarty + okrecipesCount * 80)
-        {
-            craftingselectedrecipe = (mouseCurrentY - menustarty) / 80;
-        }
-        else
-        {
-            //craftingselectedrecipe = -1;
-        }
-        if (mouseleftclick)
-        {
-            if (okrecipesCount != 0)
-            {
-                CraftingRecipeSelected(craftingTableposx, craftingTableposy, craftingTableposz, IntRef.Create(okrecipes[craftingselectedrecipe]));
-            }
-            mouseleftclick = false;
-            GuiStateBackToGame();
-        }
-    }
-    internal CraftingTableTool d_CraftingTableTool;
 
     public GamePlatform GetPlatform()
     {
@@ -5375,19 +4739,11 @@
     internal int Font;
     internal GameExit d_Exit;
 
-    internal void OnKeyPress(int keyChar)
-    {
-        if (guistate == GuiState.Inventory)
-        {
-            d_HudInventory.OnKeyPress(keyChar);
-        }
-    }
-
     internal void OnFocusChanged()
     {
         if (guistate == GuiState.Normal)
         {
-            escapeMenu.EscapeMenuStart();
+            EscapeMenuStart();
         }
     }
 
@@ -5418,8 +4774,6 @@
 
     internal void Connect__()
     {
-        escapeMenu.LoadOptions();
-
         if (connectdata.ServerPassword == null || connectdata.ServerPassword == "")
         {
             Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
@@ -5562,13 +4916,6 @@
         }
     }
 
-    int touchIdMove;
-    int touchMoveStartX;
-    int touchMoveStartY;
-    int touchIdRotate;
-    int touchRotateStartX;
-    int touchRotateStartY;
-
     public void OnTouchStart(TouchEventArgs e)
     {
         InvalidVersionAllow();
@@ -5576,91 +4923,32 @@
         mouseCurrentY = e.GetY();
         mouseleftclick = true;
 
-        MouseEventArgs args = new MouseEventArgs();
-        args.SetX(e.GetX());
-        args.SetY(e.GetY());
-
-        if (d_HudInventory.Mouse_ButtonDown(args))
+        for (int i = 0; i < clientmodsCount; i++)
         {
-            return;
-        }
-
-        for (int i = 0; i < screensMax; i++)
-        {
-            if (screens[i] == null)
-            {
-                continue;
-            }
-            screens[i].OnTouchStart(e);
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnTouchStart(this, e);
             if (e.GetHandled())
             {
                 return;
-            }
-        }
-
-        if (e.GetX() <= Width() / 2)
-        {
-            if (touchIdMove == -1)
-            {
-                touchIdMove = e.GetId();
-                touchMoveStartX = e.GetX();
-                touchMoveStartY = e.GetY();
-                touchMoveDx = 0;
-                if (e.GetY() < Height() * 50 / 100)
-                {
-                    touchMoveDy = 1;
-                }
-                else
-                {
-                    touchMoveDy = 0;
-                }
-            }
-        }
-        if (((touchIdMove != -1)
-            && (e.GetId() != touchIdMove))
-            || (e.GetX() > Width() / 2))
-        {
-            if (touchIdRotate == -1)
-            {
-                touchIdRotate = e.GetId();
-                touchRotateStartX = e.GetX();
-                touchRotateStartY = e.GetY();
             }
         }
     }
 
     internal float touchMoveDx;
     internal float touchMoveDy;
-    float touchOrientationDx;
-    float touchOrientationDy;
+    internal float touchOrientationDx;
+    internal float touchOrientationDy;
+
     public void OnTouchMove(TouchEventArgs e)
     {
-        if (e.GetId() == touchIdMove)
+        for (int i = 0; i < clientmodsCount; i++)
         {
-            float range = Width() * one / 20;
-            touchMoveDx = e.GetX() - touchMoveStartX;
-            touchMoveDy = -((e.GetY() - 1) - touchMoveStartY);
-            float length = Length(touchMoveDx, touchMoveDy, 0);
-            if (e.GetY() < Height() * 50 / 100)
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnTouchMove(this, e);
+            if (e.GetHandled())
             {
-                touchMoveDx = 0;
-                touchMoveDy = 1;
+                return;
             }
-            else
-            {
-                if (length > 0)
-                {
-                    touchMoveDx /= length;
-                    touchMoveDy /= length;
-                }
-            }
-        }
-        if (e.GetId() == touchIdRotate)
-        {
-            touchOrientationDx += (e.GetX() - touchRotateStartX) / (Width() * one / 40);
-            touchOrientationDy += (e.GetY() - touchRotateStartY) / (Width() * one / 40);
-            touchRotateStartX = e.GetX();
-            touchRotateStartY = e.GetY();
         }
     }
 
@@ -5668,29 +4956,14 @@
     {
         mouseCurrentX = 0;
         mouseCurrentY = 0;
-        for (int i = 0; i < screensMax; i++)
+        for (int i = 0; i < clientmodsCount; i++)
         {
-            if (screens[i] == null)
-            {
-                continue;
-            }
-            screens[i].OnTouchEnd(e);
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnTouchEnd(this, e);
             if (e.GetHandled())
             {
                 return;
             }
-        }
-        if (e.GetId() == touchIdMove)
-        {
-            touchIdMove = -1;
-            touchMoveDx = 0;
-            touchMoveDy = 0;
-        }
-        if (e.GetId() == touchIdRotate)
-        {
-            touchIdRotate = -1;
-            touchOrientationDx = 0;
-            touchOrientationDy = 0;
         }
     }
 
@@ -5704,6 +4977,11 @@
         mouseCurrentY = e.GetY();
         mouseDeltaX = e.GetMovementX();
         mouseDeltaY = e.GetMovementY();
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnMouseMove(this, e);
+        }
     }
 
     TaskScheduler_ scheduler;
@@ -5770,16 +5048,13 @@
             platform.GLDeleteTexture(cachedTextTextures[i].texture.textureId);
         }
     }
-
-    internal GameScreen[] screens;
-    internal const int screensMax = 8;
-
+    
     public void StartTyping()
     {
         GuiTyping = TypingState.Typing;
-        d_HudChat.IsTyping = true;
-        d_HudChat.GuiTypingBuffer = "";
-        d_HudChat.IsTeamchat = false;
+        IsTyping = true;
+        GuiTypingBuffer = "";
+        IsTeamchat = false;
     }
 
     public void StopTyping()
@@ -5861,7 +5136,7 @@ public class DictionaryStringAudioSample
     }
 }
 
-public class GameScreen
+public class GameScreen : ClientMod
 {
     public GameScreen()
     {
@@ -5869,16 +5144,20 @@ public class GameScreen
         widgets = new MenuWidget[WidgetCount];
     }
     internal Game game;
-    public virtual void Render(float dt) { }
-    public virtual void OnKeyDown(KeyEventArgs e) { }
-    public virtual void OnKeyPress(KeyPressEventArgs e) { KeyPress(e); }
-    public virtual void OnKeyUp(KeyEventArgs e) { }
-    public virtual void OnTouchStart(TouchEventArgs e) { e.SetHandled(MouseDown(e.GetX(), e.GetY())); }
-    public virtual void OnTouchMove(TouchEventArgs e) { }
-    public virtual void OnTouchEnd(TouchEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
-    public virtual void OnMouseDown(MouseEventArgs e) { MouseDown(e.GetX(), e.GetY()); }
-    public virtual void OnMouseUp(MouseEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
-    public virtual void OnMouseMove(MouseEventArgs e) { MouseMove(e); }
+    public override void OnKeyPress(Game game_, KeyPressEventArgs args) { KeyPress(args); }
+    public override void OnTouchStart(Game game_, TouchEventArgs e) { ScreenOnTouchStart(e); }
+    public void ScreenOnTouchStart(TouchEventArgs e)
+    {
+        e.SetHandled(MouseDown(e.GetX(), e.GetY()));
+    }
+    public override void OnTouchEnd(Game game_, TouchEventArgs e) { ScreenOnTouchEnd(e); }
+    public void ScreenOnTouchEnd(TouchEventArgs e)
+    {
+        MouseUp(e.GetX(), e.GetY());
+    }
+    public override void OnMouseDown(Game game_, MouseEventArgs args) { MouseDown(args.GetX(), args.GetY()); }
+    public override void OnMouseUp(Game game_, MouseEventArgs args) { MouseUp(args.GetX(), args.GetY()); }
+    public override void OnMouseMove(Game game_, MouseEventArgs args) { MouseMove(args); }
     public virtual void OnBackPressed() { }
     
     void KeyPress(KeyPressEventArgs e)
@@ -6089,98 +5368,6 @@ public class GameScreen
     }
     internal int screenx;
     internal int screeny;
-}
-
-public class ScreenTouchButtons : GameScreen
-{
-    public ScreenTouchButtons()
-    {
-        buttonMenu = new MenuWidget();
-        buttonMenu.image = "TouchMenu.png";
-        buttonInventory = new MenuWidget();
-        buttonInventory.image = "TouchInventory.png";
-        buttonTalk = new MenuWidget();
-        buttonTalk.image = "TouchTalk.png";
-        buttonCamera = new MenuWidget();
-        buttonCamera.image = "TouchCamera.png";
-        widgets[0] = buttonMenu;
-        widgets[1] = buttonInventory;
-        widgets[2] = buttonTalk;
-        widgets[3] = buttonCamera;
-    }
-    MenuWidget buttonMenu;
-    MenuWidget buttonInventory;
-    MenuWidget buttonTalk;
-    MenuWidget buttonCamera;
-    public override void Render(float dt)
-    {
-        int buttonSize = 80;
-
-        buttonMenu.x = 16 * Scale();
-        buttonMenu.y = (16 + 96 * 0) * Scale();
-        buttonMenu.sizex = buttonSize * Scale();
-        buttonMenu.sizey = buttonSize * Scale();
-
-        buttonInventory.x = 16 * Scale();
-        buttonInventory.y = (16 + 96 * 1) * Scale();
-        buttonInventory.sizex = buttonSize * Scale();
-        buttonInventory.sizey = buttonSize * Scale();
-
-        buttonTalk.x = 16 * Scale();
-        buttonTalk.y = (16 + 96 * 2) * Scale();
-        buttonTalk.sizex = buttonSize * Scale();
-        buttonTalk.sizey = buttonSize * Scale();
-
-        buttonCamera.x = 16 * Scale();
-        buttonCamera.y = (16 + 96 * 3) * Scale();
-        buttonCamera.sizex = buttonSize * Scale();
-        buttonCamera.sizey = buttonSize * Scale();
-
-
-        if (!game.platform.IsMousePointerLocked())
-        {
-            if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
-            {
-                game.Draw2dText1("Move", game.Width() * 5 / 100, game.Height() * 85 / 100, game.platform.FloatToInt(Scale() * 50), null, false);
-                game.Draw2dText1("Look", game.Width() * 80 / 100, game.Height() * 85 / 100, game.platform.FloatToInt(Scale() * 50), null, false);
-            }
-            DrawWidgets();
-        }
-    }
-
-    float Scale()
-    {
-        return game.Scale();
-    }
-
-    public override void OnButton(MenuWidget w)
-    {
-        if (w == buttonMenu)
-        {
-            game.ShowEscapeMenu();
-        }
-        if (w == buttonInventory)
-        {
-            game.ShowInventory();
-        }
-        if (w == buttonTalk)
-        {
-            if (game.GuiTyping == TypingState.None)
-            {
-                game.StartTyping();
-                game.platform.ShowKeyboard(true);
-            }
-            else
-            {
-                game.StopTyping();
-                game.platform.ShowKeyboard(false);
-            }
-        }
-        if (w == buttonCamera)
-        {
-            game.CameraChange();
-        }
-    }
 }
 
 public class UpdateTask : Task
@@ -8179,6 +7366,11 @@ public abstract class ClientMod
     public virtual void OnKeyUp(Game game, KeyEventArgs args) { }
     public virtual void OnMouseUp(Game game, MouseEventArgs args) { }
     public virtual void OnMouseDown(Game game, MouseEventArgs args) { }
+    public virtual void OnMouseMove(Game game, MouseEventArgs args) { }
+    public virtual void OnMouseWheelChanged(Game game, MouseWheelEventArgs args) { }
+    public virtual void OnTouchStart(Game game, TouchEventArgs e) { }
+    public virtual void OnTouchMove(Game game, TouchEventArgs e) { }
+    public virtual void OnTouchEnd(Game game, TouchEventArgs e) { }
 }
 
 public class ClientCommandArgs
@@ -8632,84 +7824,6 @@ public class Kamera
     {
         Angle += p;
         SetValidAngle();
-    }
-}
-
-public class CraftingTableTool
-{
-    internal IMapStorage2 d_Map;
-    internal GameData d_Data;
-    public int[] GetOnTable(Vector3IntRef[] table, int tableCount, IntRef retCount)
-    {
-        int[] ontable = new int[2048];
-        int ontableCount = 0;
-        for (int i = 0; i < tableCount; i++)
-        {
-            Vector3IntRef v = table[i];
-            int t = d_Map.GetBlock(v.X, v.Y, v.Z + 1);
-            ontable[ontableCount++] = t;
-        }
-        retCount.value = ontableCount;
-        return ontable;
-    }
-    const int maxcraftingtablesize = 2000;
-    public Vector3IntRef[] GetTable(int posx, int posy, int posz, IntRef retCount)
-    {
-        Vector3IntRef[] l = new Vector3IntRef[2048];
-        int lCount = 0;
-        Vector3IntRef[] todo = new Vector3IntRef[2048];
-        int todoCount = 0;
-        todo[todoCount++] = Vector3IntRef.Create(posx, posy, posz);
-        for (; ; )
-        {
-            if (todoCount == 0 || lCount >= maxcraftingtablesize)
-            {
-                break;
-            }
-            Vector3IntRef p = todo[todoCount - 1];
-            todoCount--;
-            if (Vector3IntRefArrayContains(l, lCount, p))
-            {
-                continue;
-            }
-            l[lCount++] = p;
-            Vector3IntRef a = Vector3IntRef.Create(p.X + 1, p.Y, p.Z);
-            if (d_Map.GetBlock(a.X, a.Y, a.Z) == d_Data.BlockIdCraftingTable())
-            {
-                todo[todoCount++] = a;
-            }
-            Vector3IntRef b = Vector3IntRef.Create(p.X - 1, p.Y, p.Z);
-            if (d_Map.GetBlock(b.X, b.Y, b.Z) == d_Data.BlockIdCraftingTable())
-            {
-                todo[todoCount++] = b;
-            }
-            Vector3IntRef c = Vector3IntRef.Create(p.X, p.Y + 1, p.Z);
-            if (d_Map.GetBlock(c.X, c.Y, c.Z) == d_Data.BlockIdCraftingTable())
-            {
-                todo[todoCount++] = c;
-            }
-            Vector3IntRef d = Vector3IntRef.Create(p.X, p.Y - 1, p.Z);
-            if (d_Map.GetBlock(d.X, d.Y, d.Z) == d_Data.BlockIdCraftingTable())
-            {
-                todo[todoCount++] = d;
-            }
-        }
-        retCount.value = lCount;
-        return l;
-    }
-
-    bool Vector3IntRefArrayContains(Vector3IntRef[] l, int lCount, Vector3IntRef p)
-    {
-        for (int i = 0; i < lCount; i++)
-        {
-            if (l[i].X == p.X
-                && l[i].Y == p.Y
-                && l[i].Z == p.Z)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }
 

@@ -1,6 +1,6 @@
-﻿public class GuiStateEscapeMenu
+﻿public class ModGuiEscapeMenu : ClientMod
 {
-    public GuiStateEscapeMenu()
+    public ModGuiEscapeMenu()
     {
         one = 1;
         fonts = new string[4];
@@ -316,13 +316,6 @@
     }
 
     internal Game game;
-    public void EscapeMenuStart()
-    {
-        game.guistate = GuiState.EscapeMenu;
-        game.menustate = new MenuState();
-        game.platform.ExitMousePointerLock();
-        SetEscapeMenuState(EscapeMenuState.Main);
-    }
     EscapeMenuState escapemenustate;
     void EscapeMenuMouse1()
     {
@@ -521,8 +514,24 @@
             }
         }
     }
-    public void EscapeMenuDraw()
+    bool loaded;
+    public override void OnNewFrameDraw2d(Game game_, float deltaTime)
     {
+        game = game_;
+        if (!loaded)
+        {
+            loaded = true;
+            LoadOptions();
+        }
+        if (game.escapeMenuRestart)
+        {
+            game.escapeMenuRestart = false;
+            SetEscapeMenuState(EscapeMenuState.Main);
+        }
+        if (game.guistate != GuiState.EscapeMenu)
+        {
+            return;
+        }
         SetEscapeMenuState(escapemenustate);
         EscapeMenuMouse1();
         for (int i = 0; i < widgetsCount; i++)
@@ -579,8 +588,9 @@
 
 
     int keyselectid;
-    public void EscapeMenuKeyDown(int eKey)
+    public override void OnKeyDown(Game game_, KeyEventArgs args)
     {
+        int eKey = args.GetKeyCode();
         if (eKey == game.GetKey(GlKeys.Escape))
         {
             if (escapemenustate == EscapeMenuState.Graphics
@@ -599,6 +609,7 @@
                 SetEscapeMenuState(EscapeMenuState.Main);
                 game.GuiStateBackToGame();
             }
+            args.SetHandled(true);
         }
         if (escapemenustate == EscapeMenuState.Keys)
         {
@@ -606,7 +617,24 @@
             {
                 game.options.Keys[keyhelps()[keyselectid].DefaultKey] = eKey;
                 keyselectid = -1;
+                args.SetHandled(true);
             }
+        }
+        if (eKey == game.GetKey(GlKeys.F11))
+        {
+            if (game.platform.GetWindowState() == WindowState.Fullscreen)
+            {
+                game.platform.SetWindowState(WindowState.Normal);
+                RestoreResolution();
+                SaveOptions();
+            }
+            else
+            {
+                game.platform.SetWindowState(WindowState.Fullscreen);
+                UseResolution();
+                SaveOptions();
+            }
+            args.SetHandled(true);
         }
     }
     public void LoadOptions()

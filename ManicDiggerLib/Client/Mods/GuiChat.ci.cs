@@ -1,0 +1,324 @@
+﻿public class ModGuiChat : ClientMod
+{
+    public ModGuiChat()
+    {
+        one = 1;
+        ChatFontSize = 11;
+        ChatScreenExpireTimeSeconds = 20;
+        ChatLinesMaxToDraw = 10;
+        font = new FontCi();
+        font.family = "Arial";
+        font.size = ChatFontSize;
+        chatlines2 = new Chatline[1024];
+    }
+
+    internal Game game;
+    internal float ChatFontSize;
+    internal int ChatScreenExpireTimeSeconds;
+    internal int ChatLinesMaxToDraw;
+    internal int ChatPageScroll;
+    internal float one;
+
+    public override void OnNewFrameDraw2d(Game game_, float deltaTime)
+    {
+        game = game_;
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+        DrawChatLines(game.GuiTyping == TypingState.Typing);
+        if (game.GuiTyping == TypingState.Typing)
+        {
+            DrawTypingBuffer();
+        }
+    }
+
+    public override void OnMouseDown(Game game_, MouseEventArgs args)
+    {
+        for (int i = 0; i < chatlines2Count; i++)
+        {
+            float dx = 20;
+            if (!game.platform.IsMousePointerLocked())
+            {
+                dx += 100;
+            }
+            float chatlineStartX = dx * game.Scale();
+            float chatlineStartY = (90 + i * 25) * game.Scale();
+            float chatlineSizeX = 500 * game.Scale();
+            float chatlineSizeY = 20 * game.Scale();
+            if (args.GetX() > chatlineStartX && args.GetX() < chatlineStartX + chatlineSizeX)
+            {
+                if (args.GetY() > chatlineStartY && args.GetY() < chatlineStartY + chatlineSizeY)
+                {
+                    //Mouse over chatline at position i
+                    if (chatlines2[i].clickable)
+                    {
+                        game.platform.OpenLinkInBrowser(chatlines2[i].linkTarget);
+                    }
+                }
+            }
+        }
+    }
+
+    Chatline[] chatlines2;
+    int chatlines2Count;
+    public void DrawChatLines(bool all)
+    {
+        chatlines2Count = 0;
+        if (!all)
+        {
+            for (int i = 0; i < game.ChatLinesCount; i++)
+            {
+                Chatline c = game.ChatLines[i];
+                if ((one * (game.platform.TimeMillisecondsFromStart() - c.timeMilliseconds) / 1000) < ChatScreenExpireTimeSeconds)
+                {
+                    chatlines2[chatlines2Count++] = c;
+                }
+            }
+        }
+        else
+        {
+            int first = game.ChatLinesCount - ChatLinesMaxToDraw * (ChatPageScroll + 1);
+            if (first < 0)
+            {
+                first = 0;
+            }
+            int count = game.ChatLinesCount;
+            if (count > ChatLinesMaxToDraw)
+            {
+                count = ChatLinesMaxToDraw;
+            }
+            for (int i = first; i < first + count; i++)
+            {
+                chatlines2[chatlines2Count++] = game.ChatLines[i];
+            }
+        }
+        font.size = ChatFontSize * game.Scale();
+        float dx = 20;
+        //if (!game.platform.IsMousePointerLocked())
+        //{
+        //    dx += 100;
+        //}
+        for (int i = 0; i < chatlines2Count; i++)
+        {
+            if (chatlines2[i].clickable)
+            {
+                //Different display of links in chat
+                //2 = italic
+                //3 = bold italic
+                font.style = 3;
+            }
+            else
+            {
+                //0 = normal
+                //1 = bold
+                font.style = 1;
+            }
+            game.Draw2dText(chatlines2[i].text, font, dx * game.Scale(), (90 + i * 25) * game.Scale(), null, false);
+        }
+        if (ChatPageScroll != 0)
+        {
+            game.Draw2dText(game.platform.StringFormat("&7Page: {0}", game.platform.IntToString(ChatPageScroll)), font, dx * game.Scale(), (90 + (-1) * 25) * game.Scale(), null, false);
+        }
+    }
+    FontCi font;
+    public void DrawTypingBuffer()
+    {
+        font.size = ChatFontSize * game.Scale();
+        string s = game.GuiTypingBuffer;
+        if (game.IsTeamchat)
+        {
+            s = game.platform.StringFormat("To team: {0}", s);
+        }
+        if (game.platform.IsSmallScreen())
+        {
+            game.Draw2dText(game.platform.StringFormat("{0}_", s), font, 50 * game.Scale(), (game.platform.GetCanvasHeight() / 2) - 100 * game.Scale(), null, true);
+        }
+        else
+        {
+            game.Draw2dText(game.platform.StringFormat("{0}_", s), font, 50 * game.Scale(), game.platform.GetCanvasHeight() - 100 * game.Scale(), null, true);
+        }
+    }
+
+    public override void OnKeyDown(Game game_, KeyEventArgs args)
+    {
+        int eKey = args.GetKeyCode();
+        if (eKey == game.GetKey(GlKeys.Number7) && game.IsShiftPressed && game.GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
+        {
+            game.GuiTyping = TypingState.Typing;
+            game.IsTyping = true;
+            game.GuiTypingBuffer = "";
+            game.IsTeamchat = false;
+            args.SetHandled(true);
+            return;
+        }
+        if (eKey == game.GetKey(GlKeys.PageUp) && game.GuiTyping == TypingState.Typing)
+        {
+            ChatPageScroll++;
+            args.SetHandled(true);
+        }
+        if (eKey == game.GetKey(GlKeys.PageDown) && game.GuiTyping == TypingState.Typing)
+        {
+            ChatPageScroll--;
+            args.SetHandled(true);
+        }
+        ChatPageScroll = Game.ClampInt(ChatPageScroll, 0, game.ChatLinesCount / ChatLinesMaxToDraw);
+        if (eKey == game.GetKey(GlKeys.Enter) || eKey == game.GetKey(GlKeys.KeypadEnter))
+        {
+            if (game.GuiTyping == TypingState.Typing)
+            {
+                game.typinglog[game.typinglogCount++] = game.GuiTypingBuffer;
+                game.typinglogpos = game.typinglogCount;
+                game.ClientCommand(game.GuiTypingBuffer);
+
+                game.GuiTypingBuffer = "";
+                game.IsTyping = false;
+
+                game.GuiTyping = TypingState.None;
+                game.platform.ShowKeyboard(false);
+            }
+            else if (game.GuiTyping == TypingState.None)
+            {
+                game.StartTyping();
+            }
+            else if (game.GuiTyping == TypingState.Ready)
+            {
+                game.platform.ConsoleWriteLine("Keyboard_KeyDown ready");
+            }
+            args.SetHandled(true);
+            return;
+        }
+        if (game.GuiTyping == TypingState.Typing)
+        {
+            int key = eKey;
+            if (key == game.GetKey(GlKeys.BackSpace))
+            {
+                if (StringTools.StringLength(game.platform, game.GuiTypingBuffer) > 0)
+                {
+                    game.GuiTypingBuffer = StringTools.StringSubstring(game.platform, game.GuiTypingBuffer, 0, StringTools.StringLength(game.platform, game.GuiTypingBuffer) - 1);
+                }
+                args.SetHandled(true);
+                return;
+            }
+            if (game.keyboardState[game.GetKey(GlKeys.ControlLeft)] || game.keyboardState[game.GetKey(GlKeys.ControlRight)])
+            {
+                if (key == game.GetKey(GlKeys.V))
+                {
+                    if (game.platform.ClipboardContainsText())
+                    {
+                        game.GuiTypingBuffer = StringTools.StringAppend(game.platform, game.GuiTypingBuffer, game.platform.ClipboardGetText());
+                    }
+                    args.SetHandled(true);
+                    return;
+                }
+            }
+            if (key == game.GetKey(GlKeys.Up))
+            {
+                game.typinglogpos--;
+                if (game.typinglogpos < 0) { game.typinglogpos = 0; }
+                if (game.typinglogpos >= 0 && game.typinglogpos < game.typinglogCount)
+                {
+                    game.GuiTypingBuffer = game.typinglog[game.typinglogpos];
+                }
+                args.SetHandled(true);
+            }
+            if (key == game.GetKey(GlKeys.Down))
+            {
+                game.typinglogpos++;
+                if (game.typinglogpos > game.typinglogCount) { game.typinglogpos = game.typinglogCount; }
+                if (game.typinglogpos >= 0 && game.typinglogpos < game.typinglogCount)
+                {
+                    game.GuiTypingBuffer = game.typinglog[game.typinglogpos];
+                }
+                if (game.typinglogpos == game.typinglogCount)
+                {
+                    game.GuiTypingBuffer = "";
+                }
+                args.SetHandled(true);
+            }
+            args.SetHandled(true);
+            return;
+        }
+    }
+
+    public override void OnKeyPress(Game game_, KeyPressEventArgs args)
+    {
+        int eKeyChar = args.GetKeyChar();
+        int chart = 116;
+        int charT = 84;
+        int chary = 121;
+        int charY = 89;
+        if ((eKeyChar == chart || eKeyChar == charT) && game.GuiTyping == TypingState.None)
+        {
+            game.GuiTyping = TypingState.Typing;
+            game.GuiTypingBuffer = "";
+            game.IsTeamchat = false;
+            return;
+        }
+        if ((eKeyChar == chary || eKeyChar == charY) && game.GuiTyping == TypingState.None)
+        {
+            game.GuiTyping = TypingState.Typing;
+            game.GuiTypingBuffer = "";
+            game.IsTeamchat = true;
+            return;
+        }
+        if (game.GuiTyping == TypingState.Typing)
+        {
+            int c = eKeyChar;
+            if (game.platform.IsValidTypingChar(c))
+            {
+                game.GuiTypingBuffer = StringTools.StringAppend(game.platform, game.GuiTypingBuffer, game.CharToString(c));
+            }
+            int charTab = 9;
+            //Handles player name autocomplete in chat
+            if (c == charTab && game.platform.StringTrim(game.GuiTypingBuffer) != "")
+            {
+                for (int i = 0; i < game.entitiesCount; i++)
+                {
+                    if (game.entities[i] == null)
+                    {
+                        continue;
+                    }
+                    if (game.entities[i].drawName == null)
+                    {
+                        continue;
+                    }
+                    DrawName p = game.entities[i].drawName;
+                    //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
+                    if (game.platform.StringStartsWithIgnoreCase(StringTools.StringSubstringToEnd(game.platform, p.Name, 2), game.GuiTypingBuffer))
+                    {
+                        game.GuiTypingBuffer = StringTools.StringAppend(game.platform, StringTools.StringSubstringToEnd(game.platform, p.Name, 2), ": ");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+public class Chatline
+{
+    internal string text;
+    internal int timeMilliseconds;
+    internal bool clickable;
+    internal string linkTarget;
+
+    internal static Chatline Create(string text_, int timeMilliseconds_)
+    {
+        Chatline c = new Chatline();
+        c.text = text_;
+        c.timeMilliseconds = timeMilliseconds_;
+        c.clickable = false;
+        return c;
+    }
+
+    internal static Chatline CreateClickable(string text_, int timeMilliseconds_, string linkTarget_)
+    {
+        Chatline c = new Chatline();
+        c.text = text_;
+        c.timeMilliseconds = timeMilliseconds_;
+        c.clickable = true;
+        c.linkTarget = linkTarget_;
+        return c;
+    }
+}

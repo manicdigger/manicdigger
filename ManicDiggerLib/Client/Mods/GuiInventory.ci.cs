@@ -1,6 +1,6 @@
-﻿public class HudInventory
+﻿public class ModGuiInventory : ClientMod
 {
-    public HudInventory()
+    public ModGuiInventory()
     {
         //indexed by enum WearPlace
         wearPlaceStart = new PointRef[5];
@@ -52,8 +52,13 @@
 
     public int ActiveMaterialCellSize() { return game.platform.FloatToInt(48 * game.Scale()); }
 
-    public void OnKeyPress(int keyChar)
+    public override void OnKeyPress(Game game_, KeyPressEventArgs args)
     {
+        if (game.guistate != GuiState.Inventory)
+        {
+            return;
+        }
+        int keyChar = args.GetKeyChar();
         if (keyChar == 49) { game.ActiveMaterial = 0; }
         if (keyChar == 50) { game.ActiveMaterial = 1; }
         if (keyChar == 51) { game.ActiveMaterial = 2; }
@@ -65,6 +70,7 @@
         if (keyChar == 57) { game.ActiveMaterial = 8; }
         if (keyChar == 48) { game.ActiveMaterial = 9; }
     }
+
     int ScrollButtonSize() { return CellDrawSize; }
 
     int ScrollUpButtonX() { return CellsStartX() + CellCountInPageX * CellDrawSize; }
@@ -73,8 +79,12 @@
     int ScrollDownButtonX() { return CellsStartX() + CellCountInPageX * CellDrawSize; }
     int ScrollDownButtonY() { return CellsStartY() + (CellCountInPageY - 1) * CellDrawSize; }
 
-    public bool Mouse_ButtonDown(MouseEventArgs args)
+    public override void OnMouseDown(Game game_, MouseEventArgs args)
     {
+        if (game.guistate != GuiState.Inventory)
+        {
+            return;
+        }
         PointRef scaledMouse = PointRef.Create(args.GetX(), args.GetY());
 
         //material selector
@@ -89,12 +99,13 @@
                 p.MaterialId = game.ActiveMaterial;
                 controller.InventoryClick(p);
             }
-            return true;
+            args.SetHandled(true);
+            return;
         }
 
         if (game.guistate != GuiState.Inventory)
         {
-            return false;
+            return;
         }
 
         //main inventory
@@ -109,7 +120,8 @@
                 p.AreaX = cellInPage.X;
                 p.AreaY = cellInPage.Y + ScrollLine;
                 controller.InventoryClick(p);
-                return true;
+                args.SetHandled(true);
+                return;
             }
             else
             {
@@ -137,7 +149,8 @@
             }
             if (game.guistate == GuiState.Inventory)
             {
-                return true;
+                args.SetHandled(true);
+                return;
             }
         }
         // //drop items on ground
@@ -162,24 +175,36 @@
             p.WearPlace = (SelectedWearPlace(scaledMouse).value);
             p.ActiveMaterial = game.ActiveMaterial;
             controller.InventoryClick(p);
-            return true;
+            args.SetHandled(true);
+            return;
         }
         if (scaledMouse.X >= ScrollUpButtonX() && scaledMouse.X < ScrollUpButtonX() + ScrollButtonSize()
             && scaledMouse.Y >= ScrollUpButtonY() && scaledMouse.Y < ScrollUpButtonY() + ScrollButtonSize())
         {
             ScrollUp();
             ScrollingUpTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
-            return true;
+            args.SetHandled(true);
+            return;
         }
         if (scaledMouse.X >= ScrollDownButtonX() && scaledMouse.X < ScrollDownButtonX() + ScrollButtonSize()
             && scaledMouse.Y >= ScrollDownButtonY() && scaledMouse.Y < ScrollDownButtonY() + ScrollButtonSize())
         {
             ScrollDown();
             ScrollingDownTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
-            return true;
+            args.SetHandled(true);
+            return;
         }
         game.GuiStateBackToGame();
-        return false;
+        return;
+    }
+
+    public override void OnTouchStart(Game game_, TouchEventArgs e)
+    {
+        MouseEventArgs args = new MouseEventArgs();
+        args.SetX(e.GetX());
+        args.SetY(e.GetY());
+        OnMouseDown(game_, args);
+        e.SetHandled(args.GetHandled());
     }
 
     public bool IsMouseOverCells()
@@ -203,8 +228,12 @@
     int ScrollingUpTimeMilliseconds;
     int ScrollingDownTimeMilliseconds;
 
-    public void Mouse_ButtonUp(MouseEventArgs args)
+    public override void OnMouseUp(Game game_, MouseEventArgs args)
     {
+        if (game.guistate != GuiState.Inventory)
+        {
+            return;
+        }
         ScrollingUpTimeMilliseconds = 0;
         ScrollingDownTimeMilliseconds = 0;
     }
@@ -246,8 +275,25 @@
 
     internal int ScrollLine;
 
-    public void Draw()
+    public override void OnNewFrameDraw2d(Game game_, float deltaTime)
     {
+        game = game_;
+        if (dataItems == null)
+        {
+            dataItems = new GameDataItemsClient();
+            dataItems.game = game_;
+            controller = ClientInventoryController.Create(game_);
+            inventoryUtil = game.d_InventoryUtil;
+        }
+        if (game.guistate == GuiState.MapLoading)
+        {
+            return;
+        }
+        DrawMaterialSelector();
+        if (game.guistate != GuiState.Inventory)
+        {
+            return;
+        }
         if (ScrollingUpTimeMilliseconds != 0 && (game.platform.TimeMillisecondsFromStart() - ScrollingUpTimeMilliseconds) > 250)
         {
             ScrollingUpTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
@@ -501,5 +547,21 @@
         Packet_Item item2 = new Packet_Item();
         item2.BlockId = item.BlockId;
         DrawItem(screenposX - w + 2, screenposY - h + 2, item2, 0, 0);
+    }
+
+    public override void OnMouseWheelChanged(Game game_, MouseWheelEventArgs args)
+    {
+        if (IsMouseOverCells() && game.guistate == GuiState.Inventory)
+        {
+            float delta = args.GetDeltaPrecise();
+            if (delta > 0)
+            {
+                ScrollUp();
+            }
+            if (delta < 0)
+            {
+                ScrollDown();
+            }
+        }
     }
 }
