@@ -85,9 +85,12 @@
                     p_.drawModel.renderer = new AnimatedModelRenderer();
                     byte[] data = game.GetFile(p_.drawModel.Model_);
                     int dataLength = game.GetFileLength(p_.drawModel.Model_);
-                    string dataString = game.platform.StringFromUtf8ByteArray(data, dataLength);
-                    AnimatedModel model = AnimatedModelSerializer.Deserialize(game.platform, dataString);
-                    p_.drawModel.renderer.Start(game, model);
+                    if (data != null)
+                    {
+                        string dataString = game.platform.StringFromUtf8ByteArray(data, dataLength);
+                        AnimatedModel model = AnimatedModelSerializer.Deserialize(game.platform, dataString);
+                        p_.drawModel.renderer.Start(game, model);
+                    }
                 }
                 game.GLPushMatrix();
                 game.GLTranslate(FeetPosX, FeetPosY, FeetPosZ);

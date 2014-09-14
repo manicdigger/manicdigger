@@ -261,6 +261,10 @@ public class TableSerializer
                 continue;
             }
             {
+                if (header == null)
+                {
+                    continue;
+                }
                 IntRef ssLength = new IntRef();
                 string[] ss = p.StringSplit(s, "\t", ssLength);
                 for (int k = 0; k < ssLength.value; k++)
@@ -324,6 +328,9 @@ public class AnimatedModelRenderer
     float frame;
     public void Render(float dt, float headDeg, bool walkAnimation, bool moves, float light)
     {
+        if (m == null) { return; }
+        if (m.animations == null) { return; }
+        if (m.animations[anim] == null) { return; }
         float length = m.animations[anim].length;
         if (moves)
         {
