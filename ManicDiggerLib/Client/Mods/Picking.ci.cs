@@ -142,6 +142,14 @@
             }
         }
         bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
+        if (pickdistanceok)
+        {
+            if (game.Dist(pick2[0].blockPos[0] + one / 2, pick2[0].blockPos[1] + one / 2, pick2[0].blockPos[2] + one / 2,
+                pick.Start[0], pick.Start[1], pick.Start[2]) > CurrentPickDistance(game))
+            {
+                pickdistanceok = false;
+            }
+        }
         bool playertileempty = game.IsTileEmptyForPhysics(
                   game.platform.FloatToInt(game.player.position.x),
                   game.platform.FloatToInt(game.player.position.z),
@@ -727,6 +735,7 @@
         retPick.Start[2] = tempRayStartPoint[2];// +raydirZ;
 
         float pickDistance1 = CurrentPickDistance(game) * ((ispistolshoot) ? 100 : 1);
+        pickDistance1 += 1;
         retPick.End = new float[3];
         retPick.End[0] = tempRayStartPoint[0] + raydirX * pickDistance1;
         retPick.End[1] = tempRayStartPoint[1] + raydirY * pickDistance1;

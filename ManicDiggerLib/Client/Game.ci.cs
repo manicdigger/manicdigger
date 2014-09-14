@@ -67,7 +67,7 @@
         rotation_speed = one * 180 / 20;
         modmanager = new ClientModManager1();
         particleEffectBlockBreak = new ModDrawParticleEffectBlockBreak();
-        PICK_DISTANCE = one * 35 / 10;
+        PICK_DISTANCE = one * 37 / 10;
         selectedmodelid = -1;
         grenadetime = 3;
         rotationspeed = one * 15 / 100;
@@ -4645,9 +4645,9 @@
         if (maxX > MapSizeX) { maxX = MapSizeX; }
         if (maxY > MapSizeZ) { maxY = MapSizeZ; }
         if (maxZ > MapSizeY) { maxZ = MapSizeY; }
-        int sizex = maxX - minX;
-        int sizey = maxY - minY;
-        int sizez = maxZ - minZ;
+        int sizex = maxX - minX + 1;
+        int sizey = maxY - minY + 1;
+        int sizez = maxZ - minZ + 1;
         int size = BitTools.NextPowerOfTwo(MaxInt(sizex, MaxInt(sizey, sizez)));
         s_.StartBox = Box3D.Create(minX, minY, minZ, size);
         //s_.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(MaxInt(MapSizeX, MaxInt(MapSizeY, MapSizeZ))));
