@@ -218,6 +218,7 @@
     <Compile Include="Server\Systems\NotifyEntities.cs" />
     <Compile Include="Server\Systems\NotifyMap.cs" />
     <Compile Include="Server\Systems\NotifyPing.cs" />
+    <Compile Include="Server\Systems\PermissionSign.cs" />
     <Compile Include="Server\Systems\ServerHeartbeat.cs" />
     <Compile Include="Server\ServerMap.cs" />
     <Compile Include="Server\ServerMonitor.cs" />

@@ -6273,6 +6273,17 @@ public class Entity
     internal Packet_ServerExplosion push;
     internal EntityUsable usable;
     internal Packet_ServerPlayerStats health;
+    internal EntityDrawArea drawArea;
+}
+
+public class EntityDrawArea
+{
+    internal int x;
+    internal int y;
+    internal int z;
+    internal int sizex;
+    internal int sizey;
+    internal int sizez;
 }
 
 public class EntityPosition_

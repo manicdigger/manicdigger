@@ -72,6 +72,7 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemLoadServerClient();
         systems[systemsCount++] = new ServerSystemNotifyEntities();
         systems[systemsCount++] = new ServerSystemSign();
+        systems[systemsCount++] = new ServerSystemPermissionSign();
         systems[systemsCount++] = new ServerSystemMonsterWalk();
 
         //Load translations

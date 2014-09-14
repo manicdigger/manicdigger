@@ -320,6 +320,16 @@ public class ServerSystemNotifyEntities : ServerSystem
         {
             p.Usable = new Packet_ServerEntityUsable();
         }
+        if (entity.drawArea != null)
+        {
+            p.DrawArea = new Packet_ServerEntityDrawArea();
+            p.DrawArea.X = entity.drawArea.x;
+            p.DrawArea.Y = entity.drawArea.y;
+            p.DrawArea.Z = entity.drawArea.z;
+            p.DrawArea.Sizex = entity.drawArea.sizex;
+            p.DrawArea.Sizey = entity.drawArea.sizey;
+            p.DrawArea.Sizez = entity.drawArea.sizez;
+        }
 
         return p;
     }

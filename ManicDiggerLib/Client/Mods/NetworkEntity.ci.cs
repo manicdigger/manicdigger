@@ -106,6 +106,16 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         {
             old.usable = new EntityUsable();
         }
+        if (entity.DrawArea != null)
+        {
+            old.drawArea = new EntityDrawArea();
+            old.drawArea.x = entity.DrawArea.X;
+            old.drawArea.y = entity.DrawArea.Y;
+            old.drawArea.z = entity.DrawArea.Z;
+            old.drawArea.sizex = entity.DrawArea.Sizex;
+            old.drawArea.sizey = entity.DrawArea.Sizey;
+            old.drawArea.sizez = entity.DrawArea.Sizez;
+        }
         return old;
     }
 }

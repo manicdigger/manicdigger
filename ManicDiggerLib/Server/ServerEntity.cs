@@ -15,14 +15,29 @@ public class ServerEntity
     internal ServerEntityPush push;
     [ProtoMember(7, IsRequired = false)]
     internal ServerEntityUsable usable;
+    [ProtoMember(9, IsRequired = false)]
+    internal ServerEntityDrawArea drawArea;
 
     [ProtoMember(6, IsRequired = false)]
     internal ServerEntitySign sign;
+    [ProtoMember(8, IsRequired = false)]
+    internal ServerEntityPermissionSign permissionSign;
 }
 
 [ProtoContract()]
 public class ServerEntityUsable
 {
+}
+
+[ProtoContract()]
+public class ServerEntityDrawArea
+{
+    internal int x;
+    internal int y;
+    internal int z;
+    internal int sizex;
+    internal int sizey;
+    internal int sizez;
 }
 
 [ProtoContract()]
@@ -39,6 +54,21 @@ public class ServerEntitySign
 {
     [ProtoMember(1)]
     internal string text;
+}
+
+[ProtoContract()]
+public class ServerEntityPermissionSign
+{
+    [ProtoMember(1)]
+    internal string name;
+    [ProtoMember(2)]
+    internal PermissionSignType type;
+}
+
+public enum PermissionSignType
+{
+    Player,
+    Group,
 }
 
 [ProtoContract()]

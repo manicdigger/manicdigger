@@ -721,6 +721,17 @@ package Packet;
 		optional ServerEntityPush push = 6;
 		optional ServerEntityUsable usable = 7;
 		optional ServerPlayerStats health = 8;
+		optional ServerEntityDrawArea drawArea = 9;
+    }
+    
+    message ServerEntityDrawArea
+    {
+		optional int32 x = 1;
+		optional int32 y = 2;
+		optional int32 z = 3;
+		optional int32 sizex = 4;
+		optional int32 sizey = 5;
+		optional int32 sizez = 6;
     }
     
     message ServerEntityUsable

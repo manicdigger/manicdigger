@@ -21,6 +21,15 @@ namespace ManicDigger.Mods
                 IsTool = true,
             });
             m.AddToCreativeInventory("Sign");
+            m.SetBlockType(155, "PermissionSign", new BlockType()
+            {
+                AllTextures = "PermissionSign",
+                DrawType = DrawType.Solid,
+                WalkableType = WalkableType.Solid,
+                IsUsable = true,
+                IsTool = true,
+            });
+            m.AddToCreativeInventory("PermissionSign");
         }
 
         ModManager m;
