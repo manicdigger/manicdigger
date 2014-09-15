@@ -22,6 +22,7 @@ package Packet;
         Oxygen = 59;
         Death = 60;
         UseEntity = 61;
+        HitEntity = 62;
         ServerQuery = 64;
         GameResolution = 10;
         ExtendedPacketCommand = 100;
@@ -261,6 +262,7 @@ package Packet;
         optional ClientServerQuery query = 19;
         optional ClientGameResolution gameResolution = 20;
         optional ClientUseEntity useEntity = 21;
+        optional ClientHitEntity hitEntity = 22;
 	}
     
     
@@ -269,7 +271,10 @@ package Packet;
 		optional int32 entityId = 1;
     }
     
-    
+    message ClientHitEntity
+    {
+		optional int32 entityId = 1;
+    }
     
     
     

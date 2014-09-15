@@ -1791,6 +1791,13 @@ public partial class Server : ICurrentTime, IDropItem
                     modEventHandlers.onuseentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
                 }
                 break;
+            case Packet_ClientIdEnum.HitEntity:
+                for (int i = 0; i < modEventHandlers.onhitentity.Count; i++)
+                {
+                    ServerEntityId id = c.spawnedEntities[packet.HitEntity.EntityId - 64];
+                    modEventHandlers.onhitentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
+                }
+                break;
             default:
                 Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.Id, clientid);
                 break;
@@ -3593,6 +3600,7 @@ public class ModEventHandlers
     public List<ModDelegates.LoadWorld> onloadworld = new List<ModDelegates.LoadWorld>();
     public List<ModDelegates.UpdateEntity> onupdateentity = new List<ModDelegates.UpdateEntity>();
     public List<ModDelegates.UseEntity> onuseentity = new List<ModDelegates.UseEntity>();
+    public List<ModDelegates.HitEntity> onhitentity = new List<ModDelegates.HitEntity>();
 }
 public class GameTime
 {

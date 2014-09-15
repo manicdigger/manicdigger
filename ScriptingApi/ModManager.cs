@@ -625,6 +625,7 @@ namespace ManicDigger
         public delegate void LoadWorld();
         public delegate void UpdateEntity(int chunkx, int chunky, int chunkz, int id);
         public delegate void UseEntity(int player, int chunkx, int chunky, int chunkz, int id);
+        public delegate void HitEntity(int player, int chunkx, int chunky, int chunkz, int id);
 
         public delegate void DialogClick2(DialogClickArgs args);
     }

@@ -108,6 +108,7 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         }
         if (entity.DrawArea != null)
         {
+            //New DrawArea
             old.drawArea = new EntityDrawArea();
             old.drawArea.x = entity.DrawArea.X;
             old.drawArea.y = entity.DrawArea.Y;
@@ -115,6 +116,11 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
             old.drawArea.sizex = entity.DrawArea.Sizex;
             old.drawArea.sizey = entity.DrawArea.Sizey;
             old.drawArea.sizez = entity.DrawArea.Sizez;
+        }
+        else
+        {
+            //DrawArea deleted/not present
+            old.drawArea = null;
         }
         return old;
     }

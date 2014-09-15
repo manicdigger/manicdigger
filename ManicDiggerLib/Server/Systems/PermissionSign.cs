@@ -14,6 +14,7 @@ public class ServerSystemPermissionSign : ServerSystem
             server_.modManager.RegisterOnBlockUseWithTool(OnUseWithTool);
             server_.modEventHandlers.onupdateentity.Add(UpdateEntity);
             server_.modEventHandlers.onuseentity.Add(OnUseEntity);
+            server_.modEventHandlers.onhitentity.Add(OnHitEntity);
             server.modEventHandlers.ondialogclick2.Add(OnDialogClick);
         }
     }
@@ -80,19 +81,6 @@ public class ServerSystemPermissionSign : ServerSystem
             e.drawName.name = "Permission Sign";
             e.drawName.onlyWhenSelected = true;
         }
-        if (e.drawArea == null)
-        {
-            e.drawArea = new ServerEntityDrawArea();
-        }
-        int sizex = 32;
-        int sizey = 32;
-        int sizez = 32;
-        e.drawArea.x = (int)e.position.x - sizex / 2;
-        e.drawArea.y = (int)e.position.y - sizey / 2;
-        e.drawArea.z = (int)e.position.z - sizez / 2;
-        e.drawArea.sizex = sizex;
-        e.drawArea.sizey = sizey;
-        e.drawArea.sizez = sizez;
     }
 
     void OnUseEntity(int player, int chunkx, int chunky, int chunkz, int id)
@@ -132,6 +120,38 @@ public class ServerSystemPermissionSign : ServerSystem
         id_.id = id;
         server.clients[player].editingSign = id_;
         server.SendDialog(player, "UseSign", d);
+    }
+    
+    void OnHitEntity(int player, int chunkx, int chunky, int chunkz, int id)
+    {
+        ServerEntity e = server.GetEntity(chunkx, chunky, chunkz, id);
+        if (e.permissionSign == null)
+        {
+            return;
+        }
+        if (e.drawArea == null)
+        {
+            e.drawArea = new ServerEntityDrawArea();
+            int sizex = 32;
+            int sizey = 32;
+            int sizez = 32;
+            e.drawArea.x = (int)e.position.x - sizex / 2;
+            e.drawArea.y = (int)e.position.y - sizey / 2;
+            e.drawArea.z = (int)e.position.z - sizez / 2;
+            e.drawArea.sizex = sizex;
+            e.drawArea.sizey = sizey;
+            e.drawArea.sizez = sizez;
+        }
+        else
+        {
+            e.drawArea = null;
+        }
+        ServerEntityId id_ = new ServerEntityId();
+        id_.chunkx = chunkx;
+        id_.chunky = chunky;
+        id_.chunkz = chunkz;
+        id_.id = id;
+        server.SetEntityDirty(id_);
     }
 
     void OnDialogClick(DialogClickArgs args)

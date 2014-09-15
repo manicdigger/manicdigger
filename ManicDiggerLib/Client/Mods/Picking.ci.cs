@@ -26,6 +26,7 @@
         if (game.guistate == GuiState.Normal)
         {
             UpdatePicking(game);
+            UpdateEntityHit(game);
         }
     }
 
@@ -665,6 +666,15 @@
                     }
                 }
             }
+        }
+    }
+    
+    void UpdateEntityHit(Game game)
+    {
+        if (game.currentlyAttackedEntity != -1 && game.mouseLeft)
+        {
+            //Only single hit when mouse clicked
+            game.SendPacketClient(ClientPackets.HitEntity(game.currentlyAttackedEntity));
         }
     }
 

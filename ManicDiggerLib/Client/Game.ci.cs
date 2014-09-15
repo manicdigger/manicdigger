@@ -8581,6 +8581,15 @@ public class ClientPackets
         p.UseEntity.EntityId = entityId;
         return p;
     }
+
+    internal static Packet_Client HitEntity(int entityId)
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.HitEntity;
+        p.HitEntity = new Packet_ClientHitEntity();
+        p.HitEntity.EntityId = entityId;
+        return p;
+    }
 }
 
 public class ServerPackets
