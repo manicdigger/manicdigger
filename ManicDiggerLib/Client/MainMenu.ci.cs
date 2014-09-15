@@ -511,21 +511,13 @@
     internal float windowY;
     internal void DrawBackground()
     {
-        backgroundW = 1024;
-        backgroundH = 1024;
+        backgroundW = 512;
+        backgroundH = 512;
         windowX = p.GetCanvasWidth();
         windowY = p.GetCanvasHeight();
-        int countX = p.FloatToInt(windowX / backgroundW) + 1;
-        int countY = p.FloatToInt(windowY / backgroundH) + 1;
-        //Prevent black gaps at the borders of the screen (background tiling)
-        if (countX * backgroundW < windowX + (2 * overlap))
-        {
-            countX++;
-        }
-        if (countY * backgroundH < windowY + (2 * overlap))
-        {
-            countY++;
-        }
+        //Background tiling
+        int countX = p.FloatToInt((windowX + (2 * overlap)) / backgroundW) + 1;
+        int countY = p.FloatToInt((windowY + (2 * overlap)) / backgroundH) + 1;
         for (int x = 0; x < countX; x++)
         {
             for (int y = 0; y < countY; y++)

@@ -1,5 +1,10 @@
 ﻿public class ModGuiMapLoading : ClientMod
 {
+    int Width;
+    int Height;
+    int backgroundW;
+    int backgroundH;
+
     public override void OnNewFrameDraw2d(Game game, float deltaTime)
     {
         if (game.guistate != GuiState.MapLoading)
@@ -10,10 +15,10 @@
         GamePlatform platform = game.platform;
         float one = 1;
 
-        int Width = platform.GetCanvasWidth();
-        int Height = platform.GetCanvasHeight();
+        Width = platform.GetCanvasWidth();
+        Height = platform.GetCanvasHeight();
+        DrawBackground(game);
 
-        game.Draw2dTexture(game.GetTexture("background.png"), 0, 0, 1024 * (one * Width / 800), 1024 * (one * Height / 600), null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
         string connecting = game.language.Connecting();
         if (game.issingleplayer && (!platform.SinglePlayerServerLoaded()))
         {
@@ -78,6 +83,22 @@
             colors[2] = green;
             int c = InterpolationCi.InterpolateColor(platform, progressratio, colors, 3);
             game.Draw2dTexture(game.WhiteTexture(), game.xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, 0, c, false);
+        }
+    }
+
+    void DrawBackground(Game game)
+    {
+        backgroundW = 512;
+        backgroundH = 512;
+        //Background tiling
+        int countX = game.platform.FloatToInt(Width / backgroundW) + 1;
+        int countY = game.platform.FloatToInt(Height / backgroundH) + 1;
+        for (int x = 0; x < countX; x++)
+        {
+            for (int y = 0; y < countY; y++)
+            {
+                game.Draw2dTexture(game.GetTexture("background.png"), x * backgroundW, y * backgroundH, backgroundW, backgroundH, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+            }
         }
     }
 }
