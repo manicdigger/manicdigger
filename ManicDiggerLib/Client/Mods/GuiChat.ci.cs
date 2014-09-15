@@ -142,6 +142,11 @@
 
     public override void OnKeyDown(Game game_, KeyEventArgs args)
     {
+        if (game.guistate != GuiState.Normal)
+        {
+            //Don't open chat when not in normal game
+            return;
+        }
         int eKey = args.GetKeyCode();
         if (eKey == game.GetKey(GlKeys.Number7) && game.IsShiftPressed && game.GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
         {
@@ -243,6 +248,11 @@
 
     public override void OnKeyPress(Game game_, KeyPressEventArgs args)
     {
+        if (game.guistate != GuiState.Normal)
+        {
+            //Don't open chat when not in normal game
+            return;
+        }
         int eKeyChar = args.GetKeyChar();
         int chart = 116;
         int charT = 84;
