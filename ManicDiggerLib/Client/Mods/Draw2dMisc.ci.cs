@@ -91,7 +91,7 @@
             {
                 name = e.drawName.Name;
             }
-            if (e.usable != null)
+            if (e.usable)
             {
                 DrawEnemyHealthUseInfo(game, game.language.Get(name), health, true);
             }

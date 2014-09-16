@@ -71,10 +71,7 @@ public class ServerSystemPermissionSign : ServerSystem
         e.drawText.dx = one * 3 / 32;
         e.drawText.dy = one * 36 / 32;
         e.drawText.dz = one * 3 / 32;
-        if (e.usable == null)
-        {
-            e.usable = new ServerEntityUsable();
-        }
+        e.usable = true;
         if (e.drawName == null)
         {
             e.drawName = new ServerEntityDrawName();

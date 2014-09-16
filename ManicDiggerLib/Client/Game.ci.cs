@@ -3353,14 +3353,10 @@
                     Log("Clients:");
                     for (int i = 0; i < entitiesCount; i++)
                     {
-                        if (entities[i] == null)
-                        {
-                            continue;
-                        }
-                        if (entities[i].drawName == null)
-                        {
-                            continue;
-                        }
+                        Entity entity = entities[i];
+                        if (entity == null) { continue; }
+                        if (entity.drawName == null) { continue; }
+                        if (!entity.drawName.ClientAutoComplete) { continue; }
                         Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].drawName.Name));
                     }
                 }
@@ -4351,7 +4347,7 @@
                 }
                 if (currentlyAttackedEntity != -1)
                 {
-                    if (entities[currentlyAttackedEntity].usable != null)
+                    if (entities[currentlyAttackedEntity].usable)
                     {
                         SendPacketClient(ClientPackets.UseEntity(currentlyAttackedEntity));
                     }
@@ -6252,6 +6248,7 @@ public class DrawName
     internal bool DrawHealth;
     internal float Health;
     internal bool OnlyWhenSelected;
+    internal bool ClientAutoComplete;
 }
 
 public class Entity
@@ -6271,7 +6268,7 @@ public class Entity
     internal EntityDrawModel drawModel;
     internal EntityDrawText drawText;
     internal Packet_ServerExplosion push;
-    internal EntityUsable usable;
+    internal bool usable;
     internal Packet_ServerPlayerStats playerStats;
     internal EntityDrawArea drawArea;
 }
@@ -6326,10 +6323,6 @@ public class EntityDrawText
     internal float roty;
     internal float rotz;
     internal string text;
-}
-
-public class EntityUsable
-{
 }
 
 public class DictionaryVector3Float

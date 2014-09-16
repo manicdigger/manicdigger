@@ -619,7 +619,7 @@
             {
                 continue;
             }
-            if (p_.usable == null)
+            if (!p_.usable)
             {
                 continue;
             }

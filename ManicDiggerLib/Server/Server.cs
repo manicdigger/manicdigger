@@ -3463,6 +3463,7 @@ public class ClientOnServer
         float one = 1;
         entity = new ServerEntity();
         entity.drawName = new ServerEntityDrawName();
+        entity.drawName.clientAutoComplete = true;
         entity.position = new ServerEntityPositionAndOrientation();
         entity.position.pitch = 2 * 255 / 4;
         entity.drawModel = new ServerEntityAnimatedModel();

@@ -299,6 +299,7 @@ public class ServerSystemNotifyEntities : ServerSystem
             p.DrawName_ = new Packet_ServerEntityDrawName();
             p.DrawName_.Name = entity.drawName.name;
             p.DrawName_.OnlyWhenSelected = entity.drawName.onlyWhenSelected;
+            p.DrawName_.ClientAutoComplete = entity.drawName.clientAutoComplete;
         }
         if (entity.drawText != null)
         {
@@ -316,10 +317,7 @@ public class ServerSystemNotifyEntities : ServerSystem
             p.Push = new Packet_ServerEntityPush();
             p.Push.RangeFloat = platform.FloatToInt(entity.push.range * 32);
         }
-        if (entity.usable != null)
-        {
-            p.Usable = new Packet_ServerEntityUsable();
-        }
+        p.Usable = entity.usable;
         if (entity.drawArea != null)
         {
             p.DrawArea = new Packet_ServerEntityDrawArea();

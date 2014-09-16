@@ -84,6 +84,7 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
                 old.drawName.Name = game.platform.StringFormat("&f{0}", old.drawName.Name);
             }
             old.drawName.OnlyWhenSelected = entity.DrawName_.OnlyWhenSelected;
+            old.drawName.ClientAutoComplete = entity.DrawName_.ClientAutoComplete;
         }
         if (entity.DrawText != null)
         {
@@ -110,14 +111,7 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         {
             old.push = null;
         }
-        if (entity.Usable != null)
-        {
-            old.usable = new EntityUsable();
-        }
-        else
-        {
-            old.usable = null;
-        }
+        old.usable = entity.Usable;
         if (entity.DrawArea != null)
         {
             //New DrawArea

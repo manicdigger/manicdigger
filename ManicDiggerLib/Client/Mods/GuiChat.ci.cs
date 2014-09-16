@@ -285,15 +285,11 @@
             {
                 for (int i = 0; i < game.entitiesCount; i++)
                 {
-                    if (game.entities[i] == null)
-                    {
-                        continue;
-                    }
-                    if (game.entities[i].drawName == null)
-                    {
-                        continue;
-                    }
-                    DrawName p = game.entities[i].drawName;
+                    Entity entity = game.entities[i];
+                    if (entity == null) { continue; }
+                    if (entity.drawName == null) { continue; }
+                    if (!entity.drawName.ClientAutoComplete) { continue; }
+                    DrawName p = entity.drawName;
                     //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
                     if (game.platform.StringStartsWithIgnoreCase(StringTools.StringSubstringToEnd(game.platform, p.Name, 2), game.GuiTypingBuffer))
                     {

@@ -719,7 +719,7 @@ package Packet;
 		optional ServerEntityDrawText drawText = 4;
 		optional ServerEntityDrawBlock drawBlock = 5;
 		optional ServerEntityPush push = 6;
-		optional ServerEntityUsable usable = 7;
+		optional bool usable = 7;
 		optional ServerPlayerStats playerStats = 8;
 		optional ServerEntityDrawArea drawArea = 9;
     }
@@ -735,10 +735,6 @@ package Packet;
 		optional int32 visibleToClientId = 7;
     }
     
-    message ServerEntityUsable
-    {
-    }
-    
     message ServerEntityAnimatedModel
     {
         optional string model_ = 1;
@@ -752,6 +748,7 @@ package Packet;
     {
 		optional string name = 1;
 		optional bool onlyWhenSelected = 2;
+		optional bool clientAutoComplete = 3;
     }
     
     message ServerEntityDrawText

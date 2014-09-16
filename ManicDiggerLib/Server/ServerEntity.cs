@@ -14,7 +14,7 @@ public class ServerEntity
     [ProtoMember(5, IsRequired = false)]
     internal ServerEntityPush push;
     [ProtoMember(7, IsRequired = false)]
-    internal ServerEntityUsable usable;
+    internal bool usable;
     [ProtoMember(9, IsRequired = false)]
     internal ServerEntityDrawArea drawArea;
 
@@ -22,11 +22,6 @@ public class ServerEntity
     internal ServerEntitySign sign;
     [ProtoMember(8, IsRequired = false)]
     internal ServerEntityPermissionSign permissionSign;
-}
-
-[ProtoContract()]
-public class ServerEntityUsable
-{
 }
 
 [ProtoContract()]
@@ -48,6 +43,8 @@ public class ServerEntityDrawName
     internal string name;
     [ProtoMember(2)]
     internal bool onlyWhenSelected;
+    [ProtoMember(3)]
+    internal bool clientAutoComplete;
 }
 
 [ProtoContract()]
