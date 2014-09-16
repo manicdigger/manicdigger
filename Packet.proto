@@ -720,7 +720,7 @@ package Packet;
 		optional ServerEntityDrawBlock drawBlock = 5;
 		optional ServerEntityPush push = 6;
 		optional ServerEntityUsable usable = 7;
-		optional ServerPlayerStats health = 8;
+		optional ServerPlayerStats playerStats = 8;
 		optional ServerEntityDrawArea drawArea = 9;
     }
     

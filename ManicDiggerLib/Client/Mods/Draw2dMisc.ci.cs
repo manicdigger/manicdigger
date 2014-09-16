@@ -78,9 +78,9 @@
                 return;
             }
             float health;
-            if (e.health != null)
+            if (e.playerStats != null)
             {
-                health = game.one * e.health.CurrentHealth / e.health.MaxHealth;
+                health = game.one * e.playerStats.CurrentHealth / e.playerStats.MaxHealth;
             }
             else
             {

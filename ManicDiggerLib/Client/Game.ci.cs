@@ -6272,7 +6272,7 @@ public class Entity
     internal EntityDrawText drawText;
     internal Packet_ServerExplosion push;
     internal EntityUsable usable;
-    internal Packet_ServerPlayerStats health;
+    internal Packet_ServerPlayerStats playerStats;
     internal EntityDrawArea drawArea;
 }
 
