@@ -41,6 +41,7 @@
                 Entity e = game.entities[i];
                 if (e == null) { continue; }
                 if (e.drawArea == null) { continue; }
+                if (!e.drawArea.visible) { continue; }
                 int x = e.drawArea.x + e.drawArea.sizex / 2;
                 int y = e.drawArea.y + e.drawArea.sizey / 2;
                 int z = e.drawArea.z + e.drawArea.sizez / 2;

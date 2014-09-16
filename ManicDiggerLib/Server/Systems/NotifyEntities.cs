@@ -329,6 +329,7 @@ public class ServerSystemNotifyEntities : ServerSystem
             p.DrawArea.Sizex = entity.drawArea.sizex;
             p.DrawArea.Sizey = entity.drawArea.sizey;
             p.DrawArea.Sizez = entity.drawArea.sizez;
+            p.DrawArea.VisibleToClientId = entity.drawArea.visibleToClientId;
         }
 
         return p;

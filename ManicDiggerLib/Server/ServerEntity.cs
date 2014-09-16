@@ -38,6 +38,7 @@ public class ServerEntityDrawArea
     internal int sizex;
     internal int sizey;
     internal int sizez;
+    internal int visibleToClientId;
 }
 
 [ProtoContract()]

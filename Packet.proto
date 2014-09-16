@@ -732,6 +732,7 @@ package Packet;
 		optional int32 sizex = 4;
 		optional int32 sizey = 5;
 		optional int32 sizez = 6;
+		optional int32 visibleToClientId = 7;
     }
     
     message ServerEntityUsable

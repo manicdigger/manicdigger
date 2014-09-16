@@ -141,6 +141,7 @@ public class ServerSystemPermissionSign : ServerSystem
             e.drawArea.sizex = sizex;
             e.drawArea.sizey = sizey;
             e.drawArea.sizez = sizez;
+            e.drawArea.visibleToClientId = player;
         }
         else
         {

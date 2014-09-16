@@ -94,6 +94,10 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
             old.drawText.dy = one_ * entity.DrawText.Dy / 32;
             old.drawText.dz = one_ * entity.DrawText.Dz / 32;
         }
+        else
+        {
+            old.drawText = null;
+        }
         if (entity.DrawBlock != null)
         {
         }
@@ -102,9 +106,17 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
             old.push = new Packet_ServerExplosion();
             old.push.RangeFloat = entity.Push.RangeFloat;
         }
+        else
+        {
+            old.push = null;
+        }
         if (entity.Usable != null)
         {
             old.usable = new EntityUsable();
+        }
+        else
+        {
+            old.usable = null;
         }
         if (entity.DrawArea != null)
         {
@@ -116,6 +128,7 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
             old.drawArea.sizex = entity.DrawArea.Sizex;
             old.drawArea.sizey = entity.DrawArea.Sizey;
             old.drawArea.sizez = entity.DrawArea.Sizez;
+            old.drawArea.visible = ((entity.DrawArea.VisibleToClientId == game.LocalPlayerId) || (entity.DrawArea.VisibleToClientId == -1));
         }
         else
         {

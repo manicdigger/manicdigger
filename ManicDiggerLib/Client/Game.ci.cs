@@ -6284,6 +6284,7 @@ public class EntityDrawArea
     internal int sizex;
     internal int sizey;
     internal int sizez;
+    internal bool visible;
 }
 
 public class EntityPosition_
