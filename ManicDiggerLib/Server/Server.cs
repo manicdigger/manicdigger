@@ -1784,18 +1784,26 @@ public partial class Server : ICurrentTime, IDropItem
                 clients[clientid].WindowSize = new int[] { packet.GameResolution.Width, packet.GameResolution.Height };
                 //Console.WriteLine("client:{0} --> {1}x{2}", clientid, clients[clientid].WindowSize[0], clients[clientid].WindowSize[1]);
                 break;
-            case Packet_ClientIdEnum.UseEntity:
-                for (int i = 0; i < modEventHandlers.onuseentity.Count; i++)
+            case Packet_ClientIdEnum.EntityInteraction:
+                switch (packet.EntityInteraction.InteractionType)
                 {
-                    ServerEntityId id = c.spawnedEntities[packet.UseEntity.EntityId - 64];
-                    modEventHandlers.onuseentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
-                }
-                break;
-            case Packet_ClientIdEnum.HitEntity:
-                for (int i = 0; i < modEventHandlers.onhitentity.Count; i++)
-                {
-                    ServerEntityId id = c.spawnedEntities[packet.HitEntity.EntityId - 64];
-                    modEventHandlers.onhitentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
+                    case Packet_EntityInteractionTypeEnum.Use:
+                        for (int i = 0; i < modEventHandlers.onuseentity.Count; i++)
+                        {
+                            ServerEntityId id = c.spawnedEntities[packet.EntityInteraction.EntityId - 64];
+                            modEventHandlers.onuseentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
+                        }
+                        break;
+                    case Packet_EntityInteractionTypeEnum.Hit:
+                        for (int i = 0; i < modEventHandlers.onhitentity.Count; i++)
+                        {
+                            ServerEntityId id = c.spawnedEntities[packet.EntityInteraction.EntityId - 64];
+                            modEventHandlers.onhitentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
+                        }
+                        break;
+                    default:
+                        Console.WriteLine("Unknown EntityInteractionType: {0}, clientid: {1}", packet.EntityInteraction.InteractionType, clientid);
+                        break;
                 }
                 break;
             default:

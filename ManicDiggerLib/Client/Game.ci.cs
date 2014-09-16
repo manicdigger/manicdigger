@@ -8576,18 +8576,20 @@ public class ClientPackets
     internal static Packet_Client UseEntity(int entityId)
     {
         Packet_Client p = new Packet_Client();
-        p.Id = Packet_ClientIdEnum.UseEntity;
-        p.UseEntity = new Packet_ClientUseEntity();
-        p.UseEntity.EntityId = entityId;
+        p.Id = Packet_ClientIdEnum.EntityInteraction;
+        p.EntityInteraction = new Packet_ClientEntityInteraction();
+        p.EntityInteraction.EntityId = entityId;
+        p.EntityInteraction.InteractionType = Packet_EntityInteractionTypeEnum.Use;
         return p;
     }
 
     internal static Packet_Client HitEntity(int entityId)
     {
         Packet_Client p = new Packet_Client();
-        p.Id = Packet_ClientIdEnum.HitEntity;
-        p.HitEntity = new Packet_ClientHitEntity();
-        p.HitEntity.EntityId = entityId;
+        p.Id = Packet_ClientIdEnum.EntityInteraction;
+        p.EntityInteraction = new Packet_ClientEntityInteraction();
+        p.EntityInteraction.EntityId = entityId;
+        p.EntityInteraction.InteractionType = Packet_EntityInteractionTypeEnum.Hit;
         return p;
     }
 }

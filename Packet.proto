@@ -21,8 +21,7 @@ package Packet;
         Reload = 58;
         Oxygen = 59;
         Death = 60;
-        UseEntity = 61;
-        HitEntity = 62;
+        EntityInteraction = 61;
         ServerQuery = 64;
         GameResolution = 10;
         ExtendedPacketCommand = 100;
@@ -261,26 +260,22 @@ package Packet;
         optional ClientDeath death = 18;
         optional ClientServerQuery query = 19;
         optional ClientGameResolution gameResolution = 20;
-        optional ClientUseEntity useEntity = 21;
-        optional ClientHitEntity hitEntity = 22;
+        optional ClientEntityInteraction entityInteraction = 21;
 	}
-    
-    
-    message ClientUseEntity
-    {
-		optional int32 entityId = 1;
-    }
-    
-    message ClientHitEntity
-    {
-		optional int32 entityId = 1;
-    }
-    
-    
-    
 
-	
-	
+
+    message ClientEntityInteraction
+    {
+        optional int32 entityId = 1;
+        optional EntityInteractionType interactionType = 2 [default = Use];
+    }
+
+    enum EntityInteractionType
+    {
+        Use = 0;
+        Hit = 1;
+    }
+
 
     message SoundSet
     {
