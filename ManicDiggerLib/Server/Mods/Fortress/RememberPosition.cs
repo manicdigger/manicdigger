@@ -93,7 +93,18 @@ namespace ManicDigger.Mods
                 //Don't store bot positions
                 return;
             }
-            positions.Store(m.GetPlayerName(player), (int)m.GetPlayerPositionX(player), (int)m.GetPlayerPositionY(player), (int)m.GetPlayerPositionZ(player));
+            
+            //Do not save position if it is outside the map
+            int x = (int)m.GetPlayerPositionX(player);
+            int y = (int)m.GetPlayerPositionY(player);
+            int z = (int)m.GetPlayerPositionZ(player);
+            if (x > 0 && y > 0 && z > 0)
+            {
+                if (x < m.GetMapSizeX() && y < m.GetMapSizeY() && z < m.GetMapSizeZ())
+                {
+                    positions.Store(m.GetPlayerName(player), x, y, z);
+                }
+            }
         }
     }
     
