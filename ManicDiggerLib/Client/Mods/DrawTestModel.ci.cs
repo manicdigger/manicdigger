@@ -19,8 +19,8 @@
         if (testmodel == null)
         {
             testmodel = new AnimatedModelRenderer();
-            byte[] data = game.GetFile("player2.txt");
-            int dataLength = game.GetFileLength("player2.txt");
+            byte[] data = game.GetFile("player.txt");
+            int dataLength = game.GetFileLength("player.txt");
             string dataString = game.platform.StringFromUtf8ByteArray(data, dataLength);
             AnimatedModel model = AnimatedModelSerializer.Deserialize(game.platform, dataString);
             testmodel.Start(game, model);

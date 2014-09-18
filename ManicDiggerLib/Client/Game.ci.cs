@@ -6863,7 +6863,7 @@ public class Player
     public Player()
     {
         AnimationHint_ = new AnimationHint();
-        Model = "player2.txt";
+        Model = "player.txt";
         EyeHeight = DefaultEyeHeight();
         ModelHeight = DefaultModelHeight();
         CurrentTexture = -1;

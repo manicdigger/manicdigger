@@ -25,7 +25,7 @@ namespace MdMonsterEditor
         {
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             getfile = new GetFileStream(datapaths);
-            richTextBox1.Text = new StreamReader(getfile.GetFile("player2.txt")).ReadToEnd();
+            richTextBox1.Text = new StreamReader(getfile.GetFile("player.txt")).ReadToEnd();
             RichTextBoxContextMenu(richTextBox1);
             RichTextBoxContextMenu(richTextBox2);
             UpdateLabels();

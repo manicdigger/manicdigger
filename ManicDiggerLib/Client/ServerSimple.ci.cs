@@ -208,7 +208,7 @@
                         //SendPacket(client, ServerPackets.Spawn(i, clients[i].Name, pos));
                         Packet_ServerEntity e = new Packet_ServerEntity();
                         e.DrawModel = new Packet_ServerEntityAnimatedModel();
-                        e.DrawModel.Model_ = "player2.txt";
+                        e.DrawModel.Model_ = "player.txt";
                         e.DrawModel.ModelHeight = platform.FloatToInt((one * 17 / 10) * 32);
                         e.DrawModel.EyeHeight = platform.FloatToInt((one * 15 / 10) * 32);
                         e.Position = pos;
