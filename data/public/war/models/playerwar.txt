@@ -3,21 +3,21 @@ name	paren	x	y	z	sizex	sizey	sizez	u	v	rotx	roty	rotz	pivx	pivy	pivz	scalx	scaly
 torso	root	0	18	0	8	12	4	16	16	0	0	0	0	0	0	1	1	1	0
 head	torso	0	6	0	8	8	8	0	0	0	0	0	0	4	0	0	0	0	1
 hat	head	0	0	0	8	8	8	32	0	0	0	0	0	0	0	1.1	1.1	1.1	0
-legl	torso	-2	-6	0	4	12	4	0	16	0	0	0	0	-6	0	0	0	0	0
-legr	torso	2	-6	0	4	12	4	0	16	0	0	0	0	-6	0	0	0	0	0
-arml	torso	-6	6	0	4	12	4	40	16	0	0	0	0	-6	0	0	0	0	0
-armr	torso	6	6	0	4	12	4	40	16	0	0	0	0	-6	0	0	0	0	0
+legr	torso	-2	-6	0	4	12	4	0	16	0	0	0	0	-6	0	0	0	0	0
+legl	torso	2	-6	0	4	12	4	0	16	0	0	0	0	-6	0	0	0	0	0
+armr	torso	-6	6	0	4	12	4	40	16	0	0	0	0	-6	0	0	0	0	0
+arml	torso	6	6	0	4	12	4	40	16	0	0	0	0	-6	0	0	0	0	0
 
 section=keyframes
 anim	node	frame	type	x	y	z
-walk	legl	10	rot	-45	0	0
-walk	legl	30	rot	45	0	0
-walk	legr	10	rot	45	0	0
-walk	legr	30	rot	-45	0	0
-walk	armr	10	rot	-45	0	0
-walk	armr	30	rot	45	0	0
-walk	arml	10	rot	45	0	0
-walk	arml	30	rot	-45	0	0
+walk	legr	10	rot	-45	0	0
+walk	legr	30	rot	45	0	0
+walk	legl	10	rot	45	0	0
+walk	legl	30	rot	-45	0	0
+walk	armr	10	rot	45	0	0
+walk	armr	30	rot	-45	0	0
+walk	arml	10	rot	-45	0	0
+walk	arml	30	rot	45	0	0
 walk	torso	0	pos	0	18	0
 walk	torso	10	pos	0	19	0
 walk	torso	20	pos	0	18	0
