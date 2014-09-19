@@ -122,7 +122,6 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
             old.drawArea.sizex = entity.DrawArea.Sizex;
             old.drawArea.sizey = entity.DrawArea.Sizey;
             old.drawArea.sizez = entity.DrawArea.Sizez;
-            old.drawArea.visible = ((entity.DrawArea.VisibleToClientId == game.LocalPlayerId) || (entity.DrawArea.VisibleToClientId == -1));
         }
         else
         {

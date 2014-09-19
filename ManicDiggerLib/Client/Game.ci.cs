@@ -241,6 +241,7 @@
         AddMod(new ModDrawTestModel());
         AddMod(new ModDrawPlayers());
         AddMod(new ModDrawLinesAroundSelectedBlock());
+        AddMod(new ModDrawArea());
         AddMod(new ModDrawTerrain());
         AddMod(new ModDrawPlayerNames());
         AddMod(new ModDrawText());
@@ -4349,6 +4350,13 @@
                 {
                     if (entities[currentlyAttackedEntity].usable)
                     {
+                        for (int i = 0; i < clientmodsCount; i++)
+                        {
+                            if (clientmods[i] == null) { continue; }
+                            OnUseEntityArgs args = new OnUseEntityArgs();
+                            args.entityId = currentlyAttackedEntity;
+                            clientmods[i].OnUseEntity(this, args);
+                        }
                         SendPacketClient(ClientPackets.UseEntity(currentlyAttackedEntity));
                     }
                 }
@@ -7376,6 +7384,13 @@ public abstract class ClientMod
     public virtual void OnTouchStart(Game game, TouchEventArgs e) { }
     public virtual void OnTouchMove(Game game, TouchEventArgs e) { }
     public virtual void OnTouchEnd(Game game, TouchEventArgs e) { }
+    public virtual void OnUseEntity(Game game, OnUseEntityArgs e) { }
+    public virtual void OnHitEntity(Game game, OnUseEntityArgs e) { }
+}
+
+public class OnUseEntityArgs
+{
+    internal int entityId;
 }
 
 public class ClientCommandArgs

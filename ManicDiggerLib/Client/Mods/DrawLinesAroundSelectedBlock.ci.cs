@@ -3,7 +3,10 @@
     public ModDrawLinesAroundSelectedBlock()
     {
         one = 1;
+        lines = new DrawWireframeCube();
     }
+    float one;
+    DrawWireframeCube lines;
     public override void OnNewFrameDraw3d(Game game, float deltaTime)
     {
         if (game.ENABLE_DRAW2D)
@@ -14,7 +17,7 @@
                 Entity e = game.entities[game.SelectedEntityId];
                 if (e != null)
                 {
-                    DrawLinesAroundSelectedBlock(game,
+                    lines.DrawWireframeCube_(game,
                         e.position.x, e.position.y + e.drawModel.ModelHeight / 2, e.position.z,
                         size, size * e.drawModel.ModelHeight, size);
                 }
@@ -33,29 +36,23 @@
                     float scalex = size;
                     float scaley = size * pickcubeheight;
                     float scalez = size;
-                    DrawLinesAroundSelectedBlock(game, posx, posy, posz, scalex, scaley, scalez);
+                    lines.DrawWireframeCube_(game, posx, posy, posz, scalex, scaley, scalez);
                 }
             }
-            for (int i = 0; i < game.entitiesCount; i++)
-            {
-                Entity e = game.entities[i];
-                if (e == null) { continue; }
-                if (e.drawArea == null) { continue; }
-                if (!e.drawArea.visible) { continue; }
-                int x = e.drawArea.x + e.drawArea.sizex / 2;
-                int y = e.drawArea.y + e.drawArea.sizey / 2;
-                int z = e.drawArea.z + e.drawArea.sizez / 2;
-                float scalex = e.drawArea.sizex;
-                float scaley = e.drawArea.sizey;
-                float scalez = e.drawArea.sizez;
-                DrawLinesAroundSelectedBlock(game, x, y, z, scalex, scaley, scalez);
-            }
         }
+    }
+}
+
+public class DrawWireframeCube
+{
+    public DrawWireframeCube()
+    {
+        one = 1;
     }
     float one;
 
     Model wireframeCube;
-    public void DrawLinesAroundSelectedBlock(Game game, float posx, float posy, float posz, float scalex, float scaley, float scalez)
+    public void DrawWireframeCube_(Game game, float posx, float posy, float posz, float scalex, float scaley, float scalez)
     {
         game.platform.GLLineWidth(2);
         
