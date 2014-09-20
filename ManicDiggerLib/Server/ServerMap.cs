@@ -187,6 +187,10 @@ public class ServerMap : IMapStorage2
             }
             c.dataOld = null;
         }
+        if (c.Entities != null)
+        {
+            c.EntitiesCount = c.Entities.Length;
+        }
         return c;
     }
     public int chunksize = 16;
