@@ -74,9 +74,9 @@ public class ServerSystemPermissionSign : ServerSystem
         if (e.drawName == null)
         {
             e.drawName = new ServerEntityDrawName();
-            e.drawName.name = "Permission Sign";
-            e.drawName.onlyWhenSelected = true;
         }
+        e.drawName.name = "Permission Sign";
+        e.drawName.onlyWhenSelected = true;
         if (e.drawArea == null)
         {
             e.drawArea = new ServerEntityDrawArea();
@@ -87,6 +87,32 @@ public class ServerSystemPermissionSign : ServerSystem
         e.drawArea.x = (int)e.position.x - sizex / 2;
         e.drawArea.y = (int)e.position.y - sizey / 2;
         e.drawArea.z = (int)e.position.z - sizez / 2;
+        byte heading = (byte)(e.position.heading + 255 / 8);
+        int rotDir = heading / 64;
+        if (rotDir == 0)
+        {
+            e.drawArea.x = (int)e.position.x - sizex / 2;
+            e.drawArea.y = (int)e.position.y - sizey / 2;
+            e.drawArea.z = (int)e.position.z - sizez;
+        }
+        else if (rotDir == 1)
+        {
+            e.drawArea.x = (int)e.position.x;
+            e.drawArea.y = (int)e.position.y - sizey / 2;
+            e.drawArea.z = (int)e.position.z - sizez / 2;
+        }
+        else if (rotDir == 2)
+        {
+            e.drawArea.x = (int)e.position.x - sizex / 2;
+            e.drawArea.y = (int)e.position.y - sizey / 2;
+            e.drawArea.z = (int)e.position.z;
+        }
+        else
+        {
+            e.drawArea.x = (int)e.position.x - sizex;
+            e.drawArea.y = (int)e.position.y - sizey / 2;
+            e.drawArea.z = (int)e.position.z - sizez / 2;
+        }
         e.drawArea.sizex = sizex;
         e.drawArea.sizey = sizey;
         e.drawArea.sizez = sizez;
