@@ -31,7 +31,8 @@
 
     public override void OnKeyPress(Game game, KeyPressEventArgs args)
     {
-        if (game.guistate != GuiState.ModalDialog)
+        if (game.guistate != GuiState.ModalDialog
+            && game.guistate != GuiState.Normal)
         {
             return;
         }
@@ -237,6 +238,14 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
             }
             b.id = a.Id;
             b.isbutton = a.ClickKey != 0;
+            if (a.Image == "Solid")
+            {
+                b.image = null;
+            }
+            else if (a.Image != null)
+            {
+                b.image = StringTools.StringAppend(game.platform, a.Image, ".png");
+            }
             s.widgets[i] = b;
         }
         for (int i = 0; i < s.WidgetCount; i++)

@@ -267,6 +267,10 @@
                         continue;
                     }
                     Entity p_ = game.entities[i];
+                    if (p_.networkPosition == null)
+                    {
+                        continue;
+                    }
                     if (!p_.networkPosition.PositionLoaded)
                     {
                         continue;

@@ -5321,7 +5321,7 @@ public class GameScreen : ClientMod
                         {
                             game.Draw2dTexture(game.WhiteTexture(), screenx + w.x, screeny + w.y, w.sizex, w.sizey, null, 0, w.color, false);
                         }
-                        //menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.hover);
+                        game.Draw2dText1(text, screenx + game.platform.FloatToInt(w.x), screeny + game.platform.FloatToInt(w.y + w.sizey / 2), game.platform.FloatToInt(w.fontSize), null, false);
                     }
                 }
                 if (w.type == WidgetType.Textbox)
