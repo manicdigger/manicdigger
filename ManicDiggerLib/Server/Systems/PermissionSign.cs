@@ -15,6 +15,7 @@ public class ServerSystemPermissionSign : ServerSystem
             server_.modEventHandlers.onupdateentity.Add(UpdateEntity);
             server_.modEventHandlers.onuseentity.Add(OnUseEntity);
             server.modEventHandlers.ondialogclick2.Add(OnDialogClick);
+            server.modEventHandlers.onpermission.Add(OnPermission);
         }
     }
     bool started;
@@ -137,6 +138,11 @@ public class ServerSystemPermissionSign : ServerSystem
         {
             return;
         }
+        if (!server.PlayerHasPrivilege(player, ServerClientMisc.Privilege.area_add))
+        {
+            server.SendMessage(player, server.colorError + server.language.Get("Server_CommandInsufficientPrivileges"));
+            return;
+        }
         ManicDigger.Dialog d = new ManicDigger.Dialog();
         d.Width = 400;
         d.Height = 400;
@@ -220,5 +226,64 @@ public class ServerSystemPermissionSign : ServerSystem
             server.DespawnEntity(id);
         }
         server.SendDialog(args.GetPlayer(), "UseSign", null);
+    }
+
+    void OnPermission(PermissionArgs args)
+    {
+        for (int x = 0; x < 3; x++)
+        {
+            for (int y = 0; y < 3; y++)
+            {
+                for (int z = 0; z < 3; z++)
+                {
+                    int cx = args.GetX() / Server.chunksize + x - 1;
+                    int cy = args.GetY() / Server.chunksize + y - 1;
+                    int cz = args.GetZ() / Server.chunksize + z - 1;
+                    if (!MapUtil.IsValidChunkPos(server.d_Map, cx, cy, cz, Server.chunksize))
+                    {
+                        continue;
+                    }
+                    ServerChunk c = server.d_Map.GetChunk_(cx, cy, cz);
+                    if (c == null) { return; }
+                    for (int i = 0; i < c.EntitiesCount; i++)
+                    {
+                        ServerEntity e = c.Entities[i];
+                        if (e == null) { continue; }
+                        if (e.permissionSign == null) { continue; }
+                        if (e.drawArea == null) { continue; }
+                        if (!InArea(args.GetX(), args.GetY(), args.GetZ(),
+                            e.drawArea.x, e.drawArea.z, e.drawArea.y,
+                            e.drawArea.sizex, e.drawArea.sizez, e.drawArea.sizey))
+                        {
+                            continue;
+                        }
+                        if (e.permissionSign.type == PermissionSignType.Group)
+                        {
+                            if (e.permissionSign.name == server.clients[args.GetPlayer()].clientGroup.Name)
+                            {
+                                args.SetAllowed(true);
+                                return;
+                            }
+                        }
+                        if (e.permissionSign.type == PermissionSignType.Player)
+                        {
+                            if (e.permissionSign.name == server.clients[args.GetPlayer()].playername)
+                            {
+                                args.SetAllowed(true);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bool InArea(int x, int y, int z, int areaX, int areaY, int areaZ, int areaSizeX, int areaSizeY, int areaSizeZ)
+    {
+        return x >= areaX && y >= areaY && z >= areaZ
+            && x < (areaX + areaSizeX)
+            && y < (areaY + areaSizeY)
+            && z < (areaZ + areaSizeZ);
     }
 }

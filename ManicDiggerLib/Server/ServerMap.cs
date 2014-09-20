@@ -104,6 +104,12 @@ public class ServerMap : IMapStorage2
             GetChunk(cx * chunksize, cy * chunksize, cz * chunksize);
         }
     }
+
+    public ServerChunk GetChunk_(int chunkx, int chunky, int chunkz)
+    {
+        return GetChunk(chunkx * chunksize, chunky * chunksize, chunkz * chunksize);
+    }
+
     public ServerChunk GetChunk(int x, int y, int z)
     {
         x = x / chunksize;

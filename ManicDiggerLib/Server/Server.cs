@@ -1811,6 +1811,19 @@ public partial class Server : ICurrentTime, IDropItem
             server.SendMessage(player, server.colorError + server.language.ServerNoSpectatorBuild());
             return false;
         }
+        for (int i = 0; i < server.modEventHandlers.onpermission.Count; i++)
+        {
+            PermissionArgs args = new PermissionArgs();
+            args.SetPlayer(player);
+            args.SetX(x);
+            args.SetY(y);
+            args.SetZ(z);
+            server.modEventHandlers.onpermission[i](args);
+            if (args.GetAllowed())
+            {
+                return true;
+            }
+        }
         if (!server.config.CanUserBuild(server.clients[player], x, y, z)
             && !server.extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
         {
@@ -3618,6 +3631,7 @@ public class ModEventHandlers
     public List<ModDelegates.UpdateEntity> onupdateentity = new List<ModDelegates.UpdateEntity>();
     public List<ModDelegates.UseEntity> onuseentity = new List<ModDelegates.UseEntity>();
     public List<ModDelegates.HitEntity> onhitentity = new List<ModDelegates.HitEntity>();
+    public List<ModDelegates.Permission> onpermission = new List<ModDelegates.Permission>();
 }
 public class GameTime
 {
