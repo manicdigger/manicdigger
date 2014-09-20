@@ -29,6 +29,18 @@ public class ServerSystemPermissionSign : ServerSystem
             {
                 return;
             }
+
+            if (!server.CheckBuildPrivileges(player, x, y, z))
+            {
+                return;
+            }
+
+            if (!server.PlayerHasPrivilege(player, ServerClientMisc.Privilege.area_add))
+            {
+                server.SendMessage(player, server.colorError + server.language.Get("Server_CommandInsufficientPrivileges"));
+                return;
+            }
+
             ServerEntity e = new ServerEntity();
             e.position = new ServerEntityPositionAndOrientation();
             e.position.x = x + one / 2;

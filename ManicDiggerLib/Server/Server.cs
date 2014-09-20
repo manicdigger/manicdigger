@@ -1333,22 +1333,8 @@ public partial class Server : ICurrentTime, IDropItem
                     }
                     else	//Player builds, deletes or uses block with tool
                     {
-                        if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.build))
+                        if (!CheckBuildPrivileges(clientid, x, y, z))
                         {
-                            SendMessage(clientid, colorError + language.ServerNoBuildPrivilege());
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
-                        }
-                        if (clients[clientid].IsSpectator && !config.AllowSpectatorBuild)
-                        {
-                            SendMessage(clientid, colorError + language.ServerNoSpectatorBuild());
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
-                        }
-                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Create || packet.SetBlock.Mode == Packet_BlockSetModeEnum.Destroy)
-                            && !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
-                        {
-                            SendMessage(clientid, colorError + language.ServerNoBuildPermissionHere());
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             break;
                         }
@@ -1810,6 +1796,28 @@ public partial class Server : ICurrentTime, IDropItem
                 Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.Id, clientid);
                 break;
         }
+    }
+
+    public bool CheckBuildPrivileges(int player, int x, int y, int z)
+    {
+        Server server = this;
+        if (!server.PlayerHasPrivilege(player, ServerClientMisc.Privilege.build))
+        {
+            server.SendMessage(player, server.colorError + server.language.ServerNoBuildPrivilege());
+            return false;
+        }
+        if (server.clients[player].IsSpectator && !server.config.AllowSpectatorBuild)
+        {
+            server.SendMessage(player, server.colorError + server.language.ServerNoSpectatorBuild());
+            return false;
+        }
+        if (!server.config.CanUserBuild(server.clients[player], x, y, z)
+            && !server.extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
+        {
+            server.SendMessage(player, server.colorError + server.language.ServerNoBuildPermissionHere());
+            return false;
+        }
+        return true;
     }
 
     public void SendServerRedirect(int clientid, string ip_, int port_)

@@ -29,6 +29,12 @@ public class ServerSystemSign : ServerSystem
             {
                 return;
             }
+
+            if (!server.CheckBuildPrivileges(player, x, y, z))
+            {
+                return;
+            }
+
             ServerEntity e = new ServerEntity();
             e.position = new ServerEntityPositionAndOrientation();
             e.position.x = x + one / 2;
@@ -77,6 +83,10 @@ public class ServerSystemSign : ServerSystem
     {
         ServerEntity e = server.GetEntity(chunkx, chunky, chunkz, id);
         if (e.sign == null)
+        {
+            return;
+        }
+        if (!server.CheckBuildPrivileges(player, (int)e.position.x, (int)e.position.z, (int)e.position.y))
         {
             return;
         }
