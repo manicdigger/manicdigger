@@ -353,6 +353,7 @@ package Packet;
         Fence = 10;
         HalfHeight = 11;
         Flat = 12;
+        Cactus = 13;
     }
     
     enum WalkableType

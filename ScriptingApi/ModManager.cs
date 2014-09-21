@@ -955,6 +955,7 @@ namespace ManicDigger
         Fence,
         HalfHeight,
         Flat,
+        Cactus,
     }
 
     public enum WalkableType

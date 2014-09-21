@@ -497,6 +497,10 @@ public class TerrainChunkTesselatorCi
             drawleft = 1;
             flowerfix = one / 2; // 0.5f;
         }
+        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
+        {
+            flowerfix = one / 16;
+        }
         if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
         {
             drawtop = 0;
@@ -957,6 +961,10 @@ public class TerrainChunkTesselatorCi
             drawfront = 1;
             drawleft = 1;
             flowerfix = one / 2; // 0.5f;
+        }
+        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
+        {
+            flowerfix = one / 16;
         }
         if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
         {
