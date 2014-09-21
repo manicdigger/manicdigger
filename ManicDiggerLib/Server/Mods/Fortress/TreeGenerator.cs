@@ -51,7 +51,7 @@ namespace ManicDigger.Mods
             z *= m.GetChunkSize();
             //forests
             //if (Math.Abs(treenoise.GetValue(x, 0, y)) >= 0.9)
-            double count = treenoise.GetValue(x, 0, y) * 1000;
+            double count = treenoise.GetValue(x/512.0, 0, y/512.0) * 1000;
             {
                 count = System.Math.Min(count, 300);
                 MakeSmallTrees(x, y, z, m.GetChunkSize(), _rnd, (int)count);
