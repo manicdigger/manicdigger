@@ -433,88 +433,69 @@ namespace ManicDigger.Mods.War
                                WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(51, "FireBlock", new BlockType()
+            m.SetBlockType(51, "Clay", new BlockType()
                            {
-                               AllTextures = "Unknown",
+                               AllTextures = "Clay",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(52, "InfiniteWaterSource", new BlockType()
+            m.SetBlockType(52, "Marble", new BlockType()
                            {
-                               AllTextures = "Unknown",
-                               DrawType = DrawType.Fluid,
-                               WalkableType = WalkableType.Fluid,
-                               Sounds = solidSounds,
-                           });
-            m.SetBlockType(53, "InfiniteLavaSource", new BlockType()
-                           {
-                               AllTextures = "Unknown",
+                               AllTextures = "Marble",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(54, "Chest", new BlockType()
+            m.SetBlockType(53, "Granite", new BlockType()
                            {
-                               AllTextures = "Unknown",
+                               AllTextures = "Granite",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(55, "Gear", new BlockType()
+            m.SetBlockType(54, "RedSand", new BlockType()
                            {
-                               AllTextures = "Unknown",
+                               AllTextures = "RedSand",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(56, "DiamondPre", new BlockType()
+            m.SetBlockType(55, "Sandstone", new BlockType()
                            {
-                               AllTextures = "Unknown",
+                               AllTextures = "Sandstone",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(57, "DiamondBlock", new BlockType()
+            m.SetBlockType(56, "RedSandstone", new BlockType()
                            {
-                               AllTextures = "Unknown",
+                               AllTextures = "RedSandstone",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(58, "CraftingTable1", new BlockType()
+            m.SetBlockType(57, "Cactus", new BlockType()
                            {
-                               AllTextures = "Unknown",
-                               DrawType = DrawType.Solid,
+                               TopBottomTextures = "CactusTopBottom",
+                               SideTextures = "CactusSide",
+                               TextureIdForInventory = "CactusSide",
+                               DrawType = DrawType.Cactus,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(59, "Crops", new BlockType()
+            m.SetBlockType(58, "DeadPlant", new BlockType()
                            {
-                               AllTextures = "Unknown",
-                               DrawType = DrawType.Solid,
-                               WalkableType = WalkableType.Solid,
+                               AllTextures = "DeadPlant",
+                               DrawType = DrawType.Plant,
+                               WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(60, "Soil", new BlockType()
+            m.SetBlockType(59, "GrassPlant", new BlockType()
                            {
-                               AllTextures = "Unknown",
-                               DrawType = DrawType.Solid,
-                               WalkableType = WalkableType.Solid,
-                               Sounds = solidSounds,
-                           });
-            m.SetBlockType(61, "Furnace", new BlockType()
-                           {
-                               AllTextures = "Unknown",
-                               DrawType = DrawType.Solid,
-                               WalkableType = WalkableType.Solid,
-                               Sounds = solidSounds,
-                           });
-            m.SetBlockType(62, "BurningFurnace", new BlockType()
-                           {
-                               AllTextures = "Unknown",
-                               DrawType = DrawType.Solid,
-                               WalkableType = WalkableType.Solid,
+                               AllTextures = "GrassPlant",
+                               DrawType = DrawType.Plant,
+                               WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
                            });
             m.SetBlockType(100, "BrushedMetal", new BlockType()
@@ -978,6 +959,15 @@ namespace ManicDigger.Mods.War
             m.AddToCreativeInventory("Ladder");
             m.AddToCreativeInventory("Rail3");
             m.AddToCreativeInventory("Rail60");
+            m.AddToCreativeInventory("Clay");
+            m.AddToCreativeInventory("Marble");
+            m.AddToCreativeInventory("Granite");
+            m.AddToCreativeInventory("Sandstone");
+            m.AddToCreativeInventory("RedSand");
+            m.AddToCreativeInventory("RedSandstone");
+            m.AddToCreativeInventory("Cactus");
+            m.AddToCreativeInventory("DeadPlant");
+            m.AddToCreativeInventory("GrassPlant");
             #endregion
             
             #region Start inventory
