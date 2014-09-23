@@ -12,34 +12,36 @@ namespace ManicDigger.Mods
         public void Start(ModManager manager)
         {
             m = manager;
-            TileIdGrass = m.GetBlockId("Grass");
-            TileIdTreeTrunk = m.GetBlockId("TreeTrunk");
-            TileIdLeaves = m.GetBlockId("Leaves");
-            TileIdApples = m.GetBlockId("Apples");
+            BLOCK_GRASS = m.GetBlockId("Grass");
+            BLOCK_OAKTRUNK = m.GetBlockId("TreeTrunk");
+            BLOCK_OAKLEAVES = m.GetBlockId("Leaves");
+            BLOCK_APPLES = m.GetBlockId("Apples");
+            BLOCK_SPRUCETRUNK = m.GetBlockId("SpruceTreeTrunk");
+            BLOCK_BIRCHTRUNK = m.GetBlockId("BirchTreeTrunk");
             m.RegisterPopulateChunk(PopulateChunk);
         }
         ModManager m;
         
         int treeCount = 20;
         
-        // ##### TREE GEN #####
         Billow treenoise = new Billow();
-        // ##### END TREE GEN ####
         
-        int TileIdGrass;
-        int TileIdTreeTrunk;
-        int TileIdLeaves;
-        int TileIdApples;
+        int BLOCK_GRASS;
+        int BLOCK_OAKTRUNK;
+        int BLOCK_OAKLEAVES;
+        int BLOCK_APPLES;
+        int BLOCK_SPRUCETRUNK;
+        //int BLOCK_SPRUCELEAVES;
+        int BLOCK_BIRCHTRUNK;
+        //int BLOCK_BIRCHLEAVES;
         
         void Init()
         {
             int Seed = m.GetSeed();
-            //###### TREE GEN #####
             treenoise.Seed = (Seed + 2);
             treenoise.OctaveCount = (6);
             treenoise.Frequency = (1.0 / 180.0);
             treenoise.Lacunarity = ((treeCount / 20.0) * (treeCount / 20.0) * 2.0);
-            //###### END TREE GEN #######
         }
         
         Random _rnd = new Random();
@@ -50,7 +52,6 @@ namespace ManicDigger.Mods
             y *= m.GetChunkSize();
             z *= m.GetChunkSize();
             //forests
-            //if (Math.Abs(treenoise.GetValue(x, 0, y)) >= 0.9)
             double count = treenoise.GetValue(x/512.0, 0, y/512.0) * 1000;
             {
                 count = System.Math.Min(count, 300);
@@ -68,17 +69,17 @@ namespace ManicDigger.Mods
                 int x = cx + rnd.Next(chunksize);
                 int y = cy + rnd.Next(chunksize);
                 int z = cz + rnd.Next(chunksize);
-                if (!m.IsValidPos(x, y, z) || m.GetBlock(x, y, z) != TileIdGrass)
+                if (!m.IsValidPos(x, y, z) || m.GetBlock(x, y, z) != BLOCK_GRASS)
                 {
                     continue;
                 }
                 chooseTreeType = rnd.Next(0, 3);
                 switch (chooseTreeType)
                 {
-                    case 0: MakeTreeType1(x, y, z, rnd); break;
-                    case 1: MakeTreeType2(x, y, z, rnd); break;
-                    case 2: MakeTreeType3(x, y, z, rnd); break;
-            };
+                        case 0: MakeTreeType1(x, y, z, rnd); break; //Oak
+                        case 1: MakeTreeType2(x, y, z, rnd); break; //Spruce
+                        case 2: MakeTreeType3(x, y, z, rnd); break; //Birch
+                };
             }
         }
         
@@ -91,13 +92,13 @@ namespace ManicDigger.Mods
             
             for (int i = 0; i < treeHeight; i++)
             {
-                SetBlock(x, y, z + i, TileIdTreeTrunk);
+                SetBlock(x, y, z + i, BLOCK_OAKTRUNK);
                 if (i == treeHeight - 4)
                 {
-                    SetBlock(x + 1, y, z + i, TileIdTreeTrunk);
-                    SetBlock(x - 1, y, z + i, TileIdTreeTrunk);
-                    SetBlock(x, y + 1, z + i, TileIdTreeTrunk);
-                    SetBlock(x, y - 1, z + i, TileIdTreeTrunk);
+                    SetBlock(x + 1, y, z + i, BLOCK_OAKTRUNK);
+                    SetBlock(x - 1, y, z + i, BLOCK_OAKTRUNK);
+                    SetBlock(x, y + 1, z + i, BLOCK_OAKTRUNK);
+                    SetBlock(x, y - 1, z + i, BLOCK_OAKTRUNK);
                 }
                 
                 if (i == treeHeight - 3)
@@ -111,13 +112,13 @@ namespace ManicDigger.Mods
                             xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
                             yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
                             
-                            SetBlock(x + xx, y + yy, z + i, TileIdTreeTrunk);
-                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, TileIdLeaves);
+                            SetBlock(x + xx, y + yy, z + i, BLOCK_OAKTRUNK);
+                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_OAKLEAVES);
                             
-                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, BLOCK_OAKLEAVES);
                         }
                     }
                 }
@@ -132,13 +133,13 @@ namespace ManicDigger.Mods
                             xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
                             yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
                             
-                            SetBlock(x + xx, y + yy, z + i, TileIdTreeTrunk);
-                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, TileIdLeaves);
+                            SetBlock(x + xx, y + yy, z + i, BLOCK_OAKTRUNK);
+                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_OAKLEAVES);
                             
-                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, BLOCK_OAKLEAVES);
                         }
                     }
                 }
@@ -154,7 +155,7 @@ namespace ManicDigger.Mods
             float chanceToAppleTree = 0.1f;
             for (int i = 0; i < treeHeight; i++)
             {
-                SetBlock(x, y, z + i, TileIdTreeTrunk);
+                SetBlock(x, y, z + i, BLOCK_SPRUCETRUNK);
                 if (i == treeHeight - 1)
                 {
                     for (int j = 1; j < 9; j++)
@@ -166,24 +167,24 @@ namespace ManicDigger.Mods
                             xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
                             yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
                             
-                            SetBlock(x + xx, y + yy, z + i, TileIdTreeTrunk);
+                            SetBlock(x + xx, y + yy, z + i, BLOCK_SPRUCETRUNK);
                             if (chanceToAppleTree < rnd.NextDouble())
                             {
-                                SetBlockIfEmpty(x + xx, y + yy, z + i + 1, TileIdLeaves);
-                                SetBlockIfEmpty(x + xx + 1, y + yy, z + i, TileIdLeaves);
-                                SetBlockIfEmpty(x + xx - 1, y + yy, z + i, TileIdLeaves);
-                                SetBlockIfEmpty(x + xx, y + yy + 1, z + i, TileIdLeaves);
-                                SetBlockIfEmpty(x + xx, y + yy - 1, z + i, TileIdLeaves);
+                                SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_OAKLEAVES);
+                                SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                                SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                                SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_OAKLEAVES);
+                                SetBlockIfEmpty(x + xx, y + yy - 1, z + i, BLOCK_OAKLEAVES);
                             }
                             else
                             {
                                 float appleChance = 0.4f;
                                 int tile;
-                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(x + xx, y + yy, z + i + 1, tile);
-                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(x + xx + 1, y + yy, z + i, tile);
-                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(x + xx - 1, y + yy, z + i, tile);
-                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(x + xx, y + yy + 1, z + i, tile);
-                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(x + xx, y + yy - 1, z + i, tile);
+                                tile = rnd.NextDouble() < appleChance ? BLOCK_APPLES : BLOCK_OAKLEAVES; SetBlockIfEmpty(x + xx, y + yy, z + i + 1, tile);
+                                tile = rnd.NextDouble() < appleChance ? BLOCK_APPLES : BLOCK_OAKLEAVES; SetBlockIfEmpty(x + xx + 1, y + yy, z + i, tile);
+                                tile = rnd.NextDouble() < appleChance ? BLOCK_APPLES : BLOCK_OAKLEAVES; SetBlockIfEmpty(x + xx - 1, y + yy, z + i, tile);
+                                tile = rnd.NextDouble() < appleChance ? BLOCK_APPLES : BLOCK_OAKLEAVES; SetBlockIfEmpty(x + xx, y + yy + 1, z + i, tile);
+                                tile = rnd.NextDouble() < appleChance ? BLOCK_APPLES : BLOCK_OAKLEAVES; SetBlockIfEmpty(x + xx, y + yy - 1, z + i, tile);
                             }
                         }
                     }
@@ -199,7 +200,7 @@ namespace ManicDigger.Mods
             int dir = 0;
             for (int i = 0; i < treeHeight; i++)
             {
-                SetBlock(x, y, z + i, TileIdTreeTrunk);
+                SetBlock(x, y, z + i, BLOCK_BIRCHTRUNK);
                 if (i % 3 == 0 && i > 3)
                 {
                     for (int j = 1; j < 9; j++)
@@ -211,13 +212,13 @@ namespace ManicDigger.Mods
                             xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
                             yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
                             
-                            SetBlock(x + xx, y + yy, z + i, TileIdTreeTrunk);
-                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, TileIdLeaves);
+                            SetBlock(x + xx, y + yy, z + i, BLOCK_BIRCHTRUNK);
+                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_OAKLEAVES);
                             
-                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, BLOCK_OAKLEAVES);
                         }
                     }
                 }
@@ -233,17 +234,17 @@ namespace ManicDigger.Mods
                             xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
                             yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
                             
-                            SetBlock(x + xx, y + yy, z + i, TileIdTreeTrunk);
-                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, TileIdLeaves);
+                            SetBlock(x + xx, y + yy, z + i, BLOCK_BIRCHTRUNK);
+                            SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_OAKLEAVES);
                             
-                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, TileIdLeaves);
-                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_OAKLEAVES);
+                            SetBlockIfEmpty(x + xx, y + yy - 1, z + i, BLOCK_OAKLEAVES);
                         }
                     }
                 }
-                SetBlockIfEmpty(x, y, z + treeHeight, TileIdLeaves);
+                SetBlockIfEmpty(x, y, z + treeHeight, BLOCK_OAKLEAVES);
             }
         }
         

@@ -58,10 +58,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(2, "Grass", new BlockType()
                            {
                                TextureIdTop = "Grass",
-                               TextureIdBack = "GrassSide",
-                               TextureIdFront = "GrassSide",
-                               TextureIdLeft = "GrassSide",
-                               TextureIdRight = "GrassSide",
+                               SideTextures = "GrassSide",
                                TextureIdForInventory = "GrassSide",
                                TextureIdBottom = "Dirt",
                                DrawType = DrawType.Solid,
@@ -85,14 +82,14 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(5, "Wood", new BlockType()
                            {
-                               AllTextures = "Wood",
+                               AllTextures = "OakWood",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
             m.SetBlockType(6, "Sapling", new BlockType()
                            {
-                               AllTextures = "Sapling",
+                               AllTextures = "OakSapling",
                                DrawType = DrawType.Plant,
                                WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
@@ -173,13 +170,9 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(17, "TreeTrunk", new BlockType()
                            {
-                               TextureIdTop = "TreeTrunkTopBottom",
-                               TextureIdBottom = "TreeTrunkTopBottom",
-                               TextureIdBack = "TreeTrunk",
-                               TextureIdFront = "TreeTrunk",
-                               TextureIdLeft = "TreeTrunk",
-                               TextureIdRight = "TreeTrunk",
-                               TextureIdForInventory = "TreeTrunk",
+                               TopBottomTextures = "OakTreeTrunkTopBottom",
+                               SideTextures = "OakTreeTrunk",
+                               TextureIdForInventory = "OakTreeTrunk",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
@@ -361,12 +354,8 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(43, "DoubleStair", new BlockType()
                            {
-                               TextureIdTop = "Stair",
-                               TextureIdBottom = "Stair",
-                               TextureIdBack = "DoubleStairSide",
-                               TextureIdFront = "DoubleStairSide",
-                               TextureIdLeft = "DoubleStairSide",
-                               TextureIdRight = "DoubleStairSide",
+                               TopBottomTextures = "Stair",
+                               SideTextures = "DoubleStairSide",
                                TextureIdForInventory = "DoubleStairSide",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
@@ -374,12 +363,8 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(44, "Stair", new BlockType()
                            {
-                               TextureIdTop = "Stair",
-                               TextureIdBottom = "Stair",
-                               TextureIdBack = "StairSide",
-                               TextureIdFront = "StairSide",
-                               TextureIdLeft = "StairSide",
-                               TextureIdRight = "StairSide",
+                               TopBottomTextures = "Stair",
+                               SideTextures = "StairSide",
                                TextureIdForInventory = "Stair",
                                DrawType = DrawType.HalfHeight,
                                WalkableType = WalkableType.Solid,
@@ -394,12 +379,8 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(47, "Bookcase", new BlockType()
                            {
-                               TextureIdTop = "Wood",
-                               TextureIdBottom = "Wood",
-                               TextureIdBack = "Bookcase",
-                               TextureIdFront = "Bookcase",
-                               TextureIdLeft = "Bookcase",
-                               TextureIdRight = "Bookcase",
+                               TopBottomTextures = "OakWood",
+                               SideTextures = "Bookcase",
                                TextureIdForInventory = "Bookcase",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
@@ -423,10 +404,7 @@ namespace ManicDigger.Mods
                            {
                                TextureIdTop = "TorchTop",
                                TextureIdBottom = "Torch",
-                               TextureIdBack = "Torch",
-                               TextureIdFront = "Torch",
-                               TextureIdLeft = "Torch",
-                               TextureIdRight = "Torch",
+                               SideTextures = "Torch",
                                TextureIdForInventory = "Torch",
                                LightRadius = 15,
                                DrawType = DrawType.Torch,
@@ -494,6 +472,52 @@ namespace ManicDigger.Mods
             m.SetBlockType(59, "GrassPlant", new BlockType()
                            {
                                AllTextures = "GrassPlant",
+                               DrawType = DrawType.Plant,
+                               WalkableType = WalkableType.Empty,
+                               Sounds = solidSounds,
+                           });
+            m.SetBlockType(60, "BirchTreeTrunk", new BlockType()
+                           {
+                               TopBottomTextures = "BirchTreeTrunkTopBottom",
+                               SideTextures = "BirchTreeTrunk",
+                               TextureIdForInventory = "BirchTreeTrunk",
+                               DrawType = DrawType.Solid,
+                               WalkableType = WalkableType.Solid,
+                               Sounds = solidSounds,
+                           });
+            m.SetBlockType(61, "BirchLeaves", new BlockType()
+                           {
+                               AllTextures = "Leaves",
+                               DrawType = DrawType.Transparent,
+                               WalkableType = WalkableType.Solid,
+                               Sounds = solidSounds,
+                           });
+            m.SetBlockType(62, "BirchSapling", new BlockType()
+                           {
+                               AllTextures = "BirchSapling",
+                               DrawType = DrawType.Plant,
+                               WalkableType = WalkableType.Empty,
+                               Sounds = solidSounds,
+                           });
+            m.SetBlockType(63, "SpruceTreeTrunk", new BlockType()
+                           {
+                               TopBottomTextures = "SpruceTreeTrunkTopBottom",
+                               SideTextures = "SpruceTreeTrunk",
+                               TextureIdForInventory = "SpruceTreeTrunk",
+                               DrawType = DrawType.Solid,
+                               WalkableType = WalkableType.Solid,
+                               Sounds = solidSounds,
+                           });
+            m.SetBlockType(64, "SpruceLeaves", new BlockType()
+                           {
+                               AllTextures = "Leaves",
+                               DrawType = DrawType.Transparent,
+                               WalkableType = WalkableType.Solid,
+                               Sounds = solidSounds,
+                           });
+            m.SetBlockType(65, "SpruceSapling", new BlockType()
+                           {
+                               AllTextures = "SpruceSapling",
                                DrawType = DrawType.Plant,
                                WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
@@ -584,13 +608,9 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(112, "CraftingTable", new BlockType()
                            {
-                               TextureIdTop = "CraftingTableTopBottom",
-                               TextureIdBack = "CraftingTableSide",
-                               TextureIdFront = "CraftingTableSide",
-                               TextureIdLeft = "CraftingTableSide",
-                               TextureIdRight = "CraftingTableSide",
+                               TopBottomTextures = "CraftingTableTopBottom",
+                               SideTextures = "CraftingTableSide",
                                TextureIdForInventory = "CraftingTableTopBottom",
-                               TextureIdBottom = "CraftingTableTopBottom",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
@@ -693,10 +713,7 @@ namespace ManicDigger.Mods
                                {
                                    TextureIdTop = "Rail" + i.ToString(),
                                    TextureIdBottom = "Cobblestone",
-                                   TextureIdBack = "Cobblestone",
-                                   TextureIdFront = "Cobblestone",
-                                   TextureIdLeft = "Cobblestone",
-                                   TextureIdRight = "Cobblestone",
+                                   SideTextures = "Cobblestone",
                                    TextureIdForInventory = "Rail" + i.ToString(),
                                    DrawType = DrawType.Transparent,
                                    WalkableType = WalkableType.Solid,
@@ -707,10 +724,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(130, "GrassTrap", new BlockType()
                            {
                                TextureIdTop = "Grass",
-                               TextureIdBack = "GrassSide",
-                               TextureIdFront = "GrassSide",
-                               TextureIdLeft = "GrassSide",
-                               TextureIdRight = "GrassSide",
+                               SideTextures = "GrassSide",
                                TextureIdForInventory = "GrassSide",
                                TextureIdBottom = "Dirt",
                                DrawType = DrawType.Solid,
@@ -726,13 +740,9 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(132, "GoldBar", new BlockType()
                            {
-                               TextureIdTop = "GoldBarTopBottom",
-                               TextureIdBack = "GoldBarSide",
-                               TextureIdFront = "GoldBarSide",
-                               TextureIdLeft = "GoldBarSide",
-                               TextureIdRight = "GoldBarSide",
+                               TopBottomTextures = "GoldBarTopBottom",
+                               SideTextures = "GoldBarSide",
                                TextureIdForInventory = "GoldBarInvetory",
-                               TextureIdBottom = "GoldBarTopBottom",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
@@ -775,12 +785,8 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(143, "FakeBookcase", new BlockType()
                            {
-                               TextureIdTop = "Wood",
-                               TextureIdBottom = "Wood",
-                               TextureIdBack = "Bookcase",
-                               TextureIdFront = "Bookcase",
-                               TextureIdLeft = "Bookcase",
-                               TextureIdRight = "Bookcase",
+                               TopBottomTextures = "OakWood",
+                               SideTextures = "Bookcase",
                                TextureIdForInventory = "Bookcase",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Empty,
@@ -790,10 +796,7 @@ namespace ManicDigger.Mods
                            {
                                TextureIdTop = "WoodBlock",
                                TextureIdBottom = "Empty",
-                               TextureIdBack = "GlassDeskSide",
-                               TextureIdFront = "GlassDeskSide",
-                               TextureIdLeft = "GlassDeskSide",
-                               TextureIdRight = "GlassDeskSide",
+                               SideTextures = "GlassDeskSide",
                                TextureIdForInventory = "WoodBlock",
                                DrawType = DrawType.Transparent,
                                WalkableType = WalkableType.Solid,
@@ -803,10 +806,7 @@ namespace ManicDigger.Mods
                            {
                                TextureIdTop = "Glass",
                                TextureIdBottom = "Empty",
-                               TextureIdBack = "GlassDeskSide",
-                               TextureIdFront = "GlassDeskSide",
-                               TextureIdLeft = "GlassDeskSide",
-                               TextureIdRight = "GlassDeskSide",
+                               SideTextures = "GlassDeskSide",
                                TextureIdForInventory = "GlassDeskSide",
                                DrawType = DrawType.Transparent,
                                WalkableType = WalkableType.Solid,
@@ -830,10 +830,7 @@ namespace ManicDigger.Mods
                            {
                                TextureIdTop = "CakeTop",
                                TextureIdBottom = "Gray",
-                               TextureIdBack = "CakeSide",
-                               TextureIdFront = "CakeSide",
-                               TextureIdLeft = "CakeSide",
-                               TextureIdRight = "CakeSide",
+                               SideTextures = "CakeSide",
                                TextureIdForInventory = "CakeTop",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,

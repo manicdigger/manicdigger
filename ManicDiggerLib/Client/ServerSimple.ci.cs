@@ -595,7 +595,7 @@ public class ModSimpleDefault : ModSimple
         BlockTypeSimple wood = manager.CreateBlockType("Wood");
         wood.SetDrawType(Packet_DrawTypeEnum.Solid);
         wood.SetWalkableType(Packet_WalkableTypeEnum.Solid);
-        wood.SetAllTextures("Wood");
+        wood.SetAllTextures("OakWood");
 
         BlockTypeSimple brick = manager.CreateBlockType("Brick");
         brick.SetDrawType(Packet_DrawTypeEnum.Solid);
