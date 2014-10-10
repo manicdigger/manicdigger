@@ -47,7 +47,7 @@ using OpenTK.Graphics;
             platform.singlePlayerServerDummyNetwork = dummyNetwork;
             this.platform = platform;
             platform.StartSinglePlayerServer = (filename) => { savefilename = filename; new Thread(ServerThreadStart).Start(); };
-            GraphicsMode mode = GraphicsMode.Default;
+            GraphicsMode mode = new GraphicsMode(OpenTK.DisplayDevice.Default.BitsPerPixel, 24);
             using (GameWindowNative game = new GameWindowNative(mode))
             {
                 game.VSync = OpenTK.VSyncMode.Adaptive;
