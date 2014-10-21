@@ -83,7 +83,7 @@ namespace ManicDigger.Mods
                     {
                         return;
                     }
-                    MakeAppleTree(x, y, z - 1);
+                    MakeAppleTree(x, y, z);
                 }
             }
         }
