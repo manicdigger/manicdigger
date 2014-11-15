@@ -22,8 +22,13 @@ using OpenTK.Graphics;
         [STAThread]
         public static void Main(string[] args)
         {
+            //Catch unhandled exceptions
+            CrashReporter.DefaultFileName = "ManicDiggerClientCrash.txt";
+            CrashReporter.EnableGlobalExceptionHandling(false);
+
             new ManicDiggerProgram(args);
         }
+
         public ManicDiggerProgram(string[] args)
         {
             dummyNetwork = new DummyNetwork();

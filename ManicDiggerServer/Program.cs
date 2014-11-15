@@ -12,24 +12,28 @@ namespace ManicDiggerServer
     {
         static void Main(string[] args)
         {
+            //Catch unhandled exceptions
+            CrashReporter.DefaultFileName = "ManicDiggerServerCrash.txt";
+            CrashReporter.EnableGlobalExceptionHandling(true);
+
             new Program(args);
         }
         
         public Program(string[] args)
         {
+            //TODO: Check if file exists
             try
             {
-                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.txt"))))
+                using (FileStream stream = File.Open(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.txt"), FileMode.Open))
                 {
-                    StreamReader sr = new StreamReader(s);
                     XmlDocument d = new XmlDocument();
-                    d.Load(sr);
+                    d.Load(stream);
                     autoRestartCycle = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AutoRestartCycle"));
                 }
             }
             catch
             {
-                //ServerConfig cannot be read. Use default value of 6 hours
+                Console.WriteLine("ServerConfig cannot be read. Use default value of 6 hours");
                 autoRestartCycle = 6;
             }
             
