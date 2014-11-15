@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Threading;
 using ManicDigger;
-using System.Xml;
 using System.IO;
 using ManicDigger.ClientNative;
 
@@ -166,6 +165,13 @@ namespace ManicDiggerServer
 
         void ParentAutoRestarter()
         {
+            //Allow this number of restarts in a certain interval. Prevents endless restart-loops
+            int restartLimit_Count = 5;
+            int restartLimit_Minutes = 10;
+
+            int restartCount = 0;
+            Stopwatch restartGuard = new Stopwatch();
+            restartGuard.Start();
             Restart();
             for (; ; )
             {
@@ -180,8 +186,39 @@ namespace ManicDiggerServer
                     }
 
                     // II) Server wants to be restarted or has crashed (lockfile not deleted)
-                    Console.WriteLine("[SERVER] Will restart");
-                    Restart();
+                    if (restartCount < restartLimit_Count)
+                    {
+                        //Consider this a normal number of restarts
+                        Console.WriteLine("[SERVER] Will restart");
+                        restartCount++;
+                        Restart();
+                    }
+                    else
+                    {
+                        //Stop restarting automatically to prevent extreme load on host system
+                        Console.WriteLine("[SERVER] Attention! The server tried to restart more often than usual.");
+                        Console.WriteLine("[SERVER] Please check for errors.");
+                        Console.WriteLine("[SERVER] Do you want to continue trying? (Y/N)");
+                        if (string.Equals(Console.ReadLine(), "Y", StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            //Continue trying, reset counter
+                            restartCount = 0;
+                            Restart();
+                        }
+                        else
+                        {
+                            //Quit server
+                            Console.WriteLine("[SERVER] Exiting...");
+                            return;
+                        }
+                    }
+                }
+                if (restartGuard.Elapsed.TotalMinutes >= restartLimit_Minutes)
+                {
+                    //One interval elapsed, reset restart counter
+                    restartCount = 0;
+                    restartGuard.Reset();
+                    restartGuard.Start();
                 }
                 Thread.Sleep(1);
             }
