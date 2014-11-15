@@ -941,6 +941,11 @@ namespace ManicDigger
             return server.config.AutoRestartCycle;
         }
 
+        public int GetServerUptimeSeconds()
+        {
+            return (int)server.serverUptime.Elapsed.TotalSeconds;
+        }
+
         public void SendPlayerRedirect(int player, string ip, int port)
         {
             server.SendServerRedirect(player, ip, port);

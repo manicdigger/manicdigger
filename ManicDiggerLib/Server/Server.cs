@@ -172,6 +172,7 @@ public partial class Server : ICurrentTime, IDropItem
     public Language language = new Language();
 
     Stopwatch stopwatchDt = new Stopwatch();
+    public Stopwatch serverUptime = new Stopwatch();
     public void Process()
     {
         try
@@ -188,6 +189,13 @@ public partial class Server : ICurrentTime, IDropItem
             ProcessSave();
             //Do server stuff
             ProcessMain();
+
+            //When a value of 0 or less is given, don't restart
+            if (config.AutoRestartCycle > 0 && serverUptime.Elapsed.TotalHours >= config.AutoRestartCycle)
+            {
+                //Restart interval elapsed
+                Restart();
+            }
         }
         catch (Exception e)
         {
@@ -388,6 +396,16 @@ public partial class Server : ICurrentTime, IDropItem
         serverGroup.GroupColor = ServerClientMisc.ClientColor.Red;
         serverConsoleClient.AssignGroup(serverGroup);
         serverConsole = new ServerConsole(this, exit);
+
+        if (config.AutoRestartCycle > 0)
+        {
+            Console.WriteLine("AutoRestartInterval: {0}", config.AutoRestartCycle);
+        }
+        else
+        {
+            Console.WriteLine("AutoRestartInterval: DISABLED");
+        }
+        serverUptime.Start();
     }
     void Start(int port)
     {

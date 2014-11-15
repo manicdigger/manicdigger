@@ -21,22 +21,6 @@ namespace ManicDiggerServer
         
         public Program(string[] args)
         {
-            //TODO: Check if file exists
-            try
-            {
-                using (FileStream stream = File.Open(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.txt"), FileMode.Open))
-                {
-                    XmlDocument d = new XmlDocument();
-                    d.Load(stream);
-                    autoRestartCycle = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AutoRestartCycle"));
-                }
-            }
-            catch
-            {
-                Console.WriteLine("ServerConfig cannot be read. Use default value of 6 hours");
-                autoRestartCycle = 6;
-            }
-            
             ENABLE_REDIRECT_STANDARD_INPUT = IsMono;
             if (args.Length > 0)
             {
@@ -50,7 +34,6 @@ namespace ManicDiggerServer
         bool ENABLE_AUTORESTARTER = !Debugger.IsAttached;
         int parentid;
         bool IsAutoRestarter = true;
-        int autoRestartCycle = 6;
         const string lockFileName = "ManicDiggerServer.lck";
 
         void Main2()
@@ -64,16 +47,17 @@ namespace ManicDiggerServer
                     {
                         new Thread(ConsoleInput).Start();
                     }
-                    Console.WriteLine("AutoRestartCycle: {0}", autoRestartCycle);
                     ParentAutoRestarter();
                 }
                 else
                 {
+                    //Start as server process when parent process ID is given
                     ChildServer();
                 }
             }
             else
             {
+                //Just start as server process if automatic restarting is disabled
                 ChildServer();
             }
             //End program (kills Input/Output Redirects)
@@ -99,17 +83,12 @@ namespace ManicDiggerServer
                 server.Process();
                 Thread.Sleep(1);
 
-                if (server.config != null)
-                {
-                    autoRestartCycle = server.config.AutoRestartCycle;
-                }
-                
                 //Check if server wants to exit
                 if (server.exit != null && server.exit.GetExit())
                 {
                     //If so, save data
                     server.Stop();
-                    
+
                     //Check if server wants to be restarted
                     if (!server.exit.GetRestart())
                     {
@@ -123,13 +102,15 @@ namespace ManicDiggerServer
                             Console.WriteLine("[SERVER] Lockfile could not be deleted! Server will be restarted!");
                         }
                     }
-                    
+
                     //Finally kill the server process
-                    Process.GetCurrentProcess().Kill();
+                    return;
                 }
 
+                //Check if parent process is still running
                 if (!ENABLE_AUTORESTARTER)
                 {
+                    //Only do so when automatic restarts are enabled
                     continue;
                 }
                 if (parentCheckStopwatch == null)
@@ -148,7 +129,7 @@ namespace ManicDiggerServer
                         server.Exit();
                         return;
                     }
-                    parentCheckStopwatch = new Stopwatch();
+                    parentCheckStopwatch.Reset();
                     parentCheckStopwatch.Start();
                 }
             }
@@ -188,7 +169,7 @@ namespace ManicDiggerServer
             Restart();
             for (; ; )
             {
-                //a) server process not found
+                //server process not found
                 if (ServerProcess.HasExited)
                 {
                     // I) Server wants to be shutdown (lockfile has been deleted by child server)
@@ -197,30 +178,14 @@ namespace ManicDiggerServer
                         Console.WriteLine("[SERVER] Successful shutdown");
                         return;
                     }
-                    
+
                     // II) Server wants to be restarted or has crashed (lockfile not deleted)
                     Console.WriteLine("[SERVER] Will restart");
                     Restart();
                 }
-
-                //b) routine restart
-                if (RoutineRestartStopwatch == null)
-                {
-                    RoutineRestartStopwatch = new Stopwatch();
-                    RoutineRestartStopwatch.Start();
-                }
-                if (RoutineRestartStopwatch.Elapsed.Hours >= autoRestartCycle)
-                {
-                    RoutineRestartStopwatch = new Stopwatch();
-                    RoutineRestartStopwatch.Start();
-                    Restart();
-                }
-
                 Thread.Sleep(1);
             }
         }
-
-        Stopwatch RoutineRestartStopwatch;
 
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
 
@@ -242,16 +207,14 @@ namespace ManicDiggerServer
                 p.FileName = "mono";
                 p.Arguments = System.Windows.Forms.Application.ExecutablePath + " " + Process.GetCurrentProcess().Id.ToString();
             }
-            
-            //p.WindowStyle = ProcessWindowStyle.Hidden;
-            
+
             p.RedirectStandardOutput = true;
             if (ENABLE_REDIRECT_STANDARD_INPUT) // fix
             {
                 p.RedirectStandardInput = true;
             }
             p.UseShellExecute = false;
-            
+
             ServerProcess = Process.Start(p);
         }
 

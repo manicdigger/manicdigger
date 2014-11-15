@@ -576,7 +576,13 @@ namespace ManicDigger
         /// </summary>
         /// <returns>Value of AutoRestartCycle</returns>
         int GetAutoRestartInterval();
-        
+
+        /// <summary>
+        /// Returns the number of seconds the server has been running
+        /// </summary>
+        /// <returns>Server uptime in seconds</returns>
+        int GetServerUptimeSeconds();
+
         /// <summary>
         /// Sends a redirection request to the specified client. The target server has to be public!
         /// </summary>
