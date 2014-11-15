@@ -1,0 +1,7 @@
+language: c
+
+install:
+ - sudo apt-get install mono-gmcs cli-common-dev > /dev/null
+
+script:
+ - xbuild

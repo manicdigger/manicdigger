@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/manicdigger/manicdigger.svg?branch=master)](https://travis-ci.org/manicdigger/manicdigger)
+
 Manic Digger
 ===========
 Manic Digger is a 3d block-building game similar to Minecraft.
