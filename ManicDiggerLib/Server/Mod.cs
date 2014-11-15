@@ -945,5 +945,10 @@ namespace ManicDigger
         {
             server.SendServerRedirect(player, ip, port);
         }
+
+        public bool IsShuttingDown()
+        {
+            return server.exit.GetExit();
+        }
     }
 }

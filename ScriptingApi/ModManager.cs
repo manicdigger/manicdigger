@@ -584,6 +584,13 @@ namespace ManicDigger
         /// <param name="ip">The IP of the target server</param>
         /// <param name="port">The Port of the target server</param>
         void SendPlayerRedirect(int player, string ip, int port);
+
+        /// <summary>
+        /// Determines if the server process has been asked to terminate.
+        /// Use this when you need to save data in a method registered using RegisterOnSave() before server quits.
+        /// </summary>
+        /// <returns><i>true</i> if server is about to shutdown</returns>
+        bool IsShuttingDown();
     }
 
     public enum SpecialKey
