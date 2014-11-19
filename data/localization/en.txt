@@ -243,6 +243,18 @@ Block_Rail60=Rail
 Block_Rail61=Rail
 Block_Rail62=Rail
 Block_Rail63=Rail
+Block_Granite=Granite
+Block_RedSand=Red Sand
+Block_Sandstone=Sandstone
+Block_RedSandstone=Red Sandstone
+Block_Cactus=Cactus
+Block_DeadPlant=Dead Plant
+Block_GrassPlant=Grass
+Block_VandalFinder=Vandal Finder
+Block_Clay=Clay
+Block_Marble=Marble
+Block_Sign=Sign
+Block_PermissionSign=Permission Sign
 
 
 Server_CannotWriteLogFile=Cannot write to server log file {0}.
