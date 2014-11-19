@@ -966,6 +966,12 @@ namespace ManicDigger.Mods.War
             m.AddToCreativeInventory("Cactus");
             m.AddToCreativeInventory("DeadPlant");
             m.AddToCreativeInventory("GrassPlant");
+            m.AddToCreativeInventory("BirchTreeTrunk");
+            m.AddToCreativeInventory("BirchLeaves");
+            m.AddToCreativeInventory("BirchSapling");
+            m.AddToCreativeInventory("SpruceTreeTrunk");
+            m.AddToCreativeInventory("SpruceLeaves");
+            m.AddToCreativeInventory("SpruceSapling");
             #endregion
             
             #region Start inventory
