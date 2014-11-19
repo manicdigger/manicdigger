@@ -243,6 +243,18 @@ Block_Rail60=Schiene
 Block_Rail61=Schiene
 Block_Rail62=Schiene
 Block_Rail63=Schiene
+Block_Granite=Granit
+Block_RedSand=Roter Sand
+Block_Sandstone=Sandstein
+Block_RedSandstone=Roter Sandstein
+Block_Cactus=Kaktus
+Block_DeadPlant=Tote Pflanze
+Block_GrassPlant=Gras
+Block_VandalFinder=Vandal Finder
+Block_Clay=Lehm
+Block_Marble=Marmor
+Block_Sign=Schild
+Block_PermissionSign=Berechtigungsschild
 
 
 Server_CannotWriteLogFile=Kann die Server-Logdatei {0} nicht beschreiben.
