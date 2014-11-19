@@ -141,7 +141,7 @@ namespace ManicDigger.ClientNative
             {
                 //Critical!
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.Out.WriteLine("Unhandled Exception occured");
+                Console.Out.WriteLine("Unhandled Exception occurred");
             }
 
             Exception ex = e.ExceptionObject as Exception;
@@ -199,7 +199,7 @@ namespace ManicDigger.ClientNative
                 {
                     using (StreamWriter logger = new StreamWriter(fs))
                     {
-                        Log(DateTime.Now.ToString() + ": Critical error occured", logger);
+                        Log(DateTime.Now.ToString() + ": Critical error occurred", logger);
 
                         //Call OnCrash logic
                         CallOnCrash(logger);
