@@ -176,7 +176,7 @@ namespace FragLabs.HTTP
         {
             var response = new HttpResponse();
             response.StatusCode = httpStatusCode;
-            response.Producer = new BufferedProducer("An error occured, please hang tight");
+            response.Producer = new BufferedProducer("An error occurred, please hang tight");
             var writer = new HttpResponseWriter(request.ClientSocket);
             writer.AsyncWrite(request, response);
         }
