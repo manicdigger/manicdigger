@@ -255,6 +255,12 @@ Block_Clay=Clay
 Block_Marble=Marble
 Block_Sign=Sign
 Block_PermissionSign=Permission Sign
+Block_BirchTreeTrunk=Birch Tree Trunk
+Block_BirchLeaves=Birch Leaves
+Block_BirchSapling=Birch Sapling
+Block_SpruceTreeTrunk=Spruce Tree Trunk
+Block_SpruceLeaves=Spruce Leaves
+Block_SpruceSapling=Spruce Sapling
 
 
 Server_CannotWriteLogFile=Cannot write to server log file {0}.
