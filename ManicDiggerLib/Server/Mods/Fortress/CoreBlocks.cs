@@ -487,7 +487,7 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(61, "BirchLeaves", new BlockType()
                            {
-                               AllTextures = "Leaves",
+                               AllTextures = "BirchLeaves",
                                DrawType = DrawType.Transparent,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
@@ -517,7 +517,7 @@ namespace ManicDigger.Mods
                            });
             m.SetBlockType(65, "SpruceLeaves", new BlockType()
                            {
-                               AllTextures = "Leaves",
+                               AllTextures = "SpruceLeaves",
                                DrawType = DrawType.Transparent,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
@@ -904,8 +904,8 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("GoldOre");
             m.AddToCreativeInventory("IronOre");
             m.AddToCreativeInventory("CoalOre");
-            m.AddToCreativeInventory("TreeTrunk");
-            m.AddToCreativeInventory("Leaves");
+            m.AddToCreativeInventory("OakTreeTrunk");
+            m.AddToCreativeInventory("OakLeaves");
             m.AddToCreativeInventory("Sponge");
             m.AddToCreativeInventory("Glass");
             m.AddToCreativeInventory("RedCloth");
@@ -1024,9 +1024,9 @@ namespace ManicDigger.Mods
                                        Sounds = snowSounds,
                                        WhenPlayerPlacesGetsConvertedTo = 3,
                                    });
-                    m.SetBlockType(18, "Leaves", new BlockType()
+                    m.SetBlockType(18, "OakLeaves", new BlockType()
                                    {
-                                       AllTextures = "Leaves",
+                                       AllTextures = "OakLeaves",
                                        DrawType = DrawType.Transparent,
                                        WalkableType = WalkableType.Solid,
                                        Sounds = solidSounds,
@@ -1056,9 +1056,9 @@ namespace ManicDigger.Mods
                                        Sounds = solidSounds,
                                        WhenPlayerPlacesGetsConvertedTo = 3,
                                    });
-                    m.SetBlockType(18, "Leaves", new BlockType()
+                    m.SetBlockType(18, "OakLeaves", new BlockType()
                                    {
-                                       AllTextures = "Leaves",
+                                       AllTextures = "OakLeaves",
                                        DrawType = DrawType.Transparent,
                                        WalkableType = WalkableType.Solid,
                                        Sounds = solidSounds,
@@ -1095,7 +1095,7 @@ namespace ManicDigger.Mods
                                        Sounds = snowSounds,
                                        WhenPlayerPlacesGetsConvertedTo = 3,
                                    });
-                    m.SetBlockType(18, "Leaves", new BlockType()
+                    m.SetBlockType(18, "OakLeaves", new BlockType()
                                    {
                                        AllTextures = "AutumnLeaves",
                                        DrawType = DrawType.Transparent,
@@ -1127,7 +1127,7 @@ namespace ManicDigger.Mods
                                        Sounds = snowSounds,
                                        WhenPlayerPlacesGetsConvertedTo = 3,
                                    });
-                    m.SetBlockType(18, "Leaves", new BlockType()
+                    m.SetBlockType(18, "OakLeaves", new BlockType()
                                    {
                                        AllTextures = "WinterLeaves",
                                        DrawType = DrawType.Transparent,
@@ -1156,7 +1156,7 @@ namespace ManicDigger.Mods
                 lastseason = currentSeason;
                 
                 //Readd "lost blocks" to inventory
-                m.AddToCreativeInventory("Leaves");
+                m.AddToCreativeInventory("OakLeaves");
                 m.AddToCreativeInventory("Apples");
                 m.AddToCreativeInventory("Water");
             }
