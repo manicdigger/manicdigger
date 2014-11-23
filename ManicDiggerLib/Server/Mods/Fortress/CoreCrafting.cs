@@ -101,7 +101,7 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe2("GrassTrap", 1, "Dirt", 10, "Camouflage", 5);
             m.AddCraftingRecipe2("OakSapling", 10, "Apples", 5, "DirtForFarming", 1);
             m.AddCraftingRecipe2("BirchSapling", 10, "Apples", 5, "DirtForFarming", 1);
-            m.AddCraftingRecipe2("SpruceSapling", 10, "Apples", 5, "DirtForFarming", 1;
+            m.AddCraftingRecipe2("SpruceSapling", 10, "Apples", 5, "DirtForFarming", 1);
             m.AddCraftingRecipe2("DirtBrick", 1, "Dirt", 2, "Stone", 1);
             m.AddCraftingRecipe2("BrushedMetal", 1, "IronBlock", 1, "CoalOre", 1);
             m.AddCraftingRecipe2("SandBrick", 1, "Sand", 1, "Stone", 2);
