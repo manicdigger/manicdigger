@@ -503,7 +503,7 @@ namespace ManicDigger.Mods
                             {
                                AllTextures = "BirchWood",
                                DrawType = DrawType.Solid,
-                               WalkableType = Walkabletype.Solid,
+                               WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                             });
             m.SetBlockType(64, "SpruceTreeTrunk", new BlockType()
@@ -533,7 +533,7 @@ namespace ManicDigger.Mods
                             {
                                AllTextures = "SpruceWood",
                                DrawType = DrawType.Solid,
-                               WalkableType = Walkabletype.Solid,
+                               WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                             });
             m.SetBlockType(100, "BrushedMetal", new BlockType()
