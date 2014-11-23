@@ -168,7 +168,7 @@ namespace ManicDigger.Mods
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(17, "TreeTrunk", new BlockType()
+            m.SetBlockType(17, "OakTreeTrunk", new BlockType()
                            {
                                TopBottomTextures = "OakTreeTrunkTopBottom",
                                SideTextures = "OakTreeTrunk",
@@ -177,9 +177,9 @@ namespace ManicDigger.Mods
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(18, "Leaves", new BlockType()
+            m.SetBlockType(18, "OakLeaves", new BlockType()
                            {
-                               AllTextures = "Leaves",
+                               AllTextures = "OakLeaves",
                                DrawType = DrawType.Transparent,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
