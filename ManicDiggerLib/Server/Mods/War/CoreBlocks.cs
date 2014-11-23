@@ -80,14 +80,14 @@ namespace ManicDigger.Mods.War
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(5, "Wood", new BlockType()
+            m.SetBlockType(5, "OakWood", new BlockType()
                            {
                                AllTextures = "OakWood",
                                DrawType = DrawType.Solid,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(6, "Sapling", new BlockType()
+            m.SetBlockType(6, "OakSapling", new BlockType()
                            {
                                AllTextures = "OakSapling",
                                DrawType = DrawType.Plant,
@@ -168,7 +168,7 @@ namespace ManicDigger.Mods.War
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(17, "TreeTrunk", new BlockType()
+            m.SetBlockType(17, "OakTreeTrunk", new BlockType()
                            {
                                TopBottomTextures = "OakTreeTrunkTopBottom",
                                SideTextures = "OakTreeTrunk",
@@ -177,9 +177,9 @@ namespace ManicDigger.Mods.War
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(18, "Leaves", new BlockType()
+            m.SetBlockType(18, "OakLeaves", new BlockType()
                            {
-                               AllTextures = "Leaves",
+                               AllTextures = "OakLeaves",
                                DrawType = DrawType.Transparent,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
@@ -499,7 +499,14 @@ namespace ManicDigger.Mods.War
                                WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(63, "SpruceTreeTrunk", new BlockType()
+            m.SetBlockType(63, "BirchWood", new BlockType()
+                            {
+                               AllTextures = "BirchWood",
+                               DrawType = DrawType.Solid,
+                               WalkableType = WalkableType.Solid,
+                               Sounds = solidSounds,
+                            });
+            m.SetBlockType(64, "SpruceTreeTrunk", new BlockType()
                            {
                                TopBottomTextures = "SpruceTreeTrunkTopBottom",
                                SideTextures = "SpruceTreeTrunk",
@@ -508,20 +515,27 @@ namespace ManicDigger.Mods.War
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(64, "SpruceLeaves", new BlockType()
+            m.SetBlockType(65, "SpruceLeaves", new BlockType()
                            {
                                AllTextures = "Leaves",
                                DrawType = DrawType.Transparent,
                                WalkableType = WalkableType.Solid,
                                Sounds = solidSounds,
                            });
-            m.SetBlockType(65, "SpruceSapling", new BlockType()
+            m.SetBlockType(66, "SpruceSapling", new BlockType()
                            {
                                AllTextures = "SpruceSapling",
                                DrawType = DrawType.Plant,
                                WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
                            });
+            m.SetBlockType(67, "SpruceWood", new BlockType()
+                            {
+                               AllTextures = "SpruceWood",
+                               DrawType = DrawType.Solid,
+                               WalkableType = WalkableType.Solid,
+                               Sounds = solidSounds,
+                            });
             m.SetBlockType(100, "BrushedMetal", new BlockType()
                            {
                                AllTextures = "BrushedMetal",
@@ -969,9 +983,11 @@ namespace ManicDigger.Mods.War
             m.AddToCreativeInventory("BirchTreeTrunk");
             m.AddToCreativeInventory("BirchLeaves");
             m.AddToCreativeInventory("BirchSapling");
+            m.AddToCreativeInventory("BirchWood");
             m.AddToCreativeInventory("SpruceTreeTrunk");
             m.AddToCreativeInventory("SpruceLeaves");
             m.AddToCreativeInventory("SpruceSapling");
+            m.AddToCreativeInventory("SpruceWood");
             #endregion
             
             #region Start inventory
