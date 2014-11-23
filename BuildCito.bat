@@ -23,4 +23,9 @@ echo %LIST%
 cito -D CITO -D C -l c -o CitoOutput\C\ManicDigger.c %LIST% Packet.Serializer.ci.cs
 IF NOT "%1"=="fast" cito -D CITO -D JAVA -l java -o CitoOutput\Java\ManicDigger.java -n manicdigger.lib  %LIST% Packet.Serializer.ci.cs
 IF NOT "%1"=="fast" cito -D CITO -D CS -l cs -o CitoOutput\Cs\ManicDigger.cs %LIST% Packet.Serializer.ci.cs
+
+IF NOT "%1"=="fast" CitoAssets data Assets.ci.cs
+IF NOT "%1"=="fast" cito -D CITO -D JS -D JSTA -l js-ta -o Html\Assets.js Assets.ci.cs
 IF NOT "%1"=="fast" cito -D CITO -D JS -D JSTA -l js-ta -o CitoOutput\JsTa\ManicDigger.js %LIST% Packet.Serializer.ci.cs
+
+copy CitoOutput\JsTa\* Html\*
