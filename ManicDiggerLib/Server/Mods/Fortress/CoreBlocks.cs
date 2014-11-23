@@ -983,9 +983,11 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("BirchTreeTrunk");
             m.AddToCreativeInventory("BirchLeaves");
             m.AddToCreativeInventory("BirchSapling");
+            m.AddToCreativeInventory("BirchWood");
             m.AddToCreativeInventory("SpruceTreeTrunk");
             m.AddToCreativeInventory("SpruceLeaves");
             m.AddToCreativeInventory("SpruceSapling");
+            m.AddToCreativeInventory("SpruceWood");
             #endregion
             
             #region Start inventory
