@@ -34,9 +34,9 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("Glass", 1, "Sand", 2);
             m.AddCraftingRecipe("RedRoseDecorations", 1, "Leaves", 10);
             m.AddCraftingRecipe("YellowFlowerDecorations", 1, "Leaves", 10);
-            m.AddCraftingRecipe("OakSapling", 1, "Leaves", 3);
-            m.AddCraftingRecipe("BirchSapling", 1, "Leaves", 3);
-            m.AddCraftingRecipe("SpruceSapling", 1, "Leaves", 3);
+            m.AddCraftingRecipe("OakSapling", 1, "OakLeaves", 3);
+            m.AddCraftingRecipe("BirchSapling", 1, "BirchLeaves", 3);
+            m.AddCraftingRecipe("SpruceSapling", 1, "SpruceLeaves", 3);
             m.AddCraftingRecipe("RedMushroom", 1, "Dirt", 10);
             m.AddCraftingRecipe("BrownMushroom", 1, "Dirt", 10);
             m.AddCraftingRecipe("RedMushroom", 1, "Grass", 10);
