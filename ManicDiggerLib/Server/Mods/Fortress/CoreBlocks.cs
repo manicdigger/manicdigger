@@ -499,7 +499,7 @@ namespace ManicDigger.Mods
                                WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
                            });
-            m.setBlockType(63, "BirchWood", new BlockType()
+            m.SetBlockType(63, "BirchWood", new BlockType()
                             {
                                AllTextures = "BirchWood",
                                DrawType = DrawType.Solid,
@@ -529,7 +529,7 @@ namespace ManicDigger.Mods
                                WalkableType = WalkableType.Empty,
                                Sounds = solidSounds,
                            });
-            m.setBlockType(67, "SpruceWood", new BlockType()
+            m.SetBlockType(67, "SpruceWood", new BlockType()
                             {
                                AllTextures = "SpruceWood",
                                DrawType = DrawType.Solid,
