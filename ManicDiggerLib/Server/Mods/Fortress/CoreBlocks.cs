@@ -1031,6 +1031,20 @@ namespace ManicDigger.Mods
                                        WalkableType = WalkableType.Solid,
                                        Sounds = solidSounds,
                                    });
+                    m.SetBlockType(61, "BirchLeaves", new BlockType()
+                                   {
+                                       AllTextures = "BirchLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });
+                    m.SetBlockType(65, "SpruceLeaves", new BlockType()
+                                   {
+                                       AllTextures = "SpruceLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });
                     m.SetBlockType(106, "Apples", new BlockType()
                                    {
                                        AllTextures = "Apples",
@@ -1063,6 +1077,20 @@ namespace ManicDigger.Mods
                                        WalkableType = WalkableType.Solid,
                                        Sounds = solidSounds,
                                    });
+                    m.SetBlockType(61, "BirchLeaves", new BlockType()
+                                   {
+                                       AllTextures = "BirchLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });
+                    m.SetBlockType(65, "SpruceLeaves", new BlockType()
+                                   {
+                                       AllTextures = "SpruceLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });               
                     m.SetBlockType(106, "Apples", new BlockType()
                                    {
                                        AllTextures = "Apples",
@@ -1097,11 +1125,25 @@ namespace ManicDigger.Mods
                                    });
                     m.SetBlockType(18, "OakLeaves", new BlockType()
                                    {
-                                       AllTextures = "AutumnLeaves",
+                                       AllTextures = "OakAutumnLeaves",
                                        DrawType = DrawType.Transparent,
                                        WalkableType = WalkableType.Solid,
                                        Sounds = solidSounds,
                                    });
+                    m.SetBlockType(61, "BirchLeaves", new BlockType()
+                                   {
+                                       AllTextures = "BirchAutumnLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });
+                    m.SetBlockType(65, "SpruceLeaves", new BlockType()
+                                   {
+                                       AllTextures = "SpruceAutumnLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });  
                     m.SetBlockType(106, "Apples", new BlockType()
                                    {
                                        AllTextures = "AutumnApples",
@@ -1129,11 +1171,25 @@ namespace ManicDigger.Mods
                                    });
                     m.SetBlockType(18, "OakLeaves", new BlockType()
                                    {
-                                       AllTextures = "WinterLeaves",
+                                       AllTextures = "OakWinterLeaves",
                                        DrawType = DrawType.Transparent,
                                        WalkableType = WalkableType.Solid,
                                        Sounds = solidSounds,
                                    });
+                    m.SetBlockType(61, "BirchLeaves", new BlockType()
+                                   {
+                                       AllTextures = "BirchWinterLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });               
+                    m.SetBlockType(65, "SpruceLeaves", new BlockType()
+                                   {
+                                       AllTextures = "SpruceWinterLeaves",
+                                       DrawType = DrawType.Transparent,
+                                       WalkableType = WalkableType.Solid,
+                                       Sounds = solidSounds,
+                                   });  
                     m.SetBlockType(106, "Apples", new BlockType()
                                    {
                                        AllTextures = "WinterApples",
@@ -1157,6 +1213,8 @@ namespace ManicDigger.Mods
                 
                 //Readd "lost blocks" to inventory
                 m.AddToCreativeInventory("OakLeaves");
+                m.AddToCreativeInventory("BirchLeaves");
+                m.AddToCreativeInventory("SpruceLeaves");
                 m.AddToCreativeInventory("Apples");
                 m.AddToCreativeInventory("Water");
             }
