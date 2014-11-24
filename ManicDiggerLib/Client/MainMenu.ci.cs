@@ -1850,7 +1850,7 @@ public class ScreenMultiplayer : Screen
     {
         if (!loaded)
         {
-            menu.p.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.txt", serverListAddress);
+            menu.p.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.php", serverListAddress);
             loaded = true;
         }
         if (serverListAddress.done)

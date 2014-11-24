@@ -5,7 +5,6 @@
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 
 <script type="text/javascript" src="ManicDigger.js"></script>
-<script type="text/javascript" src="Assets.js"></script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
@@ -15,7 +14,15 @@
     uniform sampler2D uSampler;
 
     void main(void) {
-        gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        //if (textureColor.a < 0.5)
+        //{
+        //  discard;
+        //}
+        //else
+        //{
+          gl_FragColor = textureColor;
+        //}
     }
 </script>
 
@@ -39,6 +46,7 @@
 <script type="text/javascript">
 
 
+var canvas;
 
 function PlatformJs()
 {
@@ -49,10 +57,14 @@ PlatformJs.prototype = new GamePlatform();
 PlatformJs.prototype.addOnCrash = function(handler) {
 }
 
+var keyEventHandler;
 PlatformJs.prototype.addOnKeyEvent = function(handler) {
+	keyEventHandler = handler;
 }
 
+var mouseEventHandler;
 PlatformJs.prototype.addOnMouseEvent = function(handler) {
+	mouseEventHandler = handler;
 }
 
 var newFrameHandler;
@@ -60,7 +72,9 @@ PlatformJs.prototype.addOnNewFrame = function(handler) {
 	newFrameHandler = handler;
 }
 
+var touchEventHandler;
 PlatformJs.prototype.addOnTouchEvent = function(handler) {
+	touchEventHandler = handler;
 }
 
 PlatformJs.prototype.applicationDoEvents = function() {
@@ -84,55 +98,72 @@ PlatformJs.prototype.aviWriterCreate = function() {
 }
 
 PlatformJs.prototype.bindTexture2d = function(texture) {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
 }
 
 PlatformJs.prototype.bitmapCreate = function(width, height) {
-	return null;
+	var bmp = {};
+	bmp.image = new Image(width, height);
+	return bmp;
 }
 
+    var BASE64_CHUNK_SIZE = 100;
+    var toBase64 = function(data) {
+      var str = "";
+      for (var i = 0; i < data.length; i += BASE64_CHUNK_SIZE) {
+        str += String.fromCharCode.apply(String, data.subarray(i, i + BASE64_CHUNK_SIZE));
+      }
+      return btoa(str);
+    };
+
 PlatformJs.prototype.bitmapCreateFromPng = function(data, dataLength) {
-	return null;
+	var bmp = {};
+	bmp.image = new Image();
+	bmp.image.src = "data:image/png;base64," + toBase64(data);
+	return bmp;
 }
 
 PlatformJs.prototype.bitmapDelete = function(bmp) {
 }
 
 PlatformJs.prototype.bitmapGetHeight = function(bmp) {
-	return 0;
+	if(bmp==null){return 100;}
+	return bmp.image.naturalWidth;
 }
 
 PlatformJs.prototype.bitmapGetPixelsArgb = function(bitmap, bmpPixels) {
 }
 
 PlatformJs.prototype.bitmapGetWidth = function(bmp) {
-	return 0;
+	if(bmp==null){return 100;}
+	return bmp.image.naturalHeight;
 }
 
 PlatformJs.prototype.bitmapSetPixelsArgb = function(bmp, pixels) {
 }
 
 PlatformJs.prototype.byteArrayLength = function(arr) {
-	return 0;
+	return arr.length;
 }
 
 PlatformJs.prototype.castToDummyNetOutgoingMessage = function(message) {
-	return null;
+	return message;
 }
 
 PlatformJs.prototype.castToEnetNetConnection = function(connection) {
-	return null;
+	return connection;
 }
 
 PlatformJs.prototype.castToEnetNetOutgoingMessage = function(msg) {
-	return null;
+	return msg;
 }
 
 PlatformJs.prototype.castToPlayerInterpolationState = function(a) {
-	return null;
+	return a;
 }
 
 PlatformJs.prototype.castToTcpNetOutgoingMessage = function(message) {
-	return null;
+	return message;
 }
 
 PlatformJs.prototype.changeResolution = function(width, height, bitsPerPixel, refreshRate) {
@@ -161,11 +192,36 @@ PlatformJs.prototype.consoleWriteLine = function(p) {
 }
 
 PlatformJs.prototype.createModel = function(modelData) {
-	return null;
+	model = {};
+    
+        model.cubeVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, model.cubeVertexPositionBuffer);
+        var vertices = modelData.xyz;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        model.cubeVertexPositionBuffer.itemSize = 3;
+        model.cubeVertexPositionBuffer.numItems = modelData.verticesCount;
+
+        model.cubeVertexTextureCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, model.cubeVertexTextureCoordBuffer);
+        var textureCoords = modelData.uv;
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+        model.cubeVertexTextureCoordBuffer.itemSize = 2;
+        model.cubeVertexTextureCoordBuffer.numItems = modelData.verticesCount;
+
+        model.cubeVertexIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.cubeVertexIndexBuffer);
+        var cubeVertexIndices = modelData.indices;
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW);
+        model.cubeVertexIndexBuffer.itemSize = 1;
+        model.cubeVertexIndexBuffer.numItems = modelData.indicesCount;
+        
+        return model;
 }
 
 PlatformJs.prototype.createTextTexture = function(t) {
-	return null;
+	var bmp = {};
+	bmp.image = new Image(200, 100);
+	return bmp;
 }
 
 PlatformJs.prototype.deleteModel = function(model) {
@@ -176,9 +232,25 @@ PlatformJs.prototype.directoryGetFiles = function(path, length) {
 }
 
 PlatformJs.prototype.drawModel = function(model) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, model.cubeVertexPositionBuffer);
+        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, model.cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, model.cubeVertexTextureCoordBuffer);
+        gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, model.cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.activeTexture(gl.TEXTURE0);
+        //gl.bindTexture(gl.TEXTURE_2D, crateTextures[filter]);
+        gl.uniform1i(shaderProgram.samplerUniform, 0);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.cubeVertexIndexBuffer);
+        //setMatrixUniforms();
+        gl.drawElements(gl.TRIANGLES, model.cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
 PlatformJs.prototype.drawModelData = function(data) {
+var model = this.createModel(data);
+this.drawModel(model);
+this.deleteModel(model);
 }
 
 PlatformJs.prototype.drawModels = function(model, count) {
@@ -232,27 +304,32 @@ PlatformJs.prototype.fileReadAllLines = function(path, length) {
 }
 
 PlatformJs.prototype.floatModulo = function(a, b) {
-	return 0;
+	return a % b;
 }
 
 PlatformJs.prototype.floatParse = function(value) {
-	return 0;
+	return parseFloat(value);
 }
 
 PlatformJs.prototype.floatToInt = function(value) {
-	return 0;
+	return value | 0;
 }
 
 PlatformJs.prototype.floatToString = function(value) {
-	return null;
+	return value.toString();
 }
 
 PlatformJs.prototype.floatTryParse = function(s, ret) {
+	if (!isNaN(s))
+	{
+		ret.value = parseFloat(s);
+		return true;
+	}
 	return false;
 }
 
 PlatformJs.prototype.focused = function() {
-	return false;
+	return true;
 }
 
 PlatformJs.prototype.gLDeleteTexture = function(id) {
@@ -268,11 +345,11 @@ PlatformJs.prototype.gLLineWidth = function(width) {
 }
 
 PlatformJs.prototype.getCanvasHeight = function() {
-	return 500;
+	return canvas.height;
 }
 
 PlatformJs.prototype.getCanvasWidth = function() {
-	return 500;
+	return canvas.width;
 }
 
 PlatformJs.prototype.getDisplayResolutionDefault = function() {
@@ -292,7 +369,7 @@ PlatformJs.prototype.getLanguageIso6391 = function() {
 }
 
 PlatformJs.prototype.getPreferences = function() {
-	return null;
+	return new Preferences();
 }
 
 PlatformJs.prototype.getWindowState = function() {
@@ -317,12 +394,14 @@ PlatformJs.prototype.glCullFaceBack = function() {
 }
 
 PlatformJs.prototype.glDepthMask = function(flag) {
+	gl.depthMask(flag);
 }
 
 PlatformJs.prototype.glDisableCullFace = function() {
 }
 
 PlatformJs.prototype.glDisableDepthTest = function() {
+        gl.disable(gl.DEPTH_TEST);
 }
 
 PlatformJs.prototype.glDisableFog = function() {
@@ -431,11 +510,64 @@ PlatformJs.prototype.loadAssetFromCache = function(md5) {
 	return null;
 }
 
-PlatformJs.prototype.loadAssetsAsyc = function(list, progress) {
+//this function will work cross-browser for loading scripts asynchronously
+function loadScript(src, callback)
+{
+  var s,
+      r,
+      t;
+  r = false;
+  s = document.createElement('script');
+  s.type = 'text/javascript';
+  s.src = src;
+  s.onload = s.onreadystatechange = function() {
+    //console.log( this.readyState ); //uncomment this line to see which ready states are called.
+    if ( !r && (!this.readyState || this.readyState == 'complete') )
+    {
+      r = true;
+      callback();
+    }
+  };
+  t = document.getElementsByTagName('script')[0];
+  t.parentNode.insertBefore(s, t);
 }
 
+var assets;
+PlatformJs.prototype.loadAssetsAsyc = function(list, progress) {
+
+loadScript("Assets.js", function()
+{
+assets = new Assets();
+list.count = assets.count;
+list.items = {};
+for(var i = 0; i < assets.count; i++)
+{
+	var item = {};
+	item.name = assets.name[i];
+	item.data = assets.data[i];
+	item.dataLength = assets.length[i];
+	list.items[i] = item;
+}
+progress.value = 1;
+});
+}
+
+    function handleLoadedTexture(texture) {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
+        gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+
 PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
-	return 0;
+	var texture = gl.createTexture();
+	texture.image = bmp.image;
+	bmp.image.onload = function () {
+            handleLoadedTexture(texture);
+        }
+      return texture;
 }
 
 PlatformJs.prototype.mathAcos = function(p) {
@@ -578,40 +710,59 @@ PlatformJs.prototype.stringEmpty = function(data) {
 	return false;
 }
 
+var stringFormat = function(s, arguments) {
+    var i = arguments.length;
+
+    while (i--) {
+        s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), arguments[i]);
+    }
+    return s;
+};
+
+
 PlatformJs.prototype.stringFormat = function(format, arg0) {
-	return null;
+	return stringFormat(format, [arg0]);
 }
 
 PlatformJs.prototype.stringFormat2 = function(format, arg0, arg1) {
-	return null;
+	return stringFormat(format, [arg0, arg1]);
 }
 
 PlatformJs.prototype.stringFormat3 = function(format, arg0, arg1, arg2) {
-	return null;
+	return stringFormat(format, [arg0, arg1, arg2]);
 }
 
 PlatformJs.prototype.stringFormat4 = function(format, arg0, arg1, arg2, arg3) {
-	return null;
+	return stringFormat(format, [arg0, arg1, arg2, arg3]);
 }
 
 PlatformJs.prototype.stringFromUtf8ByteArray = function(value, valueLength) {
-	return null;
+	var arr = new Uint8Array(valueLength);
+	for(var i = 0; i < valueLength;i++)
+	{
+		arr[i] = value[i];
+	}
+	var encodedString = String.fromCharCode.apply(null, arr),
+	decodedString = decodeURIComponent(escape(encodedString));
+	return decodedString;
 }
 
 PlatformJs.prototype.stringIndexOf = function(s, p) {
-	return 0;
+	return s.indexOf(p);
 }
 
 PlatformJs.prototype.stringReplace = function(s, from, to) {
-	return null;
+	return s.replace(from, to);
 }
 
 PlatformJs.prototype.stringSplit = function(value, separator, returnLength) {
-	return null;
+	var ret = value.split(separator);
+	returnLength.value = ret.length;
+	return ret;
 }
 
 PlatformJs.prototype.stringStartsWithIgnoreCase = function(a, b) {
-	return false;
+	return a.toLowerCase().indexOf(b.toLowerCase()) == 0;
 }
 
 PlatformJs.prototype.stringToCharArray = function(s, length) {
@@ -619,7 +770,7 @@ PlatformJs.prototype.stringToCharArray = function(s, length) {
 }
 
 PlatformJs.prototype.stringToLower = function(p) {
-	return null;
+	return p.toLowerCase();
 }
 
 PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
@@ -627,7 +778,7 @@ PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
 }
 
 PlatformJs.prototype.stringTrim = function(value) {
-	return null;
+	return value.trim();
 }
 
 PlatformJs.prototype.tcpAvailable = function() {
@@ -665,6 +816,22 @@ PlatformJs.prototype.timestamp = function() {
 }
 
 PlatformJs.prototype.webClientDownloadDataAsync = function(url, response) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", url);
+	xhr.overrideMimeType('text/plain; charset=x-user-defined');
+	xhr.onload  = function() {
+		if (this.status == 200) {
+			var ret = {};
+			for (var i=0;i<xhr.response.length;i++)
+			{
+				ret[i]=xhr.response.charCodeAt(i) & 0xff;;
+			}
+			response.value = ret;
+			response.valueLength = xhr.response.length;
+			response.done = true;
+		}
+	}
+	xhr.send();
 }
 
 PlatformJs.prototype.webClientUploadDataAsync = function(url, data, dataLength, response) {
@@ -774,29 +941,6 @@ window.requestAnimFrame = (function() {
     }
 
 
-    function handleLoadedTexture(textures) {
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-
-        gl.bindTexture(gl.TEXTURE_2D, textures[0]);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textures[0].image);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-        gl.bindTexture(gl.TEXTURE_2D, textures[1]);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textures[1].image);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-        gl.bindTexture(gl.TEXTURE_2D, textures[2]);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textures[2].image);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-        gl.generateMipmap(gl.TEXTURE_2D);
-
-        gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-
-
     var crateTextures = Array();
 
     function initTexture() {
@@ -834,9 +978,37 @@ window.requestAnimFrame = (function() {
     }
 
 
-    function handleKeyUp(event) {
-        currentlyPressedKeys[event.keyCode] = false;
-    }
+	function handleKeyUp(event) {
+		currentlyPressedKeys[event.keyCode] = false;
+	}
+
+	function handleMouseDown(event) {
+		var args = new MouseEventArgs();
+		args.x = event.pageX;
+		args.y = event.pageY;
+		mouseEventHandler.onMouseDown(args);
+	}
+
+	function handleMouseUp(event) {
+		var args = new MouseEventArgs();
+		args.x = event.pageX;
+		args.y = event.pageY;
+		mouseEventHandler.onMouseUp(args);
+	}
+
+	function handleMouseMove(event) {
+		var args = new MouseEventArgs();
+		args.x = event.pageX;
+		args.y = event.pageY;
+		mouseEventHandler.onMouseMove(args);
+	}
+
+	function handleMouseWheel(event) {
+		var args = new MouseEventArgs();
+		args.x = event.pageX;
+		args.y = event.pageY;
+		mouseEventHandler.onMouseMove(args);
+	}
 
 
 var lastTime = 0;
@@ -857,16 +1029,25 @@ newFrameArgs.setDt = function(dt_) { this.dt = dt_; }
     }
 
     function webGLStart() {
-        var canvas = document.getElementById("lesson06-canvas");
+        canvas = document.getElementById("lesson06-canvas");
+        canvas.style.width ='100%';
+	  canvas.style.height='100%';
+	    canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
         initGL(canvas);
         initShaders();
         initTexture();
 
         gl.clearColor(1.0, 0.0, 0.0, 1.0);
         gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
 
         document.onkeydown = handleKeyDown;
         document.onkeyup = handleKeyUp;
+        document.onmousedown = handleMouseDown;
+        document.onmouseup = handleMouseUp;
         
         var mainmenu = new MainMenu();
         var platform = new PlatformJs();
@@ -881,8 +1062,8 @@ newFrameArgs.setDt = function(dt_) { this.dt = dt_; }
 </head>
 
 
-<body onload="webGLStart();">
-    <canvas id="lesson06-canvas" style="border: none;" width="500" height="500"></canvas>
+<body onload="webGLStart();" id="main" style="padding:0px; margin:0px;">
+    <canvas id="lesson06-canvas" style="border: none;"></canvas>
 </body>
 
 </html>
