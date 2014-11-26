@@ -1140,7 +1140,7 @@ public class ScreenSingleplayer : Screen
             worldButtons[i].fontSize = 14 * scale;
         }
 
-
+        open.visible = menu.p.SinglePlayerServerAvailable();
         play.visible = false;
         newWorld.visible = false;
         modify.visible = false;
@@ -1150,6 +1150,11 @@ public class ScreenSingleplayer : Screen
         }
 
         DrawWidgets();
+
+        if (!menu.p.SinglePlayerServerAvailable())
+        {
+            menu.DrawText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.", 16 * scale, menu.p.GetCanvasWidth() / 2, menu.p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
+        }
     }
 
     public override void OnBackPressed()

@@ -128,18 +128,96 @@ PlatformJs.prototype.bitmapDelete = function(bmp) {
 
 PlatformJs.prototype.bitmapGetHeight = function(bmp) {
 	if(bmp==null){return 100;}
-	return bmp.image.naturalWidth;
+	return bmp.image.naturalHeight || bmp.image.height;
+}
+
+var colorA = function(color) {
+	var a = Game.intToByte(color >> 24);
+	return a;
+}
+
+var colorB = function(color) {
+	var b = Game.intToByte(color);
+	return b;
+}
+
+var colorG = function(color) {
+	var g = Game.intToByte(color >> 8);
+	return g;
+}
+
+var colorR = function(color) {
+	var r = Game.intToByte(color >> 16);
+	return r;
+}
+
+var colorFromArgb = function(a, r, g, b) {
+	var iCol = a << 24 | r << 16 | g << 8 | b;
+	return iCol;
 }
 
 PlatformJs.prototype.bitmapGetPixelsArgb = function(bitmap, bmpPixels) {
+	var width = bitmap.image.naturalWidth;
+	var height = bitmap.image.naturalHeight;
+
+	var c = document.getElementById("textureCanvas");
+	var ctx = c.getContext("2d");
+	c.width = width;
+	c.height = height;
+	ctx.drawImage(bitmap.image, 0, 0);
+    
+	var imageData = ctx.getImageData(0, 0, width, height);
+	for(var x=0;x<width;x++)
+	{
+		for(var y=0;y<height;y++)
+		{
+			var pos = y*width + x;
+			var r = imageData.data[pos * 4 + 0];
+			var g = imageData.data[pos * 4 + 1];
+			var b = imageData.data[pos * 4 + 2];
+			var a = imageData.data[pos * 4 + 3];
+			bmpPixels[pos] = colorFromArgb(a,r,g,b);
+		}
+	}
 }
 
 PlatformJs.prototype.bitmapGetWidth = function(bmp) {
 	if(bmp==null){return 100;}
-	return bmp.image.naturalHeight;
+	return bmp.image.naturalWidth || bmp.image.width;
 }
 
 PlatformJs.prototype.bitmapSetPixelsArgb = function(bmp, pixels) {
+	var canvas1 = document.getElementById('textureCanvas');
+	var ctx = canvas1.getContext('2d');
+	var width = bmp.image.width;
+	var height = bmp.image.height;
+	canvas1.width = width;
+	canvas1.height = height;
+	
+	var imageData = ctx.createImageData(width, height);
+	var arr = imageData.data;
+	for (var x = 0; x < width; x++)
+	{
+		for (var y = 0; y < height; y++)
+		{
+			var pos = y*width + x;
+			var color = pixels[pos];
+			var r = colorR(color);
+			var g = colorG(color);
+			var b = colorB(color);
+			var a = colorA(color);
+			arr[pos * 4 + 0] = r;
+			arr[pos * 4 + 1] = g;
+			arr[pos * 4 + 2] = b;
+			arr[pos * 4 + 3] = a;
+		}
+	}
+		
+	ctx.putImageData(imageData, 0, 0);
+	
+	var image = new Image();
+	image.src = ctx.canvas.toDataURL("image/png");
+	bmp.image = image;
 }
 
 PlatformJs.prototype.byteArrayLength = function(arr) {
@@ -170,7 +248,12 @@ PlatformJs.prototype.changeResolution = function(width, height, bitsPerPixel, re
 }
 
 PlatformJs.prototype.charArrayToString = function(charArray, length) {
-	return null;
+	var arr = [];
+	for(var i = 0; i < length; i++)
+	{
+		arr[i] = String.fromCharCode(charArray[i]);
+	}
+	return arr.join("");
 }
 
 PlatformJs.prototype.chatLog = function(servername, p) {
@@ -218,9 +301,40 @@ PlatformJs.prototype.createModel = function(modelData) {
         return model;
 }
 
+
+function getPowerOfTwo(value, pow) {
+	var pow = pow || 1;
+	while(pow<value) {
+		pow *= 2;
+	}
+	return pow;
+}
+
+function setFont(ctx, text, fontSize, color)
+{
+	ctx.fillStyle ='rgb('+colorR(color)+','+colorG(color)+','+colorB(color)+')';
+	ctx.fillStyle = '#ffffff';
+	ctx.lineWidth = 3.5;
+	ctx.strokeStyle = 'black';
+	ctx.font = fontSize+"px Verdana";
+	ctx.textAlign = '';
+	ctx.textBaseline = 'top';
+}
+
 PlatformJs.prototype.createTextTexture = function(t) {
+	var canvas1 = document.getElementById('textureCanvas');
+	var ctx = canvas1.getContext('2d');
+
+	canvas1.width = getPowerOfTwo(ctx.measureText(t.text).width);
+	canvas1.height = getPowerOfTwo(2 * t.fontsize);
+	
+	setFont(ctx, t.text, t.fontsize, t.color);
+	ctx.fillText(t.text, 0, 0);
+
 	var bmp = {};
-	bmp.image = new Image(200, 100);
+	var image = new Image();
+	image.src = canvas1.toDataURL("image/png");
+	bmp.image = image;
 	return bmp;
 }
 
@@ -766,7 +880,17 @@ PlatformJs.prototype.stringStartsWithIgnoreCase = function(a, b) {
 }
 
 PlatformJs.prototype.stringToCharArray = function(s, length) {
-	return null;
+	var ret = {};
+	if (s == null)
+	{
+		s="";
+	}
+	for(var i = 0; i < s.length; i++)
+	{
+		ret[i] = s.charAt(i);
+	}
+	length.value = s.length;
+	return ret;
 }
 
 PlatformJs.prototype.stringToLower = function(p) {
@@ -796,6 +920,11 @@ PlatformJs.prototype.tcpSend = function(data, length) {
 }
 
 PlatformJs.prototype.textSize = function(text, fontSize, outWidth, outHeight) {
+	var canvas1 = document.getElementById('textureCanvas');
+	var ctx = canvas1.getContext('2d');
+	setFont(ctx, text, fontSize, 0);
+	outWidth.value = ctx.measureText(text).width;
+	outHeight.value = 2 * fontSize;
 }
 
 PlatformJs.prototype.threadSpinWait = function(iterations) {
@@ -1064,6 +1193,7 @@ newFrameArgs.setDt = function(dt_) { this.dt = dt_; }
 
 <body onload="webGLStart();" id="main" style="padding:0px; margin:0px;">
     <canvas id="lesson06-canvas" style="border: none;"></canvas>
+    <canvas id="textureCanvas" style="display: none;">I'm sorry your browser does not support the HTML5 canvas element.</canvas>
 </body>
 
 </html>
