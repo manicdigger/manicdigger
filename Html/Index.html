@@ -313,7 +313,6 @@ function getPowerOfTwo(value, pow) {
 function setFont(ctx, text, fontSize, color)
 {
 	ctx.fillStyle ='rgb('+colorR(color)+','+colorG(color)+','+colorB(color)+')';
-	ctx.fillStyle = '#ffffff';
 	ctx.lineWidth = 3.5;
 	ctx.strokeStyle = 'black';
 	ctx.font = fontSize+"px Verdana";
@@ -400,6 +399,10 @@ PlatformJs.prototype.enetPeerSend = function(peer, channelID, data, dataLength, 
 }
 
 PlatformJs.prototype.exit = function() {
+}
+
+PlatformJs.prototype.exitAvailable = function() {
+	return false;
 }
 
 PlatformJs.prototype.exitMousePointerLock = function() {
@@ -581,11 +584,11 @@ PlatformJs.prototype.initShaders = function() {
 }
 
 PlatformJs.prototype.intParse = function(value) {
-	return 0;
+	return parseInt(value);
 }
 
 PlatformJs.prototype.intToString = function(value) {
-	return null;
+	return value.toString();
 }
 
 PlatformJs.prototype.isCached = function(md5) {
@@ -609,7 +612,7 @@ PlatformJs.prototype.isMousePointerLocked = function() {
 }
 
 PlatformJs.prototype.isSmallScreen = function() {
-	return false;
+	return true;
 }
 
 PlatformJs.prototype.isValidTypingChar = function(c) {
@@ -887,7 +890,7 @@ PlatformJs.prototype.stringToCharArray = function(s, length) {
 	}
 	for(var i = 0; i < s.length; i++)
 	{
-		ret[i] = s.charAt(i);
+		ret[i] = s.charCodeAt(i);
 	}
 	length.value = s.length;
 	return ret;
@@ -1146,44 +1149,57 @@ newFrameArgs.dt = 0;
 newFrameArgs.getDt = function() { return this.dt; }
 newFrameArgs.setDt = function(dt_) { this.dt = dt_; }
 
-    function tick() {
-	  requestAnimFrame(tick);
-        var timeNow = new Date().getTime();
-        if (lastTime != 0) {
+var oldCanvasWidth = 0;
+var oldCanvasHeight = 0;
+function resizeCanvas()
+{
+	if (window.innerWidth != oldCanvasWidth
+		|| window.innerHeight != oldCanvasHeight)
+	{
+		oldCanvasWidth = window.innerWidth;
+		oldCanvasHeight = window.innerHeight;
+		canvas.width  = window.innerWidth;
+		canvas.height = window.innerHeight;
+	}
+}
+
+function tick() {
+	requestAnimFrame(tick);	
+	
+	resizeCanvas();	
+	var timeNow = new Date().getTime();
+	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
 		newFrameArgs.dt = elapsed / 1000;
-	  }
-	  lastTime = timeNow;
-        newFrameHandler.onNewFrame(newFrameArgs);
-    }
+	}
+	lastTime = timeNow;
+	newFrameHandler.onNewFrame(newFrameArgs);
+}
 
-    function webGLStart() {
-        canvas = document.getElementById("lesson06-canvas");
-        canvas.style.width ='100%';
-	  canvas.style.height='100%';
-	    canvas.width  = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-        initGL(canvas);
-        initShaders();
-        initTexture();
+function webGLStart() {
+	canvas = document.getElementById("lesson06-canvas");
 
-        gl.clearColor(1.0, 0.0, 0.0, 1.0);
-        gl.enable(gl.DEPTH_TEST);
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+	initGL(canvas);
+	initShaders();
+	initTexture();
+
+	gl.clearColor(1.0, 0.0, 0.0, 1.0);
+	gl.enable(gl.DEPTH_TEST);
+	gl.enable(gl.BLEND);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 
-        document.onkeydown = handleKeyDown;
-        document.onkeyup = handleKeyUp;
-        document.onmousedown = handleMouseDown;
-        document.onmouseup = handleMouseUp;
+	document.onkeydown = handleKeyDown;
+	document.onkeyup = handleKeyUp;
+	document.onmousedown = handleMouseDown;
+	document.onmouseup = handleMouseUp;
         
-        var mainmenu = new MainMenu();
-        var platform = new PlatformJs();
-        mainmenu.start(platform);
-        platform.start();
-        tick();
-    }
+	var mainmenu = new MainMenu();
+	var platform = new PlatformJs();
+	mainmenu.start(platform);
+	platform.start();
+	tick();
+}
 
 </script>
 

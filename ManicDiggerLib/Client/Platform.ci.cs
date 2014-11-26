@@ -36,6 +36,7 @@
     public abstract void ClipboardSetText(string s);
     public abstract void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight);
     public abstract void Exit();
+    public abstract bool ExitAvailable();
     public abstract string PathSavegames();
     public abstract string PathCombine(string part1, string part2);
     public abstract string[] DirectoryGetFiles(string path, IntRef length);

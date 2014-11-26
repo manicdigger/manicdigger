@@ -251,6 +251,11 @@ public class GamePlatformNative : GamePlatform
         Environment.Exit(0);
     }
 
+    public override bool ExitAvailable()
+    {
+        return true;
+    }
+
     public override string PathSavegames()
     {
         return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

@@ -979,6 +979,8 @@ public class ScreenMain : Screen
         multiplayer.sizex = buttonwidth * scale;
         multiplayer.sizey = buttonheight * scale;
 
+        exit.visible = menu.p.ExitAvailable();
+
         exit.text = menu.lang.Get("MainMenu_Quit");
         exit.x = windowX / 2 - (buttonwidth / 2) * scale;
         exit.y = windowY - (1 * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
