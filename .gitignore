@@ -2,18 +2,18 @@ output
 CitoOutput
 bin
 obj
+Html
+
 _ReSharper.*
 *.user
 *.suo
+*.sdsettings
 
 /Packet.Serializer.cs
-
 /ManicDiggerLib/Server/Mods/current.txt
-
 /Packet.Serializer.ci.cs
-
 /Packet.cs
-
 /ProtocolParser.cs
+/Assets.ci.cs
 
 local.properties
