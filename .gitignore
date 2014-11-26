@@ -2,7 +2,6 @@ output
 CitoOutput
 bin
 obj
-Html
 
 _ReSharper.*
 *.user
@@ -15,5 +14,7 @@ _ReSharper.*
 /Packet.cs
 /ProtocolParser.cs
 /Assets.ci.cs
+/Html/Assets.js
+/Html/ManicDigger.js
 
 local.properties
