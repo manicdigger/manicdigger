@@ -101,10 +101,11 @@ PlatformJs.prototype.bindTexture2d = function(texture) {
         gl.bindTexture(gl.TEXTURE_2D, texture);
 }
 
+var textureCanvas;
+var textureCanvasContext;
+
 PlatformJs.prototype.bitmapCreate = function(width, height) {
-	var bmp = {};
-	bmp.image = new Image(width, height);
-	return bmp;
+	return textureCanvasContext.createImageData(width, height);
 }
 
     var BASE64_CHUNK_SIZE = 100;
@@ -120,7 +121,12 @@ PlatformJs.prototype.bitmapCreateFromPng = function(data, dataLength) {
 	var bmp = {};
 	bmp.image = new Image();
 	bmp.image.src = "data:image/png;base64," + toBase64(data);
-	return bmp;
+	var width = bmp.image.naturalWidth;
+	var height = bmp.image.naturalHeight;
+	textureCanvas.width = width;
+	textureCanvas.height = height;
+	textureCanvasContext.drawImage(bmp.image, 0, 0);
+	return textureCanvasContext.getImageData(0, 0, width, height);
 }
 
 PlatformJs.prototype.bitmapDelete = function(bmp) {
@@ -128,7 +134,7 @@ PlatformJs.prototype.bitmapDelete = function(bmp) {
 
 PlatformJs.prototype.bitmapGetHeight = function(bmp) {
 	if(bmp==null){return 100;}
-	return bmp.image.naturalHeight || bmp.image.height;
+	return bmp.height;
 }
 
 var colorA = function(color) {
@@ -157,16 +163,10 @@ var colorFromArgb = function(a, r, g, b) {
 }
 
 PlatformJs.prototype.bitmapGetPixelsArgb = function(bitmap, bmpPixels) {
-	var width = bitmap.image.naturalWidth;
-	var height = bitmap.image.naturalHeight;
-
-	var c = document.getElementById("textureCanvas");
-	var ctx = c.getContext("2d");
-	c.width = width;
-	c.height = height;
-	ctx.drawImage(bitmap.image, 0, 0);
-    
-	var imageData = ctx.getImageData(0, 0, width, height);
+	var imageData = bitmap;
+	var width = bitmap.width;
+	var height = bitmap.height;
+	
 	for(var x=0;x<width;x++)
 	{
 		for(var y=0;y<height;y++)
@@ -183,19 +183,14 @@ PlatformJs.prototype.bitmapGetPixelsArgb = function(bitmap, bmpPixels) {
 
 PlatformJs.prototype.bitmapGetWidth = function(bmp) {
 	if(bmp==null){return 100;}
-	return bmp.image.naturalWidth || bmp.image.width;
+	return bmp.width;
 }
 
 PlatformJs.prototype.bitmapSetPixelsArgb = function(bmp, pixels) {
-	var canvas1 = document.getElementById('textureCanvas');
-	var ctx = canvas1.getContext('2d');
-	var width = bmp.image.width;
-	var height = bmp.image.height;
-	canvas1.width = width;
-	canvas1.height = height;
-	
-	var imageData = ctx.createImageData(width, height);
+	var imageData = bmp;
 	var arr = imageData.data;
+	var width = bmp.width;
+	var height = bmp.height;
 	for (var x = 0; x < width; x++)
 	{
 		for (var y = 0; y < height; y++)
@@ -212,12 +207,6 @@ PlatformJs.prototype.bitmapSetPixelsArgb = function(bmp, pixels) {
 			arr[pos * 4 + 3] = a;
 		}
 	}
-		
-	ctx.putImageData(imageData, 0, 0);
-	
-	var image = new Image();
-	image.src = ctx.canvas.toDataURL("image/png");
-	bmp.image = image;
 }
 
 PlatformJs.prototype.byteArrayLength = function(arr) {
@@ -321,20 +310,14 @@ function setFont(ctx, text, fontSize, color)
 }
 
 PlatformJs.prototype.createTextTexture = function(t) {
-	var canvas1 = document.getElementById('textureCanvas');
-	var ctx = canvas1.getContext('2d');
-
-	canvas1.width = getPowerOfTwo(ctx.measureText(t.text).width);
-	canvas1.height = getPowerOfTwo(2 * t.fontsize);
+	textureCanvas.width = getPowerOfTwo(textureCanvasContext.measureText(t.text).width);
+	textureCanvas.height = getPowerOfTwo(2 * t.fontsize);
 	
-	setFont(ctx, t.text, t.fontsize, t.color);
-	ctx.fillText(t.text, 0, 0);
-
-	var bmp = {};
-	var image = new Image();
-	image.src = canvas1.toDataURL("image/png");
-	bmp.image = image;
-	return bmp;
+	setFont(textureCanvasContext, t.text, t.fontsize, t.color);
+	textureCanvasContext.fillText(t.text, 0, 0);
+	
+	var imageData = textureCanvasContext.getImageData(0, 0, textureCanvas.width, textureCanvas.height);
+	return imageData;
 }
 
 PlatformJs.prototype.deleteModel = function(model) {
@@ -361,9 +344,9 @@ PlatformJs.prototype.drawModel = function(model) {
 }
 
 PlatformJs.prototype.drawModelData = function(data) {
-var model = this.createModel(data);
-this.drawModel(model);
-this.deleteModel(model);
+	var model = this.createModel(data);
+	this.drawModel(model);
+	this.deleteModel(model);
 }
 
 PlatformJs.prototype.drawModels = function(model, count) {
@@ -669,42 +652,37 @@ progress.value = 1;
 });
 }
 
-    function handleLoadedTexture(texture) {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-        gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-
 PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
 	var texture = gl.createTexture();
-	texture.image = bmp.image;
-	bmp.image.onload = function () {
-            handleLoadedTexture(texture);
-        }
+	
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
+	gl.bindTexture(gl.TEXTURE_2D, null);
+	
       return texture;
 }
 
 PlatformJs.prototype.mathAcos = function(p) {
-	return 0;
+	return Math.acos(a);
 }
 
 PlatformJs.prototype.mathCos = function(a) {
-	return 0;
+	return Math.cos(a);
 }
 
 PlatformJs.prototype.mathSin = function(a) {
-	return 0;
+	return Math.sin(a);
 }
 
 PlatformJs.prototype.mathSqrt = function(value) {
-	return 0;
+	return Math.sqrt(value);
 }
 
 PlatformJs.prototype.mathTan = function(p) {
-	return 0;
+	return Math.tan(p);
 }
 
 PlatformJs.prototype.messageBoxShowError = function(text, caption) {
@@ -1072,25 +1050,6 @@ window.requestAnimFrame = (function() {
         shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
     }
 
-
-    var crateTextures = Array();
-
-    function initTexture() {
-        var crateImage = new Image();
-
-        for (var i=0; i < 3; i++) {
-            var texture = gl.createTexture();
-            texture.image = crateImage;
-            crateTextures.push(texture);
-        }
-
-        crateImage.onload = function () {
-            handleLoadedTexture(crateTextures)
-        }
-        crateImage.src = "crate.gif";
-    }
-
-
     function degToRad(degrees) {
         return degrees * Math.PI / 180;
     }
@@ -1141,6 +1100,51 @@ window.requestAnimFrame = (function() {
 		args.y = event.pageY;
 		mouseEventHandler.onMouseMove(args);
 	}
+	
+	
+	function handleTouchStart(event) {
+		var args = new TouchEventArgs();
+		for (var i = 0; i < event.changedTouches.length; i++)
+		{
+			var touch = event.changedTouches[i];
+			args.x = touch.pageX;
+			args.y = touch.pageY;
+			args.id = touch.identifier;
+			touchEventHandler.onTouchStart(args);
+		}
+		event.stopPropagation();
+		event.preventDefault();
+	}
+
+	function handleTouchEnd(event) {
+		var args = new TouchEventArgs();
+		
+		for (var i = 0; i < event.changedTouches.length; i++)
+		{
+			var touch = event.changedTouches[i];
+			args.x = touch.pageX;
+			args.y = touch.pageY;
+			args.id = touch.identifier;
+			touchEventHandler.onTouchEnd(args);
+		}
+		
+		event.stopPropagation();
+		event.preventDefault();
+	}
+
+	function handleTouchMove(event) {
+		var args = new TouchEventArgs();
+		for (var i = 0; i < event.changedTouches.length; i++)
+		{
+			var touch = event.changedTouches[i];
+			args.x = touch.pageX;
+			args.y = touch.pageY;
+			args.id = touch.identifier;
+			touchEventHandler.onTouchMove(args);
+		}
+		event.stopPropagation();
+		event.preventDefault();
+	}
 
 
 var lastTime = 0;
@@ -1178,10 +1182,12 @@ function tick() {
 
 function webGLStart() {
 	canvas = document.getElementById("lesson06-canvas");
+	
+	textureCanvas = document.getElementById("textureCanvas");
+	textureCanvasContext = textureCanvas.getContext("2d");
 
 	initGL(canvas);
 	initShaders();
-	initTexture();
 
 	gl.clearColor(1.0, 0.0, 0.0, 1.0);
 	gl.enable(gl.DEPTH_TEST);
@@ -1193,6 +1199,9 @@ function webGLStart() {
 	document.onkeyup = handleKeyUp;
 	document.onmousedown = handleMouseDown;
 	document.onmouseup = handleMouseUp;
+	document.addEventListener("touchstart", handleTouchStart, false);
+	document.addEventListener("touchmove", handleTouchMove, false);
+	document.addEventListener("touchend", handleTouchEnd, false);
         
 	var mainmenu = new MainMenu();
 	var platform = new PlatformJs();

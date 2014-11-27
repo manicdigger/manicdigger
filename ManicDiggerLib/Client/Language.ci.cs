@@ -511,7 +511,7 @@
         {
             currentLanguage = platform.GetLanguageIso6391();  //Else use system language if defined
         }
-        for (int i = 0; i < stringsMax; i++)
+        for (int i = 0; i < stringsCount; i++)
         {
             if (strings[i] == null)
             {
@@ -523,7 +523,7 @@
             }
         }
         // fallback to english
-        for (int i = 0; i < stringsMax; i++)
+        for (int i = 0; i < stringsCount; i++)
         {
             if (strings[i] == null)
             {
