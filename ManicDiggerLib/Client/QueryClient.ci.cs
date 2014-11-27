@@ -16,7 +16,7 @@
     public void PerformQuery(string ip, int port)
     {
         serverMessage = "";
-        INetClient client;
+        NetClient client;
         if (p.EnetAvailable())
         {
             //Create enet client
@@ -42,7 +42,7 @@
         queryPerformed = true;
     }
     
-    void SendRequest(INetClient client)
+    void SendRequest(NetClient client)
     {
         //Create request packet
         Packet_Client pp = ClientPackets.ServerQuery();
@@ -53,12 +53,12 @@
         byte[] data = ms.ToArray();
         
         //Send packet to server
-        INetOutgoingMessage msg = client.CreateMessage();
+        INetOutgoingMessage msg = new INetOutgoingMessage();
         msg.Write(data, ms.Length());
         client.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
     }
     
-    void ReadPacket(INetClient client)
+    void ReadPacket(NetClient client)
     {
         bool success = false;
         int started = p.TimeMillisecondsFromStart();
@@ -71,7 +71,7 @@
                 querySuccess = true;
                 return;
             }
-            INetIncomingMessage msg;
+            NetIncomingMessage msg;
             msg = client.ReadMessage();
             if (msg == null)
             {
@@ -80,7 +80,7 @@
             }
             
             Packet_Server packet = new Packet_Server();
-            Packet_ServerSerializer.DeserializeBuffer(msg.ReadBytes(msg.LengthBytes()), msg.LengthBytes(), packet);
+            Packet_ServerSerializer.DeserializeBuffer(msg.message, msg.messageLength, packet);
             
             switch (packet.Id)
             {

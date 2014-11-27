@@ -136,6 +136,12 @@
     public abstract EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit);
     public abstract void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags);
     public abstract void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth);
+
+    // WebSocket
+    public abstract bool WebSocketAvailable();
+    public abstract void WebSocketConnect(string ip, int port);
+    public abstract void WebSocketSend(byte[] data, int dataLength);
+    public abstract int WebSocketReceive(byte[] data, int dataLength);
     
     // OpenGl
     public abstract void GlViewport(int x, int y, int width, int height);
@@ -184,10 +190,7 @@
     public abstract void SinglePlayerServerDisable();
     public abstract DummyNetwork SinglePlayerServerGetNetwork();
     public abstract PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a);
-    public abstract DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message);
-    public abstract TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message);
-    public abstract EnetNetConnection CastToEnetNetConnection(INetConnection connection);
-    public abstract EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg);
+    public abstract EnetNetConnection CastToEnetNetConnection(NetConnection connection);
 }
 
 public class Asset

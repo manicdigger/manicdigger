@@ -1299,7 +1299,29 @@ public class GamePlatformNative : GamePlatform
         host_.host.Initialize(null, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth);
     }
     #endregion
-    
+
+    #region WebSocket
+
+    public override bool WebSocketAvailable()
+    {
+        return false;
+    }
+
+    public override void WebSocketConnect(string ip, int port)
+    {
+    }
+
+    public override void WebSocketSend(byte[] data, int dataLength)
+    {
+    }
+
+    public override int WebSocketReceive(byte[] data, int dataLength)
+    {
+        return -1;
+    }
+
+    #endregion
+
     #region OpenGlImpl
 
     public GameWindow window;
@@ -2143,24 +2165,9 @@ public class GamePlatformNative : GamePlatform
         singlePlayerServerAvailable = false;
     }
 
-    public override DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message)
-    {
-        return (DummyNetOutgoingMessage)message;
-    }
-
-    public override TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message)
-    {
-        return (TcpNetOutgoingMessage)message;
-    }
-
-    public override EnetNetConnection CastToEnetNetConnection(INetConnection connection)
+    public override EnetNetConnection CastToEnetNetConnection(NetConnection connection)
     {
         return (EnetNetConnection)connection;
-    }
-
-    public override EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg)
-    {
-        return (EnetNetOutgoingMessage)msg;
     }
 
     public override PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a)

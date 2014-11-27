@@ -1,28 +1,23 @@
-﻿public class EnetNetServer : INetServer
+﻿public class EnetNetServer : NetServer
 {
     public EnetNetServer()
     {
-        configuration = new ENetPeerConfiguration();
         event_ = new EnetEventRef();
-        messages = new QueueEnetNetIncomingMessage();
+        messages = new QueueNetIncomingMessage();
     }
     internal GamePlatform platform;
 
     public override void Start()
     {
         host = platform.EnetCreateHost();
-        platform.EnetHostInitializeServer(host, configuration.Port, 256);
+        platform.EnetHostInitializeServer(host, Port, 256);
     }
 
     EnetHost host;
 
-    public override void Recycle(INetIncomingMessage msg)
-    {
-    }
-
     EnetEventRef event_;
 
-    public override INetIncomingMessage ReadMessage()
+    public override NetIncomingMessage ReadMessage()
     {
         if (messages.Count() > 0)
         {
@@ -42,9 +37,9 @@
                             EnetNetConnection senderConnectionConnect = new EnetNetConnection();
                             senderConnectionConnect.platform = platform;
                             senderConnectionConnect.peer = event_.e.Peer();
-                            EnetNetIncomingMessage message = new EnetNetIncomingMessage();
-                            message.senderconnection = senderConnectionConnect;
-                            message.type = NetworkMessageType.Connect;
+                            NetIncomingMessage message = new NetIncomingMessage();
+                            message.SenderConnection = senderConnectionConnect;
+                            message.Type = NetworkMessageType.Connect;
                             messages.Enqueue(message);
                         }
                         break;
@@ -55,10 +50,10 @@
                             EnetNetConnection senderConnectionReceive = new EnetNetConnection();
                             senderConnectionReceive.platform = platform;
                             senderConnectionReceive.peer = event_.e.Peer();
-                            EnetNetIncomingMessage message = new EnetNetIncomingMessage();
-                            message.senderconnection = senderConnectionReceive;
+                            NetIncomingMessage message = new NetIncomingMessage();
+                            message.SenderConnection = senderConnectionReceive;
                             message.message = data;
-                            message.type = NetworkMessageType.Data;
+                            message.Type = NetworkMessageType.Data;
                             messages.Enqueue(message);
                         }
                         break;
@@ -67,9 +62,9 @@
                             EnetNetConnection senderConnectionDisconnect = new EnetNetConnection();
                             senderConnectionDisconnect.platform = platform;
                             senderConnectionDisconnect.peer = event_.e.Peer();
-                            EnetNetIncomingMessage message = new EnetNetIncomingMessage();
-                            message.senderconnection = senderConnectionDisconnect;
-                            message.type = NetworkMessageType.Disconnect;
+                            NetIncomingMessage message = new NetIncomingMessage();
+                            message.SenderConnection = senderConnectionDisconnect;
+                            message.Type = NetworkMessageType.Disconnect;
                             messages.Enqueue(message);
                         }
                         break;
@@ -84,63 +79,17 @@
         return null;
     }
     int clientid;
-    QueueEnetNetIncomingMessage messages;
+    QueueNetIncomingMessage messages;
+    
+    int Port;
 
-    ENetPeerConfiguration configuration;
-
-    public override INetPeerConfiguration Configuration()
+    public override void SetPort(int port)
     {
-        return configuration;
-    }
-
-    public override INetOutgoingMessage CreateMessage()
-    {
-        return new EnetNetOutgoingMessage();
+        Port = port;
     }
 }
 
-public class ENetPeerConfiguration : INetPeerConfiguration
-{
-    internal int Port;
-
-    public override int GetPort()
-    {
-        return Port;
-    }
-
-    public override void SetPort(int value)
-    {
-        Port = value;
-    }
-}
-
-public class EnetNetIncomingMessage : INetIncomingMessage
-{
-    internal EnetNetConnection senderconnection;
-
-    public override INetConnection SenderConnection()
-    {
-        return senderconnection;
-    }
-
-    internal byte[] message;
-    internal int messageLength;
-
-    public override byte[] ReadBytes(int numberOfBytes)
-    {
-        return message;
-    }
-
-    public override int LengthBytes()
-    {
-        return messageLength;
-    }
-
-    internal NetworkMessageType type;
-    public override NetworkMessageType Type() { return type; }
-}
-
-public class EnetNetConnection : INetConnection
+public class EnetNetConnection : NetConnection
 {
     internal GamePlatform platform;
     internal EnetPeer peer;
@@ -151,7 +100,7 @@ public class EnetNetConnection : INetConnection
 
     public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
     {
-        EnetNetOutgoingMessage msg1 = platform.CastToEnetNetOutgoingMessage(msg);
+        INetOutgoingMessage msg1 = msg;
         platform.EnetPeerSend(peer, 0, msg1.message, msg1.messageLength, EnetPacketFlags.Reliable);
     }
 
@@ -159,50 +108,35 @@ public class EnetNetConnection : INetConnection
     {
     }
 
-    public override bool EqualsConnection(INetConnection connection)
+    public override bool EqualsConnection(NetConnection connection)
     {
         return peer.UserData() == platform.CastToEnetNetConnection(connection).peer.UserData();
     }
 }
 
-public class EnetNetOutgoingMessage : INetOutgoingMessage
-{
-    internal byte[] message;
-    internal int messageLength;
-    public override void Write(byte[] source, int sourceCount)
-    {
-        messageLength = sourceCount;
-        message = new byte[sourceCount];
-        for (int i = 0; i < sourceCount; i++)
-        {
-            message[i] = source[i];
-        }
-    }
-}
-
-public class EnetNetClient : INetClient
+public class EnetNetClient : NetClient
 {
     internal GamePlatform platform;
     public override void Start()
     {
         host = platform.EnetCreateHost();
         platform.EnetHostInitialize(host, null, 1, 0, 0, 0);
-        tosend = new QueueEnetNetOutgoingMessage();
-        messages = new QueueEnetNetIncomingMessage();
+        tosend = new QueueINetOutgoingMessage();
+        messages = new QueueNetIncomingMessage();
     }
     EnetHost host;
     EnetPeer peer;
     bool connected;
     bool connected2;
 
-    public override INetConnection Connect(string ip, int port)
+    public override NetConnection Connect(string ip, int port)
     {
         peer = platform.EnetHostConnect(host, ip, port, 1234, 200);
         connected = true;
         return null;
     }
 
-    public override INetIncomingMessage ReadMessage()
+    public override NetIncomingMessage ReadMessage()
     {
         if (!connected)
         {
@@ -216,7 +150,7 @@ public class EnetNetClient : INetClient
         {
             while (tosend.Count() > 0)
             {
-                EnetNetOutgoingMessage msg = tosend.Dequeue();
+                INetOutgoingMessage msg = tosend.Dequeue();
                 DoSendPacket(msg);
             }
         }
@@ -235,7 +169,7 @@ public class EnetNetClient : INetClient
                         byte[] data = event_.e.Packet().GetBytes();
                         int dataLength = event_.e.Packet().GetBytesCount();
                         event_.e.Packet().Dispose();
-                        EnetNetIncomingMessage msg = new EnetNetIncomingMessage();
+                        NetIncomingMessage msg = new NetIncomingMessage();
                         msg.message = data;
                         msg.messageLength = dataLength;
                         messages.Enqueue(msg);
@@ -251,22 +185,18 @@ public class EnetNetClient : INetClient
         return null;
     }
 
-    void DoSendPacket(EnetNetOutgoingMessage msg)
+    void DoSendPacket(INetOutgoingMessage msg)
     {
-        EnetNetOutgoingMessage msg1 = msg;
+        INetOutgoingMessage msg1 = msg;
         platform.EnetPeerSend(peer, 0, msg1.message, msg1.messageLength, EnetPacketFlags.Reliable);
     }
 
-    QueueEnetNetIncomingMessage messages;
+    QueueNetIncomingMessage messages;
 
-    public override INetOutgoingMessage CreateMessage()
-    {
-        return new EnetNetOutgoingMessage();
-    }
-    QueueEnetNetOutgoingMessage tosend;
+    QueueINetOutgoingMessage tosend;
     public override void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
     {
-        EnetNetOutgoingMessage msg = platform.CastToEnetNetOutgoingMessage(message);
+        INetOutgoingMessage msg = message;
         if (!connected2)
         {
             tosend.Enqueue(msg);
@@ -280,94 +210,3 @@ public class EnetNetClient : INetClient
         platform = platform_;
     }
 }
-
-public class QueueEnetNetIncomingMessage
-{
-    public QueueEnetNetIncomingMessage()
-    {
-        items = new EnetNetIncomingMessage[1];
-        itemsSize = 1;
-        count = 0;
-    }
-    EnetNetIncomingMessage[] items;
-    int count;
-    int itemsSize;
-
-    internal int Count()
-    {
-        return count;
-    }
-
-    internal EnetNetIncomingMessage Dequeue()
-    {
-        EnetNetIncomingMessage ret = items[0];
-        for (int i = 0; i < count - 1; i++)
-        {
-            items[i] = items[i + 1];
-        }
-        count--;
-        return ret;
-    }
-
-    internal void Enqueue(EnetNetIncomingMessage p)
-    {
-        if (count == itemsSize)
-        {
-            EnetNetIncomingMessage[] items2 = new EnetNetIncomingMessage[itemsSize * 2];
-            for (int i = 0; i < itemsSize; i++)
-            {
-                items2[i] = items[i];
-            }
-            itemsSize = itemsSize * 2;
-            items = items2;
-        }
-        items[count++] = p;
-    }
-}
-
-
-
-public class QueueEnetNetOutgoingMessage
-{
-    public QueueEnetNetOutgoingMessage()
-    {
-        items = new EnetNetOutgoingMessage[1];
-        itemsSize = 1;
-        count = 0;
-    }
-    EnetNetOutgoingMessage[] items;
-    int count;
-    int itemsSize;
-
-    internal int Count()
-    {
-        return count;
-    }
-
-    internal EnetNetOutgoingMessage Dequeue()
-    {
-        EnetNetOutgoingMessage ret = items[0];
-        for (int i = 0; i < count - 1; i++)
-        {
-            items[i] = items[i + 1];
-        }
-        count--;
-        return ret;
-    }
-
-    internal void Enqueue(EnetNetOutgoingMessage p)
-    {
-        if (count == itemsSize)
-        {
-            EnetNetOutgoingMessage[] items2 = new EnetNetOutgoingMessage[itemsSize * 2];
-            for (int i = 0; i < itemsSize; i++)
-            {
-                items2[i] = items[i];
-            }
-            itemsSize = itemsSize * 2;
-            items = items2;
-        }
-        items[count++] = p;
-    }
-}
-

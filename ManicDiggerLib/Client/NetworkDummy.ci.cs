@@ -1,38 +1,38 @@
-﻿public class DummyNetClient : INetClient
+﻿public class DummyNetClient : NetClient
 {
     internal GamePlatform platform;
     internal DummyNetwork network;
-    public override INetConnection Connect(string ip, int port)
+    public override NetConnection Connect(string ip, int port)
     {
         return new DummyNetConnection();
     }
 
-    public override INetIncomingMessage ReadMessage()
+    public override NetIncomingMessage ReadMessage()
     {
-        DummyNetIncomingmessage msg = null;
+        NetIncomingMessage msg = null;
         platform.MonitorEnter(network.ClientReceiveBufferLock);
         {
             if (network.ClientReceiveBuffer.Count() > 0)
             {
-                msg = new DummyNetIncomingmessage();
-                msg.message = network.ClientReceiveBuffer.Dequeue();
+                msg = new NetIncomingMessage();
+                ByteArray b = network.ClientReceiveBuffer.Dequeue();
+                msg.message = b.data;
+                msg.messageLength = b.length;
             }
         }
         platform.MonitorExit(network.ClientReceiveBufferLock);
         return msg;
     }
 
-    public override INetOutgoingMessage CreateMessage()
-    {
-        return new DummyNetOutgoingMessage();
-    }
-
     public override void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
     {
         platform.MonitorEnter(network.ServerReceiveBufferLock);
         {
-            DummyNetOutgoingMessage msg = platform.CastToDummyNetOutgoingMessage(message);
-            network.ServerReceiveBuffer.Enqueue(msg.data);
+            INetOutgoingMessage msg = message;
+            ByteArray b = new ByteArray();
+            b.data = msg.message;
+            b.length = msg.messageLength;
+            network.ServerReceiveBuffer.Enqueue(b);
         }
         platform.MonitorExit(network.ServerReceiveBufferLock);
     }
@@ -51,7 +51,7 @@
         platform = gamePlatform;
     }
 }
-public class DummyNetConnection : INetConnection
+public class DummyNetConnection : NetConnection
 {
     internal GamePlatform platform;
     internal DummyNetwork network;
@@ -59,8 +59,11 @@ public class DummyNetConnection : INetConnection
     {
         platform.MonitorEnter(network.ClientReceiveBufferLock);
         {
-            DummyNetOutgoingMessage msg2 = platform.CastToDummyNetOutgoingMessage(msg);
-            network.ClientReceiveBuffer.Enqueue(msg2.data);
+            INetOutgoingMessage msg2 = msg;
+            ByteArray b = new ByteArray();
+            b.data = msg2.message;
+            b.length = msg2.messageLength;
+            network.ClientReceiveBuffer.Enqueue(b);
         }
         platform.MonitorExit(network.ClientReceiveBufferLock);
     }
@@ -72,7 +75,7 @@ public class DummyNetConnection : INetConnection
     {
     }
 
-    public override bool EqualsConnection(INetConnection connection)
+    public override bool EqualsConnection(NetConnection connection)
     {
         return true;
     }
@@ -85,33 +88,11 @@ public class DummyIpEndPoint : IPEndPointCi
     }
 }
 
-public class DummyNetIncomingmessage : INetIncomingMessage
-{
-    internal ByteArray message;
-    internal INetConnection senderConnection;
-    public override INetConnection SenderConnection() { return senderConnection; }
-
-    public override byte[] ReadBytes(int numberOfBytes)
-    {
-        //if (numberOfBytes != message.Length)
-        {
-            //throw new Exception();
-        }
-        return message.data;
-    }
-
-    public override int LengthBytes() { return message.length; }
-
-    internal NetworkMessageType type;
-    public override NetworkMessageType Type() { return type; }
-}
-
-public class DummyNetServer : INetServer
+public class DummyNetServer : NetServer
 {
     public DummyNetServer()
     {
         connectedClient = new DummyNetConnection();
-        configuration = new DummyNetPeerConfiguration();
     }
     internal GamePlatform platform;
     internal DummyNetwork network;
@@ -119,20 +100,16 @@ public class DummyNetServer : INetServer
     {
     }
 
-    public override void Recycle(INetIncomingMessage msg)
-    {
-    }
-
     DummyNetConnection connectedClient;
 
     bool receivedAnyMessage;
 
-    public override INetIncomingMessage ReadMessage()
+    public override NetIncomingMessage ReadMessage()
     {
         connectedClient.network = network;
         connectedClient.platform = platform;
 
-        DummyNetIncomingmessage msg = null;
+        NetIncomingMessage msg = null;
         platform.MonitorEnter(network.ServerReceiveBufferLock);
         {
             if (network.ServerReceiveBuffer.Count() > 0)
@@ -140,31 +117,22 @@ public class DummyNetServer : INetServer
                 if (!receivedAnyMessage)
                 {
                     receivedAnyMessage = true;
-                    msg = new DummyNetIncomingmessage();
-                    msg.type = NetworkMessageType.Connect;
-                    msg.senderConnection = connectedClient;
+                    msg = new NetIncomingMessage();
+                    msg.Type = NetworkMessageType.Connect;
+                    msg.SenderConnection = connectedClient;
                 }
                 else
                 {
-                    msg = new DummyNetIncomingmessage();
-                    msg.message = network.ServerReceiveBuffer.Dequeue();
-                    msg.senderConnection = connectedClient;
+                    msg = new NetIncomingMessage();
+                    ByteArray b = network.ServerReceiveBuffer.Dequeue();
+                    msg.message = b.data;
+                    msg.messageLength = b.length;
+                    msg.SenderConnection = connectedClient;
                 }
             }
         }
         platform.MonitorExit(network.ServerReceiveBufferLock);
         return msg;
-    }
-
-    DummyNetPeerConfiguration configuration;
-    public override INetPeerConfiguration Configuration()
-    {
-        return configuration;
-    }
-
-    public override INetOutgoingMessage CreateMessage()
-    {
-        return new DummyNetOutgoingMessage();
     }
 
     public void SetNetwork(DummyNetwork dummyNetwork)
@@ -176,38 +144,16 @@ public class DummyNetServer : INetServer
     {
         platform = gamePlatform;
     }
+
+    public override void SetPort(int port)
+    {
+    }
 }
 
 
 
 public class DummyNetOutgoingMessage : INetOutgoingMessage
 {
-    internal ByteArray data;
-    public override void Write(byte[] source, int sourceCount)
-    {
-        data = new ByteArray();
-        data.data = new byte[sourceCount];
-        data.length = sourceCount;
-        for (int i = 0; i < sourceCount; i++)
-        {
-            data.data[i] = source[i];
-        }
-    }
-}
-
-public class DummyNetPeerConfiguration : INetPeerConfiguration
-{
-    internal int Port;
-
-    public override int GetPort()
-    {
-        return Port;
-    }
-
-    public override void SetPort(int value)
-    {
-        Port = value;
-    }
 }
 
 public class DummyNetwork

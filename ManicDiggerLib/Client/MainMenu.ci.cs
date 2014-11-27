@@ -98,41 +98,6 @@
         screen.OnKeyPress(e);
     }
 
-    void HandleKeys()
-    {
-        float elapsed_ = elapsed * 60;
-        if (currentlyPressedKeys[33])
-        {
-            // Page Up
-            z -= (one / 20) * elapsed_;
-        }
-        if (currentlyPressedKeys[34])
-        {
-            // Page Down
-            z += (one / 20) * elapsed_;
-        }
-        if (currentlyPressedKeys[37])
-        {
-            // Left cursor key
-            ySpeed -= 1 * elapsed_;
-        }
-        if (currentlyPressedKeys[39])
-        {
-            // Right cursor key
-            ySpeed += 1 * elapsed_;
-        }
-        if (currentlyPressedKeys[38])
-        {
-            // Up cursor key
-            xSpeed -= 1 * elapsed_;
-        }
-        if (currentlyPressedKeys[40])
-        {
-            // Down cursor key
-            xSpeed += 1 * elapsed_;
-        }
-    }
-
     void DrawScene(float dt)
     {
         p.GlViewport(0, 0, viewportWidth, viewportHeight);
@@ -330,10 +295,13 @@
 
     bool initialized;
 
-    float elapsed;
-
-    void Animate()
+    void Animate(float dt)
     {
+        float maxDt = 1;
+        if (dt > maxDt)
+        {
+            dt = maxDt;
+        }
         if (xInv)
         {
             if (xRot <= -overlap)
@@ -341,7 +309,7 @@
                 xInv = false;
                 xSpeed = minspeed + rnd.MaxNext(5);
             }
-            xRot -= xSpeed * elapsed;
+            xRot -= xSpeed * dt;
         }
         else
         {
@@ -350,7 +318,7 @@
                 xInv = true;
                 xSpeed = minspeed + rnd.MaxNext(5);
             }
-            xRot += xSpeed * elapsed;
+            xRot += xSpeed * dt;
         }
         if (yInv)
         {
@@ -359,7 +327,7 @@
                 yInv = false;
                 ySpeed = minspeed + rnd.MaxNext(5);
             }
-            yRot -= ySpeed * elapsed;
+            yRot -= ySpeed * dt;
         }
         else
         {
@@ -368,13 +336,12 @@
                 yInv = true;
                 ySpeed = minspeed + rnd.MaxNext(5);
             }
-            yRot += ySpeed * elapsed;
+            yRot += ySpeed * dt;
         }
     }
 
     public void OnNewFrame(NewFrameEventArgs args)
     {
-        elapsed = args.GetDt();
         if (!initialized)
         {
             initialized = true;
@@ -385,9 +352,8 @@
         }
         viewportWidth = p.GetCanvasWidth();
         viewportHeight = p.GetCanvasHeight();
-        HandleKeys();
         DrawScene(args.GetDt());
-        Animate();
+        Animate(args.GetDt());
         loginClient.Update(p);
     }
 
@@ -1602,6 +1568,12 @@ public class ScreenGame : Screen
             else if (platform.TcpAvailable())
             {
                 TcpNetClient client = new TcpNetClient();
+                client.SetPlatform(platform);
+                game.main = client;
+            }
+            else if (platform.WebSocketAvailable())
+            {
+                WebSocketClient client = new WebSocketClient();
                 client.SetPlatform(platform);
                 game.main = client;
             }

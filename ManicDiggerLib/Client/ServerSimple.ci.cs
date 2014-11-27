@@ -45,10 +45,10 @@
 
 
     float one;
-    INetServer server;
+    NetServer server;
     string saveFilename;
     internal GamePlatform platform;
-    public void Start(INetServer server_, string saveFilename_, GamePlatform platform_)
+    public void Start(NetServer server_, string saveFilename_, GamePlatform platform_)
     {
         server = server_;
         saveFilename = saveFilename_;
@@ -136,25 +136,25 @@
     {
         for (; ; )
         {
-            INetIncomingMessage msg = server.ReadMessage();
+            NetIncomingMessage msg = server.ReadMessage();
             if (msg == null)
             {
                 return;
             }
-            switch (msg.Type())
+            switch (msg.Type)
             {
                 case NetworkMessageType.Connect:
                     ClientSimple c = new ClientSimple();
                     c.MainSocket = server;
-                    c.Connection = msg.SenderConnection();
+                    c.Connection = msg.SenderConnection;
                     c.chunksseen = new bool[(MapSizeX / ChunkSize) * (MapSizeY / ChunkSize)][];
                     clients[0] = c;
                     clientsCount = 1;
                     break;
                 case NetworkMessageType.Data:
-                    byte[] data = msg.ReadBytes(msg.LengthBytes());
+                    byte[] data = msg.message;
                     Packet_Client packet = new Packet_Client();
-                    Packet_ClientSerializer.DeserializeBuffer(data, msg.LengthBytes(), packet);
+                    Packet_ClientSerializer.DeserializeBuffer(data, msg.messageLength, packet);
                     ProcessPacket(0, packet);
                     break;
                 case NetworkMessageType.Disconnect:
@@ -280,7 +280,7 @@
     {
         IntRef length = new IntRef();
         byte[] data = ServerPackets.Serialize(packet, length);
-        INetOutgoingMessage msg = clients[client].MainSocket.CreateMessage();
+        INetOutgoingMessage msg = new INetOutgoingMessage();
         msg.Write(data, length.value);
         clients[client].Connection.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered, 0);
     }
@@ -694,8 +694,8 @@ public class ClientSimple
         }
     }
     internal string Name;
-    internal INetConnection Connection;
-    internal INetServer MainSocket;
+    internal NetConnection Connection;
+    internal NetServer MainSocket;
     internal bool[][] chunksseen;
     internal Action_ notifyMapAction;
     internal float glX;

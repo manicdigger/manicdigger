@@ -43,8 +43,8 @@ namespace ManicDigger
                     return i;
                 }
             }
-            //return -1;
-            throw new Exception(name);
+            return -1;
+            //throw new Exception(name);
         }
 
         public void AddToCreativeInventory(string blockType)
@@ -117,11 +117,13 @@ namespace ManicDigger
         {
             server.SetLightLevels(lightLevels);
         }
+        
+        const string recipeError = "Recipe error:";
 
         public void AddCraftingRecipe(string output, int outputAmount, string Input0, int Input0Amount)
         {
-            if (GetBlockId(output) == -1) { throw new Exception(output); }
-            if (GetBlockId(Input0) == -1) { throw new Exception(Input0); }
+            if (GetBlockId(output) == -1) { Console.WriteLine(recipeError + output); return; }
+            if (GetBlockId(Input0) == -1) { Console.WriteLine(recipeError + Input0); return; }
             CraftingRecipe r = new CraftingRecipe();
             r.ingredients = new Ingredient[]
             {
@@ -133,8 +135,9 @@ namespace ManicDigger
 
         public void AddCraftingRecipe2(string output, int outputAmount, string Input0, int Input0Amount, string Input1, int Input1Amount)
         {
-            if (GetBlockId(output) == -1) { throw new Exception(output); }
-            if (GetBlockId(Input1) == -1) { throw new Exception(Input1); }
+            if (GetBlockId(output) == -1) { Console.WriteLine(recipeError + output); return; }
+            if (GetBlockId(Input0) == -1) { Console.WriteLine(recipeError + Input0); return; }
+            if (GetBlockId(Input1) == -1) { Console.WriteLine(recipeError + Input1); return; }
             CraftingRecipe r = new CraftingRecipe();
             r.ingredients = new Ingredient[]
             {
@@ -147,10 +150,10 @@ namespace ManicDigger
 
         public void AddCraftingRecipe3(string output, int outputAmount, string Input0, int Input0Amount, string Input1, int Input1Amount, string Input2, int Input2Amount)
         {
-            if (GetBlockId(output) == -1) { throw new Exception(output); }
-            if (GetBlockId(Input0) == -1) { throw new Exception(Input0); }
-            if (GetBlockId(Input1) == -1) { throw new Exception(Input1); }
-            if (GetBlockId(Input2) == -1) { throw new Exception(Input2); }
+            if (GetBlockId(output) == -1) { Console.WriteLine(recipeError + output); return; }
+            if (GetBlockId(Input0) == -1) { Console.WriteLine(recipeError + Input0); return; }
+            if (GetBlockId(Input1) == -1) { Console.WriteLine(recipeError + Input1); return; }
+            if (GetBlockId(Input2) == -1) { Console.WriteLine(recipeError + Input2); return; }
             CraftingRecipe r = new CraftingRecipe();
             r.ingredients = new Ingredient[]
             {

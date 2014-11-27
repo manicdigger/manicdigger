@@ -11,7 +11,6 @@ using ManicDigger;
 using ManicDigger.Renderers;
 using System.Text;
 using System.Net.Sockets;
-using Lidgren.Network;
 using ManicDigger.ClientNative;
 using OpenTK.Graphics;
 #endregion
@@ -91,7 +90,8 @@ using OpenTK.Graphics;
                 DummyNetServer netServer = new DummyNetServer();
                 netServer.SetPlatform(new GamePlatformNative());
                 netServer.SetNetwork(dummyNetwork);
-                server.mainSocket0 = netServer;
+                server.mainSockets = new NetServer[3];
+                server.mainSockets[0] = netServer;
                 for (; ; )
                 {
                     server.Process();

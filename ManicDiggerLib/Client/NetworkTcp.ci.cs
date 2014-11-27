@@ -1,58 +1,4 @@
-﻿public class TcpPeerConfiguration : INetPeerConfiguration
-{
-    internal int Port;
-
-    public override int GetPort()
-    {
-        return Port;
-    }
-
-    public override void SetPort(int value)
-    {
-        Port = value;
-    }
-}
-
-public class TcpNetIncomingMessage : INetIncomingMessage
-{
-    public override INetConnection SenderConnection()
-    {
-        return null;
-    }
-
-    internal byte[] message;
-    internal int messageLength;
-
-    public override byte[] ReadBytes(int numberOfBytes)
-    {
-        return message;
-    }
-
-    public override int LengthBytes()
-    {
-        return messageLength;
-    }
-
-    internal NetworkMessageType type;
-    public override NetworkMessageType Type() { return type; }
-}
-
-public class TcpNetOutgoingMessage : INetOutgoingMessage
-{
-    internal byte[] message;
-    internal int messageLength;
-    public override void Write(byte[] source, int sourceCount)
-    {
-        messageLength = sourceCount;
-        message = new byte[sourceCount];
-        for (int i = 0; i < sourceCount; i++)
-        {
-            message[i] = source[i];
-        }
-    }
-}
-
-public class TcpNetClient : INetClient
+﻿public class TcpNetClient : NetClient
 {
     public TcpNetClient()
     {
@@ -63,12 +9,12 @@ public class TcpNetClient : INetClient
     internal GamePlatform platform;
     public override void Start()
     {
-        tosend = new QueueTcpNetOutgoingMessage();
+        tosend = new QueueINetOutgoingMessage();
     }
 
     BoolRef connected;
 
-    public override INetConnection Connect(string ip, int port)
+    public override NetConnection Connect(string ip, int port)
     {
         platform.TcpConnect(ip, port, connected);
         return null;
@@ -79,17 +25,17 @@ public class TcpNetClient : INetClient
 
     byte[] data;
     const int dataLength = 1024;
-    public override INetIncomingMessage ReadMessage()
+    public override NetIncomingMessage ReadMessage()
     {
         if (connected.value)
         {
             while (tosend.Count() > 0)
             {
-                TcpNetOutgoingMessage msg = tosend.Dequeue();
+                INetOutgoingMessage msg = tosend.Dequeue();
                 DoSendPacket(msg);
             }
         }
-        TcpNetIncomingMessage message = GetMessage();
+        NetIncomingMessage message = GetMessage();
         if (message != null)
         {
             return message;
@@ -117,7 +63,7 @@ public class TcpNetClient : INetClient
         return null;
     }
 
-    TcpNetIncomingMessage GetMessage()
+    NetIncomingMessage GetMessage()
     {
         if (incoming.count >= 4)
         {
@@ -127,7 +73,7 @@ public class TcpNetClient : INetClient
             if (incoming.count >= 4 + messageLength)
             {
                 incoming.DequeueRange(new byte[4], 4);
-                TcpNetIncomingMessage msg = new TcpNetIncomingMessage();
+                NetIncomingMessage msg = new NetIncomingMessage();
                 msg.message = new byte[messageLength];
                 msg.messageLength = messageLength;
                 incoming.DequeueRange(msg.message, msg.messageLength);
@@ -158,7 +104,7 @@ public class TcpNetClient : INetClient
         return n;
     }
 
-    void DoSendPacket(TcpNetOutgoingMessage msg)
+    void DoSendPacket(INetOutgoingMessage msg)
     {
         byte[] packet = new byte[msg.messageLength + 4];
         WriteInt(packet, 0, msg.messageLength);
@@ -169,14 +115,10 @@ public class TcpNetClient : INetClient
         platform.TcpSend(packet, msg.messageLength + 4);
     }
 
-    public override INetOutgoingMessage CreateMessage()
-    {
-        return new TcpNetOutgoingMessage();
-    }
-    QueueTcpNetOutgoingMessage tosend;
+    QueueINetOutgoingMessage tosend;
     public override void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
     {
-        TcpNetOutgoingMessage msg = platform.CastToTcpNetOutgoingMessage(message);
+        INetOutgoingMessage msg = message;
         if (!connected.value)
         {
             tosend.Enqueue(msg);
@@ -243,15 +185,15 @@ public class QueueByte
     }
 }
 
-public class QueueTcpNetIncomingMessage
+public class QueueINetOutgoingMessage
 {
-    public QueueTcpNetIncomingMessage()
+    public QueueINetOutgoingMessage()
     {
-        items = new TcpNetIncomingMessage[1];
+        items = new INetOutgoingMessage[1];
         itemsSize = 1;
         count = 0;
     }
-    TcpNetIncomingMessage[] items;
+    INetOutgoingMessage[] items;
     int count;
     int itemsSize;
 
@@ -260,9 +202,9 @@ public class QueueTcpNetIncomingMessage
         return count;
     }
 
-    internal TcpNetIncomingMessage Dequeue()
+    internal INetOutgoingMessage Dequeue()
     {
-        TcpNetIncomingMessage ret = items[0];
+        INetOutgoingMessage ret = items[0];
         for (int i = 0; i < count - 1; i++)
         {
             items[i] = items[i + 1];
@@ -271,57 +213,11 @@ public class QueueTcpNetIncomingMessage
         return ret;
     }
 
-    internal void Enqueue(TcpNetIncomingMessage p)
+    internal void Enqueue(INetOutgoingMessage p)
     {
         if (count == itemsSize)
         {
-            TcpNetIncomingMessage[] items2 = new TcpNetIncomingMessage[itemsSize * 2];
-            for (int i = 0; i < itemsSize; i++)
-            {
-                items2[i] = items[i];
-            }
-            itemsSize = itemsSize * 2;
-            items = items2;
-        }
-        items[count++] = p;
-    }
-}
-
-
-
-public class QueueTcpNetOutgoingMessage
-{
-    public QueueTcpNetOutgoingMessage()
-    {
-        items = new TcpNetOutgoingMessage[1];
-        itemsSize = 1;
-        count = 0;
-    }
-    TcpNetOutgoingMessage[] items;
-    int count;
-    int itemsSize;
-
-    internal int Count()
-    {
-        return count;
-    }
-
-    internal TcpNetOutgoingMessage Dequeue()
-    {
-        TcpNetOutgoingMessage ret = items[0];
-        for (int i = 0; i < count - 1; i++)
-        {
-            items[i] = items[i + 1];
-        }
-        count--;
-        return ret;
-    }
-
-    internal void Enqueue(TcpNetOutgoingMessage p)
-    {
-        if (count == itemsSize)
-        {
-            TcpNetOutgoingMessage[] items2 = new TcpNetOutgoingMessage[itemsSize * 2];
+            INetOutgoingMessage[] items2 = new INetOutgoingMessage[itemsSize * 2];
             for (int i = 0; i < itemsSize; i++)
             {
                 items2[i] = items[i];

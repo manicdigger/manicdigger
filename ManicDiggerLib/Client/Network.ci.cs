@@ -1,39 +1,31 @@
-﻿public abstract class INetServer
+﻿public abstract class NetServer
 {
-    public abstract INetPeerConfiguration Configuration();
+    public abstract void SetPort(int port);
     public abstract void Start();
-    public abstract void Recycle(INetIncomingMessage msg);
-    public abstract INetIncomingMessage ReadMessage();
-    public abstract INetOutgoingMessage CreateMessage();
-}
-public abstract class INetPeerConfiguration
-{
-    public abstract int GetPort();
-    public abstract void SetPort(int value);
+    public abstract NetIncomingMessage ReadMessage();
 }
 
-public abstract class INetClient
+public abstract class NetClient
 {
     public abstract void Start();
-    public abstract INetConnection Connect(string ip, int port);
-    public abstract INetIncomingMessage ReadMessage();
-    public abstract INetOutgoingMessage CreateMessage();
+    public abstract NetConnection Connect(string ip, int port);
+    public abstract NetIncomingMessage ReadMessage();
     public abstract void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method);
 }
 
-public abstract class INetConnection
+public abstract class NetConnection
 {
     public abstract IPEndPointCi RemoteEndPoint();
     public abstract void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel);
     public abstract void Update();
-    public abstract bool EqualsConnection(INetConnection connection);
+    public abstract bool EqualsConnection(NetConnection connection);
 }
-public abstract class INetIncomingMessage
+public class NetIncomingMessage
 {
-    public abstract INetConnection SenderConnection();
-    public abstract byte[] ReadBytes(int numberOfBytes);
-    public abstract int LengthBytes();
-    public abstract NetworkMessageType Type();
+    internal NetConnection SenderConnection;
+    internal NetworkMessageType Type;
+    internal byte[] message;
+    internal int messageLength;
 }
 public enum NetworkMessageType
 {
@@ -41,9 +33,19 @@ public enum NetworkMessageType
     Connect,
     Disconnect
 }
-public abstract class INetOutgoingMessage
+public class INetOutgoingMessage
 {
-    public abstract void Write(byte[] source, int sourceCount);
+    internal byte[] message;
+    internal int messageLength;
+    public void Write(byte[] source, int sourceCount)
+    {
+        messageLength = sourceCount;
+        message = new byte[sourceCount];
+        for (int i = 0; i < sourceCount; i++)
+        {
+            message[i] = source[i];
+        }
+    }
 }
 
 public abstract class IPEndPointCi
@@ -76,3 +78,46 @@ public enum MyNetDeliveryMethod
     ReliableOrdered// = 67,
 }
 
+public class QueueNetIncomingMessage
+{
+    public QueueNetIncomingMessage()
+    {
+        items = new NetIncomingMessage[1];
+        itemsSize = 1;
+        count = 0;
+    }
+    NetIncomingMessage[] items;
+    int count;
+    int itemsSize;
+
+    internal int Count()
+    {
+        return count;
+    }
+
+    internal NetIncomingMessage Dequeue()
+    {
+        NetIncomingMessage ret = items[0];
+        for (int i = 0; i < count - 1; i++)
+        {
+            items[i] = items[i + 1];
+        }
+        count--;
+        return ret;
+    }
+
+    internal void Enqueue(NetIncomingMessage p)
+    {
+        if (count == itemsSize)
+        {
+            NetIncomingMessage[] items2 = new NetIncomingMessage[itemsSize * 2];
+            for (int i = 0; i < itemsSize; i++)
+            {
+                items2[i] = items[i];
+            }
+            itemsSize = itemsSize * 2;
+            items = items2;
+        }
+        items[count++] = p;
+    }
+}

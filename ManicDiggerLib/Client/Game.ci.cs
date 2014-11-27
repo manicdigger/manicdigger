@@ -1191,7 +1191,7 @@
     {
         //try
         //{
-        INetOutgoingMessage msg = main.CreateMessage();
+        INetOutgoingMessage msg = new INetOutgoingMessage();
         msg.Write(packet, packetLength);
         main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
         //}
@@ -1201,7 +1201,7 @@
         //}
     }
 
-    internal INetClient main;
+    internal NetClient main;
 
     IntRef packetLen;
     public void SendPacketClient(Packet_Client packetClient)
@@ -3254,7 +3254,7 @@
         return redirectTo;
     }
 
-    internal void ExitToMainMenu()
+    internal void ExitToMainMenu_()
     {
         if (issingleplayer)
         {
@@ -3719,7 +3719,7 @@
                     ChatLog(platform.StringFormat("[GAME] Disconnected by the server ({0})", packet.DisconnectPlayer.DisconnectReason));
                     //When server disconnects player, return to main menu
                     platform.MessageBoxShowError(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server");
-                    ExitToMainMenu();
+                    ExitToMainMenu_();
                     break;
                 }
             case Packet_ServerIdEnum.PlayerStats:
@@ -4408,7 +4408,7 @@
             //Return to main menu when ESC key is pressed while loading
             if (eKey == GetKey(GlKeys.Escape))
             {
-                ExitToMainMenu();
+                ExitToMainMenu_();
             }
         }
         if (guistate == GuiState.CraftingRecipes)
@@ -5419,7 +5419,7 @@ public class NetworkProcessTask : Task
         {
             return;
         }
-        INetIncomingMessage msg;
+        NetIncomingMessage msg;
         for (; ; )
         {
             if (game.invalidVersionPacketIdentification != null)
@@ -5431,7 +5431,7 @@ public class NetworkProcessTask : Task
             {
                 break;
             }
-            TryReadPacket(msg.ReadBytes(msg.LengthBytes()), msg.LengthBytes());
+            TryReadPacket(msg.message, msg.messageLength);
         }
     }
 
@@ -5664,13 +5664,21 @@ public class TaskScheduler_
             {
                 tasks.Dequeue().Run(dt);
             }
+
+            Move(newPerFrameTasks, tasks);
+            while (tasks.Count() > 0)
+            {
+                Task task = tasks.Dequeue();
+                backgroundPerFrameTasks.Add(task);
+                task.Done = false;
+            }
         }
     }
 
     void Move(QueueTask from, QueueTask to)
     {
         platform.MonitorEnter(lockObject);
-        int count = from.count;
+        int count = from.count_;
         for (int i = 0; i < count; i++)
         {
             Task task = from.Dequeue();
@@ -5693,55 +5701,55 @@ public class QueueTask
         return queue;
     }
 
-    void Start(int max_)
+    void Start(int max)
     {
-        max = max_;
+        max_ = max;
         items = new Task[max_];
-        count = 0;
+        count_ = 0;
     }
 
     internal Task[] items;
-    internal int start;
-    internal int count;
-    internal int max;
+    internal int start_;
+    internal int count_;
+    internal int max_;
 
     public void Enqueue(Task value)
     {
-        if (count == max)
+        if (count_ == max_)
         {
-            Resize(max * 2);
+            Resize(max_ * 2);
         }
-        int pos = start + count;
-        pos = pos % max;
-        count++;
+        int pos = start_ + count_;
+        pos = pos % max_;
+        count_++;
         items[pos] = value;
     }
 
     void Resize(int newSize)
     {
         Task[] items2 = new Task[newSize];
-        for (int i = 0; i < max; i++)
+        for (int i = 0; i < max_; i++)
         {
-            items2[i] = items[(start + i) % max];
+            items2[i] = items[(start_ + i) % max_];
         }
         items = items2;
-        start = 0;
-        max = newSize;
+        start_ = 0;
+        max_ = newSize;
     }
 
     public Task Dequeue()
     {
-        Task ret = items[start];
-        items[start] = null;
-        start++;
-        start = start % max;
-        count--;
+        Task ret = items[start_];
+        items[start_] = null;
+        start_++;
+        start_ = start_ % max_;
+        count_--;
         return ret;
     }
 
     public int Count()
     {
-        return count;
+        return count_;
     }
 }
 
@@ -5914,7 +5922,7 @@ public class LoginClientCi
         if (loginUrlResponse == null && loginUrl == null)
         {
             loginUrlResponse = new HttpResponseCi();
-            platform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/login.txt", loginUrlResponse);
+            platform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/login.php", loginUrlResponse);
         }
         if (loginUrlResponse != null && loginUrlResponse.done)
         {
@@ -7423,28 +7431,28 @@ public class StackMatrix4
     }
     float[][] values;
     const int max = 1024;
-    int count;
+    int count_;
 
     internal void Push(float[] p)
     {
-        Mat4.Copy(values[count], p);
-        count++;
+        Mat4.Copy(values[count_], p);
+        count_++;
     }
 
     internal float[] Peek()
     {
-        return values[count - 1];
+        return values[count_ - 1];
     }
 
     internal int Count()
     {
-        return count;
+        return count_;
     }
 
     internal float[] Pop()
     {
-        float[] ret = values[count - 1];
-        count--;
+        float[] ret = values[count_ - 1];
+        count_--;
         return ret;
     }
 }

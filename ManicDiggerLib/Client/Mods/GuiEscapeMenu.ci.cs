@@ -52,7 +52,7 @@
         if (b == buttonMainExit)
         {
             game.SendLeave(Packet_LeaveReasonEnum.Leave);
-            game.ExitToMainMenu();
+            game.ExitToMainMenu_();
         }
     }
 
@@ -442,6 +442,11 @@
         OptionsCi options = game.options;
         IntRef resolutionsCount = new IntRef();
         DisplayResolutionCi[] resolutions = game.platform.GetDisplayResolutions(resolutionsCount);
+
+        if (resolutions == null)
+        {
+            return;
+        }
 
         if (options.Resolution >= resolutionsCount.value)
         {

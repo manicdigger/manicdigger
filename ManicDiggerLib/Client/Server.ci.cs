@@ -3,10 +3,11 @@
     public ServerCi()
     {
         one = 1;
+        mainSocketsCount = 3;
     }
     float one;
-    internal INetServer mainSocket0;
-    internal INetServer mainSocket1;
+    internal NetServer[] mainSockets;
+    internal int mainSocketsCount;
 }
 
 public class ClientStateOnServer

@@ -4,18 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 
-public class TcpNetServer : INetServer
+public class TcpNetServer : NetServer
 {
     public TcpNetServer()
     {
-        configuration = new TcpPeerConfiguration();
-        messages = new Queue<TcpServerNetIncomingMessage>();
+        messages = new Queue<NetIncomingMessage>();
         server = new ServerManager();
     }
 
     public override void Start()
     {
-        server.StartServer(configuration.Port);
+        server.StartServer(Port);
         server.Connected += new EventHandler<ConnectionEventArgs>(server_Connected);
         server.ReceivedMessage += new EventHandler<MessageEventArgs>(server_ReceivedMessage);
         server.Disconnected += new EventHandler<ConnectionEventArgs>(server_Disconnected);
@@ -23,9 +22,9 @@ public class TcpNetServer : INetServer
 
     void server_Connected(object sender, ConnectionEventArgs e)
     {
-        TcpServerNetIncomingMessage msg = new TcpServerNetIncomingMessage();
-        msg.type = NetworkMessageType.Connect;
-        msg.connection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
+        NetIncomingMessage msg = new NetIncomingMessage();
+        msg.Type = NetworkMessageType.Connect;
+        msg.SenderConnection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
         lock (messages)
         {
             messages.Enqueue(msg);
@@ -34,9 +33,9 @@ public class TcpNetServer : INetServer
 
     void server_Disconnected(object sender, ConnectionEventArgs e)
     {
-        TcpServerNetIncomingMessage msg = new TcpServerNetIncomingMessage();
-        msg.type = NetworkMessageType.Disconnect;
-        msg.connection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
+        NetIncomingMessage msg = new NetIncomingMessage();
+        msg.Type = NetworkMessageType.Disconnect;
+        msg.SenderConnection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
         lock (messages)
         {
             messages.Enqueue(msg);
@@ -45,11 +44,11 @@ public class TcpNetServer : INetServer
 
     void server_ReceivedMessage(object sender, MessageEventArgs e)
     {
-        TcpServerNetIncomingMessage msg = new TcpServerNetIncomingMessage();
-        msg.type = NetworkMessageType.Data;
+        NetIncomingMessage msg = new NetIncomingMessage();
+        msg.Type = NetworkMessageType.Data;
         msg.message = e.data;
         msg.messageLength = e.data.Length;
-        msg.connection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
+        msg.SenderConnection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
         lock (messages)
         {
             messages.Enqueue(msg);
@@ -58,11 +57,7 @@ public class TcpNetServer : INetServer
 
     ServerManager server;
 
-    public override void Recycle(INetIncomingMessage msg)
-    {
-    }
-
-    public override INetIncomingMessage ReadMessage()
+    public override NetIncomingMessage ReadMessage()
     {
         lock (messages)
         {
@@ -74,47 +69,17 @@ public class TcpNetServer : INetServer
 
         return null;
     }
-    Queue<TcpServerNetIncomingMessage> messages;
+    Queue<NetIncomingMessage> messages;
 
-    TcpPeerConfiguration configuration;
+    int Port;
 
-    public override INetPeerConfiguration Configuration()
+    public override void SetPort(int port)
     {
-        return configuration;
-    }
-
-    public override INetOutgoingMessage CreateMessage()
-    {
-        return new TcpNetOutgoingMessage();
+        Port = port;
     }
 }
 
-public class TcpServerNetIncomingMessage : INetIncomingMessage
-{
-    public TcpNetConnection connection;
-    public override INetConnection SenderConnection()
-    {
-        return connection;
-    }
-
-    internal byte[] message;
-    internal int messageLength;
-
-    public override byte[] ReadBytes(int numberOfBytes)
-    {
-        return message;
-    }
-
-    public override int LengthBytes()
-    {
-        return messageLength;
-    }
-
-    internal NetworkMessageType type;
-    public override NetworkMessageType Type() { return type; }
-}
-
-public class TcpNetConnection : INetConnection
+public class TcpNetConnection : NetConnection
 {
     public TcpConnection peer;
 
@@ -125,7 +90,7 @@ public class TcpNetConnection : INetConnection
 
     public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
     {
-        TcpNetOutgoingMessage msg1 = (TcpNetOutgoingMessage)msg;
+        INetOutgoingMessage msg1 = (INetOutgoingMessage)msg;
         byte[] data = new byte[msg1.messageLength];
         for (int i = 0; i < msg1.messageLength; i++)
         {
@@ -138,7 +103,7 @@ public class TcpNetConnection : INetConnection
     {
     }
 
-    public override bool EqualsConnection(INetConnection connection)
+    public override bool EqualsConnection(NetConnection connection)
     {
         return peer.sock == ((TcpNetConnection)connection).peer.sock;
     }

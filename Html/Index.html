@@ -465,11 +465,18 @@ PlatformJs.prototype.getGameVersion = function() {
 }
 
 PlatformJs.prototype.getLanguageIso6391 = function() {
-	return null;
+	return "en";
 }
 
 PlatformJs.prototype.getPreferences = function() {
-	return new Preferences();
+	var p = new Preferences();
+	var pp = JSON.parse(localStorage.getItem("Preferences"));
+	if (pp)
+	{
+		p.items.items = pp.items;
+		p.items.count = pp.count;
+	}
+	return p;
 }
 
 PlatformJs.prototype.getWindowState = function() {
@@ -599,7 +606,7 @@ PlatformJs.prototype.isSmallScreen = function() {
 }
 
 PlatformJs.prototype.isValidTypingChar = function(c) {
-	return false;
+	return true;
 }
 
 PlatformJs.prototype.keyName = function(key) {
@@ -738,7 +745,9 @@ PlatformJs.prototype.randomCreate = function() {
 }
 
 PlatformJs.prototype.readAllLines = function(p, retCount) {
-	return null;
+	var lines = p.split("\n");
+	retCount.value = lines.length;
+	return lines;
 }
 
 PlatformJs.prototype.requestMousePointerLock = function() {
@@ -759,6 +768,7 @@ PlatformJs.prototype.setMatrixUniformProjection = function(pMatrix) {
 }
 
 PlatformJs.prototype.setPreferences = function(preferences) {
+	localStorage.setItem("Preferences", JSON.stringify(preferences.items));
 }
 
 PlatformJs.prototype.setTextRendererFont = function(fontID) {
@@ -798,11 +808,11 @@ PlatformJs.prototype.singlePlayerServerStart = function(saveFilename) {
 }
 
 PlatformJs.prototype.stringContains = function(a, b) {
-	return false;
+	return a.indexOf(b) != -1;
 }
 
 PlatformJs.prototype.stringEmpty = function(data) {
-	return false;
+	return data == "";
 }
 
 var stringFormat = function(s, arguments) {
@@ -878,8 +888,38 @@ PlatformJs.prototype.stringToLower = function(p) {
 	return p.toLowerCase();
 }
 
+// http://stackoverflow.com/a/18729931
 PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
-	return null;
+	var str = s;
+    var utf8 = [];
+    for (var i=0; i < str.length; i++) {
+        var charcode = str.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+            utf8.push(0xc0 | (charcode >> 6), 
+                      0x80 | (charcode & 0x3f));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+            utf8.push(0xe0 | (charcode >> 12), 
+                      0x80 | ((charcode>>6) & 0x3f), 
+                      0x80 | (charcode & 0x3f));
+        }
+        // surrogate pair
+        else {
+            i++;
+            // UTF-16 encodes 0x10000-0x10FFFF by
+            // subtracting 0x10000 and splitting the
+            // 20 bits of 0x0-0xFFFFF into two halves
+            charcode = 0x10000 + (((charcode & 0x3ff)<<10)
+                      | (str.charCodeAt(i) & 0x3ff))
+            utf8.push(0xf0 | (charcode >>18), 
+                      0x80 | ((charcode>>12) & 0x3f), 
+                      0x80 | ((charcode>>6) & 0x3f), 
+                      0x80 | (charcode & 0x3f));
+        }
+    }
+    retLength.value = utf8.length;
+    return utf8;
 }
 
 PlatformJs.prototype.stringTrim = function(value) {
@@ -945,6 +985,102 @@ PlatformJs.prototype.webClientDownloadDataAsync = function(url, response) {
 }
 
 PlatformJs.prototype.webClientUploadDataAsync = function(url, data, dataLength, response) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", url);
+	
+	xhr.overrideMimeType('text/plain; charset=x-user-defined');
+	xhr.onload  = function() {
+		if (this.status == 200) {
+			var ret = {};
+			for (var i=0;i<xhr.response.length;i++)
+			{
+				ret[i]=xhr.response.charCodeAt(i) & 0xff;;
+			}
+			response.value = ret;
+			response.valueLength = xhr.response.length;
+			response.done = true;
+		}
+	}
+	var data2 = new Uint8Array(dataLength);
+	for (var i=0; i < dataLength; i++)
+	{
+		data2[i] = data[i];
+	}
+	xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	xhr.send(data2);
+}
+
+PlatformJs.prototype.webSocketAvailable = function() {
+	return true;
+}
+
+var websocket;
+PlatformJs.prototype.webSocketConnect = function(ip, port) {
+	websocket = new WebSocket("ws://"+ip+":"+port+"/Game");
+	websocket.binaryType = "arraybuffer";
+	websocket.onopen = function(evt) { onOpen(evt) };
+	websocket.onclose = function(evt) { onClose(evt) };
+	websocket.onmessage = function(evt) { onMessage(evt) };
+	websocket.onerror = function(evt) { onError(evt) };
+}
+
+var incoming = [];
+
+var connected = false;
+function onOpen(evt)
+{
+connected = true;
+}
+function onClose(evt)
+{
+}
+function onMessage(evt)
+{
+	incoming.push(evt.data);
+}
+function onError(evt)
+{
+}
+
+var outgoing = [];
+
+PlatformJs.prototype.webSocketSend = function(data, dataLength) {
+	var data2 = new Uint8Array(dataLength);
+	for(var i = 0; i < dataLength; i++)
+	{
+		data2[i] = data[i];
+	}
+	if (connected)
+	{
+		websocket.send(data2);
+	}
+	else
+	{
+		outgoing.push(data2);
+	}
+}
+
+PlatformJs.prototype.webSocketReceive = function(data, dataLength) {
+	if (connected)
+	{
+		while(outgoing.length!=0)
+		{
+			websocket.send(outgoing.shift());
+		}
+	}
+	if (incoming.length != 0)
+	{
+		var packet = new Uint8Array(incoming.shift());
+		for (var i = 0; i < packet.length; i++)
+		{
+			data[i] = packet[i];
+		}
+		return packet.length;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 PlatformJs.prototype.windowExit = function() {
@@ -1054,23 +1190,32 @@ window.requestAnimFrame = (function() {
         return degrees * Math.PI / 180;
     }
 
-
-    var currentlyPressedKeys = {};
-
-    function handleKeyDown(event) {
-        currentlyPressedKeys[event.keyCode] = true;
-
-        if (String.fromCharCode(event.keyCode) == "F") {
-            filter += 1;
-            if (filter == 3) {
-                filter = 0;
-            }
-        }
-    }
-
+	function handleKeyDown(event) {
+		if(event.keyCode == 8
+			)
+		{
+			var args = new KeyPressEventArgs();
+			args.keyChar  = 8;
+			keyEventHandler.onKeyPress(args);
+			event.stopPropagation();
+			event.preventDefault();
+			return;
+		}
+		var args = new KeyEventArgs();
+		args.keyCode = event.keyCode;
+		keyEventHandler.onKeyDown(args);
+	}
 
 	function handleKeyUp(event) {
-		currentlyPressedKeys[event.keyCode] = false;
+		var args = new KeyEventArgs();
+		args.keyCode = event.keyCode;
+		keyEventHandler.onKeyUp(args);
+	}
+	
+	function handleKeyPress(event) {
+		var args = new KeyPressEventArgs();
+		args.keyChar  = event.charCode;
+		keyEventHandler.onKeyPress(args);
 	}
 
 	function handleMouseDown(event) {
@@ -1197,6 +1342,7 @@ function webGLStart() {
 
 	document.onkeydown = handleKeyDown;
 	document.onkeyup = handleKeyUp;
+	document.onkeypress = handleKeyPress;
 	document.onmousedown = handleMouseDown;
 	document.onmouseup = handleMouseUp;
 	document.addEventListener("touchstart", handleTouchStart, false);

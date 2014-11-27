@@ -15,7 +15,6 @@ using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Jint.Delegates;
-using Lidgren.Network;
 using System.Diagnostics;
 using ManicDigger.ClientNative;
 
@@ -95,9 +94,9 @@ public partial class Server : ICurrentTime, IDropItem
     public IGetFileStream d_GetFile;
     public IChunkDb d_ChunkDb;
     public ICompression d_NetworkCompression;
-    public INetServer mainSocket0 { get { return server.mainSocket0; } set { server.mainSocket0 = value; } }
-    public INetServer mainSocket1 { get { return server.mainSocket1; } set { server.mainSocket1 = value; } }
-
+    public NetServer[] mainSockets { get { return server.mainSockets; } set { server.mainSockets = value; } }
+    public int mainSocketsCount { get { return server.mainSocketsCount; } set { server.mainSocketsCount = value; } }
+    
     public bool LocalConnectionsOnly { get; set; }
     public string[] PublicDataPaths = new string[0];
     public int singleplayerport = 25570;
@@ -214,7 +213,7 @@ public partial class Server : ICurrentTime, IDropItem
     }
     public void ProcessMain()
     {
-        if (mainSocket0 == null)
+        if (server.mainSockets == null)
         {
             return;
         }
@@ -240,20 +239,21 @@ public partial class Server : ICurrentTime, IDropItem
             oldtime = currenttime;
         }
 
-        INetIncomingMessage msg;
+        NetIncomingMessage msg;
         Stopwatch s = new Stopwatch();
         s.Start();
 
         //Process client packets
-        while ((msg = mainSocket0.ReadMessage()) != null)
+        for (int i = 0; i < mainSocketsCount; i++)
         {
-            ProcessNetMessage(msg, mainSocket0, s);
-        }
-        if (mainSocket1 != null)
-        {
-            while ((msg = mainSocket1.ReadMessage()) != null)
+            NetServer mainSocket = mainSockets[i];
+            if (mainSocket == null)
             {
-                ProcessNetMessage(msg, mainSocket1, s);
+                continue;
+            }
+            while ((msg = mainSocket.ReadMessage()) != null)
+            {
+                ProcessNetMessage(msg, mainSocket, s);
             }
         }
         foreach (var k in clients)
@@ -329,12 +329,18 @@ public partial class Server : ICurrentTime, IDropItem
         map.d_ChunkDb = chunkdb;
         d_NetworkCompression = networkcompression;
         d_DataItems = new GameDataItemsBlocks() { d_Data = data };
-        if (mainSocket0 == null)
+        if (server.mainSockets == null)
         {
-            mainSocket0 = new EnetNetServer() { platform = gameplatform };
-            if (mainSocket1 == null)
+            server.mainSockets = new NetServer[3];
+            server.mainSocketsCount = 3;
+            mainSockets[0] = new EnetNetServer() { platform = gameplatform };
+            if (mainSockets[1] == null)
             {
-                mainSocket1 = new TcpNetServer();
+                mainSockets[1] = new TcpNetServer();
+            }
+            if (mainSockets[2] == null)
+            {
+                mainSockets[2] = new WebSocketNetServer();
             }
         }
 
@@ -410,12 +416,17 @@ public partial class Server : ICurrentTime, IDropItem
     void Start(int port)
     {
         Port = port;
-        mainSocket0.Configuration().SetPort(port);
-        mainSocket0.Start();
-        if (mainSocket1 != null)
+        mainSockets[0].SetPort(port);
+        mainSockets[0].Start();
+        if (mainSockets[1] != null)
         {
-            mainSocket1.Configuration().SetPort(port);
-            mainSocket1.Start();
+            mainSockets[1].SetPort(port);
+            mainSockets[1].Start();
+        }
+        if (mainSockets[2] != null)
+        {
+            mainSockets[2].SetPort(port + 2);
+            mainSockets[2].Start();
         }
     }
     internal int Port;
@@ -668,9 +679,9 @@ public partial class Server : ICurrentTime, IDropItem
 
     public GamePlatformNative platform = new GamePlatformNative();
 
-    private void ProcessNetMessage(INetIncomingMessage msg, INetServer mainSocket, Stopwatch s)
+    private void ProcessNetMessage(NetIncomingMessage msg, NetServer mainSocket, Stopwatch s)
     {
-        if (msg.SenderConnection() == null)
+        if (msg.SenderConnection == null)
         {
             return;
         }
@@ -681,17 +692,17 @@ public partial class Server : ICurrentTime, IDropItem
             {
                 continue;
             }
-            if (k.Value.socket.EqualsConnection(msg.SenderConnection()))
+            if (k.Value.socket.EqualsConnection(msg.SenderConnection))
             {
                 clientid = k.Key;
             }
         }
-        switch (msg.Type())
+        switch (msg.Type)
         {
             case NetworkMessageType.Connect:
                 //new connection
                 //ISocket client1 = d_MainSocket.Accept();
-                INetConnection client1 = msg.SenderConnection();
+                NetConnection client1 = msg.SenderConnection;
                 IPEndPointCi iep1 = client1.RemoteEndPoint();
 
                 ClientOnServer c = new ClientOnServer();
@@ -724,9 +735,8 @@ public partial class Server : ICurrentTime, IDropItem
                 // process packet
                 try
                 {
-                    TotalReceivedBytes += msg.LengthBytes();
-                    TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes()));
-                    mainSocket.Recycle(msg);
+                    TotalReceivedBytes += msg.messageLength;
+                    TryReadPacket(clientid, msg.message);
                 }
                 catch (Exception e)
                 {
@@ -2751,7 +2761,7 @@ public partial class Server : ICurrentTime, IDropItem
         TotalSentBytes += packet.Length;
         try
         {
-            INetOutgoingMessage msg = clients[clientid].mainSocket.CreateMessage();
+            INetOutgoingMessage msg = new INetOutgoingMessage();
             msg.Write(packet, packet.Length);
             clients[clientid].socket.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered, 0);
         }
@@ -3235,7 +3245,7 @@ public partial class Server : ICurrentTime, IDropItem
 
     public bool IsSinglePlayer
     {
-        get { return mainSocket0.GetType() == typeof(DummyNetServer); }
+        get { return mainSockets[0].GetType() == typeof(DummyNetServer); }
     }
 
     public void SendDialog(int player, string id, Dialog dialog)
@@ -3536,8 +3546,8 @@ public class ClientOnServer
     internal int Id;
     internal int state; // ClientStateOnServer
     internal bool queryClient;
-    internal INetServer mainSocket;
-    internal INetConnection socket;
+    internal NetServer mainSocket;
+    internal NetConnection socket;
     internal List<byte> received;
     internal Ping_ Ping;
     internal float LastPing;

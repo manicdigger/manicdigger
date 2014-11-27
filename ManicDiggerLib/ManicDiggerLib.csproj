@@ -16,6 +16,7 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>c.snk</AssemblyOriginatorKeyFile>
     <PlatformTarget>x86</PlatformTarget>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,11 +55,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\ENet.dll</HintPath>
     </Reference>
-    <Reference Include="Lidgren.Network, Version=2012.1.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\Lidgren.Network.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web" />
@@ -84,6 +84,10 @@
     </Reference>
     <Reference Include="Jint">
       <HintPath>..\Lib\Jint.dll</HintPath>
+    </Reference>
+    <Reference Include="websocket-sharp, Version=1.0.2.26683, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\websocket-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +169,8 @@
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\TerrainRenderer.ci.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />
+    <Compile Include="Client\NetworkWebSocket.ci.cs" />
+    <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\ServerEntity.cs" />
     <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Inventory.cs" />
