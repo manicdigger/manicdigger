@@ -2,6 +2,32 @@ language: c
 
 install:
  - sudo apt-get install mono-gmcs cli-common-dev > /dev/null
-
+# innosetup
+ - sudo add-apt-repository -y ppa:ubuntu-wine/ppa
+ - sudo apt-get update
+ - sudo apt-get install wine1.7
+ 
 script:
- - xbuild
+ - xbuild /p:Configuration=Release
+ - ./build.sh
+ - mv output ManicDiggerBinary
+ - zip -r -9 ManicDiggerBinary.zip ManicDiggerBinary
+# innosetup
+ - mv ManicDiggerBinary output
+ - wget http://constexpr.org/innoextract/files/innoextract-1.4-windows-r2.zip
+ - wget http://www.jrsoftware.org/download.php/is-unicode.exe
+ - unzip innoextract-1.4-windows-r2.zip
+ - wine innoextract-1.4-windows-r2/innoextract.exe is-unicode.exe
+ - wine app/ISCC.exe setup.iss
+ - mv output2/setup.exe ManicDiggerSetup.exe
+ 
+deploy:
+  provider: releases
+  api_key:
+    secure: nCSaKiJTAiONcbbZ3/PJ3IhDd4VMhI8DNvnoX5zxUI3nJ2Y1BonoCdkmRy4y0mXr6UHS/apNY6yGl2oSEZotp2GjmH88obBE4D83JL+mQmrDY/eIy6963/Hp+615p6nOXm8K/wxX3NVRr1dPKGV5v9bRu6GF+UsPT7piMOBWqpo=
+  file:
+    - ManicDiggerBinary.zip
+    - ManicDiggerSetup.exe
+  skip_cleanup: true
+  on:
+    repo: manicdigger/manicdigger-travis
