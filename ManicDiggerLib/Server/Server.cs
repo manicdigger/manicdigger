@@ -1746,7 +1746,7 @@ public partial class Server : ICurrentTime, IDropItem
                 break;
             case Packet_ClientIdEnum.ServerQuery:
                 //Flood/DDoS-abuse protection
-                if ((DateTime.UtcNow - lastQuery) < TimeSpan.FromSeconds(1))
+                if ((DateTime.UtcNow - lastQuery) < TimeSpan.FromMilliseconds(200))
                 {
                     Console.WriteLine("ServerQuery rejected (too many requests)");
                     SendPacket(clientid, ServerPackets.DisconnectPlayer("Too many requests!"));
