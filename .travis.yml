@@ -10,7 +10,7 @@ install:
 script:
  - xbuild /p:Configuration=Release
  - ./build.sh
- - echo `date +%Y-%m-%d` > version.txt
+ - echo `date +%Y-%m-%d` > output/version.txt
  - mv output ManicDiggerBinary
  - zip -r -9 ManicDiggerBinary.zip ManicDiggerBinary
 # innosetup
