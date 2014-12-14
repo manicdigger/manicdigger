@@ -31,4 +31,5 @@ deploy:
     - ManicDiggerSetup.exe
   skip_cleanup: true
   on:
+    tags: true
     repo: manicdigger/manicdigger
