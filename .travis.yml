@@ -30,4 +30,4 @@ deploy:
     - ManicDiggerSetup.exe
   skip_cleanup: true
   on:
-    repo: manicdigger/manicdigger-travis
+    repo: manicdigger/manicdigger
