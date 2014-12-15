@@ -37,7 +37,7 @@ script:
 env:
   global:
   - GH_REF: github.com/manicdigger/manicdigger-builds
-  - secure: 1eY+75TPlPJOy39ctJDkixgZExtz1PigKxBLAHzSq5M/OV2d3YphkEAVpzhillnRqrjUrfFAAEenhQseiHyL6ez61/LtWPc4n/Ca89W3I+AyCprUUOcwx4KO+JJJs1v1G9OArT05+YYGedcxnSECgpHyft48S9q/y5Iik+Ph1o0=
+  - secure: 0+XB4Y76gJ4kzJkbGNjsPHAT1zYLhJb4T5w8MWeOa8SQcla+6E5a2gtE/tMQSXMJHtmA+jDUJho5VJ8yRpIVwnnGVYOxzmAdEulrSk9dQaYs9YNSoE7qfxMkomffXyKTOsWdu75c5/iMxI0iqBg5IKm/lBB5BBDqMGWSrfW+3hk=
  
 deploy:
   provider: releases
