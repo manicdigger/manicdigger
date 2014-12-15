@@ -1,11 +1,7 @@
 mono CodeGenerator.exe Packet.proto
 
-mkdir CitoOutput
-mkdir CitoOutput/C
-mkdir CitoOutput/Java
-mkdir CitoOutput/Cs
-mkdir CitoOutput/JsTa
+rm Html/*.js
 
-cd CitoOutput/Java
-mono ../../CiTo.exe -D CITO -D JAVA -l java -o ManicDigger.java -n ManicDigger.lib  $(ls ../../ManicDiggerLib/Client/*.ci.cs) $(ls ../../ManicDiggerLib/Client/Mods/*.ci.cs) ../../Packet.Serializer.ci.cs
-cd ../..
+mono CitoAssets.exe data Assets.ci.cs
+mono CiTo.exe -D CITO -D JS -D JSTA -l js-ta -o Html/Assets.js Assets.ci.cs
+mono CiTo.exe -D CITO -D JS -D JSTA -l js-ta -o Html/ManicDigger.js $(ls ManicDiggerLib/Client/*.ci.cs) $(ls ManicDiggerLib/Client/Mods/*.ci.cs)  Packet.Serializer.ci.cs
