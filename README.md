@@ -3,7 +3,7 @@
 Manic Digger
 ============
 Manic Digger is a 3D voxel building game similar to Minecraft.  
-Build yourself a home in your own world or connect to an online server to team up with others to create great buldings!
+Build yourself a home in your own world or connect to an online server to team up with others to create great buildings!
 
 You can download the game directly from the GitHub releases page:  
 https://github.com/manicdigger/manicdigger/releases/latest
@@ -25,7 +25,7 @@ Game modes
 -----------
 #### Creative Mode
 
-In creative mode there are no limits on the amount of blocks you can place. Build whatever you like without having to care about collecting resources or crafting.  
+In creative mode there are no limits on the amount of blocks you can place. Build whatever you like without having to worry about collecting resources or crafting.  
 Build spaceships, flying islands or cool pixelart - your imagination is the only limit!
 
 [![Spaceship](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-11-27_18-35-13-thumb.png)](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-11-27_18-35-13.png)
@@ -52,6 +52,7 @@ Links
 - Serverlist: http://manicdigger.sourceforge.net/play/
 - Forum: http://manicdigger.sourceforge.net/forum/
 - Wiki: http://manicdigger.sourceforge.net/wiki/
+- IRC: http://chat.mibbit.com/?server=irc.esper.net&channel=%23manicdigger
 
 
 Code
