@@ -536,9 +536,55 @@ namespace ManicDigger.Mods
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
-			
-			
-			
+			m.SetBlockType(68, "HalfCobblestone", new BlockType()
+				{
+					AllTextures = "Cobblestone",
+					DrawType = DrawType.HalfHeight,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+				});
+			m.SetBlockType(69, "HalfMossyCobblestone", new BlockType()
+				{
+					AllTextures = "MossyCobblestone",
+					DrawType = DrawType.HalfHeight,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+				});
+			m.SetBlockType(70, "HalfOakWood", new BlockType()
+				{
+					AllTextures = "OakWood",
+					DrawType = DrawType.HalfHeight,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+				});
+			m.SetBlockType(71, "HalfBirchWood", new BlockType()
+				{
+					AllTextures = "BirchWood",
+					DrawType = DrawType.HalfHeight,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+				});
+			m.SetBlockType(72, "HalfSpruceWood", new BlockType()
+				{
+					AllTextures = "SpruceWood",
+					DrawType = DrawType.HalfHeight,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+				});
+			m.SetBlockType(73, "HalfBrick", new BlockType()
+				{
+					AllTextures = "Brick",
+					DrawType = DrawType.HalfHeight,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+				});
+			m.SetBlockType(74, "HalfSandBrick", new BlockType()
+				{
+					AllTextures = "SandBrick",
+					DrawType = DrawType.HalfHeight,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+				});
 			m.SetBlockType(100, "BrushedMetal", new BlockType()
 				{
 					AllTextures = "BrushedMetal",
@@ -991,6 +1037,13 @@ namespace ManicDigger.Mods
 			m.AddToCreativeInventory("SpruceLeaves");
 			m.AddToCreativeInventory("SpruceSapling");
 			m.AddToCreativeInventory("SpruceWood");
+			m.AddToCreativeInventory("HalfCobblestone");
+			m.AddToCreativeInventory("HalfMossyCobblestone");
+			m.AddToCreativeInventory("HalfOakWood");
+			m.AddToCreativeInventory("HalfBirchWood");
+			m.AddToCreativeInventory("HalfSpruceWood");
+			m.AddToCreativeInventory("HalfBrick");
+			m.AddToCreativeInventory("HalfSandBrick");
 			#endregion
             
 			#region Start inventory
