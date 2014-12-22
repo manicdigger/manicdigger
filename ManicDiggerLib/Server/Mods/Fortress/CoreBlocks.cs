@@ -365,7 +365,7 @@ namespace ManicDigger.Mods
 				{
 					TopBottomTextures = "Stair",
 					SideTextures = "StairSide",
-					TextureIdForInventory = "Stair",
+					TextureIdForInventory = "StairInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
@@ -538,49 +538,63 @@ namespace ManicDigger.Mods
 				});
 			m.SetBlockType(68, "HalfCobblestone", new BlockType()
 				{
-					AllTextures = "Cobblestone",
+					TopBottomTextures = "Cobblestone",
+					SideTextures = "CobblestoneHalf",
+					TextureIdForInventory = "CobblestoneHalfInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
 			m.SetBlockType(69, "HalfMossyCobblestone", new BlockType()
 				{
-					AllTextures = "MossyCobblestone",
+					TopBottomTextures = "MossyCobblestone",
+					SideTextures = "MossyCobblestoneHalf",
+					TextureIdForInventory = "MossyCobblestoneHalfInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
 			m.SetBlockType(70, "HalfOakWood", new BlockType()
 				{
-					AllTextures = "OakWood",
+					TopBottomTextures = "OakWood",
+					SideTextures = "OakWoodHalf",
+					TextureIdForInventory = "OakWoodHalfInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
 			m.SetBlockType(71, "HalfBirchWood", new BlockType()
 				{
-					AllTextures = "BirchWood",
+					TopBottomTextures = "BirchWood",
+					SideTextures = "BirchWoodHalf",
+					TextureIdForInventory = "BirchWoodHalfInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
 			m.SetBlockType(72, "HalfSpruceWood", new BlockType()
 				{
-					AllTextures = "SpruceWood",
+					TopBottomTextures = "SpruceWood",
+					SideTextures = "SpruceWoodHalf",
+					TextureIdForInventory = "SpruceWoodHalfInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
 			m.SetBlockType(73, "HalfBrick", new BlockType()
 				{
-					AllTextures = "Brick",
+					TopBottomTextures = "Brick",
+					SideTextures = "BrickHalf",
+					TextureIdForInventory = "BrickHalfInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
 			m.SetBlockType(74, "HalfSandBrick", new BlockType()
 				{
-					AllTextures = "SandBrick",
+					TopBottomTextures = "SandBrick",
+					SideTextures = "SandBrickHalf",
+					TextureIdForInventory = "SandBrickHalfInventory",
 					DrawType = DrawType.HalfHeight,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
