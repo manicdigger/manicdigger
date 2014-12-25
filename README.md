@@ -31,6 +31,7 @@ Build spaceships, flying islands or cool pixelart - your imagination is the only
 [![Spaceship](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-11-27_18-35-13-thumb.png)](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-11-27_18-35-13.png)
 [![Floating Island](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-12-19_20-42-13-thumb.png)](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-12-19_20-42-13.png)
 [![Pixelart](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-12-19_20-43-46-thumb.png)](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-12-19_20-43-46.png)
+[![Mansion](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-12-25_22-38-53-thumb.png)](https://raw.githubusercontent.com/manicdigger/manicdigger-screenshots/master/2014-12-25_22-38-53.png)
 
 #### Survival Mode
 
