@@ -29,8 +29,10 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("CraftingTable", 1, "OakWood", 3);
             m.AddCraftingRecipe("CraftingTable", 1, "BirchWood", 3);
             m.AddCraftingRecipe("CraftingTable", 1, "SpruceWood", 3);
-            m.AddCraftingRecipe("Stair", 1, "Stone", 2);
+            m.AddCraftingRecipe("Stair", 1, "Stone", 1);
+            m.AddCraftingRecipe("Stair", 2, "DoubleStair", 1);
             m.AddCraftingRecipe("DoubleStair", 1, "Stone", 2);
+            m.AddCraftingRecipe("DoubleStair", 1, "Stair", 2);
             m.AddCraftingRecipe("Glass", 1, "Sand", 2);
             m.AddCraftingRecipe("RedRoseDecorations", 1, "OakLeaves", 10);
             m.AddCraftingRecipe("RedRoseDecorations", 1, "BirchLeaves", 10);
