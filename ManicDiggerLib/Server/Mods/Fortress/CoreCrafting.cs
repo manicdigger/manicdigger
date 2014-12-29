@@ -32,8 +32,12 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("Stair", 1, "Stone", 2);
             m.AddCraftingRecipe("DoubleStair", 1, "Stone", 2);
             m.AddCraftingRecipe("Glass", 1, "Sand", 2);
-            m.AddCraftingRecipe("RedRoseDecorations", 1, "Leaves", 10);
-            m.AddCraftingRecipe("YellowFlowerDecorations", 1, "Leaves", 10);
+            m.AddCraftingRecipe("RedRoseDecorations", 1, "OakLeaves", 10);
+            m.AddCraftingRecipe("RedRoseDecorations", 1, "BirchLeaves", 10);
+            m.AddCraftingRecipe("RedRoseDecorations", 1, "SpruceLeaves", 10);
+            m.AddCraftingRecipe("YellowFlowerDecorations", 1, "OakLeaves", 10);
+            m.AddCraftingRecipe("YellowFlowerDecorations", 1, "BirchLeaves", 10);
+            m.AddCraftingRecipe("YellowFlowerDecorations", 1, "SpruceLeaves", 10);
             m.AddCraftingRecipe("OakSapling", 1, "OakLeaves", 3);
             m.AddCraftingRecipe("BirchSapling", 1, "BirchLeaves", 3);
             m.AddCraftingRecipe("SpruceSapling", 1, "SpruceLeaves", 3);
@@ -82,7 +86,7 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("GoldCoin", 30, "GoldBar", 1);
             m.AddCraftingRecipe("Ladder", 1, "OakWood", 4);
             m.AddCraftingRecipe("Ladder", 1, "BirchWood", 4);
-            m.AddCraftingRecipe("Ladder", 1, "SpurceWood", 4);
+            m.AddCraftingRecipe("Ladder", 1, "SpruceWood", 4);
             
             m.AddCraftingRecipe2("GoldBlock", 1, "CoalOre", 1, "GoldOre", 1);
             m.AddCraftingRecipe2("IronBlock", 1, "CoalOre", 1, "IronOre", 1);
@@ -93,7 +97,7 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe2("Rail60", 2, "BirchWood", 1, "IronBlock", 1);
             m.AddCraftingRecipe2("Rail60", 2, "SpruceWood", 1, "IronBlock", 1);
             m.AddCraftingRecipe2("Trampoline", 1, "BrushedMetal", 1, "OakWood", 1);
-            m.AddCraftingRecipe2("Trampoline", 1, "BrushedMetal", 1, "BrichWood", 1);
+            m.AddCraftingRecipe2("Trampoline", 1, "BrushedMetal", 1, "BirchWood", 1);
             m.AddCraftingRecipe2("Trampoline", 1, "BrushedMetal", 1, "SpruceWood", 1);
             m.AddCraftingRecipe2("Torch", 1, "OakWood", 1, "CoalOre", 1);
             m.AddCraftingRecipe2("Torch", 1, "BirchWood", 1, "CoalOre", 1);

@@ -66,7 +66,9 @@ namespace ManicDigger.Mods
                 });
             
             m.AddToCreativeInventory("DoorBottomClosed");
-            m.AddCraftingRecipe("DoorBottomClosed", 1, "Wood", 2);
+            m.AddCraftingRecipe("DoorBottomClosed", 1, "OakWood", 2);
+            m.AddCraftingRecipe("DoorBottomClosed", 1, "BirchWood", 2);
+            m.AddCraftingRecipe("DoorBottomClosed", 1, "SpruceWood", 2);
             
             DoorBottomClosed = m.GetBlockId("DoorBottomClosed");
             DoorTopClosed = m.GetBlockId("DoorTopClosed");
