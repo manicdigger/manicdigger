@@ -89,6 +89,22 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("Ladder", 1, "OakWood", 4);
             m.AddCraftingRecipe("Ladder", 1, "BirchWood", 4);
             m.AddCraftingRecipe("Ladder", 1, "SpruceWood", 4);
+            m.AddCraftingRecipe("Sandstone", 1, "Sand", 4);
+            m.AddCraftingRecipe("RedSandstone", 1, "RedSand", 4);
+            m.AddCraftingRecipe("HalfCobblestone", 2, "Cobblestone", 1);
+            m.AddCraftingRecipe("HalfMossyCobblestone", 2, "MossyCobblestone", 1);
+            m.AddCraftingRecipe("HalfOakWood", 2, "OakWood", 1);
+            m.AddCraftingRecipe("HalfBirchWood", 2, "BirchWood", 1);
+            m.AddCraftingRecipe("HalfSpruceWood", 2, "SpruceWood", 1);
+            m.AddCraftingRecipe("HalfBrick", 2, "Brick", 1);
+            m.AddCraftingRecipe("HalfSandBrick", 2, "SandBrick", 1);
+            m.AddCraftingRecipe("Cobblestone", 1, "HalfCobblestone", 2);
+            m.AddCraftingRecipe("MossyCobblestone", 1, "HalfMossyCobblestone", 2);
+            m.AddCraftingRecipe("OakWood", 1, "HalfOakWood", 2);
+            m.AddCraftingRecipe("BirchWood", 1, "HalfBirchWood", 2);
+            m.AddCraftingRecipe("SpruceWood", 1, "HalfSpruceWood", 2);
+            m.AddCraftingRecipe("Brick", 1, "HalfBrick", 2);
+            m.AddCraftingRecipe("SandBrick", 1, "HalfSandBrick", 2);
             
             m.AddCraftingRecipe2("GoldBlock", 1, "CoalOre", 1, "GoldOre", 1);
             m.AddCraftingRecipe2("IronBlock", 1, "CoalOre", 1, "IronOre", 1);
