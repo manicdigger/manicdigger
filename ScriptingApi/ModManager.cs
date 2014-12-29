@@ -949,7 +949,15 @@ namespace ManicDigger
 
     public interface IMod
     {
+        /// <summary>
+        /// Called once before the Mod is loaded. Use this to declare dependencies to other Mods.
+        /// </summary>
+        /// <param name="m">ModManager object</param>
         void PreStart(ModManager m);
+        /// <summary>
+        /// Called once when the Mod is started. Use this if you need to initialize fields, etc...
+        /// </summary>
+        /// <param name="m">ModManager object</param>
         void Start(ModManager m);
     }
 
