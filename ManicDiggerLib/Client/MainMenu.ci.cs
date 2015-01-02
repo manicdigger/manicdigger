@@ -1759,10 +1759,12 @@ public class ScreenMultiplayer : Screen
         pageUp.text = "";
         pageUp.type = WidgetType.Button;
         pageUp.buttonStyle = ButtonStyle.Text;
+        pageUp.visible = false;
         pageDown = new MenuWidget();
         pageDown.text = "";
         pageDown.type = WidgetType.Button;
         pageDown.buttonStyle = ButtonStyle.Text;
+        pageDown.visible = false;
 
         loggedInName = new MenuWidget();
         loggedInName.text = "";
@@ -1994,7 +1996,7 @@ public class ScreenMultiplayer : Screen
                 serverButtons[i].image = "serverlist_entry_noimage.png";
             }
         }
-
+        UpdateScrollButtons();
         DrawWidgets();
     }
 
@@ -2057,6 +2059,53 @@ public class ScreenMultiplayer : Screen
         }
     }
 
+    public void PageUp()
+    {
+        if (pageUp.visible && page < serverButtonsCount / serversPerPage - 1)
+        {
+            page++;
+        }
+    }
+    public void PageDown()
+    {
+        if (page > 0)
+        {
+            page--;
+        }
+    }
+    public void UpdateScrollButtons()
+    {
+        //Determine if this page is the highest page containing servers
+        bool maxpage = false;
+        if ((page + 1) * serversPerPage >= serversOnListCount)
+        {
+            maxpage = true;
+        }
+        else
+        {
+            if (serversOnList[(page + 1) * serversPerPage] == null)
+            {
+                maxpage = true;
+            }
+        }
+        //Hide scroll buttons
+        if (page == 0)
+        {
+            pageDown.visible = false;
+        }
+        else
+        {
+            pageDown.visible = true;
+        }
+        if (maxpage)
+        {
+            pageUp.visible = false;
+        }
+        else
+        {
+            pageUp.visible = true;
+        }
+    }
     MenuWidget back;
     MenuWidget connect;
     MenuWidget connectToIp;
@@ -2071,6 +2120,20 @@ public class ScreenMultiplayer : Screen
     public override void OnBackPressed()
     {
         menu.StartMainMenu();
+    }
+    public override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        //menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
+        if (e.GetDelta() < 0)
+        {
+            //Mouse wheel turned down
+            PageUp();
+        }
+        else if (e.GetDelta() > 0)
+        {
+            //Mouse wheel turned up
+            PageDown();
+        }
     }
     string selectedServerHash;
     public override void OnButton(MenuWidget w)
@@ -2089,17 +2152,11 @@ public class ScreenMultiplayer : Screen
         }
         if (w == pageUp)
         {
-            if (page < serverButtonsCount / serversPerPage - 1)
-            {
-                page++;
-            }
+            PageUp();
         }
         if (w == pageDown)
         {
-            if (page > 0)
-            {
-                page--;
-            }
+            PageDown();
         }
         if (w == back)
         {
