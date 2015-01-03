@@ -1,7 +1,21 @@
-﻿// Generates triangles for a single 16x16x16 chunk.
-// Needs to know the surrounding of the chunk (18x18x18 blocks total).
-// This class is heavily inlined and unrolled for performance.
-// Special-shape (rare) blocks don't need as much performance.
+﻿/* Block definition:
+ * 
+ *      Z
+ *      |
+ *      | 
+ *      |
+ *      +----- X
+ *     / 
+ *    /
+ *   Y
+ */
+
+/// <summary>
+/// Generates triangles for a single 16x16x16 chunk.
+/// Needs to know the surrounding of the chunk (18x18x18 blocks total).
+/// This class is heavily inlined and unrolled for performance.
+/// Special-shape (rare) blocks don't need as much performance.
+/// </summary>
 public class TerrainChunkTesselatorCi
 {
     private class TileDirectionEnum
@@ -26,15 +40,19 @@ public class TerrainChunkTesselatorCi
 
         public const int BottomLeft = 2;
         public const int BottomRight = 3;
+
+        public const int None = -1;
     }
 
-    
     //internal float texrecTop;
     internal float _texrecLeft;
     internal float _texrecRight;
     internal float _texrecWidth;
     internal float _texrecHeight;
     internal int _colorWhite;
+
+    private static Vector3i[][] c_OcclusionNeighbors;
+    private float[] ref_blockCornerHeight;
 
     public TerrainChunkTesselatorCi()
     {
@@ -65,7 +83,7 @@ public class TerrainChunkTesselatorCi
                                                                   new Vector3i(-1, +1, +1),
                                                                   new Vector3i(+1, +1, +1)};
 
-        c_OcclusionNeighbors[TileSideEnum.Front] = new Vector3i[] {new Vector3i(-1, +0, +1),
+        c_OcclusionNeighbors[TileSideEnum.Left] = new Vector3i[] {new Vector3i(-1, +0, +1),
                                                                    new Vector3i(-1, +0, -1),
 
                                                                    new Vector3i(-1, -1, +0),
@@ -89,7 +107,7 @@ public class TerrainChunkTesselatorCi
                                                                    new Vector3i(-1, -1, -1),
                                                                    new Vector3i(+1, -1, -1)};
 
-        c_OcclusionNeighbors[TileSideEnum.Back] = new Vector3i[]{  new Vector3i(+1, +0, +1),
+        c_OcclusionNeighbors[TileSideEnum.Right] = new Vector3i[]{  new Vector3i(+1, +0, +1),
                                                                    new Vector3i(+1, +0, -1),
 
                                                                    new Vector3i(+1, -1, +0),
@@ -101,7 +119,7 @@ public class TerrainChunkTesselatorCi
                                                                    new Vector3i(+1, -1, -1),
                                                                    new Vector3i(+1, +1, -1)};
 
-        c_OcclusionNeighbors[TileSideEnum.Left] = new Vector3i[]{  new Vector3i(+0, -1, +1),
+        c_OcclusionNeighbors[TileSideEnum.Back] = new Vector3i[]{  new Vector3i(+0, -1, +1),
                                                                    new Vector3i(+0, -1, -1),
 
                                                                    new Vector3i(+1, -1, +0),
@@ -113,7 +131,7 @@ public class TerrainChunkTesselatorCi
                                                                    new Vector3i(+1, -1, -1),
                                                                    new Vector3i(-1, -1, -1)};
 
-        c_OcclusionNeighbors[TileSideEnum.Right] = new Vector3i[]{ new Vector3i(+0, +1, +1),
+        c_OcclusionNeighbors[TileSideEnum.Front] = new Vector3i[]{ new Vector3i(+0, +1, +1),
                                                                    new Vector3i(+0, +1, -1),
 
                                                                    new Vector3i(-1, +1, +0),
@@ -294,7 +312,7 @@ public class TerrainChunkTesselatorCi
                                     || (IsWater(tt2) && (!IsWater(tt)))
                                     || istransparent_[tt2])
                                 {
-                                    draw |= TileSideFlagsEnum.Front;
+                                    draw |= TileSideFlagsEnum.Left;
                                 }
                             }
                             //x+1
@@ -305,7 +323,7 @@ public class TerrainChunkTesselatorCi
                                     || (IsWater(tt2) && (!IsWater(tt)))
                                     || istransparent_[tt2])
                                 {
-                                    draw |= TileSideFlagsEnum.Back;
+                                    draw |= TileSideFlagsEnum.Right;
                                 }
                             }
                             //y-1
@@ -316,10 +334,10 @@ public class TerrainChunkTesselatorCi
                                     || (IsWater(tt2) && (!IsWater(tt)))
                                     || istransparent_[tt2])
                                 {
-                                    draw |= TileSideFlagsEnum.Left;
+                                    draw |= TileSideFlagsEnum.Back;
                                 }
                             }
-                            //y-1
+                            //y+1
                             {
                                 int pos2 = pos + (chunksize + 2);
                                 int tt2 = currentChunk_[pos2];
@@ -327,7 +345,7 @@ public class TerrainChunkTesselatorCi
                                     || (IsWater(tt2) && (!IsWater(tt)))
                                     || istransparent_[tt2])
                                 {
-                                    draw |= TileSideFlagsEnum.Right;
+                                    draw |= TileSideFlagsEnum.Front;
                                 }
                             }
                             currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
@@ -387,22 +405,22 @@ public class TerrainChunkTesselatorCi
                             if ((draw & TileSideFlagsEnum.Front) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
                             }
                             if ((draw & TileSideFlagsEnum.Back) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
                             }
                             if ((draw & TileSideFlagsEnum.Left) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
                             }
                             if ((draw & TileSideFlagsEnum.Right) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
                             }
                         }
                         else
@@ -420,22 +438,22 @@ public class TerrainChunkTesselatorCi
                             if ((draw & TileSideFlagsEnum.Front) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Front, TileSideFlagsEnum.Front));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Left, TileSideFlagsEnum.Front));
                             }
                             if ((draw & TileSideFlagsEnum.Back) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Back, TileSideFlagsEnum.Back));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Right, TileSideFlagsEnum.Back));
                             }
                             if ((draw & TileSideFlagsEnum.Left) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Left, TileSideFlagsEnum.Left));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Back, TileSideFlagsEnum.Left));
                             }
                             if ((draw & TileSideFlagsEnum.Right) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Right, TileSideFlagsEnum.Right));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Front, TileSideFlagsEnum.Right));
                             }
                         }
                     }
@@ -473,9 +491,9 @@ public class TerrainChunkTesselatorCi
             }
             return newxx - xx;
         }
-        else if (dir == TileSideEnum.Front || dir == TileSideEnum.Back)
+        else if (dir == TileSideEnum.Left || dir == TileSideEnum.Right)
         {
-            int shadowx = dir == TileSideEnum.Front ? -1 : 1;
+            int shadowx = dir == TileSideEnum.Left ? -1 : 1;
             int newyy = yy + 1;
             for (; ; )
             {
@@ -492,7 +510,7 @@ public class TerrainChunkTesselatorCi
         }
         else
         {
-            int shadowy = dir == TileSideEnum.Left ? -1 : 1;
+            int shadowy = dir == TileSideEnum.Back ? -1 : 1;
             int newxx = xx + 1;
             for (; ; )
             {
@@ -516,7 +534,9 @@ public class TerrainChunkTesselatorCi
              && (b.DrawType != Packet_DrawTypeEnum.OpenDoorLeft) && (b.DrawType != Packet_DrawTypeEnum.OpenDoorRight) && (b.DrawType != Packet_DrawTypeEnum.ClosedDoor);
     }
 
+#if !CITO
     [System.Obsolete("Use GetShadowRation(int,int,int) instead")]
+#endif
     public int GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly, int globalz)
     {
         return GetShadowRatio(xx, yy, zz);
@@ -706,33 +726,38 @@ public class TerrainChunkTesselatorCi
         int lastelement = toreturn.verticesCount;
 
         Vector3i v;
+        float fSlopeModifier = 0f;
 
         //Calculate the corner points
         v = vNeighbors[TileDirectionEnum.TopRight].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopRight);
         float xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        float zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z);
+        float zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
         float yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
         ModelDataTool.AddVertex(toreturn, xPos, zPos , yPos, _texrecRight, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopRight]));
 
         v = vNeighbors[TileDirectionEnum.TopLeft].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopLeft);
         xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z);
+        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
         yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopLeft]));
 
         v = vNeighbors[TileDirectionEnum.BottomRight].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomRight);
         xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z);
+        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
         yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecRight, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomRight]));
 
         v = vNeighbors[TileDirectionEnum.BottomLeft].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomLeft);
         xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z);
+        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
         yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomLeft]));
 
-        if (tileSide == TileSideEnum.Back)
+        if (tileSide == TileSideEnum.Right)
         {
             //Draw backwards, so the visible side points outward
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
@@ -778,10 +803,10 @@ public class TerrainChunkTesselatorCi
 
         nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Top, nToDraw, TileSideFlagsEnum.Top);
         nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Bottom, nToDraw, TileSideFlagsEnum.Bottom);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Front, nToDraw, TileSideFlagsEnum.Front);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Back, nToDraw, TileSideFlagsEnum.Back);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Left, nToDraw, TileSideFlagsEnum.Left);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Right, nToDraw, TileSideFlagsEnum.Right);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Left, nToDraw, TileSideFlagsEnum.Front);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Right, nToDraw, TileSideFlagsEnum.Back);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Back, nToDraw, TileSideFlagsEnum.Left);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Front, nToDraw, TileSideFlagsEnum.Right);
 
         return nToDraw;
     }
@@ -802,19 +827,11 @@ public class TerrainChunkTesselatorCi
     }
 
 
-
-    private static Vector3i[][] c_OcclusionNeighbors;
-
     #region SmoothLightBlockPolygons
     public void SmoothLightBlockPolygons(int x, int y, int z, int[] currentChunk)
     {
-        float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
-
-        //slope
-        float blockheight00 = blockheight;
-        float blockheight01 = blockheight;
-        float blockheight10 = blockheight;
-        float blockheight11 = blockheight;
+        //slope height
+        ref_blockCornerHeight = new float[4];
 
         int xx = x % chunksize + 1;
         int yy = y % chunksize + 1;
@@ -858,8 +875,8 @@ public class TerrainChunkTesselatorCi
             vScale = new Vector3f(0.5f, 0.5f, 0.5f);
 
             //Draw Front and Left side
-            CalcSmoothBlockFace(x, y, z, tiletype, new Vector3f(0.5f, 0.25f, 0f), vScale, currentChunk, TileSideEnum.Front);
-            CalcSmoothBlockFace(x, y, z, tiletype, new Vector3f(0.25f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Left);
+            CalcSmoothBlockFace(x, y, z, tiletype, new Vector3f(0.5f, 0.25f, 0f), vScale, currentChunk, TileSideEnum.Left);
+            CalcSmoothBlockFace(x, y, z, tiletype, new Vector3f(0.25f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Back);
             return;
         }
         if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
@@ -983,17 +1000,13 @@ public class TerrainChunkTesselatorCi
             }
             #endregion
         }
-        else if (rail != RailDirectionFlagsEnum.None)
-        {
-            blockheight = 0.3f; 
-        }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.HalfHeight)
         {
-            blockheight = 0.5f; // 0.5f;
+            vScale = new Vector3f(1, 1, 0.5f);
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Flat)
         {
-            blockheight = 0.05f; // 0.05f;
+            vScale = new Vector3f(1, 1, 0.05f);
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Torch)
         {
@@ -1002,7 +1015,7 @@ public class TerrainChunkTesselatorCi
             if (CanSupportTorch(currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Back; }
             if (CanSupportTorch(currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Left; }
             if (CanSupportTorch(currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Right; }
-            TorchSideTexture = TextureId(tiletype, TileSideEnum.Front);
+            TorchSideTexture = TextureId(tiletype, TileSideEnum.Left);
             TorchTopTexture = TextureId(tiletype, TileSideEnum.Top);
             AddTorch(x, y, z, type, tiletype);
             return;
@@ -1010,25 +1023,27 @@ public class TerrainChunkTesselatorCi
         else if (rail != RailDirectionFlagsEnum.None)
         {
             int slope = GetRailSlope(xx, yy, zz);
+            float fSlopeMod = +1.0f;
+            vScale = new Vector3f(1f, 1f, 0.3f);
             if (slope == RailSlopeEnum.TwoRightRaised)
             {
-                blockheight10 += 1;
-                blockheight11 += 1;
+                ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
+                ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
             }
             else if (slope == RailSlopeEnum.TwoLeftRaised)
             {
-                blockheight00 += 1;
-                blockheight01 += 1;
+                ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
+                ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
             }
             else if (slope == RailSlopeEnum.TwoUpRaised)
             {
-                blockheight00 += 1;
-                blockheight10 += 1;
+                ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
+                ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
             }
             else if (slope == RailSlopeEnum.TwoDownRaised)
             {
-                blockheight01 += 1;
-                blockheight11 += 1;
+                ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
+                ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
             }
         }
         else if (tiletype == 8)
@@ -1520,6 +1535,82 @@ public class TerrainChunkTesselatorCi
         VerticesIndicesToLoad[] ret = GetFinalVerticesIndices(x, y, z, retCount);
         return ret;
     }
+
+    /// <summary>
+    /// Gets the CornerHeightModifier for a side corner out of the ref_blockCornerHeight
+    /// </summary>
+    private float GetCornerHeightModifier(int side, int corner)
+    {
+        int nIndex = CornerEnum.None;
+        switch (side)
+        {
+            case TileSideEnum.Bottom:
+                {
+                    nIndex = CornerEnum.None; //bottom height is never modified
+                    break;
+                }
+            case TileSideEnum.Right:
+                switch (corner)
+                {
+                    //right side is mirrored
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.TopRight;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.BottomRight;
+                        break;
+                }
+                break;
+            case TileSideEnum.Left:
+                switch (corner)
+                {
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.TopLeft;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.BottomLeft;
+                        break;
+                }
+                break;
+            case TileSideEnum.Front:
+                switch (corner)
+                {
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.BottomLeft;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.BottomRight;
+                        break;
+                }
+                break;
+            case TileSideEnum.Back:
+                switch (corner)
+                {
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.TopRight;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.TopLeft;
+                        break;
+                }
+                break;
+            case TileSideEnum.Top:
+                //Top side uses the same corner definition
+                nIndex = corner;
+                break;
+        }
+
+        if (nIndex != CornerEnum.None)
+        {
+            //Get height modifier
+            return ref_blockCornerHeight[nIndex];
+        }
+        else
+        {
+            //default, do not modify
+            return 0f;
+        }
+    }
 }
 
 public class VerticesIndicesToLoad
@@ -1565,10 +1656,10 @@ public class TileSideEnum
 {
     public const int Top = 0;
     public const int Bottom = 1;
-    public const int Front = 2;
-    public const int Back = 3;
-    public const int Left = 4;
-    public const int Right = 5;
+    public const int Left = 2;
+    public const int Right = 3;
+    public const int Back = 4;
+    public const int Front = 5;
 }
 
 public class TileSideFlagsEnum
