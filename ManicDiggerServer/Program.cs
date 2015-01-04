@@ -4,13 +4,58 @@ using System.Threading;
 using ManicDigger;
 using System.IO;
 using ManicDigger.ClientNative;
+using System.Runtime.InteropServices;
 
 namespace ManicDiggerServer
 {
     class Program
     {
+        static volatile bool exitSystem = false;
+
+        #region Application termination
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(CloseEventHandler handler, bool add);
+
+        private delegate bool CloseEventHandler(CtrlType sig);
+        static CloseEventHandler _handler;
+
+        enum CtrlType
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT = 1,
+            CTRL_CLOSE_EVENT = 2,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT = 6
+        }
+
+        private static bool Handler(CtrlType sig)
+        {
+            if (IsAutoRestarter)
+            {
+                Console.WriteLine("[SYSTEM] AutoRestarter: {0}", sig);
+                //Autorestarter just needs to be told not to restart
+                exitSystem = true;
+            }
+            else
+            {
+                Console.WriteLine("[SYSTEM] ChildServer: {0}", sig);
+                //Child server needs to shutdown properly
+                if (server != null)
+                {
+                    server.Exit();
+                }
+                Console.WriteLine("[SYSTEM] ChildServer: Exit() called");
+            }
+            return true;
+        }
+        #endregion
+
         static void Main(string[] args)
         {
+            //React to close window event, CTRL-C, kill, etc
+            _handler += new CloseEventHandler(Handler);
+            SetConsoleCtrlHandler(_handler, true);
+
             //Catch unhandled exceptions
             CrashReporter.DefaultFileName = "ManicDiggerServerCrash.txt";
             CrashReporter.EnableGlobalExceptionHandling(true);
@@ -32,7 +77,8 @@ namespace ManicDiggerServer
         bool ENABLE_REDIRECT_STANDARD_INPUT;
         bool ENABLE_AUTORESTARTER = !Debugger.IsAttached;
         int parentid;
-        bool IsAutoRestarter = true;
+        static bool IsAutoRestarter = true;
+        static Server server;
         const string lockFileName = "ManicDiggerServer.lck";
 
         void Main2()
@@ -74,7 +120,7 @@ namespace ManicDiggerServer
             {
                 Console.WriteLine("[SERVER] Lockfile could not be created! Shutdown will not work!");
             }
-            Server server = new Server();
+            server = new Server();
             server.exit = new GameExit();
             server.Public = true;
             for (; ; )
@@ -125,6 +171,7 @@ namespace ManicDiggerServer
                     }
                     catch
                     {
+                        //Shutdown the server if parent process could not be found
                         server.Exit();
                         return;
                     }
@@ -175,6 +222,11 @@ namespace ManicDiggerServer
             Restart();
             for (; ; )
             {
+                //server terminated
+                if (exitSystem)
+                {
+                    break;
+                }
                 //server process not found
                 if (ServerProcess.HasExited)
                 {
@@ -254,7 +306,5 @@ namespace ManicDiggerServer
 
             ServerProcess = Process.Start(p);
         }
-
-        
     }
 }

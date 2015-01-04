@@ -29,6 +29,7 @@ script:
  - git config user.name "Travis-CI"
  - git config user.email "travis@example.com"
  - cp ../ManicDiggerBinary.zip ./ManicDiggerBinary`date +%Y-%m-%d`.zip
+ - cp ../ManicDiggerBinary.zip ./ManicDiggerBinaryLatest.zip
  - cp ../ManicDiggerSetup.exe ./ManicDiggerSetup`date +%Y-%m-%d`.exe
  - cp ../Html/* .
  - git add .
