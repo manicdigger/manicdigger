@@ -165,7 +165,7 @@ public class TerrainChunkTesselatorCi
     internal const int maxlight = 15;
     internal float maxlightInverse;
     internal bool[] istransparent;
-    internal bool[] ishalfheight;
+    internal bool[] isLowered;
     internal float[] lightlevels;
 
     internal ModelData[] toreturnatlas1d;
@@ -206,7 +206,7 @@ public class TerrainChunkTesselatorCi
         started = true;
 
         istransparent = new bool[GlobalVar.MAX_BLOCKTYPES];
-        ishalfheight = new bool[GlobalVar.MAX_BLOCKTYPES];
+        isLowered = new bool[GlobalVar.MAX_BLOCKTYPES];
         maxlightInverse = one / maxlight;
         terrainTexturesPerAtlas = game.terrainTexturesPerAtlas;
         terrainTexturesPerAtlasInverse = one / game.terrainTexturesPerAtlas;
@@ -265,7 +265,6 @@ public class TerrainChunkTesselatorCi
         {
             int[] currentChunk_ = currentChunk;
             bool[] istransparent_ = istransparent;
-            bool[] ishalfheight_ = ishalfheight;
             {
                 for (int zz = 1; zz < chunksize + 1; zz++)
                 {
@@ -288,7 +287,7 @@ public class TerrainChunkTesselatorCi
                                 if (tt2 == 0
                                     || (IsWater(tt2) && (!IsWater(tt)))
                                     || istransparent_[tt2]
-                                    || ishalfheight_[tt])
+                                    || isLowered[tt])
                                 {
                                     draw |= TileSideFlagsEnum.Top;
                                 }
@@ -838,7 +837,7 @@ public class TerrainChunkTesselatorCi
         int zz = z % chunksize + 1;
 
         int nToDraw = GetToDrawFlags(xx, yy, zz);
-        int tiletype = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];;
+        int tiletype = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
         int rail = Rail(tiletype);
 
         Vector3f vOffset = new Vector3f(0, 0, 0);
@@ -1048,8 +1047,10 @@ public class TerrainChunkTesselatorCi
         }
         else if (tiletype == 8)
         {
+            //TODO: replace the (x == 8) in this part with (IsLiquid(x)) to make it work for all fluids
+
             #region liquid
-            if (currentChunk[Index3d(xx, yy , zz - 1, chunksize + 2, chunksize + 2)] == 8)
+            if (currentChunk[Index3d(xx, yy, zz - 1, chunksize + 2, chunksize + 2)] == 8)
             {
                 //flow down in the lower block
                 vOffset = new Vector3f(0, 0, -0.1f);
@@ -1059,10 +1060,50 @@ public class TerrainChunkTesselatorCi
                 //lower than a normal block
                 vScale = new Vector3f(1, 1, 0.9f);
             }
+
+            if ((nToDraw & TileSideFlagsEnum.Top) == TileSideFlagsEnum.None && //check if top is disabled
+                     currentChunk[Index3d(xx, yy, zz + 1, chunksize + 2, chunksize + 2)] != 8)//and we don't have a water block above
+            {
+                //this waterblock is lowered!
+
+                //Check if a neighbor is also a lowered waterblock
+                //if that is the case, that side and the top also need to be rendered
+                int nFlag = TileSideFlagsEnum.Right;
+
+                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
+                {
+                    if (currentChunk[Index3d(xx + 1, yy + 0, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx + 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)] == 8)
+                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
+                }
+
+                nFlag = TileSideFlagsEnum.Left;
+                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
+                {
+                    if (currentChunk[Index3d(xx - 1, yy + 0, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx - 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)] == 8)
+                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
+                }
+
+                nFlag = TileSideFlagsEnum.Front;
+                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
+                {
+                    if (currentChunk[Index3d(xx + 0, yy + 1, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx + 0, yy + 1, zz + 1, chunksize + 2, chunksize + 2)] == 8)
+                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
+                }
+
+                nFlag = TileSideFlagsEnum.Back;
+                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
+                {
+                    if (currentChunk[Index3d(xx + 0, yy - 1, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx + 0, yy - 1, zz + 1, chunksize + 2, chunksize + 2)] == 8)
+                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
+                }
+
+            }
             #endregion
         }
         
         //Draw faces
+
+        //bool blnDrawTop = (nToDraw & TileSideFlagsEnum.Top) != TileSideFlagsEnum.None;
         if ((nToDraw & TileSideFlagsEnum.Top) != TileSideFlagsEnum.None)
         {
             CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, TileSideEnum.Top);
@@ -1505,7 +1546,12 @@ public class TerrainChunkTesselatorCi
                 continue;
             }
             istransparent[i] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
-            ishalfheight[i] = (b.DrawType == Packet_DrawTypeEnum.HalfHeight) || (b.GetRail() != 0);
+
+            if((b.DrawType == Packet_DrawTypeEnum.HalfHeight) || (b.GetRail() != 0))
+            {
+                isLowered[i] = true;
+            }
+            
         }
 
         if (x < 0 || y < 0 || z < 0) { retCount.value = 0; return new VerticesIndicesToLoad[0]; }
