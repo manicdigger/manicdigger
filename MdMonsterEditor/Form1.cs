@@ -202,7 +202,7 @@ namespace MdMonsterEditor
         {
             if (grasstexture == -1)
             {
-                grasstexture = LoadTexture(getfile.GetFile("grass.png"));
+                grasstexture = LoadTexture(getfile.GetFile("grass_tiled.png"));
             }
             GL.BindTexture(TextureTarget.Texture2D, grasstexture);
             GL.Enable(EnableCap.Texture2D);
