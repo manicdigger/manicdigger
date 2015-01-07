@@ -120,6 +120,7 @@
     public abstract Asset LoadAssetFromCache(string md5);
     public abstract bool IsCached(string md5);
     public abstract bool IsChecksum(string checksum);
+    public abstract string DecodeHTMLEntities(string htmlencodedstring);
     
     // Tcp
     public abstract bool TcpAvailable();

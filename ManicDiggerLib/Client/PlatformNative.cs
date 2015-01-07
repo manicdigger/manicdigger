@@ -1028,6 +1028,11 @@ public class GamePlatformNative : GamePlatform
         return true;
     }
 
+    public override string DecodeHTMLEntities(string htmlencodedstring)
+    {
+        return System.Web.HttpUtility.HtmlDecode(htmlencodedstring);
+    }
+
     public override bool IsDebuggerAttached()
     {
         return System.Diagnostics.Debugger.IsAttached;

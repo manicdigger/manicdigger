@@ -1860,8 +1860,8 @@ public class ScreenMultiplayer : Screen
                 }
                 ServerOnList s = new ServerOnList();
                 s.hash = ss[0];
-                s.name = ss[1];
-                s.motd = ss[2];
+                s.name = menu.p.DecodeHTMLEntities(ss[1]);
+                s.motd = menu.p.DecodeHTMLEntities(ss[2]);
                 s.port = menu.p.IntParse(ss[3]);
                 s.ip = ss[4];
                 s.version = ss[5];
