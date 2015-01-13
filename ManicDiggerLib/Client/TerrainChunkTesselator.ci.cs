@@ -1,49 +1,23 @@
-﻿/* Block definition:
- * 
- *      Z
- *      |
- *      | 
- *      |
- *      +----- X
- *     / 
- *    /
- *   Y
- */
+﻿//Block definition:
+// 
+//      Z
+//      |
+//      | 
+//      |
+//      +----- X
+//     / 
+//    /
+//   Y
+//
 
-/// <summary>
-/// Generates triangles for a single 16x16x16 chunk.
-/// Needs to know the surrounding of the chunk (18x18x18 blocks total).
-/// This class is heavily inlined and unrolled for performance.
-/// Special-shape (rare) blocks don't need as much performance.
-/// </summary>
+// <summary>
+// Generates triangles for a single 16x16x16 chunk.
+// Needs to know the surrounding of the chunk (18x18x18 blocks total).
+// This class is heavily inlined and unrolled for performance.
+// Special-shape (rare) blocks don't need as much performance.
+// </summary>
 public class TerrainChunkTesselatorCi
 {
-    private class TileDirectionEnum
-    {
-        public const int Top = 0;
-        public const int Bottom = 1;
-
-        public const int Left = 2;
-        public const int Right = 3;
-
-        public const int TopLeft = 4;
-        public const int TopRight = 5;
-
-        public const int BottomLeft = 6;
-        public const int BottomRight = 7;
-    }
-
-    private class CornerEnum
-    {
-        public const int TopLeft = 0;
-        public const int TopRight = 1;
-
-        public const int BottomLeft = 2;
-        public const int BottomRight = 3;
-
-        public const int None = -1;
-    }
-
     //internal float texrecTop;
     internal float _texrecLeft;
     internal float _texrecRight;
@@ -51,7 +25,7 @@ public class TerrainChunkTesselatorCi
     internal float _texrecHeight;
     internal int _colorWhite;
 
-    private static Vector3i[][] c_OcclusionNeighbors;
+    private Vector3i[][] c_OcclusionNeighbors;
     private float[] ref_blockCornerHeight;
 
     public TerrainChunkTesselatorCi()
@@ -59,6 +33,7 @@ public class TerrainChunkTesselatorCi
         one = 1;
         EnableSmoothLight = true;
         ENABLE_TEXTURE_TILING = true;
+        //option_PreciseWaterTesselation = true;
         _colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
         BlockShadow = 0.7f;
         DONOTDRAWEDGES = true;
@@ -173,6 +148,7 @@ public class TerrainChunkTesselatorCi
 
     internal float BlockShadow;
     internal bool DONOTDRAWEDGES;
+    internal bool option_HardWaterTesselation;
     internal float AtiArtifactFix;
 
     internal float Yellowness;
@@ -258,102 +234,112 @@ public class TerrainChunkTesselatorCi
         return game.IsFluid(game.blocktypes[tt2]);
     }
 
+    // <summary>
+    // Calculate visible faces for a chunk
+    // </summary>
+    // <param name="currentChunk"></param>
     public void CalculateVisibleFaces(int[] currentChunk)
     {
         int movez = (chunksize + 2) * (chunksize + 2);
-        //unsafe
+
+        for (int zz = 1; zz < chunksize + 1; zz++)
         {
-            int[] currentChunk_ = currentChunk;
-            bool[] istransparent_ = istransparent;
+            for (int yy = 1; yy < chunksize + 1; yy++)
             {
-                for (int zz = 1; zz < chunksize + 1; zz++)
+                int posstart = Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
+                for (int xx = 1; xx < chunksize + 1; xx++)
                 {
-                    for (int yy = 1; yy < chunksize + 1; yy++)
-                    {
-                        int posstart = Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
-                        for (int xx = 1; xx < chunksize + 1; xx++)
-                        {
-                            int pos = posstart + xx;
-                            int tt = currentChunk_[pos];
-                            if (tt == 0) { continue; }
-                            int draw = TileSideFlagsEnum.None;
-                            //Instead of calculating position index with MapUtil.Index(),
-                            //relative moves are used
-                            //(just addition instead of multiplication - 1.5x - 2x faster)
-                            //z+1
-                            {
-                                int pos2 = pos + movez;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2]
-                                    || isLowered[tt])
-                                {
-                                    draw |= TileSideFlagsEnum.Top;
-                                }
-                            }
-                            //z-1
-                            {
-                                int pos2 = pos - movez;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Bottom;
-                                }
-                            }
-                            //x-1
-                            {
-                                int pos2 = pos - 1;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Left;
-                                }
-                            }
-                            //x+1
-                            {
-                                int pos2 = pos + 1;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Right;
-                                }
-                            }
-                            //y-1
-                            {
-                                int pos2 = pos - (chunksize + 2);
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Back;
-                                }
-                            }
-                            //y+1
-                            {
-                                int pos2 = pos + (chunksize + 2);
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Front;
-                                }
-                            }
-                            currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
-                        }
-                    }
+                    int pos = posstart + xx;
+                    int tt = currentChunk[pos];
+                    if (tt == 0) { continue; } //nothing to do
+
+                    int draw = TileSideFlagsEnum.None;
+
+                    //Instead of calculating position index with MapUtil.Index(),
+                    //relative moves are used
+                    //(just addition instead of multiplication - 1.5x - 2x faster)
+                    int[] nPos = new int[7];
+                    nPos[TileSideEnum.Top] = pos + movez;
+                    nPos[TileSideEnum.Bottom] = pos - movez;
+                    nPos[TileSideEnum.Front] = pos + (chunksize + 2);
+                    nPos[TileSideEnum.Back] = pos - (chunksize + 2);
+                    nPos[TileSideEnum.Left] = pos - 1;
+                    nPos[TileSideEnum.Right] = pos + 1;
+
+                    bool blnIsFluid = IsWater(tt);
+
+                    draw |= GetFaceVisibility(TileSideEnum.Top, currentChunk, nPos, blnIsFluid);
+                    draw |= GetFaceVisibility(TileSideEnum.Bottom, currentChunk, nPos, blnIsFluid);
+                    draw |= GetFaceVisibility(TileSideEnum.Left, currentChunk, nPos, blnIsFluid);
+                    draw |= GetFaceVisibility(TileSideEnum.Right, currentChunk, nPos, blnIsFluid);
+                    draw |= GetFaceVisibility(TileSideEnum.Back, currentChunk, nPos, blnIsFluid);
+                    draw |= GetFaceVisibility(TileSideEnum.Front, currentChunk, nPos, blnIsFluid);
+
+                    currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
                 }
             }
         }
     }
+
+    // <summary>
+    // Check if a face should be drawn
+    // </summary>
+    private int GetFaceVisibility(int nSide, int[] currentChunk, int[] nPos, bool blnIsFluid)
+    {
+        int nReturn = TileSideFlagsEnum.None;
+
+        int tt2 = currentChunk[nPos[nSide]];
+
+        if (tt2 == 0 || istransparent[tt2] || (IsWater(tt2) && !blnIsFluid))
+        {
+            //Transparent nearbz
+            return TileSideEnum.ToFlags(nSide);
+        }
+        else if (blnIsFluid && nSide != TileSideEnum.Bottom)
+        {
+            int top = currentChunk[nPos[TileSideEnum.Top]];
+
+            if (nSide == TileSideEnum.Top)
+            {
+                //a fluids topside maybe needs to be drawn, even if it is completly surrounded
+                if (top != 0 && !IsWater(top))
+                {
+                    //Is surrounded and has a solid block above
+                    return TileSideEnum.ToFlags(TileSideEnum.Top);
+                }
+            }
+            else if (option_HardWaterTesselation)
+            {
+                //water below?
+                if (IsWater(currentChunk[nPos[TileSideEnum.Bottom]]))
+                {
+                    //check if a lowered waterblock is below the neighbor
+                    if (!IsWater(tt2))
+                    {
+                        int movez = (chunksize + 2) * (chunksize + 2);
+                        int nPos2 = nPos[nSide] - movez;
+
+                        if (nPos2 > 0 && IsWater(currentChunk[nPos2]))
+                        {
+                            return TileSideEnum.ToFlags(nSide);
+                        }
+                    }
+                }
+                else
+                {//no water below, nothing to do
+                }
+            }
+            else
+            {//hidden
+            }
+        }
+        else
+        {//hidden
+        }
+        
+        return nReturn;
+    }
+
 
     internal bool EnableSmoothLight;
 
@@ -791,9 +777,9 @@ public class TerrainChunkTesselatorCi
         }
     }
 
-    /// <summary>
-    /// Returns the sides to draw for this block
-    /// </summary>
+    // <summary>
+    // Returns the sides to draw for this block
+    // </summary>
     private int GetToDrawFlags(int xx, int yy, int zz)
     {
         int nToDraw = TileSideFlagsEnum.None;
@@ -810,9 +796,9 @@ public class TerrainChunkTesselatorCi
         return nToDraw;
     }
 
-    /// <summary>
-    /// Sets the visible flag in the nCurrentFlags if this side needs to be drawn
-    /// </summary>
+    // <summary>
+    // Sets the visible flag in the nCurrentFlags if this side needs to be drawn
+    // </summary>
     private int SetVisibleFlag(byte[] drawFlags, int tileSideIndex, int nCurrentFlags, int nFlagToSet)
     {
         if (drawFlags[tileSideIndex] > 0)
@@ -1059,44 +1045,6 @@ public class TerrainChunkTesselatorCi
             {
                 //lower than a normal block
                 vScale = new Vector3f(1, 1, 0.9f);
-            }
-
-            if ((nToDraw & TileSideFlagsEnum.Top) == TileSideFlagsEnum.None && //check if top is disabled
-                     currentChunk[Index3d(xx, yy, zz + 1, chunksize + 2, chunksize + 2)] != 8)//and we don't have a water block above
-            {
-                //this waterblock is lowered!
-
-                //Check if a neighbor is also a lowered waterblock
-                //if that is the case, that side and the top also need to be rendered
-                int nFlag = TileSideFlagsEnum.Right;
-
-                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
-                {
-                    if (currentChunk[Index3d(xx + 1, yy + 0, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx + 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)] == 8)
-                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
-                }
-
-                nFlag = TileSideFlagsEnum.Left;
-                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
-                {
-                    if (currentChunk[Index3d(xx - 1, yy + 0, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx - 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)] == 8)
-                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
-                }
-
-                nFlag = TileSideFlagsEnum.Front;
-                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
-                {
-                    if (currentChunk[Index3d(xx + 0, yy + 1, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx + 0, yy + 1, zz + 1, chunksize + 2, chunksize + 2)] == 8)
-                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
-                }
-
-                nFlag = TileSideFlagsEnum.Back;
-                if ((nToDraw & nFlag) == TileSideFlagsEnum.None)
-                {
-                    if (currentChunk[Index3d(xx + 0, yy - 1, zz, chunksize + 2, chunksize + 2)] == 8 && currentChunk[Index3d(xx + 0, yy - 1, zz + 1, chunksize + 2, chunksize + 2)] == 8)
-                        nToDraw |= nFlag | TileSideFlagsEnum.Top;
-                }
-
             }
             #endregion
         }
@@ -1582,9 +1530,9 @@ public class TerrainChunkTesselatorCi
         return ret;
     }
 
-    /// <summary>
-    /// Gets the CornerHeightModifier for a side corner out of the ref_blockCornerHeight
-    /// </summary>
+    // <summary>
+    // Gets the CornerHeightModifier for a side corner out of the ref_blockCornerHeight
+    // </summary>
     private float GetCornerHeightModifier(int side, int corner)
     {
         int nIndex = CornerEnum.None;
@@ -1706,6 +1654,25 @@ public class TileSideEnum
     public const int Right = 3;
     public const int Back = 4;
     public const int Front = 5;
+
+    public const int SideCount = 6;
+
+    // <summary>
+    // Convert to TileSideEnumFlags
+    // </summary>
+    public static int ToFlags(int nValue)
+    {
+        switch (nValue)
+        {
+            case Top: return TileSideFlagsEnum.Top;
+            case Bottom: return TileSideFlagsEnum.Bottom;
+            case Left: return TileSideFlagsEnum.Left;
+            case Right: return TileSideFlagsEnum.Right;
+            case Back: return TileSideFlagsEnum.Back;
+            case Front: return TileSideFlagsEnum.Front;
+            default: return TileSideFlagsEnum.None;
+        }
+    }
 }
 
 public class TileSideFlagsEnum
@@ -1723,4 +1690,30 @@ public class GlobalVar
 {
     public const int MAX_BLOCKTYPES = 1024;
     public const int MAX_BLOCKTYPES_SQRT = 32;
+}
+
+public class TileDirectionEnum
+{
+    public const int Top = 0;
+    public const int Bottom = 1;
+
+    public const int Left = 2;
+    public const int Right = 3;
+
+    public const int TopLeft = 4;
+    public const int TopRight = 5;
+
+    public const int BottomLeft = 6;
+    public const int BottomRight = 7;
+}
+
+public class CornerEnum
+{
+    public const int TopLeft = 0;
+    public const int TopRight = 1;
+
+    public const int BottomLeft = 2;
+    public const int BottomRight = 3;
+
+    public const int None = -1;
 }
