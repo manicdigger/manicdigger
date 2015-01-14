@@ -25,8 +25,8 @@ public class TerrainChunkTesselatorCi
     internal float _texrecHeight;
     internal int _colorWhite;
 
-    private Vector3i[][] c_OcclusionNeighbors;
-    private float[] ref_blockCornerHeight;
+    VecCito3i[][] c_OcclusionNeighbors;
+    float[] ref_blockCornerHeight;
 
     public TerrainChunkTesselatorCi()
     {
@@ -44,80 +44,91 @@ public class TerrainChunkTesselatorCi
         Yellowness = 1f; // lower is yellower
         Blueness = 0.9f; // lower is blue-er
 
-        c_OcclusionNeighbors = new Vector3i[8][];
+        c_OcclusionNeighbors = new VecCito3i[TileSideEnum.SideCount][];
 
-        c_OcclusionNeighbors[TileSideEnum.Top] = new Vector3i[] { new Vector3i(+0, -1, +1),
-                                                                  new Vector3i(+0, +1, +1),
+        //Initialize array
+        for (int i = 0; i < TileSideEnum.SideCount; i++)
+        {
+            c_OcclusionNeighbors[i] = new VecCito3i[TileDirectionEnum.DirectionCounts];
+        }
 
-                                                                  new Vector3i(-1, +0, +1),
-                                                                  new Vector3i(+1, +0, +1),
+        //Top
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, 1, 1);
 
-                                                                  new Vector3i(-1, -1, +1),
-                                                                  new Vector3i(+1, -1, +1),
-                                                                  
-                                                                  new Vector3i(-1, +1, +1),
-                                                                  new Vector3i(+1, +1, +1)};
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, 0, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 0, 1);
 
-        c_OcclusionNeighbors[TileSideEnum.Left] = new Vector3i[] {new Vector3i(-1, +0, +1),
-                                                                   new Vector3i(-1, +0, -1),
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, -1, 1);
 
-                                                                   new Vector3i(-1, -1, +0),
-                                                                   new Vector3i(-1, +1, +0),
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, 1);
 
-                                                                   new Vector3i(-1, -1, +1),
-                                                                   new Vector3i(-1, +1, +1),
-                                                                  
-                                                                   new Vector3i(-1, -1, -1),
-                                                                   new Vector3i(-1, +1, -1)};
+        //Left
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Top] = VecCito3i.CitoCtr(-1, 0, 1);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(-1, 0, -1);
 
-        c_OcclusionNeighbors[TileSideEnum.Bottom] = new Vector3i[]{new Vector3i(+0, +1, -1),
-                                                                   new Vector3i(-1, +0, -1),
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, -1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Right] = VecCito3i.CitoCtr(-1, 1, 0);
 
-                                                                   new Vector3i(-1, +0, -1),
-                                                                   new Vector3i(+1, +0, -1),
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(-1, 1, 1);
 
-                                                                   new Vector3i(-1, +1, -1),
-                                                                   new Vector3i(+1, +1, -1),
-                                                                  
-                                                                   new Vector3i(-1, -1, -1),
-                                                                   new Vector3i(+1, -1, -1)};
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(-1, 1, -1);
 
-        c_OcclusionNeighbors[TileSideEnum.Right] = new Vector3i[]{  new Vector3i(+1, +0, +1),
-                                                                   new Vector3i(+1, +0, -1),
+        //Bottom
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(-1, 0, -1);
 
-                                                                   new Vector3i(+1, -1, +0),
-                                                                   new Vector3i(+1, +1, +0),
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, 0, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 0, -1);
 
-                                                                   new Vector3i(+1, -1, +1),
-                                                                   new Vector3i(+1, +1, +1),
-                                                                  
-                                                                   new Vector3i(+1, -1, -1),
-                                                                   new Vector3i(+1, +1, -1)};
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, 1, -1);
 
-        c_OcclusionNeighbors[TileSideEnum.Back] = new Vector3i[]{  new Vector3i(+0, -1, +1),
-                                                                   new Vector3i(+0, -1, -1),
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, -1, -1);
 
-                                                                   new Vector3i(+1, -1, +0),
-                                                                   new Vector3i(-1, -1, +0),
+        //Right
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Top] = VecCito3i.CitoCtr(1, 0, 1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(1, 0, -1);
 
-                                                                   new Vector3i(+1, -1, +1),
-                                                                   new Vector3i(-1, -1, +1),
-                                                                  
-                                                                   new Vector3i(+1, -1, -1),
-                                                                   new Vector3i(-1, -1, -1)};
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Left] = VecCito3i.CitoCtr(1, -1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 1, 0);
 
-        c_OcclusionNeighbors[TileSideEnum.Front] = new Vector3i[]{ new Vector3i(+0, +1, +1),
-                                                                   new Vector3i(+0, +1, -1),
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, 1, 1);
 
-                                                                   new Vector3i(-1, +1, +0),
-                                                                   new Vector3i(+1, +1, +0),
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, -1);
 
-                                                                   new Vector3i(-1, +1, +1),
-                                                                   new Vector3i(+1, +1, +1),
-                                                                  
-                                                                   new Vector3i(-1, +1, -1),
-                                                                   new Vector3i(+1, +1, -1)};
+        //Back
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, -1, -1);
 
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Left] = VecCito3i.CitoCtr(1, -1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Right] = VecCito3i.CitoCtr(-1, -1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(-1, -1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(-1, -1, -1);
+
+        //Front
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, 1, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, 1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, 1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, -1);
 
 
     }
@@ -159,16 +170,16 @@ public class TerrainChunkTesselatorCi
 #if CITO
     macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
 #else
-    static int Index3d(Vector3i v)
-    {
-        return Index3d(v.x, v.y, v.z, chunksize + 2, chunksize + 2);
-    }
-
     static int Index3d(int x, int y, int h, int sizex, int sizey)
     {
         return (h * sizey + y) * sizex + x;
     }
 #endif
+
+    static int Index3dVec(VecCito3i v)
+    {
+        return Index3d(v.x, v.y, v.z, chunksize + 2, chunksize + 2);
+    }
 
     public void Start()
     {
@@ -284,7 +295,7 @@ public class TerrainChunkTesselatorCi
     // <summary>
     // Check if a face should be drawn
     // </summary>
-    private int GetFaceVisibility(int nSide, int[] currentChunk, int[] nPos, bool blnIsFluid)
+    int GetFaceVisibility(int nSide, int[] currentChunk, int[] nPos, bool blnIsFluid)
     {
         int nReturn = TileSideFlagsEnum.None;
 
@@ -379,32 +390,32 @@ public class TerrainChunkTesselatorCi
                         {
                             if ((draw & TileSideFlagsEnum.Top) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy, zz + 1, x, y, z + 1);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
                             }
                             if ((draw & TileSideFlagsEnum.Bottom) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy, zz - 1, x, y, z - 1);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
                             }
                             if ((draw & TileSideFlagsEnum.Front) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
+                                int shadowratioTop = GetShadowRatioOld(xx - 1, yy, zz, x - 1, y, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
                             }
                             if ((draw & TileSideFlagsEnum.Back) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
+                                int shadowratioTop = GetShadowRatioOld(xx + 1, yy, zz, x + 1, y, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
                             }
                             if ((draw & TileSideFlagsEnum.Left) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy - 1, zz, x, y - 1, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
                             }
                             if ((draw & TileSideFlagsEnum.Right) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy + 1, zz, x, y + 1, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
                             }
                         }
@@ -412,32 +423,32 @@ public class TerrainChunkTesselatorCi
                         {
                             if ((draw & TileSideFlagsEnum.Top) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy, zz + 1, x, y, z + 1);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Top, TileSideFlagsEnum.Top));
                             }
                             if ((draw & TileSideFlagsEnum.Bottom) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy, zz - 1, x, y, z - 1);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Bottom, TileSideFlagsEnum.Bottom));
                             }
                             if ((draw & TileSideFlagsEnum.Front) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
+                                int shadowratioTop = GetShadowRatioOld(xx - 1, yy, zz, x - 1, y, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Left, TileSideFlagsEnum.Front));
                             }
                             if ((draw & TileSideFlagsEnum.Back) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
+                                int shadowratioTop = GetShadowRatioOld(xx + 1, yy, zz, x + 1, y, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Right, TileSideFlagsEnum.Back));
                             }
                             if ((draw & TileSideFlagsEnum.Left) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy - 1, zz, x, y - 1, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Back, TileSideFlagsEnum.Left));
                             }
                             if ((draw & TileSideFlagsEnum.Right) != 0)
                             {
-                                int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
+                                int shadowratioTop = GetShadowRatioOld(xx, yy + 1, zz, x, y + 1, z);
                                 currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Front, TileSideFlagsEnum.Right));
                             }
                         }
@@ -467,7 +478,7 @@ public class TerrainChunkTesselatorCi
             {
                 if (newxx >= chunksize + 1) { break; }
                 if (currentChunk[Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                int shadowratio2 = GetShadowRatio(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
+                int shadowratio2 = GetShadowRatioOld(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
                 if (shadowratio != shadowratio2) { break; }
                 if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                 currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
@@ -484,7 +495,7 @@ public class TerrainChunkTesselatorCi
             {
                 if (newyy >= chunksize + 1) { break; }
                 if (currentChunk[Index3d(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                int shadowratio2 = GetShadowRatio(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
+                int shadowratio2 = GetShadowRatioOld(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
                 if (shadowratio != shadowratio2) { break; }
                 if ((currentChunkDraw16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                 currentChunkDrawCount16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
@@ -501,7 +512,7 @@ public class TerrainChunkTesselatorCi
             {
                 if (newxx >= chunksize + 1) { break; }
                 if (currentChunk[Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                int shadowratio2 = GetShadowRatio(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
+                int shadowratio2 = GetShadowRatioOld(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
                 if (shadowratio != shadowratio2) { break; }
                 if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                 currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
@@ -522,12 +533,12 @@ public class TerrainChunkTesselatorCi
 #if !CITO
     [System.Obsolete("Use GetShadowRation(int,int,int) instead")]
 #endif
-    public int GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly, int globalz)
+    public int GetShadowRatioOld(int xx, int yy, int zz, int globalx, int globaly, int globalz)
     {
         return GetShadowRatio(xx, yy, zz);
     }
 
-    public int GetShadowRatio(Vector3i v)
+    public int GetShadowRatioVec(VecCito3i v)
     {
         return GetShadowRatio(v.x, v.y, v.z);
     }
@@ -559,7 +570,7 @@ public class TerrainChunkTesselatorCi
         }
     }
 
-    private int ColorMultiply(int color, float fValue)
+    int ColorMultiply(int color, float fValue)
     {
         return Game.ColorFromArgb(Game.ColorA(color),
             game.platform.FloatToInt(Game.ColorR(color) * fValue),
@@ -569,131 +580,75 @@ public class TerrainChunkTesselatorCi
 
     internal float occ;
     internal float halfocc;
-    internal bool topoccupied;
-    internal bool bottomoccupied;
-    internal bool leftoccupied;
-    internal bool rightoccupied;
-    internal bool topleftoccupied;
-    internal bool toprightoccupied;
-    internal bool bottomleftoccupied;
-    internal bool bottomrightoccupied;
 
-    #region CalcSmoothBlockFace
-    private void CalcSmoothBlockFace(int x, int y, int z, int tileType, Vector3f vOffset, Vector3f vScale, int[] currentChunk, int tileSide)
+    void CalcSmoothBlockFace(int x, int y, int z, int tileType, VecCito3f vOffset, VecCito3f vScale, int[] currentChunk, int tileSide)
     {
         int xx = x % chunksize + 1;
         int yy = y % chunksize + 1;
         int zz = z % chunksize + 1;
-        Vector3i[] vNeighbors = c_OcclusionNeighbors[tileSide];
+        VecCito3i[] vNeighbors = c_OcclusionNeighbors[tileSide];
 
+        int[] shadowration = new int[TileDirectionEnum.DirectionCounts];
+        bool[] occupied = new bool[TileDirectionEnum.DirectionCounts];
         int shadowratio = GetShadowRatio(xx, yy, zz + 1);
 
-        int top = currentChunk[Index3d(vNeighbors[TileDirectionEnum.Top].Add(xx, yy, zz))];
-        int bottom = currentChunk[Index3d(vNeighbors[TileDirectionEnum.Bottom].Add(xx, yy, zz))];
+        //Get occupation and int shadowRation
+        for (int i = 0; i < TileDirectionEnum.DirectionCounts; i++)
+        {
+            VecCito3i vPos = vNeighbors[i].Add(xx, yy, zz);
+            int nBlockType = currentChunk[Index3dVec(vNeighbors[i].Add(xx, yy, zz))];
 
-        int left = currentChunk[Index3d(vNeighbors[TileDirectionEnum.Left].Add(xx, yy, zz))];
-        int right = currentChunk[Index3d(vNeighbors[TileDirectionEnum.Right].Add(xx, yy, zz))];
-
-        int topleft = currentChunk[Index3d(vNeighbors[TileDirectionEnum.TopLeft].Add(xx, yy, zz))];
-        int topright = currentChunk[Index3d(vNeighbors[TileDirectionEnum.TopRight].Add(xx, yy, zz))];
-
-        int bottomleft = currentChunk[Index3d(vNeighbors[TileDirectionEnum.BottomLeft].Add(xx, yy, zz))];
-        int bottomright = currentChunk[Index3d(vNeighbors[TileDirectionEnum.BottomRight].Add(xx, yy, zz))];
-
-        int shadowratioB = shadowratio;//down
-        int shadowratioR = shadowratio;//right
-        int shadowratioT = shadowratio;//up
-        int shadowratioL = shadowratio;//left
-        int shadowratioTL = shadowratio;//leftup
-        int shadowratioTR = shadowratio;//rightup
-        int shadowratioBL = shadowratio;//leftdown
-        int shadowratioBR = shadowratio;//rightdown
-
-        //check occupied blocks
-        CheckOccupation(top, ref topoccupied, ref shadowratioT, vNeighbors[TileDirectionEnum.Top].Add(xx, yy, zz));
-        CheckOccupation(bottom, ref bottomoccupied, ref shadowratioB, vNeighbors[TileDirectionEnum.Bottom].Add(xx, yy, zz));
-        CheckOccupation(left, ref leftoccupied, ref shadowratioL, vNeighbors[TileDirectionEnum.Left].Add(xx, yy, zz));
-        CheckOccupation(right, ref rightoccupied, ref shadowratioR, vNeighbors[TileDirectionEnum.Right].Add(xx, yy, zz));
-        CheckOccupation(topleft, ref topleftoccupied, ref shadowratioTL, vNeighbors[TileDirectionEnum.TopLeft].Add(xx, yy, zz));
-        CheckOccupation(topright, ref toprightoccupied, ref shadowratioTR, vNeighbors[TileDirectionEnum.TopRight].Add(xx, yy, zz));
-        CheckOccupation(bottomleft, ref bottomleftoccupied, ref shadowratioBL, vNeighbors[TileDirectionEnum.BottomLeft].Add(xx, yy, zz));
-        CheckOccupation(bottomright, ref bottomrightoccupied, ref shadowratioBR, vNeighbors[TileDirectionEnum.BottomRight].Add(xx, yy, zz));
+            if (nBlockType != 0)
+            {
+                occupied[i] = !IsTransparentForLight(nBlockType);
+                shadowration[i] = shadowratio;
+            }
+            else
+            {
+                occupied[i] = false;
+                shadowration[i] = GetShadowRatioVec(vPos);
+            }
+        }
 
         //initialize shadow values
         float[] fShadowRation = new float[4];
         float shadowratiomain = lightlevels[shadowratio];
-        for (int i = 0; i < fShadowRation.Length; i++)
-        {
-            fShadowRation[i] = shadowratiomain;
-        }
+        fShadowRation[0] = shadowratiomain;
+        fShadowRation[1] = shadowratiomain;
+        fShadowRation[2] = shadowratiomain;
+        fShadowRation[3] = shadowratiomain;
 
-        #region Shadow
-        //get occupied blocks for ao and smoothing
-
-        //topleft vertex
-        if (leftoccupied && topoccupied) { }
-        else
-        {
-            byte facesconsidered = 1;
-            if (!topoccupied) { fShadowRation[CornerEnum.TopLeft] += lightlevels[shadowratioT]; ++facesconsidered; }
-            if (!topleftoccupied) { fShadowRation[CornerEnum.TopLeft] += lightlevels[shadowratioTL]; ++facesconsidered; }
-            if (!leftoccupied) { fShadowRation[CornerEnum.TopLeft] += lightlevels[shadowratioL]; ++facesconsidered; }
-            fShadowRation[CornerEnum.TopLeft] /= facesconsidered;
-        }
-        //topright vertex
-        if (topoccupied && rightoccupied) { }
-        else
-        {
-            byte facesconsidered = 4;
-            if (topoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.TopRight] += lightlevels[shadowratioT]; }
-            if (toprightoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.TopRight] += lightlevels[shadowratioTR]; }
-            if (rightoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.TopRight] += lightlevels[shadowratioR]; }
-            fShadowRation[CornerEnum.TopRight] /= facesconsidered;
-        }
-        //bottomright vertex
-        if (bottomoccupied && rightoccupied) { }
-        else
-        {
-            byte facesconsidered = 4;
-            if (bottomoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.BottomRight] += lightlevels[shadowratioB]; }
-            if (bottomrightoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.BottomRight] += lightlevels[shadowratioBR]; }
-            if (rightoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.BottomRight] += lightlevels[shadowratioR]; }
-            fShadowRation[CornerEnum.BottomRight] /= facesconsidered;
-        }
-        //bottomleft
-        if (bottomoccupied && leftoccupied) { }
-        else
-        {
-            byte facesconsidered = 4;
-            if (bottomoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.BottomLeft] += lightlevels[shadowratioB]; }
-            if (bottomleftoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.BottomLeft] += lightlevels[shadowratioBL]; }
-            if (leftoccupied) { facesconsidered -= 1; } else { fShadowRation[CornerEnum.BottomLeft] += lightlevels[shadowratioL]; }
-            fShadowRation[CornerEnum.BottomLeft] /= facesconsidered;
-        }
-
-
-        //ambient occlusion, corners with 2 blocks get full occlusion, others half
-        if (topoccupied && rightoccupied) { fShadowRation[CornerEnum.TopRight] *= halfocc; }
-        else if (topoccupied || rightoccupied || toprightoccupied) { fShadowRation[CornerEnum.TopRight] *= occ; }
-
-        // next:
-        if (topoccupied && leftoccupied) { fShadowRation[CornerEnum.TopLeft] *= halfocc; }
-        else if (topoccupied || leftoccupied || topleftoccupied) { fShadowRation[CornerEnum.TopLeft] *= occ; }
-
-        // next1:
-        if (bottomoccupied && rightoccupied) { fShadowRation[CornerEnum.BottomRight] *= halfocc; }
-        else if (bottomoccupied || rightoccupied || bottomrightoccupied) { fShadowRation[CornerEnum.BottomRight] *= occ; }
-
-        // next2:
-        if (bottomoccupied && leftoccupied) { fShadowRation[CornerEnum.BottomLeft] *= halfocc; }
-        else if (bottomoccupied || leftoccupied || bottomleftoccupied) { fShadowRation[CornerEnum.BottomLeft] *= occ; }
-
-        #endregion
+        //Shadows
+        CalcShadowRation(TileDirectionEnum.Top, TileDirectionEnum.Left, TileDirectionEnum.TopLeft, CornerEnum.TopLeft, fShadowRation, occupied, shadowration);
+        CalcShadowRation(TileDirectionEnum.Top, TileDirectionEnum.Right, TileDirectionEnum.TopRight, CornerEnum.TopRight, fShadowRation, occupied, shadowration);
+        CalcShadowRation(TileDirectionEnum.Bottom, TileDirectionEnum.Left, TileDirectionEnum.BottomLeft, CornerEnum.BottomLeft, fShadowRation, occupied, shadowration);
+        CalcShadowRation(TileDirectionEnum.Bottom, TileDirectionEnum.Right, TileDirectionEnum.BottomRight, CornerEnum.BottomRight, fShadowRation, occupied, shadowration);
 
         DrawBlockFace(x, y, z, tileType, tileSide, vOffset, vScale, vNeighbors, fShadowRation);
     }
 
-    private void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, Vector3f vOffset, Vector3f vScale, Vector3i[] vNeighbors, float[] fShadowRation)
+    void CalcShadowRation(int nDir1, int nDirBetween, int nDir2, int nCorner, float[] fShadowRation, bool[] occupied, int[] shadowRationInt)
+    {
+        if (occupied[nDir1] && occupied[nDir2]) 
+        {
+            fShadowRation[nCorner] *= halfocc;
+        }
+        else
+        {
+            byte facesconsidered = 1;
+            if (!occupied[nDir1]) { fShadowRation[nCorner] += lightlevels[shadowRationInt[nDir1]]; facesconsidered++; }
+            if (!occupied[nDir2]) { fShadowRation[nCorner] += lightlevels[shadowRationInt[nDir2]]; facesconsidered++; }
+            if (!occupied[nDirBetween]) { fShadowRation[nCorner] += lightlevels[shadowRationInt[nDirBetween]]; facesconsidered++; }
+            fShadowRation[nCorner] /= facesconsidered;
+
+            if (occupied[nDir1] || occupied[nDir2] || occupied[nDirBetween])
+            {
+                fShadowRation[nCorner] *= occ;
+            }
+        }
+    }
+
+    void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, VecCito3f vOffset, VecCito3f vScale, VecCito3i[] vNeighbors, float[] fShadowRation)
     {
         //shadowratioTR = shadowratioTL = shadowratioRB = shadowratiofLB = 0x1;
         int color = _colorWhite;
@@ -710,7 +665,7 @@ public class TerrainChunkTesselatorCi
         float texrecBottom = texrecTop + _texrecHeight;
         int lastelement = toreturn.verticesCount;
 
-        Vector3i v;
+        VecCito3i v;
         float fSlopeModifier = 0f;
 
         //Calculate the corner points
@@ -762,25 +717,11 @@ public class TerrainChunkTesselatorCi
             ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
     }
-    #endregion
-
-    private void CheckOccupation(int nBlockType, ref bool blnOccupied, ref int shadowratio, Vector3i vPos)
-    {
-        if (nBlockType != 0)
-        {
-            blnOccupied = !IsTransparentForLight(nBlockType);
-        }
-        else
-        {
-            blnOccupied = false;
-            shadowratio = GetShadowRatio(vPos);
-        }
-    }
 
     // <summary>
     // Returns the sides to draw for this block
     // </summary>
-    private int GetToDrawFlags(int xx, int yy, int zz)
+    int GetToDrawFlags(int xx, int yy, int zz)
     {
         int nToDraw = TileSideFlagsEnum.None;
 
@@ -799,7 +740,7 @@ public class TerrainChunkTesselatorCi
     // <summary>
     // Sets the visible flag in the nCurrentFlags if this side needs to be drawn
     // </summary>
-    private int SetVisibleFlag(byte[] drawFlags, int tileSideIndex, int nCurrentFlags, int nFlagToSet)
+    int SetVisibleFlag(byte[] drawFlags, int tileSideIndex, int nCurrentFlags, int nFlagToSet)
     {
         if (drawFlags[tileSideIndex] > 0)
         {
@@ -811,8 +752,6 @@ public class TerrainChunkTesselatorCi
         }
     }
 
-
-    #region SmoothLightBlockPolygons
     public void SmoothLightBlockPolygons(int x, int y, int z, int[] currentChunk)
     {
         //slope height
@@ -826,8 +765,8 @@ public class TerrainChunkTesselatorCi
         int tiletype = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
         int rail = Rail(tiletype);
 
-        Vector3f vOffset = new Vector3f(0, 0, 0);
-        Vector3f vScale = new Vector3f(1, 1, 1);
+        VecCito3f vOffset = VecCito3f.CitoCtr(0, 0, 0);
+        VecCito3f vScale = VecCito3f.CitoCtr(1, 1, 1);
 
         if (!isvalid(tiletype))
         {
@@ -857,28 +796,27 @@ public class TerrainChunkTesselatorCi
             //Draw nothing but 2 faces. Prevents flickering.
             nToDraw = TileSideFlagsEnum.Left | TileSideFlagsEnum.Front;
 
-            vScale = new Vector3f(0.5f, 0.5f, 0.5f);
+            vScale = VecCito3f.CitoCtr(0.5f, 0.5f, 0.5f);
 
             //Draw Front and Left side
-            CalcSmoothBlockFace(x, y, z, tiletype, new Vector3f(0.5f, 0.25f, 0f), vScale, currentChunk, TileSideEnum.Left);
-            CalcSmoothBlockFace(x, y, z, tiletype, new Vector3f(0.25f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Back);
+            CalcSmoothBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0.25f, 0f), vScale, currentChunk, TileSideEnum.Left);
+            CalcSmoothBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.25f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Back);
             return;
         }
         if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
         {
             //Cactus is thin
-            vOffset = new Vector3f(0.2f, 0.2f, 0);
-            vScale = new Vector3f(0.625f, 0.625f, 1f);
+            vOffset = VecCito3f.CitoCtr(0.2f, 0.2f, 0);
+            vScale = VecCito3f.CitoCtr(0.625f, 0.625f, 1f);
             flowerfix = 0.0625f;
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
         {
-            #region OpenDoorLeft
             nToDraw ^= TileSideFlagsEnum.Top;
             nToDraw ^= TileSideFlagsEnum.Bottom;
             flowerfix = 0.9f;
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 && 
+            //x-1, x1
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 nToDraw ^= TileSideFlagsEnum.Back;
@@ -887,8 +825,8 @@ public class TerrainChunkTesselatorCi
 
                 nToDraw |= TileSideFlagsEnum.Left;
             }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 && 
+            //y-1, y1
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 nToDraw ^= TileSideFlagsEnum.Left;
@@ -897,17 +835,15 @@ public class TerrainChunkTesselatorCi
 
                 nToDraw |= TileSideFlagsEnum.Back;
             }
-            #endregion
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
         {
-            #region OpenDoorRight
             nToDraw ^= TileSideFlagsEnum.Top;
             nToDraw ^= TileSideFlagsEnum.Bottom;
 
             flowerfix = 0.9f;
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 && 
+            //x-1, x1
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 nToDraw ^= TileSideFlagsEnum.Back;
@@ -916,8 +852,8 @@ public class TerrainChunkTesselatorCi
 
                 nToDraw |= TileSideFlagsEnum.Right;
             }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 && 
+            //y-1, y1
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 nToDraw ^= TileSideFlagsEnum.Back;
@@ -926,36 +862,32 @@ public class TerrainChunkTesselatorCi
 
                 nToDraw |= TileSideFlagsEnum.Front;
             }
-            #endregion
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence ||
                  game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
         {
-            #region Fence/Door
             nToDraw = TileSideFlagsEnum.None;
 
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0 || 
+            //x-1, x1
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0 ||
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
             {
                 nToDraw |= TileSideFlagsEnum.Left;
             }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0 || 
+            //y-1, y1
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0 ||
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
             {
                 nToDraw |= TileSideFlagsEnum.Front;
             }
-            if ((nToDraw & (TileSideFlagsEnum.Back | TileSideFlagsEnum.Front | TileSideFlagsEnum.Right | TileSideFlagsEnum.Left) ) == 0)
+            if ((nToDraw & (TileSideFlagsEnum.Back | TileSideFlagsEnum.Front | TileSideFlagsEnum.Right | TileSideFlagsEnum.Left)) == 0)
             {
                 nToDraw |= TileSideFlagsEnum.Back;
                 nToDraw |= TileSideFlagsEnum.Left;
             }
-            #endregion
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
         {
-            #region Ladder
             flowerfix = 0.95f; // 0.95f;
 
             nToDraw = TileSideFlagsEnum.None;
@@ -983,15 +915,14 @@ public class TerrainChunkTesselatorCi
                 case 3: nToDraw |= TileSideFlagsEnum.Front; break;
                 default: nToDraw |= TileSideFlagsEnum.Right; break;
             }
-            #endregion
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.HalfHeight)
         {
-            vScale = new Vector3f(1, 1, 0.5f);
+            vScale = VecCito3f.CitoCtr(1, 1, 0.5f);
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Flat)
         {
-            vScale = new Vector3f(1, 1, 0.05f);
+            vScale = VecCito3f.CitoCtr(1, 1, 0.05f);
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Torch)
         {
@@ -1008,8 +939,8 @@ public class TerrainChunkTesselatorCi
         else if (rail != RailDirectionFlagsEnum.None)
         {
             int slope = GetRailSlope(xx, yy, zz);
-            float fSlopeMod = +1.0f;
-            vScale = new Vector3f(1f, 1f, 0.3f);
+            float fSlopeMod = 1.0f;
+            vScale = VecCito3f.CitoCtr(1f, 1f, 0.3f);
             if (slope == RailSlopeEnum.TwoRightRaised)
             {
                 ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
@@ -1034,50 +965,28 @@ public class TerrainChunkTesselatorCi
         else if (tiletype == 8)
         {
             //TODO: replace the (x == 8) in this part with (IsLiquid(x)) to make it work for all fluids
-
-            #region liquid
             if (currentChunk[Index3d(xx, yy, zz - 1, chunksize + 2, chunksize + 2)] == 8)
             {
                 //flow down in the lower block
-                vOffset = new Vector3f(0, 0, -0.1f);
+                vOffset = VecCito3f.CitoCtr(0, 0, -0.1f);
             }
             else
             {
                 //lower than a normal block
-                vScale = new Vector3f(1, 1, 0.9f);
+                vScale = VecCito3f.CitoCtr(1, 1, 0.9f);
             }
-            #endregion
         }
         
         //Draw faces
+        for (int i = 0; i < TileSideEnum.SideCount; i++)
+        {
+            if ((nToDraw & TileSideEnum.ToFlags(i)) != TileSideFlagsEnum.None)
+            {
+                CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, i);
+            }
+        }
 
-        //bool blnDrawTop = (nToDraw & TileSideFlagsEnum.Top) != TileSideFlagsEnum.None;
-        if ((nToDraw & TileSideFlagsEnum.Top) != TileSideFlagsEnum.None)
-        {
-            CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, TileSideEnum.Top);
-        }
-        if ((nToDraw & TileSideFlagsEnum.Bottom) != TileSideFlagsEnum.None)
-        {
-            CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, TileSideEnum.Bottom);
-        }
-        if ((nToDraw & TileSideFlagsEnum.Front) != TileSideFlagsEnum.None)
-        {
-            CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, TileSideEnum.Front);
-        }
-        if ((nToDraw & TileSideFlagsEnum.Back) != TileSideFlagsEnum.None)
-        {
-            CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, TileSideEnum.Back);
-        }
-        if ((nToDraw & TileSideFlagsEnum.Left) != TileSideFlagsEnum.None)
-        {
-            CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, TileSideEnum.Left);
-        }
-        if ((nToDraw & TileSideFlagsEnum.Right) != TileSideFlagsEnum.None)
-        {
-            CalcSmoothBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, TileSideEnum.Right);
-        }
     }
-    #endregion
 
     public bool IsTransparentForLight(int block)
     {
@@ -1524,7 +1433,11 @@ public class TerrainChunkTesselatorCi
         }
         else
         {
+#if CITO
+            CalculateSmoothBlockPolygons(x, y, z);
+#else
             throw new System.Exception("SmoothLight disabled not implemented");
+#endif
         }
         VerticesIndicesToLoad[] ret = GetFinalVerticesIndices(x, y, z, retCount);
         return ret;
@@ -1533,7 +1446,7 @@ public class TerrainChunkTesselatorCi
     // <summary>
     // Gets the CornerHeightModifier for a side corner out of the ref_blockCornerHeight
     // </summary>
-    private float GetCornerHeightModifier(int side, int corner)
+    float GetCornerHeightModifier(int side, int corner)
     {
         int nIndex = CornerEnum.None;
         switch (side)
@@ -1705,6 +1618,8 @@ public class TileDirectionEnum
 
     public const int BottomLeft = 6;
     public const int BottomRight = 7;
+
+    public const int DirectionCounts = 8;
 }
 
 public class CornerEnum
@@ -1716,4 +1631,48 @@ public class CornerEnum
     public const int BottomRight = 3;
 
     public const int None = -1;
+}
+
+public class VecCito3i
+{
+    public int x;
+    public int y;
+    public int z;
+
+    public static VecCito3i CitoCtr(int _x, int _y, int _z)
+    {
+        VecCito3i v = new VecCito3i();
+        v.x = _x;
+        v.y = _y;
+        v.z = _z;
+
+        return v;
+    }
+
+    public VecCito3i Add(int _x, int _y, int _z)
+    {
+        return CitoCtr(this.x + _x, this.y + _y, this.z + _z);
+    }
+}
+
+public class VecCito3f
+{
+    public float x;
+    public float y;
+    public float z;
+
+    public static VecCito3f CitoCtr(float _x, float _y, float _z)
+    {
+        VecCito3f v = new VecCito3f();
+        v.x = _x;
+        v.y = _y;
+        v.z = _z;
+
+        return v;
+    }
+
+    public VecCito3f Add(float _x, float _y, float _z)
+    {
+        return CitoCtr(this.x + _x, this.y + _y, this.z + _z);
+    }
 }
