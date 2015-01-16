@@ -144,7 +144,7 @@
         if (b == graphicsOptionSmoothShadows)
         {
             options.Smoothshadows = !options.Smoothshadows;
-            game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
+            game.d_TerrainChunkTesselator.option_EnableSmoothLight = options.Smoothshadows;
             if (options.Smoothshadows)
             {
                 options.BlockShadowSave = one * 7 / 10;
@@ -662,7 +662,7 @@
         {
             game.language.OverrideLanguage = options.ClientLanguage;
         }
-        game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
+        game.d_TerrainChunkTesselator.option_EnableSmoothLight = options.Smoothshadows;
         game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
         game.ENABLE_LAG = options.Framerate;
         UseFullscreen();
@@ -716,7 +716,7 @@
         }
         options.Framerate = game.ENABLE_LAG;
         options.Fullscreen = game.platform.GetWindowState() == WindowState.Fullscreen;
-        options.Smoothshadows = game.d_TerrainChunkTesselator.EnableSmoothLight;
+        options.Smoothshadows = game.d_TerrainChunkTesselator.option_EnableSmoothLight;
 
         SaveOptions_(options);
     }
