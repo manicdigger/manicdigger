@@ -1627,7 +1627,7 @@ public class ScreenGame : Screen
                 if (!lidata.ServerCorrect)
                 {
                     //Invalid server adress
-                    platform.MessageBoxShowError("Invalid server adress!", "Redirection error");
+                    platform.MessageBoxShowError("Invalid server address!", "Redirection error!");
                     menu.StartMainMenu();
                 }
                 else if (!lidata.PasswordCorrect)
