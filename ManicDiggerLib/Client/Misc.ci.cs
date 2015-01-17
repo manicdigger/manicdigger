@@ -688,3 +688,47 @@ public class TextureAtlasConverter
         return atlases;
     }
 }
+
+public class VecCito3i
+{
+    public int x;
+    public int y;
+    public int z;
+
+    public static VecCito3i CitoCtr(int _x, int _y, int _z)
+    {
+        VecCito3i v = new VecCito3i();
+        v.x = _x;
+        v.y = _y;
+        v.z = _z;
+
+        return v;
+    }
+
+    public VecCito3i Add(int _x, int _y, int _z)
+    {
+        return CitoCtr(this.x + _x, this.y + _y, this.z + _z);
+    }
+}
+
+public class VecCito3f
+{
+    public float x;
+    public float y;
+    public float z;
+
+    public static VecCito3f CitoCtr(float _x, float _y, float _z)
+    {
+        VecCito3f v = new VecCito3f();
+        v.x = _x;
+        v.y = _y;
+        v.z = _z;
+
+        return v;
+    }
+
+    public VecCito3f Add(float _x, float _y, float _z)
+    {
+        return CitoCtr(this.x + _x, this.y + _y, this.z + _z);
+    }
+}
