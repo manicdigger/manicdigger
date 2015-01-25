@@ -23,6 +23,11 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
                 bool unload = true;
                 foreach (var k in server.clients)
                 {
+                    if (k.Value.IsBot)
+                    {
+                        //Don't hold chunks in memory for bots
+                        continue;
+                    }
                     int viewdist = (int)(server.chunkdrawdistance * Server.chunksize * 1.5f);
                     if (server.DistanceSquared(server.PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
                     {
