@@ -57,9 +57,6 @@ public class TerrainChunkTesselatorCi
     internal bool option_HardWaterTesselation;
     internal float AtiArtifactFix;
 
-    internal float Yellowness;
-    internal float Blueness;
-
     VecCito3i[][] c_OcclusionNeighbors;
 
     float[] ref_blockCornerHeight;
@@ -70,14 +67,11 @@ public class TerrainChunkTesselatorCi
         ENABLE_TEXTURE_TILING = true;
         //option_HardWaterTesselation = true;
         _colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
-        BlockShadow = 0.7f;
+        BlockShadow = 0.6f;
         option_DoNotDrawEdges = true;
         AtiArtifactFix = 0.995f;
         occ = 0.7f;
         halfocc = 0.4f;
-
-        Yellowness = 1f; // lower is yellower
-        Blueness = 0.9f; // lower is blue-er
 
         c_OcclusionNeighbors = new VecCito3i[TileSideEnum.SideCount][];
 
@@ -88,6 +82,8 @@ public class TerrainChunkTesselatorCi
         }
 
         //Top
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, 0, 1);
+
         c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, -1, 1);
         c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, 1, 1);
 
@@ -101,6 +97,8 @@ public class TerrainChunkTesselatorCi
         c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, 1);
 
         //Left
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Center] = VecCito3i.CitoCtr(-1, 0, 0);
+
         c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Top] = VecCito3i.CitoCtr(-1, 0, 1);
         c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(-1, 0, -1);
 
@@ -114,6 +112,8 @@ public class TerrainChunkTesselatorCi
         c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(-1, 1, -1);
 
         //Bottom
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, 0, -1);
+
         c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, 1, -1);
         c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(-1, 0, -1);
 
@@ -127,6 +127,8 @@ public class TerrainChunkTesselatorCi
         c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, -1, -1);
 
         //Right
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Center] = VecCito3i.CitoCtr(1, 0, 0);
+
         c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Top] = VecCito3i.CitoCtr(1, 0, 1);
         c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(1, 0, -1);
 
@@ -140,6 +142,8 @@ public class TerrainChunkTesselatorCi
         c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, -1);
 
         //Back
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, -1, 0);
+
         c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, -1, 1);
         c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, -1, -1);
 
@@ -153,6 +157,8 @@ public class TerrainChunkTesselatorCi
         c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(-1, -1, -1);
 
         //Front
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, 1, 0);
+
         c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, 1, 1);
         c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, 1, -1);
 
@@ -277,14 +283,27 @@ public class TerrainChunkTesselatorCi
                     nPos[TileSideEnum.Right] = pos + 1;
 
                     bool blnIsFluid = IsWater(tt);
+                    bool blnIsLowered = isLowered[tt];
 
                     //check which faces are visible
-                    draw |= GetFaceVisibility(TileSideEnum.Top, currentChunk, nPos, blnIsFluid);
-                    draw |= GetFaceVisibility(TileSideEnum.Bottom, currentChunk, nPos, blnIsFluid);
-                    draw |= GetFaceVisibility(TileSideEnum.Left, currentChunk, nPos, blnIsFluid);
-                    draw |= GetFaceVisibility(TileSideEnum.Right, currentChunk, nPos, blnIsFluid);
-                    draw |= GetFaceVisibility(TileSideEnum.Back, currentChunk, nPos, blnIsFluid);
-                    draw |= GetFaceVisibility(TileSideEnum.Front, currentChunk, nPos, blnIsFluid);
+                    draw |= GetFaceVisibility(TileSideEnum.Top, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Bottom, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Left, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Right, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Back, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Front, currentChunk, nPos, blnIsFluid, blnIsLowered);
+
+                    if (blnIsLowered)
+                    {
+                        //Check if top needs to be rendered
+                        if (!TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Top))
+                        {
+                            if (TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Left | TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back))
+                            {
+                                draw |= TileSideFlagsEnum.Top;
+                            }
+                        }
+                    }
 
                     currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
                 }
@@ -295,19 +314,22 @@ public class TerrainChunkTesselatorCi
     // <summary>
     // Check if a face should be drawn
     // </summary>
-    int GetFaceVisibility(int nSide, int[] currentChunk, int[] nPos, bool blnIsFluid)
+    int GetFaceVisibility(int nSide, int[] currentChunk, int[] nPos, bool blnIsFluid, bool blnIsLowered)
     {
         int nReturn = TileSideFlagsEnum.None;
+        int nIndex = nPos[nSide];
 
-        int tt2 = currentChunk[nPos[nSide]];
+        int tt2 = currentChunk[nIndex];
 
-        if (tt2 == 0 || istransparent[tt2] || (IsWater(tt2) && !blnIsFluid))
+        if (tt2 == 0 || (istransparent[tt2] && !isLowered[tt2]) || (IsWater(tt2) && !blnIsFluid))
         {
-            //Transparent block nearby
+            //Transparent or none block nearby
             return TileSideEnum.ToFlags(nSide);
         }
         else if (blnIsFluid && nSide != TileSideEnum.Bottom)
         {
+            //bootom fluid branch
+
             int top = currentChunk[nPos[TileSideEnum.Top]];
 
             if (nSide == TileSideEnum.Top)
@@ -342,6 +364,27 @@ public class TerrainChunkTesselatorCi
             }
             else
             {//hidden
+            }
+        }
+        else if (nSide != TileSideEnum.Top && isLowered[tt2])
+        {
+            //the other block is lowered
+
+            if (!blnIsLowered)
+            {
+                //The other block is lowered, but this one is not,
+                return TileSideEnum.ToFlags(nSide);
+            }
+            else if (nSide == TileSideEnum.Bottom)
+            {
+                //we need the bottom, since we have a lowered block below
+                return TileSideFlagsEnum.Bottom;
+            }
+            else
+            {
+                //this one is also lowered
+                //top is always visible, if a lowered is nearby
+                return TileSideFlagsEnum.Top;
             }
         }
         else
@@ -538,7 +581,7 @@ public class TerrainChunkTesselatorCi
         return Game.ColorFromArgb(Game.ColorA(color),
             game.platform.FloatToInt(Game.ColorR(color) * fValue),
             game.platform.FloatToInt(Game.ColorG(color) * fValue),
-            game.platform.FloatToInt(Game.ColorB(color) * fValue * Yellowness));
+            game.platform.FloatToInt(Game.ColorB(color) * fValue));
     }
 
     internal float occ;
@@ -553,7 +596,9 @@ public class TerrainChunkTesselatorCi
 
         int[] shadowration = new int[TileDirectionEnum.DirectionCounts];
         bool[] occupied = new bool[TileDirectionEnum.DirectionCounts];
-        int shadowratio = GetShadowRatio(xx, yy, zz + 1);
+
+        //TODO: is this one bad for performance?
+        int shadowratio = GetShadowRatioVec(vNeighbors[TileDirectionEnum.Center].Add(xx, yy, zz));
 
         //initialize shadow values
         float[] fShadowRation = new float[4];
@@ -569,7 +614,7 @@ public class TerrainChunkTesselatorCi
             for (int i = 0; i < TileDirectionEnum.DirectionCounts; i++)
             {
                 VecCito3i vPos = vNeighbors[i].Add(xx, yy, zz);
-                int nBlockType = currentChunk[Index3dVec(vNeighbors[i].Add(xx, yy, zz))];
+                int nBlockType = currentChunk[Index3dVec(vPos)];
 
                 if (nBlockType != 0)
                 {
@@ -619,13 +664,17 @@ public class TerrainChunkTesselatorCi
 
     void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, VecCito3f vOffset, VecCito3f vScale, VecCito3i[] vNeighbors, float[] fShadowRation)
     {
-        //shadowratioTR = shadowratioTL = shadowratioRB = shadowratiofLB = 0x1;
         int color = _colorWhite;
 
-        //Bottom is darker
-        if (tileSide == TileSideEnum.Bottom)
+        //Darken shadow sides
+        //TODO: keep that?
+        switch (tileSide)
         {
-            color = ColorMultiply(color, BlockShadow);
+            case TileSideEnum.Bottom:
+            case TileSideEnum.Left:
+            case TileSideEnum.Right:
+                color = ColorMultiply(color, BlockShadow);
+                break;
         }
 
         int sidetexture = TextureId(tileType, tileSide);
@@ -746,8 +795,7 @@ public class TerrainChunkTesselatorCi
             //nothing to do
             return;
         }
-        int color = _colorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
-        int colorShadowSide = ColorMultiply(color, BlockShadow);
+
         _texrecLeft = 0;
         if (option_DoNotDrawEdges)
         {
@@ -1555,6 +1603,11 @@ public class TileSideFlagsEnum
     public const int Back = 8;
     public const int Left = 16;
     public const int Right = 32;
+
+    public static bool HasFlag(int nFlagA, int nFlagB)
+    {
+        return (nFlagA & nFlagB) != None;
+    }
 }
 
 public class GlobalVar
@@ -1577,7 +1630,9 @@ public class TileDirectionEnum
     public const int BottomLeft = 6;
     public const int BottomRight = 7;
 
-    public const int DirectionCounts = 8;
+    public const int Center = 8;
+
+    public const int DirectionCounts = 9;
 }
 
 public class CornerEnum
