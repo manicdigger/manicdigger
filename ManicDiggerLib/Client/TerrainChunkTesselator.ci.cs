@@ -807,112 +807,102 @@ public class TerrainChunkTesselatorCi
             if (y == 0) { nToDraw ^= TileSideFlagsEnum.Left; }
             if (y == mapsizey - 1) { nToDraw ^= TileSideFlagsEnum.Right; }
         }
-        float flowerfix = 0;
+        
         if (IsFlower(tiletype))
         {
             //Draw nothing but 2 faces. Prevents flickering.
             nToDraw = TileSideFlagsEnum.Left | TileSideFlagsEnum.Front;
 
-            vScale = VecCito3f.CitoCtr(0.5f, 0.5f, 0.5f);
+            vScale = VecCito3f.CitoCtr(0.9f, 0.9f, 1f);
 
             //Draw Front and Left side
-            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0.25f, 0f), vScale, currentChunk, TileSideEnum.Left);
-            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.25f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Back);
-            return;
+            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0.05f, 0f), vScale, currentChunk, TileSideEnum.Left);
+            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.05f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Back);
+            return;//done
         }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
         {
             //Cactus is thin
-            vOffset = VecCito3f.CitoCtr(0.2f, 0.2f, 0);
-            vScale = VecCito3f.CitoCtr(0.625f, 0.625f, 1f);
-            flowerfix = 0.0625f;
+            float fScale = 0.875f;
+            float fOffset = (1f - fScale) / 2f;
+
+            //left right
+            VecCito3f vLROffset = VecCito3f.CitoCtr(fOffset, 0, 0);
+            VecCito3f vLRScale = VecCito3f.CitoCtr(fScale, 1f, 1f);
+
+            //front back
+            VecCito3f vFBOffset = VecCito3f.CitoCtr(0, fOffset, 0);
+            VecCito3f vFBScale = VecCito3f.CitoCtr(1f, fScale, 1f);
+
+            //Cactus sides need always to be drawn
+            BuildBlockFace(x, y, z, tiletype, vLROffset, vLRScale, currentChunk, TileSideEnum.Left);
+            BuildBlockFace(x, y, z, tiletype, vLROffset, vLRScale, currentChunk, TileSideEnum.Right);
+
+            BuildBlockFace(x, y, z, tiletype, vFBOffset, vFBScale, currentChunk, TileSideEnum.Front);
+            BuildBlockFace(x, y, z, tiletype, vFBOffset, vFBScale, currentChunk, TileSideEnum.Back);
+
+            //continue to draw top and bottom
+            nToDraw = nToDraw & (TileSideFlagsEnum.Top | TileSideFlagsEnum.Bottom);
         }
-        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft ||
+                 game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)//TODO: is this one ever used?
         {
-            nToDraw ^= TileSideFlagsEnum.Top;
-            nToDraw ^= TileSideFlagsEnum.Bottom;
-            flowerfix = 0.9f;
-            //x-1, x1
+            bool blnDrawn = false;
+            
+            //float fOffset = 0.01f; //does not display on certain distances
+            float fOffset = 0.025f;
+
+            //rigt to left
             if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
-                nToDraw ^= TileSideFlagsEnum.Back;
-                nToDraw ^= TileSideFlagsEnum.Front;
-                nToDraw ^= TileSideFlagsEnum.Right;
-
-                nToDraw |= TileSideFlagsEnum.Left;
+                nToDraw = TileSideFlagsEnum.Back;
+                vOffset = VecCito3f.CitoCtr(0, fOffset, 0);//do not stuck in the wall
+                blnDrawn = true;
             }
-            //y-1, y1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 &&
+            //front to back
+            if (!blnDrawn || //draw at least one side
+                currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
-                nToDraw ^= TileSideFlagsEnum.Left;
-                nToDraw ^= TileSideFlagsEnum.Right;
-                nToDraw ^= TileSideFlagsEnum.Front;
-
-                nToDraw |= TileSideFlagsEnum.Back;
-            }
-        }
-        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
-        {
-            nToDraw ^= TileSideFlagsEnum.Top;
-            nToDraw ^= TileSideFlagsEnum.Bottom;
-
-            flowerfix = 0.9f;
-            //x-1, x1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 &&
-                currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                nToDraw ^= TileSideFlagsEnum.Back;
-                nToDraw ^= TileSideFlagsEnum.Front;
-                nToDraw ^= TileSideFlagsEnum.Left;
-
-                nToDraw |= TileSideFlagsEnum.Right;
-            }
-            //y-1, y1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 &&
-                currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                nToDraw ^= TileSideFlagsEnum.Back;
-                nToDraw ^= TileSideFlagsEnum.Right;
-                nToDraw ^= TileSideFlagsEnum.Left;
-
-                nToDraw |= TileSideFlagsEnum.Front;
+                vOffset = VecCito3f.CitoCtr(fOffset, 0, 0);
+                nToDraw = TileSideFlagsEnum.Left;//do not stuck in the wall
             }
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence ||
                  game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
         {
-            nToDraw = TileSideFlagsEnum.None;
+            bool blnSideDrawn = false;
 
-            //x-1, x1
+            //left to right
             if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0 ||
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
             {
-                nToDraw |= TileSideFlagsEnum.Left;
+                BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0, -0.5f, 0), vScale, currentChunk, TileSideEnum.Front);
+                blnSideDrawn = true;
             }
-            //y-1, y1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0 ||
+
+            //front to back
+            if (!blnSideDrawn || // draw at least one side
+                currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0 ||
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
             {
-                nToDraw |= TileSideFlagsEnum.Front;
+                BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0, 0), vScale, currentChunk, TileSideEnum.Left);
             }
-            if ((nToDraw & (TileSideFlagsEnum.Back | TileSideFlagsEnum.Front | TileSideFlagsEnum.Right | TileSideFlagsEnum.Left)) == 0)
-            {
-                nToDraw |= TileSideFlagsEnum.Back;
-                nToDraw |= TileSideFlagsEnum.Left;
-            }
+
+            return;
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
         {
-            flowerfix = 0.95f; // 0.95f;
+            //bring it away from the wall
+            vOffset = VecCito3f.CitoCtr(0.025f, 0.025f, 0);
+            vScale = VecCito3f.CitoCtr(0.95f, 0.95f, 1f);
 
             nToDraw = TileSideFlagsEnum.None;
 
             int ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz, currentChunk);
             if (ladderAtPositionMatchWall < 0)
             {
-
                 int ladderbelow = getBestLadderInDirection(xx, yy, zz, currentChunk, -1);
                 int ladderabove = getBestLadderInDirection(xx, yy, zz, currentChunk, 1);
 
@@ -927,10 +917,11 @@ public class TerrainChunkTesselatorCi
             }
             switch (ladderAtPositionMatchWall)
             {
-                case 1: nToDraw |= TileSideFlagsEnum.Left; break;
-                case 2: nToDraw |= TileSideFlagsEnum.Back; break;
-                case 3: nToDraw |= TileSideFlagsEnum.Front; break;
-                default: nToDraw |= TileSideFlagsEnum.Right; break;
+                    //TODO: remove magic numbers
+                case 1: nToDraw |= TileSideFlagsEnum.Front; break;
+                case 2: nToDraw |= TileSideFlagsEnum.Left; break;
+                case 3: nToDraw |= TileSideFlagsEnum.Right; break;
+                default: nToDraw |= TileSideFlagsEnum.Back; break;
             }
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.HalfHeight)
