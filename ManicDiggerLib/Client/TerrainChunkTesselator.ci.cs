@@ -254,6 +254,7 @@ public class TerrainChunkTesselatorCi
 
     // <summary>
     // Calculate visible block faces for a chunk
+    // This method checks which faces of a block should be drawn
     // </summary>
     // <param name="currentChunk"></param>
     public void CalculateVisibleFaces(int[] currentChunk)
@@ -293,18 +294,37 @@ public class TerrainChunkTesselatorCi
                     draw |= GetFaceVisibility(TileSideEnum.Back, currentChunk, nPos, blnIsFluid, blnIsLowered);
                     draw |= GetFaceVisibility(TileSideEnum.Front, currentChunk, nPos, blnIsFluid, blnIsLowered);
 
-                    if (blnIsLowered)
+                    if (blnIsLowered && draw > TileSideFlagsEnum.None)
                     {
                         //Check if top needs to be rendered
                         if (!TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Top))
                         {
+                            //if one side is visible, top needs to be rendered
                             if (TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Left | TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back))
                             {
                                 draw |= TileSideFlagsEnum.Top;
                             }
                         }
+
+                        //check if we have a rail
+                        int nRail = Rail(tt);
+
+                        if (nRail > 0)
+                        {
+                            int nSlope = GetRailSlope(xx, yy, zz);
+
+                            //always draw raised slope sides
+                            switch (nSlope)
+                            {
+                                case RailSlopeEnum.TwoDownRaised: draw |= TileSideFlagsEnum.Front | TileSideFlagsEnum.Left | TileSideFlagsEnum.Right; break;
+                                case RailSlopeEnum.TwoUpRaised: draw |= TileSideFlagsEnum.Back | TileSideFlagsEnum.Left | TileSideFlagsEnum.Right; break;
+                                case RailSlopeEnum.TwoLeftRaised: draw |= TileSideFlagsEnum.Left | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
+                                case RailSlopeEnum.TwoRightRaised: draw |= TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
+                            }
+                        }
                     }
 
+                    //Store drawing flags
                     currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
                 }
             }
@@ -324,11 +344,11 @@ public class TerrainChunkTesselatorCi
         if (tt2 == 0 || (istransparent[tt2] && !isLowered[tt2]) || (IsWater(tt2) && !blnIsFluid))
         {
             //Transparent or none block nearby
-            return TileSideEnum.ToFlags(nSide);
+            nReturn |= TileSideEnum.ToFlags(nSide);
         }
         else if (blnIsFluid && nSide != TileSideEnum.Bottom)
         {
-            //bootom fluid branch
+            //fluid branch
 
             int top = currentChunk[nPos[TileSideEnum.Top]];
 
@@ -338,7 +358,7 @@ public class TerrainChunkTesselatorCi
                 if (top != 0 && !IsWater(top))
                 {
                     //Is surrounded and has a solid block above
-                    return TileSideEnum.ToFlags(TileSideEnum.Top);
+                    nReturn |= TileSideEnum.ToFlags(TileSideEnum.Top);
                 }
             }
             else if (option_HardWaterTesselation)
@@ -354,7 +374,7 @@ public class TerrainChunkTesselatorCi
 
                         if (nPos2 > 0 && IsWater(currentChunk[nPos2]))
                         {
-                            return TileSideEnum.ToFlags(nSide);
+                            nReturn |= TileSideEnum.ToFlags(nSide);
                         }
                     }
                 }
@@ -366,25 +386,26 @@ public class TerrainChunkTesselatorCi
             {//hidden
             }
         }
-        else if (nSide != TileSideEnum.Top && isLowered[tt2])
+        
+        if (nSide != TileSideEnum.Top && isLowered[tt2])
         {
             //the other block is lowered
 
             if (!blnIsLowered)
             {
                 //The other block is lowered, but this one is not,
-                return TileSideEnum.ToFlags(nSide);
+                nReturn |= TileSideEnum.ToFlags(nSide);
             }
             else if (nSide == TileSideEnum.Bottom)
             {
                 //we need the bottom, since we have a lowered block below
-                return TileSideFlagsEnum.Bottom;
+                nReturn |= TileSideFlagsEnum.Bottom;
             }
             else
             {
                 //this one is also lowered
                 //top is always visible, if a lowered is nearby
-                return TileSideFlagsEnum.Top;
+                nReturn |= TileSideFlagsEnum.Top;
             }
         }
         else
@@ -781,7 +802,6 @@ public class TerrainChunkTesselatorCi
 
         int nToDraw = GetToDrawFlags(xx, yy, zz);
         int tiletype = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
-        int rail = Rail(tiletype);
 
         VecCito3f vOffset = VecCito3f.CitoCtr(0, 0, 0);
         VecCito3f vScale = VecCito3f.CitoCtr(1, 1, 1);
@@ -944,32 +964,6 @@ public class TerrainChunkTesselatorCi
             AddTorch(x, y, z, type, tiletype);
             return;
         }
-        else if (rail != RailDirectionFlagsEnum.None)
-        {
-            int slope = GetRailSlope(xx, yy, zz);
-            float fSlopeMod = 1.0f;
-            vScale = VecCito3f.CitoCtr(1f, 1f, 0.3f);
-            if (slope == RailSlopeEnum.TwoRightRaised)
-            {
-                ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
-                ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
-            }
-            else if (slope == RailSlopeEnum.TwoLeftRaised)
-            {
-                ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
-                ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
-            }
-            else if (slope == RailSlopeEnum.TwoUpRaised)
-            {
-                ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
-                ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
-            }
-            else if (slope == RailSlopeEnum.TwoDownRaised)
-            {
-                ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
-                ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
-            }
-        }
         else if (tiletype == 8)
         {
             //TODO: replace the (x == 8) in this part with (IsLiquid(x)) to make it work for all fluids
@@ -982,6 +976,37 @@ public class TerrainChunkTesselatorCi
             {
                 //lower than a normal block
                 vScale = VecCito3f.CitoCtr(1, 1, 0.9f);
+            }
+        }
+        else
+        {
+            int rail = Rail(tiletype);
+
+            if (rail != RailDirectionFlagsEnum.None)
+            {
+                int slope = GetRailSlope(xx, yy, zz);
+                float fSlopeMod = 1.0f;
+                vScale = VecCito3f.CitoCtr(1f, 1f, 0.3f);
+                if (slope == RailSlopeEnum.TwoRightRaised)
+                {
+                    ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
+                }
+                else if (slope == RailSlopeEnum.TwoLeftRaised)
+                {
+                    ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
+                }
+                else if (slope == RailSlopeEnum.TwoUpRaised)
+                {
+                    ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
+                }
+                else if (slope == RailSlopeEnum.TwoDownRaised)
+                {
+                    ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
+                }
             }
         }
         
