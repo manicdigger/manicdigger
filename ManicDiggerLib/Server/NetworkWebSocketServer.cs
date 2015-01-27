@@ -1,6 +1,7 @@
 ﻿using System;
 using WebSocketSharp;
 using WebSocketSharp.Server;
+using System.Collections.Generic;
 
 public class WebSocketNetServer : NetServer
 {
@@ -125,10 +126,6 @@ public class WebSocketGameServer : WebSocketBehavior
 
     public void Send1(byte[] data)
     {
-        SendAsync(data, SendCompleted);
-    }
-
-    void SendCompleted(bool arg)
-    {
+        Send(data);
     }
 }

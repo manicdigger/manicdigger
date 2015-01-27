@@ -42,6 +42,8 @@
     }
 </script>
 
+<script type="text/javascript" src="gunzip.min.js"></script>
+
 
 <script type="text/javascript">
 
@@ -98,7 +100,14 @@ PlatformJs.prototype.aviWriterCreate = function() {
 }
 
 PlatformJs.prototype.bindTexture2d = function(texture) {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
+try
+{
+        gl.bindTexture(gl.TEXTURE_2D, loadedTextures[texture]);
+        }
+        catch(ex)
+        {
+	console.log(ex);
+        }
 }
 
 var textureCanvas;
@@ -350,6 +359,10 @@ PlatformJs.prototype.drawModelData = function(data) {
 }
 
 PlatformJs.prototype.drawModels = function(model, count) {
+	for(var i = 0; i < count; i++)
+	{
+		this.drawModel(model[i]);
+	}
 }
 
 PlatformJs.prototype.enetAvailable = function() {
@@ -568,6 +581,19 @@ PlatformJs.prototype.gzipCompress = function(data, dataLength, retLength) {
 }
 
 PlatformJs.prototype.gzipDecompress = function(compressed, compressedLength, ret) {
+	var compressed2 = [];
+	for(var i=0;i<compressedLength;i++)
+	{
+		compressed2[i] = compressed[i];
+	}
+	
+	var gunzip = new Zlib.Gunzip(compressed2);
+	var decompressed = gunzip.decompress();
+	
+	for(var i=0;i<decompressed.length;i++)
+	{
+		ret[i] = decompressed[i];
+	}
 }
 
 PlatformJs.prototype.initShaders = function() {
@@ -663,6 +689,8 @@ progress.value = 1;
 });
 }
 
+var loadedTextures = [];
+
 PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
 	var texture = gl.createTexture();
 	
@@ -673,7 +701,8 @@ PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
 
 	gl.bindTexture(gl.TEXTURE_2D, null);
 	
-      return texture;
+	loadedTextures.push(texture);
+	return loadedTextures.length - 1;
 }
 
 PlatformJs.prototype.mathAcos = function(p) {
@@ -744,6 +773,7 @@ PlatformJs.prototype.queueUserWorkItem = function(action) {
 
 PlatformJs.prototype.randomCreate = function() {
 	var random = {};
+	random.next = function() { return 0; };
 	random.maxNext = function() { return 0; };
 	return random;
 }

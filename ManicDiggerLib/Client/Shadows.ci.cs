@@ -296,7 +296,7 @@ public class Shadows3x3x3 : IShadows3x3x3
 
     void FloodLight()
     {
-        while (lighttoflood.Count() > 0)
+        while (lighttoflood.Count_() > 0)
         {
             Vector3IntRef k = lighttoflood.Pop();
             FloodLight_(workportionArr, worklightArr, k.X, k.Y, k.Z);
@@ -522,7 +522,7 @@ public class FastStackVector3IntRef
         count = 0;
     }
 
-    internal int Count()
+    internal int Count_()
     {
         return count;
     }

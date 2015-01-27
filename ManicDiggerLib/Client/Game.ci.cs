@@ -1858,7 +1858,7 @@
         platform.AudioPlayLoop(sample, play, restart);
     }
 
-    public int MaterialSlots(int i)
+    public int MaterialSlots_(int i)
     {
         Packet_Item item = d_Inventory.RightHand[i];
         int m = d_Data.BlockIdDirt();
@@ -3072,7 +3072,7 @@
     {
         float xfract = collisionPos[0] - MathFloor(collisionPos[0]);
         float zfract = collisionPos[2] - MathFloor(collisionPos[2]);
-        int activematerial = MaterialSlots(ActiveMaterial);
+        int activematerial = MaterialSlots_(ActiveMaterial);
         int railstart = d_Data.BlockIdRailstart();
         if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
             || activematerial == railstart + RailDirectionFlags.Corners)
