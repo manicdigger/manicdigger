@@ -1038,6 +1038,11 @@ public class GamePlatformNative : GamePlatform
         return System.Diagnostics.Debugger.IsAttached;
     }
 
+    public override string QueryStringValue(string key)
+    {
+        return null;
+    }
+
     #endregion
 
     #region Tcp

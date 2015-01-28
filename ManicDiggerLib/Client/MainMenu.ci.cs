@@ -905,17 +905,21 @@ public class ScreenMain : Screen
         widgets[0] = singleplayer;
         widgets[1] = multiplayer;
         widgets[2] = exit;
+        queryStringChecked = false;
     }
+
     MenuWidget singleplayer;
     MenuWidget multiplayer;
     MenuWidget exit;
     internal float windowX;
     internal float windowY;
+    bool queryStringChecked;
+
     public override void Render(float dt)
     {
         windowX = menu.p.GetCanvasWidth();
         windowY = menu.p.GetCanvasHeight();
-        
+
         float scale = menu.GetScale();
 
         if (menu.assetsLoadProgress.value != 1)
@@ -924,6 +928,8 @@ public class ScreenMain : Screen
             menu.DrawText(s, 20 * scale, windowX / 2, windowY / 2, TextAlign.Center, TextBaseline.Middle);
             return;
         }
+
+        UseQueryStringIpAndPort(menu);
 
         menu.DrawBackground();
         menu.Draw2dQuad(menu.GetTexture("logo.png"), windowX / 2 - 1024 * scale / 2, 0, 1024 * scale, 512 * scale);
@@ -953,6 +959,26 @@ public class ScreenMain : Screen
         exit.sizex = buttonwidth * scale;
         exit.sizey = buttonheight * scale;
         DrawWidgets();
+    }
+
+    void UseQueryStringIpAndPort(MainMenu menu)
+    {
+        if (queryStringChecked)
+        {
+            return;
+        }
+        queryStringChecked = true;
+        string ip = menu.p.QueryStringValue("ip");
+        string port = menu.p.QueryStringValue("port");
+        int portInt = 25565;
+        if (port != null && menu.p.FloatTryParse(port, new FloatRef()))
+        {
+            portInt = menu.p.IntParse(port);
+        }
+        if (ip != null)
+        {
+            menu.StartLogin(null, ip, portInt);
+        }
     }
 
     public override void OnButton(MenuWidget w)

@@ -121,6 +121,7 @@
     public abstract bool IsCached(string md5);
     public abstract bool IsChecksum(string checksum);
     public abstract string DecodeHTMLEntities(string htmlencodedstring);
+    public abstract string QueryStringValue(string key);
     
     // Tcp
     public abstract bool TcpAvailable();
