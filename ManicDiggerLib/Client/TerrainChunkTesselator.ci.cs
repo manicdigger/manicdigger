@@ -387,6 +387,7 @@ public class TerrainChunkTesselatorCi
             }
         }
         
+        
         if (nSide != TileSideEnum.Top && isLowered[tt2])
         {
             //the other block is lowered
@@ -699,7 +700,7 @@ public class TerrainChunkTesselatorCi
         }
 
         int sidetexture = TextureId(tileType, tileSide);
-        ModelData toreturn = GetToReturn(tileType, sidetexture);
+        ModelData toreturn = GetModelData(tileType, sidetexture);
         float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
         float texrecBottom = texrecTop + _texrecHeight;
         int lastelement = toreturn.verticesCount;
@@ -1027,15 +1028,18 @@ public class TerrainChunkTesselatorCi
         return b.DrawType != Packet_DrawTypeEnum.Solid && b.DrawType != Packet_DrawTypeEnum.ClosedDoor;
     }
     
-    public ModelData GetToReturn(int tiletype, int textureid)
+    // <summary>
+    // Get the model to which the vertices for this tiletype should be added
+    // </summary>
+    public ModelData GetModelData(int tiletype, int textureid)
     {
-        if (!(istransparent[tiletype] || IsWater(tiletype)))
+        if (IsWater(tiletype) || (istransparent[tiletype] && !isLowered[tiletype]))
         {
-            return toreturnatlas1d[textureid / game.terrainTexturesPerAtlas];
+            return toreturnatlas1dtransparent[textureid / game.terrainTexturesPerAtlas];
         }
         else
         {
-            return toreturnatlas1dtransparent[textureid / game.terrainTexturesPerAtlas];
+            return toreturnatlas1d[textureid / game.terrainTexturesPerAtlas];
         }
     }
 
@@ -1273,7 +1277,7 @@ public class TerrainChunkTesselatorCi
             int sidetexture = TorchTopTexture;
             float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
             float texrecBottom = texrecTop + _texrecHeight;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
             ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, _texrecLeft, texrecTop, curcolor);
@@ -1293,7 +1297,7 @@ public class TerrainChunkTesselatorCi
             int sidetexture = TorchSideTexture;
             float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
             float texrecBottom = texrecTop + _texrecHeight;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
             ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, _texrecLeft, texrecTop, curcolor);
@@ -1313,7 +1317,7 @@ public class TerrainChunkTesselatorCi
             int sidetexture = TorchSideTexture;
             float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
             float texrecBottom = texrecTop + _texrecHeight;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
             ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, _texrecLeft, texrecBottom, curcolor);
@@ -1333,7 +1337,7 @@ public class TerrainChunkTesselatorCi
             int sidetexture = TorchSideTexture;
             float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
             float texrecBottom = texrecTop + _texrecHeight;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
             ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, _texrecRight, texrecBottom, curcolor);
@@ -1352,7 +1356,7 @@ public class TerrainChunkTesselatorCi
             int sidetexture = TorchSideTexture;
             float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
             float texrecBottom = texrecTop + _texrecHeight;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
             ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, _texrecRight, texrecBottom, curcolor);
@@ -1372,7 +1376,7 @@ public class TerrainChunkTesselatorCi
             int sidetexture = TorchSideTexture;
             float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
             float texrecBottom = texrecTop + _texrecHeight;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
             ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, _texrecLeft, texrecBottom, curcolor);
@@ -1418,6 +1422,7 @@ public class TerrainChunkTesselatorCi
                 ret[retCount.value++] = GetVerticesIndices(toreturnatlas1dtransparent[i], x, y, z, game.d_TerrainTextures.terrainTextures1d()[i % game.d_TerrainTextures.terrainTexturesPerAtlas()], true);
             }
         }
+
         return ret;
     }
 
