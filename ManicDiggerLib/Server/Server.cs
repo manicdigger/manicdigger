@@ -4050,7 +4050,6 @@ public struct Vector3i
         return new Vector3i(this.x + x, this.y + y, this.z + z);
     }
 
-
     public override bool Equals(object obj)
     {
         if (obj is Vector3i)
@@ -4078,60 +4077,6 @@ public struct Vector3i
             hash = hash * 37 + z;
         }
         return hash;
-    }
-    public override string ToString()
-    {
-        return string.Format("[{0}, {1}, {2}]", x, y, z);
-    }
-}
-
-public struct Vector3f
-{
-    public float x;
-    public float y;
-    public float z;
-
-    public Vector3f(float x, float y, float z)
-    {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    public Vector3f Add(Vector3f v)
-    {
-        return Add(v.x, v.y, v.z);
-    }
-
-    public Vector3f Add(float x, float y, float z)
-    {
-        return new Vector3f(this.x + x, this.y + y, this.z + z);
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is Vector3i)
-        {
-            Vector3f other = (Vector3f)obj;
-            return this.x == other.x && this.y == other.y && this.z == other.z;
-        }
-        return base.Equals(obj);
-    }
-
-    public static bool operator ==(Vector3f a, Vector3f b)
-    {
-        return a.x == b.x && a.y == b.y && a.z == b.z;
-    }
-    public static bool operator !=(Vector3f a, Vector3f b)
-    {
-        return !(a.x == b.x && a.y == b.y && a.z == b.z);
-    }
-    public override int GetHashCode()
-    {
-        unchecked
-        {
-            return (x * y * z).GetHashCode();
-        }
     }
     public override string ToString()
     {

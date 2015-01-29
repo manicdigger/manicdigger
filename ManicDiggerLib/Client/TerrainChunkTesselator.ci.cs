@@ -25,7 +25,7 @@ public class TerrainChunkTesselatorCi
     internal float _texrecHeight;
     internal int _colorWhite;
 
-    internal bool option_EnableSmoothLight;
+    internal bool EnableSmoothLight;
 
     internal Game game;
 
@@ -62,7 +62,7 @@ public class TerrainChunkTesselatorCi
 
     public TerrainChunkTesselatorCi()
     {
-        option_EnableSmoothLight = true;
+        EnableSmoothLight = true;
         ENABLE_TEXTURE_TILING = true;
         //option_HardWaterTesselation = true;
         _colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
@@ -623,7 +623,7 @@ public class TerrainChunkTesselatorCi
         fShadowRation[2] = shadowratiomain;
         fShadowRation[3] = shadowratiomain;
 
-        if (option_EnableSmoothLight)
+        if (EnableSmoothLight)
         {
             //Get occupation and int shadowRation
             for (int i = 0; i < TileDirectionEnum.DirectionCounts; i++)
