@@ -54,7 +54,6 @@ public class TerrainChunkTesselatorCi
 
     internal float BlockShadow;
     internal bool option_DoNotDrawEdges;
-    internal bool option_HardWaterTesselation;
     internal float AtiArtifactFix;
 
     VecCito3i[][] c_OcclusionNeighbors;
@@ -361,29 +360,23 @@ public class TerrainChunkTesselatorCi
                     nReturn |= TileSideEnum.ToFlags(TileSideEnum.Top);
                 }
             }
-            else if (option_HardWaterTesselation)
+            //water below?
+            if (IsWater(currentChunk[nPos[TileSideEnum.Bottom]]))
             {
-                //water below?
-                if (IsWater(currentChunk[nPos[TileSideEnum.Bottom]]))
+                //check if a lowered waterblock is below the neighbor
+                if (!IsWater(tt2))
                 {
-                    //check if a lowered waterblock is below the neighbor
-                    if (!IsWater(tt2))
-                    {
-                        int movez = (chunksize + 2) * (chunksize + 2);
-                        int nPos2 = nPos[nSide] - movez;
+                    int movez = (chunksize + 2) * (chunksize + 2);
+                    int nPos2 = nPos[nSide] - movez;
 
-                        if (nPos2 > 0 && IsWater(currentChunk[nPos2]))
-                        {
-                            nReturn |= TileSideEnum.ToFlags(nSide);
-                        }
+                    if (nPos2 > 0 && IsWater(currentChunk[nPos2]))
+                    {
+                        nReturn |= TileSideEnum.ToFlags(nSide);
                     }
-                }
-                else
-                {//no water below, nothing to do
                 }
             }
             else
-            {//hidden
+            {//no water below, nothing to do
             }
         }
         
