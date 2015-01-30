@@ -1,24 +1,32 @@
-﻿// Generates triangles for a single 16x16x16 chunk.
+﻿//Block definition:
+// 
+//      Z
+//      |
+//      | 
+//      |
+//      +----- X
+//     / 
+//    /
+//   Y
+//
+
+// <summary>
+// Generates triangles for a single 16x16x16 chunk.
 // Needs to know the surrounding of the chunk (18x18x18 blocks total).
 // This class is heavily inlined and unrolled for performance.
 // Special-shape (rare) blocks don't need as much performance.
+// </summary>
 public class TerrainChunkTesselatorCi
 {
-    public TerrainChunkTesselatorCi()
-    {
-        one = 1;
-        EnableSmoothLight = true;
-        ENABLE_TEXTURE_TILING = true;
-        ColorWhite = Game.ColorFromArgb(255, 255, 255, 255);
-        BlockShadow = one * 6 / 10;
-        DONOTDRAWEDGES = true;
-        AtiArtifactFix = one * 995 / 1000; // 0.995f;
-        occ = one * 7 / 10; // 0.7f
-        halfocc = one * 4 / 10; // 0.4f
+    //internal float texrecTop;
+    internal float _texrecLeft;
+    internal float _texrecRight;
+    internal float _texrecWidth;
+    internal float _texrecHeight;
+    internal int _colorWhite;
 
-        Yellowness = 1; // lower is yellower//0.7
-        Blueness = one * 9 / 10; // lower is blue-er
-    }
+    internal bool EnableSmoothLight;
+
     internal Game game;
 
     const int chunksize = 16;
@@ -38,20 +46,132 @@ public class TerrainChunkTesselatorCi
     internal const int maxlight = 15;
     internal float maxlightInverse;
     internal bool[] istransparent;
-    internal bool[] ishalfheight;
+    internal bool[] isLowered;
     internal float[] lightlevels;
 
     internal ModelData[] toreturnatlas1d;
     internal ModelData[] toreturnatlas1dtransparent;
 
     internal float BlockShadow;
-    internal bool DONOTDRAWEDGES;
+    internal bool option_DoNotDrawEdges;
     internal float AtiArtifactFix;
 
-    internal float Yellowness;
-    internal float Blueness;
+    VecCito3i[][] c_OcclusionNeighbors;
 
-    float one;
+    float[] ref_blockCornerHeight;
+
+    public TerrainChunkTesselatorCi()
+    {
+        EnableSmoothLight = true;
+        ENABLE_TEXTURE_TILING = true;
+        //option_HardWaterTesselation = true;
+        _colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
+        BlockShadow = 0.6f;
+        option_DoNotDrawEdges = true;
+        AtiArtifactFix = 0.995f;
+        occ = 0.7f;
+        halfocc = 0.4f;
+
+        c_OcclusionNeighbors = new VecCito3i[TileSideEnum.SideCount][];
+
+        //Initialize array
+        for (int i = 0; i < TileSideEnum.SideCount; i++)
+        {
+            c_OcclusionNeighbors[i] = new VecCito3i[TileDirectionEnum.DirectionCounts];
+        }
+
+        //Top
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, 0, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, 1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, 0, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 0, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, -1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Top][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, 1);
+
+        //Left
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Center] = VecCito3i.CitoCtr(-1, 0, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Top] = VecCito3i.CitoCtr(-1, 0, 1);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(-1, 0, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, -1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.Right] = VecCito3i.CitoCtr(-1, 1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(-1, 1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Left][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(-1, 1, -1);
+
+        //Bottom
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, 0, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(-1, 0, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, 0, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 0, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, 1, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Bottom][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, -1, -1);
+
+        //Right
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Center] = VecCito3i.CitoCtr(1, 0, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Top] = VecCito3i.CitoCtr(1, 0, 1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(1, 0, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Left] = VecCito3i.CitoCtr(1, -1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, 1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, -1);
+
+        //Back
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, -1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, -1, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Left] = VecCito3i.CitoCtr(1, -1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Right] = VecCito3i.CitoCtr(-1, -1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(1, -1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(-1, -1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(1, -1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(-1, -1, -1);
+
+        //Front
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, 1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Top] = VecCito3i.CitoCtr(0, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(0, 1, -1);
+
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Left] = VecCito3i.CitoCtr(-1, 1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 1, 0);
+
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(-1, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, 1, 1);
+
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(-1, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Front][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, -1);
+
+    }
+
 
 #if CITO
     macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
@@ -61,6 +181,11 @@ public class TerrainChunkTesselatorCi
         return (h * sizey + y) * sizex + x;
     }
 #endif
+
+    static int Index3dVec(VecCito3i v)
+    {
+        return Index3d(v.x, v.y, v.z, chunksize + 2, chunksize + 2);
+    }
 
     public void Start()
     {
@@ -72,11 +197,17 @@ public class TerrainChunkTesselatorCi
         mapsizey = game.MapSizeY;
         mapsizez = game.MapSizeZ;
         started = true;
+
         istransparent = new bool[GlobalVar.MAX_BLOCKTYPES];
-        ishalfheight = new bool[GlobalVar.MAX_BLOCKTYPES];
-        maxlightInverse = one / maxlight;
+        isLowered = new bool[GlobalVar.MAX_BLOCKTYPES];
+        maxlightInverse = 1f / maxlight;
         terrainTexturesPerAtlas = game.terrainTexturesPerAtlas;
-        terrainTexturesPerAtlasInverse = one / game.terrainTexturesPerAtlas;
+        terrainTexturesPerAtlasInverse = 1f / game.terrainTexturesPerAtlas;
+
+        _texrecWidth = AtiArtifactFix;
+        _texrecHeight = terrainTexturesPerAtlasInverse * AtiArtifactFix;
+        _texrecLeft = 0f;
+        _texrecRight = _texrecLeft + _texrecWidth;
 
         toreturnatlas1dLength = Max(1, GlobalVar.MAX_BLOCKTYPES / game.terrainTexturesPerAtlas);
         toreturnatlas1d = new ModelData[toreturnatlas1dLength];
@@ -120,105 +251,163 @@ public class TerrainChunkTesselatorCi
         return game.IsFluid(game.blocktypes[tt2]);
     }
 
+    // <summary>
+    // Calculate visible block faces for a chunk
+    // This method checks which faces of a block should be drawn
+    // </summary>
+    // <param name="currentChunk"></param>
     public void CalculateVisibleFaces(int[] currentChunk)
     {
         int movez = (chunksize + 2) * (chunksize + 2);
-        //unsafe
+
+        for (int zz = 1; zz < chunksize + 1; zz++)
         {
-            int[] currentChunk_ = currentChunk;
-            bool[] istransparent_ = istransparent;
-            bool[] ishalfheight_ = ishalfheight;
+            for (int yy = 1; yy < chunksize + 1; yy++)
             {
-                for (int zz = 1; zz < chunksize + 1; zz++)
+                int posstart = Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
+                for (int xx = 1; xx < chunksize + 1; xx++)
                 {
-                    for (int yy = 1; yy < chunksize + 1; yy++)
+                    int pos = posstart + xx;
+                    int tt = currentChunk[pos];
+                    if (tt == 0) { continue; } //nothing to do
+
+                    int draw = TileSideFlagsEnum.None;
+
+                    //calculate neighbor block positions
+                    int[] nPos = new int[7];
+                    nPos[TileSideEnum.Top] = pos + movez;
+                    nPos[TileSideEnum.Bottom] = pos - movez;
+                    nPos[TileSideEnum.Front] = pos + (chunksize + 2);
+                    nPos[TileSideEnum.Back] = pos - (chunksize + 2);
+                    nPos[TileSideEnum.Left] = pos - 1;
+                    nPos[TileSideEnum.Right] = pos + 1;
+
+                    bool blnIsFluid = IsWater(tt);
+                    bool blnIsLowered = isLowered[tt];
+
+                    //check which faces are visible
+                    draw |= GetFaceVisibility(TileSideEnum.Top, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Bottom, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Left, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Right, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Back, currentChunk, nPos, blnIsFluid, blnIsLowered);
+                    draw |= GetFaceVisibility(TileSideEnum.Front, currentChunk, nPos, blnIsFluid, blnIsLowered);
+
+                    if (blnIsLowered && draw > TileSideFlagsEnum.None)
                     {
-                        int posstart = Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
-                        for (int xx = 1; xx < chunksize + 1; xx++)
+                        //Check if top needs to be rendered
+                        if (!TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Top))
                         {
-                            int pos = posstart + xx;
-                            int tt = currentChunk_[pos];
-                            if (tt == 0) { continue; }
-                            int draw = TileSideFlagsEnum.None;
-                            //Instead of calculating position index with MapUtil.Index(),
-                            //relative moves are used
-                            //(just addition instead of multiplication - 1.5x - 2x faster)
-                            //z+1
+                            //if one side is visible, top needs to be rendered
+                            if (TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Left | TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back))
                             {
-                                int pos2 = pos + movez;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2]
-                                    || ishalfheight_[tt])
-                                {
-                                    draw |= TileSideFlagsEnum.Top;
-                                }
+                                draw |= TileSideFlagsEnum.Top;
                             }
-                            //z-1
+                        }
+
+                        //check if we have a rail
+                        int nRail = Rail(tt);
+
+                        if (nRail > 0)
+                        {
+                            int nSlope = GetRailSlope(xx, yy, zz);
+
+                            //always draw raised slope sides
+                            switch (nSlope)
                             {
-                                int pos2 = pos - movez;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Bottom;
-                                }
+                                case RailSlopeEnum.TwoDownRaised: draw |= TileSideFlagsEnum.Front | TileSideFlagsEnum.Left | TileSideFlagsEnum.Right; break;
+                                case RailSlopeEnum.TwoUpRaised: draw |= TileSideFlagsEnum.Back | TileSideFlagsEnum.Left | TileSideFlagsEnum.Right; break;
+                                case RailSlopeEnum.TwoLeftRaised: draw |= TileSideFlagsEnum.Left | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
+                                case RailSlopeEnum.TwoRightRaised: draw |= TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
                             }
-                            //x-1
-                            {
-                                int pos2 = pos - 1;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Front;
-                                }
-                            }
-                            //x+1
-                            {
-                                int pos2 = pos + 1;
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Back;
-                                }
-                            }
-                            //y-1
-                            {
-                                int pos2 = pos - (chunksize + 2);
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Left;
-                                }
-                            }
-                            //y-1
-                            {
-                                int pos2 = pos + (chunksize + 2);
-                                int tt2 = currentChunk_[pos2];
-                                if (tt2 == 0
-                                    || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
-                                {
-                                    draw |= TileSideFlagsEnum.Right;
-                                }
-                            }
-                            currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
                         }
                     }
+
+                    //Store drawing flags
+                    currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
                 }
             }
         }
     }
 
-    internal bool EnableSmoothLight;
+    // <summary>
+    // Check if a face should be drawn
+    // </summary>
+    int GetFaceVisibility(int nSide, int[] currentChunk, int[] nPos, bool blnIsFluid, bool blnIsLowered)
+    {
+        int nReturn = TileSideFlagsEnum.None;
+        int nIndex = nPos[nSide];
+
+        int tt2 = currentChunk[nIndex];
+
+        if (tt2 == 0 || (istransparent[tt2] && !isLowered[tt2]) || (IsWater(tt2) && !blnIsFluid))
+        {
+            //Transparent or none block nearby
+            nReturn |= TileSideEnum.ToFlags(nSide);
+        }
+        else if (blnIsFluid && nSide != TileSideEnum.Bottom)
+        {
+            //fluid branch
+
+            int top = currentChunk[nPos[TileSideEnum.Top]];
+
+            if (nSide == TileSideEnum.Top)
+            {
+                //a fluids topside maybe needs to be drawn, even if it is completly surrounded
+                if (top != 0 && !IsWater(top))
+                {
+                    //Is surrounded and has a solid block above
+                    nReturn |= TileSideEnum.ToFlags(TileSideEnum.Top);
+                }
+            }
+            //water below?
+            if (IsWater(currentChunk[nPos[TileSideEnum.Bottom]]))
+            {
+                //check if a lowered waterblock is below the neighbor
+                if (!IsWater(tt2))
+                {
+                    int movez = (chunksize + 2) * (chunksize + 2);
+                    int nPos2 = nPos[nSide] - movez;
+
+                    if (nPos2 > 0 && IsWater(currentChunk[nPos2]))
+                    {
+                        nReturn |= TileSideEnum.ToFlags(nSide);
+                    }
+                }
+            }
+            else
+            {//no water below, nothing to do
+            }
+        }
+        
+        
+        if (nSide != TileSideEnum.Top && isLowered[tt2])
+        {
+            //the other block is lowered
+
+            if (!blnIsLowered)
+            {
+                //The other block is lowered, but this one is not,
+                nReturn |= TileSideEnum.ToFlags(nSide);
+            }
+            else if (nSide == TileSideEnum.Bottom)
+            {
+                //we need the bottom, since we have a lowered block below
+                nReturn |= TileSideFlagsEnum.Bottom;
+            }
+            else
+            {
+                //this one is also lowered
+                //top is always visible, if a lowered is nearby
+                nReturn |= TileSideFlagsEnum.Top;
+            }
+        }
+        else
+        {//hidden
+        }
+        
+        return nReturn;
+    }
 
     public void CalculateTilingCount(int[] currentChunk, int startx, int starty, int startz)
     {
@@ -252,72 +441,38 @@ public class TerrainChunkTesselatorCi
                         int z = startz + zz - 1;
                         int draw = currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)];
                         if (draw == 0) { continue; } //faster
-                        if (EnableSmoothLight)
+
+                        if ((draw & TileSideFlagsEnum.Top) != 0)
                         {
-                            if ((draw & TileSideFlagsEnum.Top) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
-                            }
-                            if ((draw & TileSideFlagsEnum.Bottom) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
-                            }
-                            if ((draw & TileSideFlagsEnum.Front) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
-                            }
-                            if ((draw & TileSideFlagsEnum.Back) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
-                            }
-                            if ((draw & TileSideFlagsEnum.Left) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
-                            }
-                            if ((draw & TileSideFlagsEnum.Right) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
-                            }
+                            int shadowratioTop = GetShadowRatio(xx, yy, zz + 1);
+                            currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = 1;
                         }
-                        else
+                        if ((draw & TileSideFlagsEnum.Bottom) != 0)
                         {
-                            if ((draw & TileSideFlagsEnum.Top) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Top, TileSideFlagsEnum.Top));
-                            }
-                            if ((draw & TileSideFlagsEnum.Bottom) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Bottom, TileSideFlagsEnum.Bottom));
-                            }
-                            if ((draw & TileSideFlagsEnum.Front) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Front, TileSideFlagsEnum.Front));
-                            }
-                            if ((draw & TileSideFlagsEnum.Back) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Back, TileSideFlagsEnum.Back));
-                            }
-                            if ((draw & TileSideFlagsEnum.Left) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Left, TileSideFlagsEnum.Left));
-                            }
-                            if ((draw & TileSideFlagsEnum.Right) != 0)
-                            {
-                                int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Right, TileSideFlagsEnum.Right));
-                            }
+                            int shadowratioTop = GetShadowRatio(xx, yy, zz - 1);
+                            currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = 1;
                         }
+                        if ((draw & TileSideFlagsEnum.Front) != 0)
+                        {
+                            int shadowratioTop = GetShadowRatio(xx - 1, yy, zz);
+                            currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;
+                        }
+                        if ((draw & TileSideFlagsEnum.Back) != 0)
+                        {
+                            int shadowratioTop = GetShadowRatio(xx + 1, yy, zz);
+                            currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;
+                        }
+                        if ((draw & TileSideFlagsEnum.Left) != 0)
+                        {
+                            int shadowratioTop = GetShadowRatio(xx, yy - 1, zz);
+                            currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;
+                        }
+                        if ((draw & TileSideFlagsEnum.Right) != 0)
+                        {
+                            int shadowratioTop = GetShadowRatio(xx, yy + 1, zz);
+                            currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;
+                        }
+
                     }
                 }
             }
@@ -344,7 +499,7 @@ public class TerrainChunkTesselatorCi
             {
                 if (newxx >= chunksize + 1) { break; }
                 if (currentChunk[Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                int shadowratio2 = GetShadowRatio(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
+                int shadowratio2 = GetShadowRatioOld(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
                 if (shadowratio != shadowratio2) { break; }
                 if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                 currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
@@ -361,7 +516,7 @@ public class TerrainChunkTesselatorCi
             {
                 if (newyy >= chunksize + 1) { break; }
                 if (currentChunk[Index3d(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                int shadowratio2 = GetShadowRatio(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
+                int shadowratio2 = GetShadowRatioOld(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
                 if (shadowratio != shadowratio2) { break; }
                 if ((currentChunkDraw16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                 currentChunkDrawCount16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
@@ -378,7 +533,7 @@ public class TerrainChunkTesselatorCi
             {
                 if (newxx >= chunksize + 1) { break; }
                 if (currentChunk[Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                int shadowratio2 = GetShadowRatio(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
+                int shadowratio2 = GetShadowRatioOld(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
                 if (shadowratio != shadowratio2) { break; }
                 if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                 currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
@@ -396,12 +551,25 @@ public class TerrainChunkTesselatorCi
              && (b.DrawType != Packet_DrawTypeEnum.OpenDoorLeft) && (b.DrawType != Packet_DrawTypeEnum.OpenDoorRight) && (b.DrawType != Packet_DrawTypeEnum.ClosedDoor);
     }
 
-    public int GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly, int globalz)
+#if !CITO
+    [System.Obsolete("Use GetShadowRation(int,int,int) instead")]
+#endif
+    public int GetShadowRatioOld(int xx, int yy, int zz, int globalx, int globaly, int globalz)
+    {
+        return GetShadowRatio(xx, yy, zz);
+    }
+
+    public int GetShadowRatioVec(VecCito3i v)
+    {
+        return GetShadowRatio(v.x, v.y, v.z);
+    }
+
+    public int GetShadowRatio(int xx, int yy, int zz)
     {
         return currentChunkShadows18[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
     }
 
-    public void CalculateBlockPolygons(int x, int y, int z)
+    public void BuildBlockPolygons(int x, int y, int z)
     {
         for (int xx = 0; xx < chunksize; xx++)
         {
@@ -409,653 +577,346 @@ public class TerrainChunkTesselatorCi
             {
                 for (int zz = 0; zz < chunksize; zz++)
                 {
-                    int xxx = x * chunksize + xx;
-                    int yyy = y * chunksize + yy;
-                    int zzz = z * chunksize + zz;
                     //Most blocks aren't rendered at all, quickly reject them.
                     if (currentChunkDraw16[Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
                     {
-                        BlockPolygons(xxx, yyy, zzz, currentChunk18);
+                        int xxx = x * chunksize + xx;
+                        int yyy = y * chunksize + yy;
+                        int zzz = z * chunksize + zz;
+
+                        BuildSingleBlockPolygon(xxx, yyy, zzz, currentChunk18);
                     }
                 }
             }
         }
     }
 
-    public void CalculateSmoothBlockPolygons(int x, int y, int z)
+    int ColorMultiply(int color, float fValue)
     {
-        for (int xx = 0; xx < chunksize; xx++)
-        {
-            for (int yy = 0; yy < chunksize; yy++)
-            {
-                for (int zz = 0; zz < chunksize; zz++)
-                {
-                    int xxx = x * chunksize + xx;
-                    int yyy = y * chunksize + yy;
-                    int zzz = z * chunksize + zz;
-                    //Most blocks aren't rendered at all, quickly reject them.
-                    if (currentChunkDraw16[Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
-                    {
-                        SmoothLightBlockPolygons(xxx, yyy, zzz, currentChunk18);
-                    }
-                }
-            }
-        }
-    }
-
-    internal float texrecLeft;
-    internal float texrecTop;
-    internal float texrecWidth;
-    internal float texrecHeight;
-    internal int ColorWhite;
-
-    public void BlockPolygons(int x, int y, int z, int[] currentChunk)
-    {
-        int xx = x % chunksize + 1;
-        int yy = y % chunksize + 1;
-        int zz = z % chunksize + 1;
-        int tt = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
-        if (!isvalid(tt))
-        {
-            return;
-        }
-        byte drawtop = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top];
-        byte drawbottom = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom];
-        byte drawfront = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front];
-        byte drawback = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back];
-        byte drawleft = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left];
-        byte drawright = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right];
-        int tiletype = tt;
-        if (drawtop == 0 && drawbottom == 0 && drawfront == 0 && drawback == 0 && drawleft == 0 && drawright == 0)
-        {
-            return;
-        }
-        int color = ColorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
-        int colorShadowSide = Game.ColorFromArgb(Game.ColorA(color),
-            game.platform.FloatToInt(Game.ColorR(color) * BlockShadow),
-            game.platform.FloatToInt(Game.ColorG(color) * BlockShadow),
-            game.platform.FloatToInt(Game.ColorB(color) * BlockShadow));
-        if (DONOTDRAWEDGES)
-        {
-            //On finite map don't draw borders:
-            //they can't be seen without freemove cheat.
-            if (z == 0) { drawbottom = 0; }
-            if (x == 0) { drawfront = 0; }
-            if (x == mapsizex - 1) { drawback = 0; }
-            if (y == 0) { drawleft = 0; }
-            if (y == mapsizey - 1) { drawright = 0; }
-        }
-        float flowerfix = 0;
-        if (IsFlower(tiletype))
-        {
-            //Draw nothing but 2 faces. Prevents flickering.
-            drawtop = 0;
-            drawbottom = 0;
-            drawback = 0;
-            drawright = 0;
-            drawfront = 1;
-            drawleft = 1;
-            flowerfix = one / 2; // 0.5f;
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
-        {
-            flowerfix = one / 16;
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
-        {
-            drawtop = 0;
-            drawbottom = 0;
-            flowerfix = one * 9 / 10; // 0.9f;
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 0;
-                drawfront = 0;
-                drawleft = 1;
-                drawright = 0;
-            }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 1;
-                drawfront = 0;
-                drawleft = 0;
-                drawright = 0;
-            }
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
-        {
-            drawtop = 0;
-            drawbottom = 0;
-            flowerfix = one * 9 / 10; // 0.9f;
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 0;
-                drawfront = 0;
-                drawleft = 0;
-                drawright = 1;
-            }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 0;
-                drawfront = 1;
-                drawleft = 0;
-                drawright = 0;
-            }
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence || game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
-        {
-            drawtop = 0;
-            drawbottom = 0;
-            drawfront = 0;
-            drawback = 0;
-            drawleft = 0;
-            drawright = 0;
-            flowerfix = one / 2;// 0.5f;
-
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
-            {
-                drawleft = 1;
-            }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
-            {
-                drawfront = 1;
-            }
-            if (drawback == 0 && drawfront == 0 && drawleft == 0 && drawright == 0)
-            {
-                drawback = 1;
-                drawleft = 1;
-            }
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
-        {
-            drawtop = 0;
-            drawbottom = 0;
-            flowerfix = one * 95 / 100; // 0.95f;
-            drawfront = 0;
-            drawback = 0;
-            drawleft = 0;
-            drawright = 0;
-            int ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz, currentChunk);
-            if (ladderAtPositionMatchWall < 0)
-            {
-
-                int ladderbelow = getBestLadderInDirection(xx, yy, zz, currentChunk, -1);
-                int ladderabove = getBestLadderInDirection(xx, yy, zz, currentChunk, 1);
-
-                if (ladderbelow != 0)
-                {
-                    ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz + ladderbelow, currentChunk);
-                }
-                else if (ladderabove != 0)
-                {
-                    ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz + ladderabove, currentChunk);
-                }
-            }
-            switch (ladderAtPositionMatchWall)
-            {
-                case 1: drawleft = 1; break;
-                case 2: drawback = 1; break;
-                case 3: drawfront = 1; break;
-                default: drawright = 1; break;
-            }
-        }
-        int rail = Rail(tiletype);
-        float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
-        if (rail != 0)
-        {
-            blockheight = one * 3 / 10; // 0.3f;
-        }
-        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
-        {
-            blockheight = one * 1 / 2; // 0.5f;
-        }
-        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Flat)
-        {
-            blockheight = one * 1 / 20; // 0.05f;
-        }
-        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
-        {
-            int type = TorchTypeEnum.Normal;
-            if (CanSupportTorch(currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Front; }
-            if (CanSupportTorch(currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Back; }
-            if (CanSupportTorch(currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Left; }
-            if (CanSupportTorch(currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Right; }
-            TorchSideTexture = TextureId(tt, TileSideEnum.Front);
-            TorchTopTexture = TextureId(tt, TileSideEnum.Top);
-            AddTorch(x, y, z, type, currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]);
-            return;
-        }
-        //slope
-        float blockheight00 = blockheight;
-        float blockheight01 = blockheight;
-        float blockheight10 = blockheight;
-        float blockheight11 = blockheight;
-        if (rail != 0)
-        {
-            int slope = GetRailSlope(xx, yy, zz);
-            if (slope == RailSlopeEnum.TwoRightRaised)
-            {
-                blockheight10 += 1;
-                blockheight11 += 1;
-            }
-            if (slope == RailSlopeEnum.TwoLeftRaised)
-            {
-                blockheight00 += 1;
-                blockheight01 += 1;
-            }
-            if (slope == RailSlopeEnum.TwoUpRaised)
-            {
-                blockheight00 += 1;
-                blockheight10 += 1;
-            }
-            if (slope == RailSlopeEnum.TwoDownRaised)
-            {
-                blockheight01 += 1;
-                blockheight11 += 1;
-            }
-        }
-        
-        //if (tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
-        //{
-        //    int waterlevel = tt - PartialWaterBlock;
-
-        //    int[] wl = new int[9];
-        //    wl[0] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[1] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[2] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[3] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[4] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[5] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[6] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[7] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-        //    wl[8] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[0] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[1] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[2] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[3] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[4] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[5] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[6] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[7] = waterLevelsCount - 1; }
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[8] = waterLevelsCount - 1; }
-
-        //    //00: maximum of (-1,-1), (0,-1), (-1,0)
-        //    blockheight00 = ((float)Max(waterlevel, wl[0], wl[1], wl[3]) + 1) / waterLevelsCount;
-        //    blockheight01 = ((float)Max(waterlevel, wl[3], wl[6], wl[7]) + 1) / waterLevelsCount;
-        //    blockheight10 = ((float)Max(waterlevel, wl[1], wl[2], wl[5]) + 1) / waterLevelsCount;
-        //    blockheight11 = ((float)Max(waterlevel, wl[5], wl[7], wl[8]) + 1) / waterLevelsCount;
-
-        //    if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx, yy, zz + 1, chunksize + 2, chunksize + 2)]) > 0)
-        //    {
-        //        blockheight00 = 1;
-        //        blockheight01 = 1;
-        //        blockheight10 = 1;
-        //        blockheight11 = 1;
-        //    }
-        //}
-        
-        int curcolor = color;
-        texrecLeft = 0;//0
-        texrecHeight = terrainTexturesPerAtlasInverse * AtiArtifactFix;
-        //top
-        if (drawtop > 0)
-        {
-            curcolor = color;
-            int shadowratio = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-            if (shadowratio != maxlight)
-            {
-                float shadowratiof = lightlevels[shadowratio];
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Top);
-            int tilecount = drawtop;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-        }
-        //bottom - same as top, but z is 1 less.
-        if (drawbottom > 0)
-        {
-            curcolor = colorShadowSide;
-            int shadowratio = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-            if (shadowratio != maxlight)
-            {
-                float shadowratiof = lightlevels[shadowratio];
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Min(Game.ColorR(curcolor), Game.ColorR(color) * shadowratiof)),
-                    game.platform.FloatToInt(Min(Game.ColorG(curcolor), Game.ColorG(color) * shadowratiof)),
-                    game.platform.FloatToInt(Min(Game.ColorB(curcolor), Game.ColorB(color) * shadowratiof)));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Bottom);
-            int tilecount = drawbottom;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 0, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 1, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 0, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 1, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-        }
-        //front
-        if (drawfront > 0)
-        {
-            curcolor = color;
-            int shadowratio = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-            if (shadowratio != maxlight)
-            {
-                float shadowratiof = lightlevels[shadowratio];
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Front);
-            int tilecount = drawfront;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-        }
-        //back - same as front, but x is 1 greater.
-        if (drawback > 0)
-        {
-            curcolor = color;
-            int shadowratio = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-            if (shadowratio != maxlight)
-            {
-                float shadowratiof = lightlevels[shadowratio];
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Back);
-            int tilecount = drawback;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-        }
-        if (drawleft > 0)
-        {
-            curcolor = colorShadowSide;
-            int shadowratio = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-            if (shadowratio != maxlight)
-            {
-                float shadowratiof = lightlevels[shadowratio];
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Min(Game.ColorR(curcolor), Game.ColorR(color) * shadowratiof)),
-                    game.platform.FloatToInt(Min(Game.ColorG(curcolor), Game.ColorG(color) * shadowratiof)),
-                    game.platform.FloatToInt(Min(Game.ColorB(curcolor), Game.ColorB(color) * shadowratiof)));
-            }
-
-            int sidetexture = TextureId(tiletype, TileSideEnum.Left);
-            int tilecount = drawleft;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix); //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-        }
-        //right - same as left, but y is 1 greater.
-        if (drawright > 0)
-        {
-            curcolor = colorShadowSide;
-            int shadowratio = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-            if (shadowratio != maxlight)
-            {
-                float shadowratiof = lightlevels[shadowratio];
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Min(Game.ColorR(curcolor), Game.ColorR(color) * shadowratiof)),
-                    game.platform.FloatToInt(Min(Game.ColorG(curcolor), Game.ColorG(color) * shadowratiof)),
-                    game.platform.FloatToInt(Min(Game.ColorB(curcolor), Game.ColorB(color) * shadowratiof)));
-            }
-
-            int sidetexture = TextureId(tiletype, TileSideEnum.Right);
-            int tilecount = drawright;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix); //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-        }
+        return Game.ColorFromArgb(Game.ColorA(color),
+            game.platform.FloatToInt(Game.ColorR(color) * fValue),
+            game.platform.FloatToInt(Game.ColorG(color) * fValue),
+            game.platform.FloatToInt(Game.ColorB(color) * fValue));
     }
 
     internal float occ;
     internal float halfocc;
-    internal bool topoccupied;
-    internal bool bottomoccupied;
-    internal bool leftoccupied;
-    internal bool rightoccupied;
-    internal bool topleftoccupied;
-    internal bool toprightoccupied;
-    internal bool bottomleftoccupied;
-    internal bool bottomrightoccupied;
-    
-    public void SmoothLightBlockPolygons(int x, int y, int z, int[] currentChunk)
+
+    void BuildBlockFace(int x, int y, int z, int tileType, VecCito3f vOffset, VecCito3f vScale, int[] currentChunk, int tileSide)
     {
         int xx = x % chunksize + 1;
         int yy = y % chunksize + 1;
         int zz = z % chunksize + 1;
-        int tt = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
-        if (!isvalid(tt))
+        VecCito3i[] vNeighbors = c_OcclusionNeighbors[tileSide];
+
+        int[] shadowration = new int[TileDirectionEnum.DirectionCounts];
+        bool[] occupied = new bool[TileDirectionEnum.DirectionCounts];
+
+        //TODO: is this one bad for performance?
+        int shadowratio = GetShadowRatioVec(vNeighbors[TileDirectionEnum.Center].Add(xx, yy, zz));
+
+        //initialize shadow values
+        float[] fShadowRation = new float[4];
+        float shadowratiomain = lightlevels[shadowratio];
+        fShadowRation[0] = shadowratiomain;
+        fShadowRation[1] = shadowratiomain;
+        fShadowRation[2] = shadowratiomain;
+        fShadowRation[3] = shadowratiomain;
+
+        if (EnableSmoothLight)
+        {
+            //Get occupation and int shadowRation
+            for (int i = 0; i < TileDirectionEnum.DirectionCounts; i++)
+            {
+                VecCito3i vPos = vNeighbors[i].Add(xx, yy, zz);
+                int nBlockType = currentChunk[Index3dVec(vPos)];
+
+                if (nBlockType != 0)
+                {
+                    occupied[i] = !IsTransparentForLight(nBlockType);
+                    shadowration[i] = shadowratio;
+                }
+                else
+                {
+                    occupied[i] = false;
+                    shadowration[i] = GetShadowRatioVec(vPos);
+                }
+            }
+
+            //Shadows
+            CalcShadowRation(TileDirectionEnum.Top, TileDirectionEnum.Left, TileDirectionEnum.TopLeft, CornerEnum.TopLeft, fShadowRation, occupied, shadowration);
+            CalcShadowRation(TileDirectionEnum.Top, TileDirectionEnum.Right, TileDirectionEnum.TopRight, CornerEnum.TopRight, fShadowRation, occupied, shadowration);
+            CalcShadowRation(TileDirectionEnum.Bottom, TileDirectionEnum.Left, TileDirectionEnum.BottomLeft, CornerEnum.BottomLeft, fShadowRation, occupied, shadowration);
+            CalcShadowRation(TileDirectionEnum.Bottom, TileDirectionEnum.Right, TileDirectionEnum.BottomRight, CornerEnum.BottomRight, fShadowRation, occupied, shadowration);
+        }
+        else
+        {//no smoothing
+        }
+
+        DrawBlockFace(x, y, z, tileType, tileSide, vOffset, vScale, vNeighbors, fShadowRation);
+    }
+
+    void CalcShadowRation(int nDir1, int nDirBetween, int nDir2, int nCorner, float[] fShadowRation, bool[] occupied, int[] shadowRationInt)
+    {
+        if (occupied[nDir1] && occupied[nDir2]) 
+        {
+            fShadowRation[nCorner] *= halfocc;
+        }
+        else
+        {
+            byte facesconsidered = 1;
+            if (!occupied[nDir1]) { fShadowRation[nCorner] += lightlevels[shadowRationInt[nDir1]]; facesconsidered++; }
+            if (!occupied[nDir2]) { fShadowRation[nCorner] += lightlevels[shadowRationInt[nDir2]]; facesconsidered++; }
+            if (!occupied[nDirBetween]) { fShadowRation[nCorner] += lightlevels[shadowRationInt[nDirBetween]]; facesconsidered++; }
+            fShadowRation[nCorner] /= facesconsidered;
+
+            if (occupied[nDir1] || occupied[nDir2] || occupied[nDirBetween])
+            {
+                fShadowRation[nCorner] *= occ;
+            }
+        }
+    }
+
+    void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, VecCito3f vOffset, VecCito3f vScale, VecCito3i[] vNeighbors, float[] fShadowRation)
+    {
+        int color = _colorWhite;
+
+        //Darken shadow sides
+        //TODO: keep that?
+        switch (tileSide)
+        {
+            case TileSideEnum.Bottom:
+            case TileSideEnum.Left:
+            case TileSideEnum.Right:
+                color = ColorMultiply(color, BlockShadow);
+                break;
+        }
+
+        int sidetexture = TextureId(tileType, tileSide);
+        ModelData toreturn = GetModelData(tileType, sidetexture);
+        float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
+        float texrecBottom = texrecTop + _texrecHeight;
+        int lastelement = toreturn.verticesCount;
+
+        VecCito3i v;
+        float fSlopeModifier = 0f;
+
+        //Calculate the corner points
+        v = vNeighbors[TileDirectionEnum.TopRight].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopRight);
+        float xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
+        float zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
+        float yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos , yPos, _texrecRight, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopRight]));
+
+        v = vNeighbors[TileDirectionEnum.TopLeft].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopLeft);
+        xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
+        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
+        yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopLeft]));
+
+        v = vNeighbors[TileDirectionEnum.BottomRight].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomRight);
+        xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
+        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
+        yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecRight, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomRight]));
+
+        v = vNeighbors[TileDirectionEnum.BottomLeft].Add(1, 1, 1);
+        fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomLeft);
+        xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
+        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
+        yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomLeft]));
+
+        if (tileSide == TileSideEnum.Right)
+        {
+            //Draw backwards, so the visible side points outward
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+        }
+        else
+        {
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+        }
+    }
+
+    // <summary>
+    // Returns the sides to draw for this block
+    // </summary>
+    int GetToDrawFlags(int xx, int yy, int zz)
+    {
+        int nToDraw = TileSideFlagsEnum.None;
+
+        byte[] drawFlags = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)];
+
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Top, nToDraw, TileSideFlagsEnum.Top);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Bottom, nToDraw, TileSideFlagsEnum.Bottom);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Left, nToDraw, TileSideFlagsEnum.Front);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Right, nToDraw, TileSideFlagsEnum.Back);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Back, nToDraw, TileSideFlagsEnum.Left);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Front, nToDraw, TileSideFlagsEnum.Right);
+
+        return nToDraw;
+    }
+
+    // <summary>
+    // Sets the visible flag in the nCurrentFlags if this side needs to be drawn
+    // </summary>
+    int SetVisibleFlag(byte[] drawFlags, int tileSideIndex, int nCurrentFlags, int nFlagToSet)
+    {
+        if (drawFlags[tileSideIndex] > 0)
+        {
+            return nCurrentFlags | nFlagToSet;
+        }
+        else
+        {
+            return nCurrentFlags;
+        }
+    }
+
+    public void BuildSingleBlockPolygon(int x, int y, int z, int[] currentChunk)
+    {
+        //slope height
+        ref_blockCornerHeight = new float[4];
+
+        int xx = x % chunksize + 1;
+        int yy = y % chunksize + 1;
+        int zz = z % chunksize + 1;
+
+        int nToDraw = GetToDrawFlags(xx, yy, zz);
+        int tiletype = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
+
+        VecCito3f vOffset = VecCito3f.CitoCtr(0, 0, 0);
+        VecCito3f vScale = VecCito3f.CitoCtr(1, 1, 1);
+
+        if (!isvalid(tiletype))
         {
             return;
         }
-        byte drawtop = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top];
-        byte drawbottom = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom];
-        byte drawfront = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front];
-        byte drawback = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back];
-        byte drawleft = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left];
-        byte drawright = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right];
-        int tiletype = tt;
-        if (drawtop == 0 && drawbottom == 0 && drawfront == 0 && drawback == 0 && drawleft == 0 && drawright == 0)
+        if (nToDraw == TileSideFlagsEnum.None)
         {
+            //nothing to do
             return;
         }
-        int color = ColorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
-        int colorShadowSide = Game.ColorFromArgb(Game.ColorA(color),
-            game.platform.FloatToInt(Game.ColorR(color) * BlockShadow),
-            game.platform.FloatToInt(Game.ColorG(color) * BlockShadow),
-            game.platform.FloatToInt(Game.ColorB(color) * BlockShadow));
-        if (DONOTDRAWEDGES)
+
+        _texrecLeft = 0;
+        if (option_DoNotDrawEdges)
         {
             //On finite map don't draw borders:
             //they can't be seen without freemove cheat.
-            if (z == 0) { drawbottom = 0; }
-            if (x == 0) { drawfront = 0; }
-            if (x == mapsizex - 1) { drawback = 0; }
-            if (y == 0) { drawleft = 0; }
-            if (y == mapsizey - 1) { drawright = 0; }
+            if (z == 0) { nToDraw ^= TileSideFlagsEnum.Bottom; }
+            if (x == 0) { nToDraw ^= TileSideFlagsEnum.Front; }
+            if (x == mapsizex - 1) { nToDraw ^= TileSideFlagsEnum.Back; }
+            if (y == 0) { nToDraw ^= TileSideFlagsEnum.Left; }
+            if (y == mapsizey - 1) { nToDraw ^= TileSideFlagsEnum.Right; }
         }
-        float flowerfix = 0;
+        
         if (IsFlower(tiletype))
         {
             //Draw nothing but 2 faces. Prevents flickering.
-            drawtop = 0;
-            drawbottom = 0;
-            drawback = 0;
-            drawright = 0;
-            drawfront = 1;
-            drawleft = 1;
-            flowerfix = one / 2; // 0.5f;
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
-        {
-            flowerfix = one / 16;
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
-        {
-            drawtop = 0;
-            drawbottom = 0;
-            flowerfix = one * 9 / 10; // 0.9f;
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 0;
-                drawfront = 0;
-                drawleft = 1;
-                drawright = 0;
-            }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 1;
-                drawfront = 0;
-                drawleft = 0;
-                drawright = 0;
-            }
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
-        {
-            drawtop = 0;
-            drawbottom = 0;
-            flowerfix = one * 9 / 10; // 0.9f;
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 0;
-                drawfront = 0;
-                drawleft = 0;
-                drawright = 1;
-            }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
-            {
-                drawback = 0;
-                drawfront = 1;
-                drawleft = 0;
-                drawright = 0;
-            }
-        }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence
-            || game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
-        {
-            drawtop = 0;
-            drawbottom = 0;
-            drawfront = 0;
-            drawback = 0;
-            drawleft = 0;
-            drawright = 0;
-            flowerfix = one / 2; // 0.5f;
+            nToDraw = TileSideFlagsEnum.Left | TileSideFlagsEnum.Front;
 
-            //x-1, x+1
-            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
+            vScale = VecCito3f.CitoCtr(0.9f, 0.9f, 1f);
+
+            //Draw Front and Left side
+            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0.05f, 0f), vScale, currentChunk, TileSideEnum.Left);
+            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.05f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Back);
+            return;//done
+        }
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
+        {
+            //Cactus is thin
+            float fScale = 0.875f;
+            float fOffset = (1f - fScale) / 2f;
+
+            //left right
+            VecCito3f vLROffset = VecCito3f.CitoCtr(fOffset, 0, 0);
+            VecCito3f vLRScale = VecCito3f.CitoCtr(fScale, 1f, 1f);
+
+            //front back
+            VecCito3f vFBOffset = VecCito3f.CitoCtr(0, fOffset, 0);
+            VecCito3f vFBScale = VecCito3f.CitoCtr(1f, fScale, 1f);
+
+            //Cactus sides need always to be drawn
+            BuildBlockFace(x, y, z, tiletype, vLROffset, vLRScale, currentChunk, TileSideEnum.Left);
+            BuildBlockFace(x, y, z, tiletype, vLROffset, vLRScale, currentChunk, TileSideEnum.Right);
+
+            BuildBlockFace(x, y, z, tiletype, vFBOffset, vFBScale, currentChunk, TileSideEnum.Front);
+            BuildBlockFace(x, y, z, tiletype, vFBOffset, vFBScale, currentChunk, TileSideEnum.Back);
+
+            //continue to draw top and bottom
+            nToDraw = nToDraw & (TileSideFlagsEnum.Top | TileSideFlagsEnum.Bottom);
+        }
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft ||
+                 game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)//TODO: is this one ever used?
+        {
+            bool blnDrawn = false;
+            
+            //float fOffset = 0.01f; //does not display on certain distances
+            float fOffset = 0.025f;
+
+            //rigt to left
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 &&
+                currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
-                drawleft = 1;
+                nToDraw = TileSideFlagsEnum.Back;
+                vOffset = VecCito3f.CitoCtr(0, fOffset, 0);//do not stuck in the wall
+                blnDrawn = true;
             }
-            //y-1, y+1
-            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
+            //front to back
+            if (!blnDrawn || //draw at least one side
+                currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 &&
+                currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
-                drawfront = 1;
-            }
-            if (drawback == 0 && drawfront == 0 && drawleft == 0 && drawright == 0)
-            {
-                drawback = 1;
-                drawleft = 1;
+                vOffset = VecCito3f.CitoCtr(fOffset, 0, 0);
+                nToDraw = TileSideFlagsEnum.Left;//do not stuck in the wall
             }
         }
-        if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence ||
+                 game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
         {
-            drawtop = 0;
-            drawbottom = 0;
-            flowerfix = one * 95 / 100; // 0.95f;
-            drawfront = 0;
-            drawback = 0;
-            drawleft = 0;
-            drawright = 0;
+            bool blnSideDrawn = false;
+
+            //left to right
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0 ||
+                currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
+            {
+                BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0, -0.5f, 0), vScale, currentChunk, TileSideEnum.Front);
+                blnSideDrawn = true;
+            }
+
+            //front to back
+            if (!blnSideDrawn || // draw at least one side
+                currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0 ||
+                currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
+            {
+                BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0, 0), vScale, currentChunk, TileSideEnum.Left);
+            }
+
+            return;
+        }
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
+        {
+            //bring it away from the wall
+            vOffset = VecCito3f.CitoCtr(0.025f, 0.025f, 0);
+            vScale = VecCito3f.CitoCtr(0.95f, 0.95f, 1f);
+
+            nToDraw = TileSideFlagsEnum.None;
+
             int ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz, currentChunk);
             if (ladderAtPositionMatchWall < 0)
             {
-
                 int ladderbelow = getBestLadderInDirection(xx, yy, zz, currentChunk, -1);
                 int ladderabove = getBestLadderInDirection(xx, yy, zz, currentChunk, 1);
 
@@ -1070,1344 +931,88 @@ public class TerrainChunkTesselatorCi
             }
             switch (ladderAtPositionMatchWall)
             {
-                case 1: drawleft = 1; break;
-                case 2: drawback = 1; break;
-                case 3: drawfront = 1; break;
-                default: drawright = 1; break;
+                    //TODO: remove magic numbers
+                case 1: nToDraw |= TileSideFlagsEnum.Front; break;
+                case 2: nToDraw |= TileSideFlagsEnum.Left; break;
+                case 3: nToDraw |= TileSideFlagsEnum.Right; break;
+                default: nToDraw |= TileSideFlagsEnum.Back; break;
             }
         }
-        int rail = Rail(tiletype);
-        float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
-        if (rail != RailDirectionFlagsEnum.None)
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.HalfHeight)
         {
-            blockheight = one * 3 / 10; // 0.3f;
-            // RailPolygons(myelements, myvertices, x, y, z, rail);
-            // return;
+            vScale = VecCito3f.CitoCtr(1, 1, 0.5f);
         }
-        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Flat)
         {
-            blockheight = one / 2; // 0.5f;
+            vScale = VecCito3f.CitoCtr(1, 1, 0.05f);
         }
-        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Flat)
-        {
-            blockheight = one * 1 / 20; // 0.05f;
-        }
-        if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
+        else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Torch)
         {
             int type = TorchTypeEnum.Normal;
             if (CanSupportTorch(currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Front; }
             if (CanSupportTorch(currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Back; }
             if (CanSupportTorch(currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Left; }
             if (CanSupportTorch(currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Right; }
-            TorchSideTexture = TextureId(tt, TileSideEnum.Front);
-            TorchTopTexture = TextureId(tt, TileSideEnum.Top);
-            AddTorch(x, y, z, type, tt);
+            TorchSideTexture = TextureId(tiletype, TileSideEnum.Left);
+            TorchTopTexture = TextureId(tiletype, TileSideEnum.Top);
+            AddTorch(x, y, z, type, tiletype);
             return;
         }
-        //slope
-        float blockheight00 = blockheight;
-        float blockheight01 = blockheight;
-        float blockheight10 = blockheight;
-        float blockheight11 = blockheight;
-        if (rail != RailDirectionFlagsEnum.None)
+        else if (tiletype == 8)
         {
-            int slope = GetRailSlope(xx, yy, zz);
-            if (slope == RailSlopeEnum.TwoRightRaised)
+            //TODO: replace the (x == 8) in this part with (IsLiquid(x)) to make it work for all fluids
+            if (currentChunk[Index3d(xx, yy, zz - 1, chunksize + 2, chunksize + 2)] == 8)
             {
-                blockheight10 += 1;
-                blockheight11 += 1;
-            }
-            if (slope == RailSlopeEnum.TwoLeftRaised)
-            {
-                blockheight00 += 1;
-                blockheight01 += 1;
-            }
-            if (slope == RailSlopeEnum.TwoUpRaised)
-            {
-                blockheight00 += 1;
-                blockheight10 += 1;
-            }
-            if (slope == RailSlopeEnum.TwoDownRaised)
-            {
-                blockheight01 += 1;
-                blockheight11 += 1;
-            }
-        }
-        //if stationary water block, make slightly lower than terrain
-        if (tt == 8)
-        {
-            //Only do this, when no other water block is above to prevent gaps
-            if (currentChunk[Index3d(xx, yy, zz+1, chunksize + 2, chunksize + 2)] != 8)
-            {
-                blockheight00 = one * 9 / 10; // 0.9f;
-                blockheight01 = one * 9 / 10;
-                blockheight10 = one * 9 / 10;
-                blockheight11 = one * 9 / 10;
-            }
-        }
-        int curcolor = color;
-        int curcolor2 = color;
-        int curcolor3 = color;
-        int curcolor4 = color;
-        texrecLeft = 0;
-        texrecHeight = terrainTexturesPerAtlasInverse * AtiArtifactFix;
-        //top
-        if (drawtop > 0)
-        {
-            bool occluded = false;
-            bool occdirnorthwest = true;
-            //bool applysmoothing = true;
-            int shadowratio = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-            //if (true)
-            {
-                int top = currentChunk[Index3d(xx, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[Index3d(xx, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[Index3d(xx - 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[Index3d(xx + 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int shadowratio3 = shadowratio;//down
-                int shadowratio4 = shadowratio;//right
-                int shadowratio5 = shadowratio;//up
-                int shadowratio2 = shadowratio;//left
-                int shadowratio7 = shadowratio;//leftup
-                int shadowratio6 = shadowratio;//rightup
-                int shadowratio9 = shadowratio;//leftdown
-                int shadowratio8 = shadowratio;//rightdown
-                //check occupied blocks
-                //todo: if top !=0 { if transparentforlight { etc
-                if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
-                else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy - 1, zz + 1, x, y - 1, z + 1); }
-                if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
-                else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy - 1, zz + 1, x - 1, y, z + 1); }
-                if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
-                else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy - 1, zz + 1, x - 1, y, z + 1); }
-                if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
-                else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy, zz + 1, x - 1, y, z + 1); }
-                if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
-                else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy, zz + 1, x + 1, y, z + 1); }
-                if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
-                else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy + 1, zz + 1, x, y + 1, z + 1); }
-                if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
-                else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy + 1, zz + 1, x - 1, y, z + 1); }
-                if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
-                else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy + 1, zz + 1, x - 1, y, z + 1); }
-
-
-                float shadowratiomain = lightlevels[shadowratio];
-                float shadowratiof5 = shadowratiomain;
-                float shadowratiof4 = shadowratiomain;
-                float shadowratiof3 = shadowratiomain;
-                float shadowratiof2 = shadowratiomain;
-
-                //get occupied blocks for ao and smoothing
-
-                if (shadowratio9 == shadowratio8 && shadowratio8 == shadowratio7 && shadowratio7 == shadowratio6 &&
-                    shadowratio6 == shadowratio5 && shadowratio5 == shadowratio4 && shadowratio4 == shadowratio3 &&
-                    shadowratio3 == shadowratio2 && shadowratio2 == shadowratio)
-                {
-                    //no shadow tiles near, just do occlusion
-                    //goto done;
-                }
-                else
-                {
-                    //topleft vertex
-                    if (leftoccupied && topoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
-                        if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
-                        shadowratiof4 /= facesconsidered;
-                    }
-                    //topright vertex
-                    if (topoccupied && rightoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
-                        if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
-                        shadowratiof5 /= facesconsidered;
-                    }
-                    //bottomright vertex
-                    if (bottomoccupied && rightoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
-                        if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
-                        shadowratiof3 /= facesconsidered;
-                    }
-                    //bottomleft
-                    if (bottomoccupied && leftoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
-                        if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
-                        shadowratiof2 /= facesconsidered;
-                    }
-                }
-            // done:
-                //ambient occlusion, corners with 2 blocks get full occlusion, others half
-                if (topoccupied && rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= halfocc; }
-                else
-                {
-                    if (topoccupied || rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                    else if (toprightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                }
-            // next:
-                if (topoccupied && leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= halfocc; }
-                else
-                {
-                    if (topoccupied || leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                    else if (topleftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                }
-            // next1:
-                if (bottomoccupied && rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                    else if (bottomrightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                }
-            // next2:
-                if (bottomoccupied && leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                    else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                }
-            // next3:
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof2 * Yellowness));
-
-                curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof3 * Yellowness));
-
-                curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof4 * Yellowness));
-
-                curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof5 * Yellowness));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Top);
-            int tilecount = drawtop;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = AtiArtifactFix; //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3);//leftbottom 4
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1, texrecLeft, texrecBottom, curcolor);//rightbottom 2
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor4);//topleft  3
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1, texrecRight, texrecBottom, curcolor2);//topright  * tilecount
-
-            //revert triangles to fix gradient problem
-            //if occluded, revert to proper occlusion direction
-
-            if (occluded)
-            {
-                if (!occdirnorthwest)
-                {
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 0));//0
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 3));//2
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 3));//1
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 2));//3
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 0));//2
-                }
-                else
-                {
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 0));//0
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 2));//2
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 3));//3
-                    ModelDataTool.AddIndex(toreturn,(lastelement + 2));//2
-                }
-            }
-
-            else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
+                //flow down in the lower block
+                vOffset = VecCito3f.CitoCtr(0, 0, -0.1f);
             }
             else
             {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                //lower than a normal block
+                vScale = VecCito3f.CitoCtr(1, 1, 0.9f);
             }
         }
-
-
-
-        //bottom - same as top, but z is 1 less.
-        if (drawbottom > 0)
+        else
         {
-            bool occluded = false;
-            bool occdirnorthwest = true;
-            //bool applysmoothing = true;
-            int shadowratio = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-            //if (true)
+            int rail = Rail(tiletype);
+
+            if (rail != RailDirectionFlagsEnum.None)
             {
-                int top = currentChunk[Index3d(xx, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[Index3d(xx, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[Index3d(xx - 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[Index3d(xx + 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int shadowratio3 = shadowratio;//down
-                int shadowratio4 = shadowratio;//right
-                int shadowratio5 = shadowratio;//up
-                int shadowratio2 = shadowratio;//left
-                int shadowratio7 = shadowratio;//leftup
-                int shadowratio6 = shadowratio;//rightup
-                int shadowratio9 = shadowratio;//leftdown
-                int shadowratio8 = shadowratio;//rightdown
-                //check occupied blocks
-                //todo: if top !=0 { if transparentforlight { etc
-
-                if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
-                else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy + 1, zz - 1, x, y - 1, z - 1); }
-                if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
-                else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy + 1, zz - 1, x - 1, y, z - 1); }
-                if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
-                else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy + 1, zz - 1, x - 1, y, z - 1); }
-                if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
-                else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy, zz - 1, x - 1, y, z - 1); }
-                if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
-                else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy, zz - 1, x + 1, y, z - 1); }
-                if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
-                else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy - 1, zz - 1, x, y + 1, z - 1); }
-                if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
-                else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy - 1, zz - 1, x - 1, y, z - 1); }
-                if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
-                else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy - 1, zz - 1, x - 1, y, z - 1); }
-
-
-                float shadowratiomain = lightlevels[shadowratio];
-                float shadowratiof5 = shadowratiomain;
-                float shadowratiof4 = shadowratiomain;
-                float shadowratiof3 = shadowratiomain;
-                float shadowratiof2 = shadowratiomain;
-
-                //get occupied blocks for ao and smoothing
-
-                if (shadowratio9 == shadowratio8 && shadowratio8 == shadowratio7 && shadowratio7 == shadowratio6 &&
-                    shadowratio6 == shadowratio5 && shadowratio5 == shadowratio4 && shadowratio4 == shadowratio3 &&
-                    shadowratio3 == shadowratio2 && shadowratio2 == shadowratio)
+                int slope = GetRailSlope(xx, yy, zz);
+                float fSlopeMod = 1.0f;
+                vScale = VecCito3f.CitoCtr(1f, 1f, 0.3f);
+                if (slope == RailSlopeEnum.TwoRightRaised)
                 {
-                    //no shadow tiles near, just do occlusion
-                    //goto done;
+                    ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
                 }
-                else
+                else if (slope == RailSlopeEnum.TwoLeftRaised)
                 {
-                    //topleft vertex
-                    if (leftoccupied && topoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
-                        if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
-                        shadowratiof4 /= facesconsidered;
-                    }
-                // toprightvertex:
-                    //topright vertex
-                    if (topoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
-                        if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
-                        shadowratiof5 /= facesconsidered;
-                    }
-                // bottomrightvertex:
-                    //bottomright vertex
-                    if (bottomoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
-                        if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
-                        shadowratiof3 /= facesconsidered;
-                    }
-                // bottomleftvertex:
-                    //bottomleft
-                    if (bottomoccupied && leftoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
-                        if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
-                        shadowratiof2 /= facesconsidered;
-                    }
+                    ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
                 }
-            // done:
-                //ambient occlusion, corners with 2 blocks get full occlusion, others half
-                if (topoccupied && rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= halfocc; }
-                else
+                else if (slope == RailSlopeEnum.TwoUpRaised)
                 {
-                    if (topoccupied || rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                    else if (toprightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
+                    ref_blockCornerHeight[CornerEnum.TopLeft] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
                 }
-            // next:
-                if (topoccupied && leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= halfocc; }
-                else
+                else if (slope == RailSlopeEnum.TwoDownRaised)
                 {
-                    if (topoccupied || leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                    else if (topleftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                }
-            // next1:
-                if (bottomoccupied && rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                    else if (bottomrightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                }
-            // next2:
-                if (bottomoccupied && leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                    else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                }
-            // next3:
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof2 * Yellowness));
-
-                curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof3 * Yellowness));
-
-                curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof4 * Yellowness));
-
-                curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof5 * Yellowness));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Bottom);
-            int tilecount = drawbottom;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = AtiArtifactFix; //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 0, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 1, texrecLeft, texrecBottom, curcolor3);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 0, texrecRight, texrecTop, curcolor2);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 1, texrecRight, texrecBottom, curcolor4);
-
-            //revert triangles to fix gradient problem
-            //if occluded, revert to proper occlusion direction
-
-            if (occluded)
-            {
-                if (occdirnorthwest)
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
-                }
-                else
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                    ref_blockCornerHeight[CornerEnum.BottomLeft] = fSlopeMod;
+                    ref_blockCornerHeight[CornerEnum.BottomRight] = fSlopeMod;
                 }
             }
-
-            else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-            }
-            else
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
-            }
-
         }
-        //front
-        if (drawfront > 0)
+        
+        //Draw faces
+        for (int i = 0; i < TileSideEnum.SideCount; i++)
         {
-            bool occluded = false;
-            bool occdirnorthwest = true;
-            //bool applysmoothing = true;
-            int shadowratio = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-            //if (true)
+            if ((nToDraw & TileSideEnum.ToFlags(i)) != TileSideFlagsEnum.None)
             {
-                int top = currentChunk[Index3d(xx - 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[Index3d(xx - 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int shadowratio3 = shadowratio;//down
-                int shadowratio4 = shadowratio;//right
-                int shadowratio5 = shadowratio;//up
-                int shadowratio2 = shadowratio;//left
-                int shadowratio7 = shadowratio;//leftup
-                int shadowratio6 = shadowratio;//rightup
-                int shadowratio9 = shadowratio;//leftdown
-                int shadowratio8 = shadowratio;//rightdown
-                //check occupied blocks
-                //todo: if top !=0 { if transparentforlight { etc
-                if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
-                else { topoccupied = false; shadowratio5 = GetShadowRatio(xx - 1, yy, zz + 1, x - 1, y, z + 1); }
-                if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
-                else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy - 1, zz + 1, x - 1, y - 1, z + 1); }
-                if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
-                else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx - 1, yy + 1, zz + 1, x - 1, y + 1, z + 1); }
-                if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
-                else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy - 1, zz, x - 1, y - 1, z); }
-                if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
-                else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx - 1, yy + 1, zz, x - 1, y + 1, z); }
-                if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
-                else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx - 1, yy, zz - 1, x - 1, y, z - 1); }
-                if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
-                else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx - 1, yy + 1, zz - 1, x - 1, y + 1, z - 1); }
-                if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
-                else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy - 1, zz - 1, x - 1, y - 1, z - 1); }
-
-
-                float shadowratiomain = lightlevels[shadowratio];
-                float shadowratiof5 = shadowratiomain;
-                float shadowratiof4 = shadowratiomain;
-                float shadowratiof3 = shadowratiomain;
-                float shadowratiof2 = shadowratiomain;
-
-                if (shadowratio9 == shadowratio8 && shadowratio8 == shadowratio7 && shadowratio7 == shadowratio6 &&
-                    shadowratio6 == shadowratio5 && shadowratio5 == shadowratio4 && shadowratio4 == shadowratio3 &&
-                    shadowratio3 == shadowratio2 && shadowratio2 == shadowratio)
-                {
-                    //no shadow tiles near, just do occlusion
-                    //goto done;
-                }
-                else
-                {
-                    //topleft vertex
-                    if (leftoccupied && topoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
-                        if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
-                        shadowratiof4 /= facesconsidered;
-                    }
-                // toprightvertex:
-                    //topright vertex
-                    if (topoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
-                        if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
-                        shadowratiof5 /= facesconsidered;
-                    }
-                // bottomrightvertex:
-                    //bottomright vertex
-                    if (bottomoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
-                        if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
-                        shadowratiof3 /= facesconsidered;
-                    }
-                // bottomleftvertex:
-                    //bottomleft
-                    if (bottomoccupied && leftoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
-                        if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
-                        shadowratiof2 /= facesconsidered;
-                    }
-                }
-            // done:
-                //ambient occlusion, corners with 2 blocks get full occlusion, others half
-                if (topoccupied && rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= halfocc; }
-                else
-                {
-                    if (topoccupied || rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                    else if (toprightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                }
-            // next:
-                if (topoccupied && leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= halfocc; }
-                else
-                {
-                    if (topoccupied || leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                    else if (topleftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                }
-            // next1:
-                if (bottomoccupied && rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                    else if (bottomrightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                }
-            // next2:
-                if (bottomoccupied && leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                    else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                }
-            // next3:
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof2 * Yellowness));
-
-                curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof3 * Yellowness));
-
-                curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof4 * Yellowness));
-
-                curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof5 * Yellowness));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Front);
-            int tilecount = drawfront;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = AtiArtifactFix; //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor2);
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3);
-            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor4);
-            if (occluded)
-            {
-                if (!occdirnorthwest)
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                }
-                else
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
-                }
-            }
-
-            else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-            }
-            else
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
-            }
-
-        }
-        //back - same as front, but x is 1 greater.
-        if (drawback > 0)
-        {
-            bool occluded = false;
-            bool occdirnorthwest = true;
-            //bool applysmoothing = true;
-            int shadowratio = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-            //if (true)
-            {
-                int top = currentChunk[Index3d(xx + 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[Index3d(xx + 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int shadowratio3 = shadowratio;//down
-                int shadowratio4 = shadowratio;//right
-                int shadowratio5 = shadowratio;//up
-                int shadowratio2 = shadowratio;//left
-                int shadowratio7 = shadowratio;//leftup
-                int shadowratio6 = shadowratio;//rightup
-                int shadowratio9 = shadowratio;//leftdown
-                int shadowratio8 = shadowratio;//rightdown
-                //check occupied blocks
-                //todo: if top !=0 { if transparentforlight { etc
-                if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
-                else { topoccupied = false; shadowratio5 = GetShadowRatio(xx + 1, yy, zz + 1, x - 1, y, z + 1); }
-                if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
-                else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx + 1, yy - 1, zz + 1, x - 1, y - 1, z + 1); }
-                if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
-                else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy + 1, zz + 1, x - 1, y + 1, z + 1); }
-                if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
-                else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx + 1, yy - 1, zz, x - 1, y - 1, z); }
-                if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
-                else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy + 1, zz, x - 1, y + 1, z); }
-                if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
-                else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx + 1, yy, zz - 1, x - 1, y, z - 1); }
-                if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
-                else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy + 1, zz - 1, x - 1, y + 1, z - 1); }
-                if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
-                else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx + 1, yy - 1, zz - 1, x - 1, y - 1, z - 1); }
-
-
-                float shadowratiomain = lightlevels[shadowratio];
-                float shadowratiof5 = shadowratiomain;
-                float shadowratiof4 = shadowratiomain;
-                float shadowratiof3 = shadowratiomain;
-                float shadowratiof2 = shadowratiomain;
-
-                if (shadowratio9 == shadowratio8 && shadowratio8 == shadowratio7 && shadowratio7 == shadowratio6 &&
-                    shadowratio6 == shadowratio5 && shadowratio5 == shadowratio4 && shadowratio4 == shadowratio3 &&
-                    shadowratio3 == shadowratio2 && shadowratio2 == shadowratio)
-                {
-                    //no shadow tiles near, just do occlusion
-                    //goto done;
-                }
-                else
-                {
-                    //topleft vertex
-                    if (leftoccupied && topoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
-                        if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
-                        shadowratiof4 /= facesconsidered;
-                    }
-                // toprightvertex:
-                    //topright vertex
-                    if (topoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
-                        if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
-                        shadowratiof5 /= facesconsidered;
-                    }
-                // bottomrightvertex:
-                    //bottomright vertex
-                    if (bottomoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
-                        if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
-                        shadowratiof3 /= facesconsidered;
-                    }
-                // bottomleftvertex:
-                    //bottomleft
-                    if (bottomoccupied && leftoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
-                        if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
-                        shadowratiof2 /= facesconsidered;
-                    }
-                }
-            // done:
-                //ambient occlusion, corners with 2 blocks get full occlusion, others half
-                if (topoccupied && rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= halfocc; }
-                else
-                {
-                    if (topoccupied || rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                    else if (toprightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                }
-            // next:
-                if (topoccupied && leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= halfocc; }
-                else
-                {
-                    if (topoccupied || leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                    else if (topleftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                }
-            // next1:
-                if (bottomoccupied && rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                    else if (bottomrightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                }
-            // next2:
-                if (bottomoccupied && leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                    else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                }
-            // next3:
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof2 * Yellowness));
-
-                curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof3 * Yellowness));
-
-                curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof4 * Yellowness));
-
-                curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(color) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorG(color) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorB(color) * shadowratiof5 * Yellowness));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Back);
-            int tilecount = drawback;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = AtiArtifactFix; //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor2);
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor3);
-            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor4);
-            if (occluded)
-            {
-                if (!occdirnorthwest)
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                }
-                else
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
-                }
-            }
-
-            else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-            }
-            else
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
+                BuildBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, i);
             }
         }
-        if (drawleft > 0)
-        {
-            bool occluded = false;
-            bool occdirnorthwest = true;
-            //bool applysmoothing = true;
-            int shadowratio = GetShadowRatio(xx, yy - 1, zz, x + 1, y, z);
-            //if (true)
-            {
-                int top = currentChunk[Index3d(xx, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[Index3d(xx, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int shadowratio3 = shadowratio;//down
-                int shadowratio4 = shadowratio;//right
-                int shadowratio5 = shadowratio;//up
-                int shadowratio2 = shadowratio;//left
-                int shadowratio7 = shadowratio;//leftup
-                int shadowratio6 = shadowratio;//rightup
-                int shadowratio9 = shadowratio;//leftdown
-                int shadowratio8 = shadowratio;//rightdown
-                //check occupied blocks
-                //todo: if top !=0 { if transparentforlight { etc
-                if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
-                else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy - 1, zz + 1, x - 1, y, z + 1); }
-                if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
-                else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx + 1, yy - 1, zz + 1, x - 1, y - 1, z + 1); }
-                if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
-                else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx - 1, yy - 1, zz + 1, x - 1, y + 1, z + 1); }
-                if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
-                else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx + 1, yy - 1, zz, x - 1, y - 1, z); }
-                if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
-                else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx - 1, yy - 1, zz, x - 1, y + 1, z); }
-                if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
-                else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy - 1, zz - 1, x - 1, y, z - 1); }
-                if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
-                else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx - 1, yy - 1, zz - 1, x - 1, y + 1, z - 1); }
-                if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
-                else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx + 1, yy - 1, zz - 1, x - 1, y - 1, z - 1); }
 
-
-                float shadowratiomain = lightlevels[shadowratio];
-                float shadowratiof5 = shadowratiomain;
-                float shadowratiof4 = shadowratiomain;
-                float shadowratiof3 = shadowratiomain;
-                float shadowratiof2 = shadowratiomain;
-
-                if (shadowratio9 == shadowratio8 && shadowratio8 == shadowratio7 && shadowratio7 == shadowratio6 &&
-                    shadowratio6 == shadowratio5 && shadowratio5 == shadowratio4 && shadowratio4 == shadowratio3 &&
-                    shadowratio3 == shadowratio2 && shadowratio2 == shadowratio)
-                {
-                    //no shadow tiles near, just do occlusion
-                    // goto done;
-                }
-                else
-                {
-                    //topleft vertex
-                    if (leftoccupied && topoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
-                        if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
-                        shadowratiof4 /= facesconsidered;
-                    }
-                // toprightvertex:
-                    //topright vertex
-                    if (topoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
-                        if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
-                        shadowratiof5 /= facesconsidered;
-                    }
-                // bottomrightvertex:
-                    //bottomright vertex
-                    if (bottomoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
-                        if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
-                        shadowratiof3 /= facesconsidered;
-                    }
-                // bottomleftvertex:
-                    //bottomleft
-                    if (bottomoccupied && leftoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
-                        if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
-                        shadowratiof2 /= facesconsidered;
-                    }
-                }
-            // done:
-                //ambient occlusion, corners with 2 blocks get full occlusion, others half
-                if (topoccupied && rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= halfocc; }
-                else
-                {
-                    if (topoccupied || rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                    else if (toprightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                }
-            // next:
-                if (topoccupied && leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= halfocc; }
-                else
-                {
-                    if (topoccupied || leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                    else if (topleftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                }
-            // next1:
-                if (bottomoccupied && rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                    else if (bottomrightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                }
-            // next2:
-                if (bottomoccupied && leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                    else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                }
-            // next3:
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof2 * Yellowness));
-
-                curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof3 * Yellowness));
-
-                curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof4 * Yellowness));
-
-                curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof5 * Yellowness));
-            }
-
-            int sidetexture = TextureId(tiletype, TileSideEnum.Left);
-            int tilecount = drawleft;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = AtiArtifactFix; //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor2);
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor4);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor3);
-            if (occluded)
-            {
-                if (occdirnorthwest)
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                }
-                else
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                }
-            }
-
-            else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-            }
-            else
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-            }
-        }
-        //right - same as left, but y is 1 greater.
-        if (drawright > 0)
-        {
-            bool occluded = false;
-            bool occdirnorthwest = true;
-            //bool applysmoothing = true;
-            int shadowratio = GetShadowRatio(xx, yy + 1, zz, x + 1, y, z);
-            //if (true)
-            {
-                int top = currentChunk[Index3d(xx, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[Index3d(xx, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int shadowratio3 = shadowratio;//down
-                int shadowratio4 = shadowratio;//right
-                int shadowratio5 = shadowratio;//up
-                int shadowratio2 = shadowratio;//left
-                int shadowratio7 = shadowratio;//leftup
-                int shadowratio6 = shadowratio;//rightup
-                int shadowratio9 = shadowratio;//leftdown
-                int shadowratio8 = shadowratio;//rightdown
-                //check occupied blocks
-                //todo: if top !=0 { if transparentforlight { etc
-                if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
-                else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy + 1, zz + 1, x - 1, y, z + 1); }
-                if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
-                else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy + 1, zz + 1, x - 1, y - 1, z + 1); }
-                if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
-                else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy + 1, zz + 1, x - 1, y + 1, z + 1); }
-                if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
-                else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy + 1, zz, x - 1, y - 1, z); }
-                if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
-                else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy + 1, zz, x - 1, y + 1, z); }
-                if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
-                else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy + 1, zz - 1, x - 1, y, z - 1); }
-                if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
-                else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy + 1, zz - 1, x - 1, y + 1, z - 1); }
-                if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
-                else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy + 1, zz - 1, x - 1, y - 1, z - 1); }
-
-
-                float shadowratiomain = lightlevels[shadowratio];
-                float shadowratiof5 = shadowratiomain;
-                float shadowratiof4 = shadowratiomain;
-                float shadowratiof3 = shadowratiomain;
-                float shadowratiof2 = shadowratiomain;
-
-                if (shadowratio9 == shadowratio8 && shadowratio8 == shadowratio7 && shadowratio7 == shadowratio6 &&
-                    shadowratio6 == shadowratio5 && shadowratio5 == shadowratio4 && shadowratio4 == shadowratio3 &&
-                    shadowratio3 == shadowratio2 && shadowratio2 == shadowratio)
-                {
-                    //no shadow tiles near, just do occlusion
-                    // goto done;
-                }
-                else
-                {
-                    //topleft vertex
-                    if (leftoccupied && topoccupied) { }
-                    else
-                    {
-                        byte facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
-                        if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
-                        shadowratiof4 /= facesconsidered;
-                    }
-                // toprightvertex:
-                    //topright vertex
-                    if (topoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
-                        if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
-                        shadowratiof5 /= facesconsidered;
-                    }
-                // bottomrightvertex:
-                    //bottomright vertex
-                    if (bottomoccupied && rightoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
-                        if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
-                        if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
-                        shadowratiof3 /= facesconsidered;
-                    }
-                // bottomleftvertex:
-                    //bottomleft
-                    if (bottomoccupied && leftoccupied) { }
-                    else
-                    {
-                        int facesconsidered = 4;
-                        if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
-                        if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
-                        if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
-                        shadowratiof2 /= facesconsidered;
-                    }
-                }
-            // done:
-                //ambient occlusion, corners with 2 blocks get full occlusion, others half
-                if (topoccupied && rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= halfocc; }
-                else
-                {
-                    if (topoccupied || rightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                    else if (toprightoccupied) { occluded = true; occdirnorthwest = false; shadowratiof5 *= occ; }
-                }
-            // next:
-                if (topoccupied && leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= halfocc; }
-                else
-                {
-                    if (topoccupied || leftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                    else if (topleftoccupied) { occluded = true; occdirnorthwest = true; shadowratiof4 *= occ; }
-                }
-            // next1:
-                if (bottomoccupied && rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || rightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                    else if (bottomrightoccupied) { occluded = true; occdirnorthwest = true; shadowratiof3 *= occ; }
-                }
-            // next2:
-                if (bottomoccupied && leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= halfocc; }
-                else
-                {
-                    if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                    else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
-                }
-            // next3:
-                curcolor = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof2),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof2 * Yellowness));
-
-                curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof3),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof3 * Yellowness));
-
-                curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof4),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof4 * Yellowness));
-
-                curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
-                    game.platform.FloatToInt(Game.ColorR(colorShadowSide) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorG(colorShadowSide) * shadowratiof5),
-                    game.platform.FloatToInt(Game.ColorB(colorShadowSide) * shadowratiof5 * Yellowness));
-            }
-            int sidetexture = TextureId(tiletype, TileSideEnum.Right);
-            int tilecount = drawright;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = AtiArtifactFix; //tilingcount*fix
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor3);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor2);
-            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor4);
-            if (occluded)
-            {
-                if (occdirnorthwest)
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                }
-                else
-                {
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
-                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                }
-            }
-
-            else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
-            }
-            else
-            {
-                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//3
-                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
-                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
-            }
-        }
     }
 
     public bool IsTransparentForLight(int block)
@@ -2416,15 +1021,18 @@ public class TerrainChunkTesselatorCi
         return b.DrawType != Packet_DrawTypeEnum.Solid && b.DrawType != Packet_DrawTypeEnum.ClosedDoor;
     }
     
-    public ModelData GetToReturn(int tiletype, int textureid)
+    // <summary>
+    // Get the model to which the vertices for this tiletype should be added
+    // </summary>
+    public ModelData GetModelData(int tiletype, int textureid)
     {
-        if (!(istransparent[tiletype] || IsWater(tiletype)))
+        if (IsWater(tiletype) || (istransparent[tiletype] && !isLowered[tiletype]))
         {
-            return toreturnatlas1d[textureid / game.terrainTexturesPerAtlas];
+            return toreturnatlas1dtransparent[textureid / game.terrainTexturesPerAtlas];
         }
         else
         {
-            return toreturnatlas1dtransparent[textureid / game.terrainTexturesPerAtlas];
+            return toreturnatlas1d[textureid / game.terrainTexturesPerAtlas];
         }
     }
 
@@ -2604,12 +1212,12 @@ public class TerrainChunkTesselatorCi
     {
         TerrainChunkTesselatorCi d_TerainRenderer = this;
 
-        int curcolor = ColorWhite;
-        float torchsizexy = one * 16 / 100; // 0.16f;
-        float topx = one / 2 - torchsizexy / 2;
-        float topy = one / 2 - torchsizexy / 2;
-        float bottomx = one / 2 - torchsizexy / 2;
-        float bottomy = one / 2 - torchsizexy / 2;
+        int curcolor = _colorWhite;
+        float torchsizexy = 0.16f;
+        float topx = 0.5f - torchsizexy / 2;
+        float topy = 0.5f - torchsizexy / 2;
+        float bottomx = 0.5f - torchsizexy / 2;
+        float bottomy = 0.5f - torchsizexy / 2;
 
         topx += x;
         topy += y;
@@ -2621,33 +1229,33 @@ public class TerrainChunkTesselatorCi
         if (type == TorchTypeEnum.Left) { bottomy = y - torchsizexy; }
         if (type == TorchTypeEnum.Right) { bottomy = y + 1; }
 
-        Vector3Ref top00 = Vector3Ref.Create(topx, z + one * 9 / 10, topy);
-        Vector3Ref top01 = Vector3Ref.Create(topx, z + one * 9 / 10, topy + torchsizexy);
-        Vector3Ref top10 = Vector3Ref.Create(topx + torchsizexy, z + one * 9 / 10, topy);
-        Vector3Ref top11 = Vector3Ref.Create(topx + torchsizexy, z + one * 9 / 10, topy + torchsizexy);
+        Vector3Ref top00 = Vector3Ref.Create(topx, z + 0.9f, topy);
+        Vector3Ref top01 = Vector3Ref.Create(topx, z + 0.9f, topy + torchsizexy);
+        Vector3Ref top10 = Vector3Ref.Create(topx + torchsizexy, z + 0.9f, topy);
+        Vector3Ref top11 = Vector3Ref.Create(topx + torchsizexy, z + 0.9f, topy + torchsizexy);
 
         if (type == TorchTypeEnum.Left)
         {
-            top01.Y += -one / 10; // 0.1f
-            top11.Y += -one / 10;
+            top01.Y += -0.1f;
+            top11.Y += -0.1f;
         }
 
         if (type == TorchTypeEnum.Right)
         {
-            top10.Y += -one / 10;
-            top00.Y += -one / 10;
+            top10.Y += -0.1f;
+            top00.Y += -0.1f;
         }
 
         if (type == TorchTypeEnum.Front)
         {
-            top10.Y += -one / 10;
-            top11.Y += -one / 10;
+            top10.Y += -0.1f;
+            top11.Y += -0.1f;
         }
 
         if (type == TorchTypeEnum.Back)
         {
-            top01.Y += -one / 10;
-            top00.Y += -one / 10;
+            top01.Y += -0.1f;
+            top00.Y += -0.1f;
         }
 
         Vector3Ref bottom00 = Vector3Ref.Create(bottomx, z + 0, bottomy);
@@ -2655,24 +1263,20 @@ public class TerrainChunkTesselatorCi
         Vector3Ref bottom10 = Vector3Ref.Create(bottomx + torchsizexy, z + 0, bottomy);
         Vector3Ref bottom11 = Vector3Ref.Create(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
 
-        texrecLeft = 0;
-        texrecHeight = terrainTexturesPerAtlasInverse * AtiArtifactFix;
+        _texrecLeft = 0;
 
         //top
         {
             int sidetexture = TorchTopTexture;
-            int tilecount = 1;
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
+            float texrecBottom = texrecTop + _texrecHeight;
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, _texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, _texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, _texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, _texrecRight, texrecBottom, curcolor);
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
             ModelDataTool.AddIndex(toreturn, (lastelement + 2));
@@ -2684,18 +1288,15 @@ public class TerrainChunkTesselatorCi
         //bottom - same as top, but z is 1 less.
         {
             int sidetexture = TorchSideTexture;
-            int tilecount = 1;
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
+            float texrecBottom = texrecTop + _texrecHeight;
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, _texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, _texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, _texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, _texrecRight, texrecBottom, curcolor);
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 2));
@@ -2707,18 +1308,15 @@ public class TerrainChunkTesselatorCi
         //front
         {
             int sidetexture = TorchSideTexture;
-            int tilecount = 1;
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
+            float texrecBottom = texrecTop + _texrecHeight;
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, _texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, _texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, _texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, _texrecRight, texrecTop, curcolor);
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
             ModelDataTool.AddIndex(toreturn, (lastelement + 2));
@@ -2730,18 +1328,15 @@ public class TerrainChunkTesselatorCi
         //back - same as front, but x is 1 greater.
         {
             int sidetexture = TorchSideTexture;
-            int tilecount = 1;
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
+            float texrecBottom = texrecTop + _texrecHeight;
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, _texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, _texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, _texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, _texrecLeft, texrecTop, curcolor);
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 2));
@@ -2752,18 +1347,15 @@ public class TerrainChunkTesselatorCi
 
         {
             int sidetexture = TorchSideTexture;
-            int tilecount = 1;
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
+            float texrecBottom = texrecTop + _texrecHeight;
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecRight, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, _texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, _texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, _texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, _texrecLeft, texrecTop, curcolor);
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
             ModelDataTool.AddIndex(toreturn, (lastelement + 2));
@@ -2775,18 +1367,15 @@ public class TerrainChunkTesselatorCi
         //right - same as left, but y is 1 greater.
         {
             int sidetexture = TorchSideTexture;
-            int tilecount = 1;
-            texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-            texrecWidth = (tilecount * AtiArtifactFix);
-            float texrecBottom = texrecTop + texrecHeight;
-            float texrecRight = texrecLeft + texrecWidth;
-            ModelData toreturn = GetToReturn(tt, sidetexture);
+            float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
+            float texrecBottom = texrecTop + _texrecHeight;
+            ModelData toreturn = GetModelData(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecTop, curcolor);
-            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
-            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, _texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, _texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, _texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, _texrecRight, texrecTop, curcolor);
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 2));
@@ -2826,6 +1415,7 @@ public class TerrainChunkTesselatorCi
                 ret[retCount.value++] = GetVerticesIndices(toreturnatlas1dtransparent[i], x, y, z, game.d_TerrainTextures.terrainTextures1d()[i % game.d_TerrainTextures.terrainTexturesPerAtlas()], true);
             }
         }
+
         return ret;
     }
 
@@ -2844,7 +1434,12 @@ public class TerrainChunkTesselatorCi
                 continue;
             }
             istransparent[i] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
-            ishalfheight[i] = (b.DrawType == Packet_DrawTypeEnum.HalfHeight) || (b.GetRail() != 0);
+
+            if((b.DrawType == Packet_DrawTypeEnum.HalfHeight) || (b.GetRail() != 0))
+            {
+                isLowered[i] = true;
+            }
+            
         }
 
         if (x < 0 || y < 0 || z < 0) { retCount.value = 0; return new VerticesIndicesToLoad[0]; }
@@ -2863,16 +1458,85 @@ public class TerrainChunkTesselatorCi
 
         CalculateVisibleFaces(currentChunk18);
         CalculateTilingCount(currentChunk18, x * chunksize, y * chunksize, z * chunksize);
-        if (EnableSmoothLight)
+        BuildBlockPolygons(x, y, z);
+        VerticesIndicesToLoad[] ret = GetFinalVerticesIndices(x, y, z, retCount);
+        return ret;
+    }
+
+    // <summary>
+    // Gets the CornerHeightModifier for a side corner out of the ref_blockCornerHeight
+    // </summary>
+    float GetCornerHeightModifier(int side, int corner)
+    {
+        int nIndex = CornerEnum.None;
+        switch (side)
         {
-            CalculateSmoothBlockPolygons(x, y, z);
+            case TileSideEnum.Bottom:
+                {
+                    nIndex = CornerEnum.None; //bottom height is never modified
+                    break;
+                }
+            case TileSideEnum.Right:
+                switch (corner)
+                {
+                    //right side is mirrored
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.TopRight;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.BottomRight;
+                        break;
+                }
+                break;
+            case TileSideEnum.Left:
+                switch (corner)
+                {
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.TopLeft;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.BottomLeft;
+                        break;
+                }
+                break;
+            case TileSideEnum.Front:
+                switch (corner)
+                {
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.BottomLeft;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.BottomRight;
+                        break;
+                }
+                break;
+            case TileSideEnum.Back:
+                switch (corner)
+                {
+                    case CornerEnum.TopLeft:
+                        nIndex = CornerEnum.TopRight;
+                        break;
+                    case CornerEnum.TopRight:
+                        nIndex = CornerEnum.TopLeft;
+                        break;
+                }
+                break;
+            case TileSideEnum.Top:
+                //Top side uses the same corner definition
+                nIndex = corner;
+                break;
+        }
+
+        if (nIndex != CornerEnum.None)
+        {
+            //Get height modifier
+            return ref_blockCornerHeight[nIndex];
         }
         else
         {
-            CalculateBlockPolygons(x, y, z);
+            //default, do not modify
+            return 0f;
         }
-        VerticesIndicesToLoad[] ret = GetFinalVerticesIndices(x, y, z, retCount);
-        return ret;
     }
 }
 
@@ -2919,10 +1583,29 @@ public class TileSideEnum
 {
     public const int Top = 0;
     public const int Bottom = 1;
-    public const int Front = 2;
-    public const int Back = 3;
-    public const int Left = 4;
-    public const int Right = 5;
+    public const int Left = 2;
+    public const int Right = 3;
+    public const int Back = 4;
+    public const int Front = 5;
+
+    public const int SideCount = 6;
+
+    // <summary>
+    // Convert to TileSideEnumFlags
+    // </summary>
+    public static int ToFlags(int nValue)
+    {
+        switch (nValue)
+        {
+            case Top: return TileSideFlagsEnum.Top;
+            case Bottom: return TileSideFlagsEnum.Bottom;
+            case Left: return TileSideFlagsEnum.Left;
+            case Right: return TileSideFlagsEnum.Right;
+            case Back: return TileSideFlagsEnum.Back;
+            case Front: return TileSideFlagsEnum.Front;
+            default: return TileSideFlagsEnum.None;
+        }
+    }
 }
 
 public class TileSideFlagsEnum
@@ -2934,6 +1617,11 @@ public class TileSideFlagsEnum
     public const int Back = 8;
     public const int Left = 16;
     public const int Right = 32;
+
+    public static bool HasFlag(int nFlagA, int nFlagB)
+    {
+        return (nFlagA & nFlagB) != None;
+    }
 }
 
 public class GlobalVar
@@ -2941,3 +1629,34 @@ public class GlobalVar
     public const int MAX_BLOCKTYPES = 1024;
     public const int MAX_BLOCKTYPES_SQRT = 32;
 }
+
+public class TileDirectionEnum
+{
+    public const int Top = 0;
+    public const int Bottom = 1;
+
+    public const int Left = 2;
+    public const int Right = 3;
+
+    public const int TopLeft = 4;
+    public const int TopRight = 5;
+
+    public const int BottomLeft = 6;
+    public const int BottomRight = 7;
+
+    public const int Center = 8;
+
+    public const int DirectionCounts = 9;
+}
+
+public class CornerEnum
+{
+    public const int TopLeft = 0;
+    public const int TopRight = 1;
+
+    public const int BottomLeft = 2;
+    public const int BottomRight = 3;
+
+    public const int None = -1;
+}
+

@@ -4029,15 +4029,27 @@ public struct Vector2i
 }
 public struct Vector3i
 {
+    public int x;
+    public int y;
+    public int z;
+
     public Vector3i(int x, int y, int z)
     {
         this.x = x;
         this.y = y;
         this.z = z;
     }
-    public int x;
-    public int y;
-    public int z;
+
+    public Vector3i Add(Vector3i v)
+    {
+        return Add(v.x, v.y, v.z);
+    }
+
+    public Vector3i Add(int x, int y, int z)
+    {
+        return new Vector3i(this.x + x, this.y + y, this.z + z);
+    }
+
     public override bool Equals(object obj)
     {
         if (obj is Vector3i)
