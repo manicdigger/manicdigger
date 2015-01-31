@@ -1058,14 +1058,14 @@ PlatformJs.prototype.aviWriterCreate = function() {
 }
 
 PlatformJs.prototype.bindTexture2d = function(texture) {
-try
-{
-        gl.bindTexture(gl.TEXTURE_2D, loadedTextures[texture]);
-        }
-        catch(ex)
-        {
-	console.log(ex);
-        }
+	try
+	{
+		gl.bindTexture(gl.TEXTURE_2D, loadedTextures[texture]);
+	}
+	catch(ex)
+	{
+		console.log(ex);
+	}
 }
 
 var textureCanvas;
@@ -1291,6 +1291,15 @@ PlatformJs.prototype.createModel = function(modelData) {
         model.cubeVertexIndexBuffer.itemSize = 1;
         model.cubeVertexIndexBuffer.numItems = modelData.indicesCount;
         
+        	if (modelData.getMode() == DrawModeEnum.LINES)
+	{
+		model.mode = gl.LINES;
+	}
+	else
+	{
+		model.mode = gl.TRIANGLES;
+	}
+        
         return model;
 }
 
@@ -1364,7 +1373,7 @@ PlatformJs.prototype.drawModel = function(model) {
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.cubeVertexIndexBuffer);
         //setMatrixUniforms();
-        gl.drawElements(gl.TRIANGLES, model.cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(model.mode, model.cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
 PlatformJs.prototype.drawModelData = function(data) {
@@ -1710,6 +1719,7 @@ progress.value = 1;
 }
 
 var loadedTextures = [];
+loadedTextures[0] = null;
 
 PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
 	var texture = gl.createTexture();
