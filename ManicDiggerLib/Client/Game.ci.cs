@@ -1365,8 +1365,10 @@
         }
         return !platform.IsMousePointerLocked();
     }
+    bool mousePointerLockShouldBe;
     public void SetFreeMouse(bool value)
     {
+        mousePointerLockShouldBe = !value;
         if (value)
         {
             platform.ExitMousePointerLock();
@@ -2264,11 +2266,14 @@
     {
         if (!overheadcamera)
         {
-            player.position.roty += mouseDeltaX * rotationspeed * (one / 75);
-            player.position.rotx += mouseDeltaY * rotationspeed * (one / 75);
-            player.position.rotx = Game.ClampFloat(player.position.rotx,
-                Game.GetPi() / 2 + (one * 15 / 1000),
-                (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
+            if (platform.IsMousePointerLocked())
+            {
+                player.position.roty += mouseDeltaX * rotationspeed * (one / 75);
+                player.position.rotx += mouseDeltaY * rotationspeed * (one / 75);
+                player.position.rotx = Game.ClampFloat(player.position.rotx,
+                    Game.GetPi() / 2 + (one * 15 / 1000),
+                    (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
+            }
 
             player.position.rotx += touchOrientationDy * rotation_speed * (one / 75);
             player.position.roty += touchOrientationDx * rotation_speed * (one / 75);
@@ -4707,6 +4712,10 @@
             if (clientmods[i] == null) { continue; }
             clientmods[i].OnMouseDown(this, args);
         }
+        if (mousePointerLockShouldBe)
+        {
+            platform.RequestMousePointerLock();
+        }
         InvalidVersionAllow();
     }
 
@@ -4864,6 +4873,8 @@
             }
         }
         GotoDraw2d(deltaTime);
+        mouseDeltaX = 0;
+        mouseDeltaY = 0;
     }
 
     int lastWidth;

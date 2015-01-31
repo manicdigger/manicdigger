@@ -431,6 +431,7 @@ PlatformJs.prototype.exitAvailable = function() {
 }
 
 PlatformJs.prototype.exitMousePointerLock = function() {
+	document.exitPointerLock();
 }
 
 PlatformJs.prototype.fileName = function(fullpath) {
@@ -534,6 +535,7 @@ PlatformJs.prototype.glClearColorRgbaf = function(r, g, b, a) {
 }
 
 PlatformJs.prototype.glClearDepthBuffer = function() {
+	gl.clear(gl.DEPTH_BUFFER_BIT);
 }
 
 PlatformJs.prototype.glColorMaterialFrontAndBackAmbientAndDiffuse = function() {
@@ -657,7 +659,7 @@ PlatformJs.prototype.isFastSystem = function() {
 }
 
 PlatformJs.prototype.isMousePointerLocked = function() {
-	return false;
+	return document.pointerLockElement != null;
 }
 
 PlatformJs.prototype.isSmallScreen = function() {
@@ -822,6 +824,7 @@ PlatformJs.prototype.randomCreate = function() {
 	var random = {};
 	random.next = function() { return 0; };
 	random.maxNext = function() { return 0; };
+	random.nextFloat = function() { return 0; };
 	return random;
 }
 
@@ -832,6 +835,7 @@ PlatformJs.prototype.readAllLines = function(p, retCount) {
 }
 
 PlatformJs.prototype.requestMousePointerLock = function() {
+	canvas.requestPointerLock();
 }
 
 PlatformJs.prototype.saveAssetToCache = function(tosave) {
@@ -1038,8 +1042,21 @@ PlatformJs.prototype.throwException = function(message) {
 PlatformJs.prototype.thumbnailDownloadAsync = function(ip, port, response) {
 }
 
+if (window.performance.now) {
+    console.log("Using high performance timer");
+    getTimestamp = function() { return window.performance.now(); };
+} else {
+    if (window.performance.webkitNow) {
+        console.log("Using webkit high performance timer");
+        getTimestamp = function() { return window.performance.webkitNow(); };
+    } else {
+        console.log("Using low performance timer");
+        getTimestamp = function() { return new Date().getTime(); };
+    }
+}
+
 PlatformJs.prototype.timeMillisecondsFromStart = function() {
-	return 0;
+	return getTimestamp();
 }
 
 PlatformJs.prototype.timestamp = function() {
@@ -1062,6 +1079,10 @@ PlatformJs.prototype.webClientDownloadDataAsync = function(url, response) {
 			response.done = true;
 		}
 	}
+	xhr.onerror = function()
+		{
+			response.error = true;
+		}
 	xhr.send();
 }
 
@@ -1286,17 +1307,103 @@ window.requestAnimFrame = (function() {
 			return;
 		}
 		var args = new KeyEventArgs();
-		args.keyCode = event.keyCode;
+		args.keyCode = GetKeyCode(event.keyCode);
 		keyEventHandler.onKeyDown(args);
+		if(args.keyCode == GlKeys.F1
+		|| args.keyCode == GlKeys.F2
+		|| args.keyCode == GlKeys.F3
+		|| args.keyCode == GlKeys.F4
+		|| args.keyCode == GlKeys.F5
+		|| args.keyCode == GlKeys.F6
+		|| args.keyCode == GlKeys.F7
+		|| args.keyCode == GlKeys.F8
+		|| args.keyCode == GlKeys.F9
+		|| args.keyCode == GlKeys.F10
+		|| args.keyCode == GlKeys.F11
+		|| args.keyCode == GlKeys.F12
+		|| args.keyCode == GlKeys.TAB
+		)
+		{
+			event.stopPropagation();
+			event.preventDefault();
+			return;
+		}
+	}
+	
+	function GetKeyCode(jsKey)
+	{
+		if(jsKey == 8) { return GlKeys.BACKSPACE; }
+		if(jsKey == 9) { return GlKeys.TAB; }
+		if(jsKey == 13) { return GlKeys.ENTER; }
+		if(jsKey == 16) { return GlKeys.SHIFT_LEFT; }
+		if(jsKey == 27) { return GlKeys.ESCAPE; }
+		if(jsKey == 32) { return GlKeys.SPACE; }
+		if(jsKey == 37) { return GlKeys.LEFT; }
+		if(jsKey == 38) { return GlKeys.UP; }
+		if(jsKey == 39) { return GlKeys.RIGHT; }
+		if(jsKey == 40) { return GlKeys.DOWN; }
+		if(jsKey == 48) { return GlKeys.NUMBER0; }
+		if(jsKey == 49) { return GlKeys.NUMBER1; }
+		if(jsKey == 50) { return GlKeys.NUMBER2; }
+		if(jsKey == 51) { return GlKeys.NUMBER3; }
+		if(jsKey == 52) { return GlKeys.NUMBER4; }
+		if(jsKey == 53) { return GlKeys.NUMBER5; }
+		if(jsKey == 54) { return GlKeys.NUMBER6; }
+		if(jsKey == 55) { return GlKeys.NUMBER7; }
+		if(jsKey == 56) { return GlKeys.NUMBER8; }
+		if(jsKey == 57) { return GlKeys.NUMBER9; }
+		if(jsKey == 65) { return GlKeys.A; }
+		if(jsKey == 66) { return GlKeys.B; }
+		if(jsKey == 67) { return GlKeys.C; }
+		if(jsKey == 68) { return GlKeys.D; }
+		if(jsKey == 69) { return GlKeys.E; }
+		if(jsKey == 70) { return GlKeys.F; }
+		if(jsKey == 71) { return GlKeys.G; }
+		if(jsKey == 72) { return GlKeys.H; }
+		if(jsKey == 73) { return GlKeys.I; }
+		if(jsKey == 74) { return GlKeys.J; }
+		if(jsKey == 75) { return GlKeys.K; }
+		if(jsKey == 76) { return GlKeys.L; }
+		if(jsKey == 77) { return GlKeys.M; }
+		if(jsKey == 78) { return GlKeys.N; }
+		if(jsKey == 79) { return GlKeys.O; }
+		if(jsKey == 80) { return GlKeys.P; }
+		if(jsKey == 81) { return GlKeys.Q; }
+		if(jsKey == 82) { return GlKeys.R; }
+		if(jsKey == 83) { return GlKeys.S; }
+		if(jsKey == 84) { return GlKeys.T; }
+		if(jsKey == 85) { return GlKeys.U; }
+		if(jsKey == 86) { return GlKeys.V; }
+		if(jsKey == 87) { return GlKeys.W; }
+		if(jsKey == 88) { return GlKeys.X; }
+		if(jsKey == 89) { return GlKeys.Y; }
+		if(jsKey == 90) { return GlKeys.Z; }
+		if(jsKey == 112) { return GlKeys.F1; }
+		if(jsKey == 113) { return GlKeys.F2; }
+		if(jsKey == 114) { return GlKeys.F3; }
+		if(jsKey == 115) { return GlKeys.F4; }
+		if(jsKey == 116) { return GlKeys.F5; }
+		if(jsKey == 117) { return GlKeys.F6; }
+		if(jsKey == 118) { return GlKeys.F7; }
+		if(jsKey == 119) { return GlKeys.F8; }
+		if(jsKey == 120) { return GlKeys.F9; }
+		if(jsKey == 121) { return GlKeys.F10; }
+		if(jsKey == 122) { return GlKeys.F11; }
+		if(jsKey == 123) { return GlKeys.F12; }
+		return 0;
 	}
 
 	function handleKeyUp(event) {
 		var args = new KeyEventArgs();
-		args.keyCode = event.keyCode;
+		args.keyCode = GetKeyCode(event.keyCode);
 		keyEventHandler.onKeyUp(args);
 	}
 	
 	function handleKeyPress(event) {
+		if(event.charCode == 13)
+		{
+			return;
+		}
 		var args = new KeyPressEventArgs();
 		args.keyChar  = event.charCode;
 		keyEventHandler.onKeyPress(args);
@@ -1306,6 +1413,7 @@ window.requestAnimFrame = (function() {
 		var args = new MouseEventArgs();
 		args.x = event.pageX;
 		args.y = event.pageY;
+		args.button = event.button;
 		mouseEventHandler.onMouseDown(args);
 	}
 
@@ -1313,13 +1421,14 @@ window.requestAnimFrame = (function() {
 		var args = new MouseEventArgs();
 		args.x = event.pageX;
 		args.y = event.pageY;
+		args.button = event.button;
 		mouseEventHandler.onMouseUp(args);
 	}
 
 	function handleMouseMove(event) {
 		var args = new MouseEventArgs();
-		args.x = event.pageX;
-		args.y = event.pageY;
+		args.movementX = event.movementX;
+		args.movementY = event.movementY;
 		mouseEventHandler.onMouseMove(args);
 	}
 
@@ -1428,6 +1537,7 @@ function webGLStart() {
 	document.onkeyup = handleKeyUp;
 	document.onkeypress = handleKeyPress;
 	document.onmousedown = handleMouseDown;
+	document.onmousemove = handleMouseMove;
 	document.onmouseup = handleMouseUp;
 	document.addEventListener("touchstart", handleTouchStart, false);
 	document.addEventListener("touchmove", handleTouchMove, false);

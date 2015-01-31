@@ -47,7 +47,7 @@
                 continue;
             }
             // a) download skin
-            if (!game.issingleplayer && e.drawModel.DownloadSkin && e.drawModel.Texture_ == null)
+            if (!game.issingleplayer && e.drawModel.DownloadSkin && skinserver != null && e.drawModel.Texture_ == null)
             {
                 if (e.drawModel.SkinDownloadResponse == null)
                 {
