@@ -45,7 +45,7 @@
     }
 </script>
 
-<script type="text/javascript" src="gunzip.min.js"></script>
+<script type="text/javascript" src="gunzipmin.js"></script>
 
 
 <script type="text/javascript">
@@ -1055,8 +1055,10 @@ if (window.performance.now) {
     }
 }
 
+var startTime = getTimestamp();
+
 PlatformJs.prototype.timeMillisecondsFromStart = function() {
-	return getTimestamp();
+	return getTimestamp() - startTime;
 }
 
 PlatformJs.prototype.timestamp = function() {
