@@ -54,7 +54,10 @@ namespace ManicDiggerServer
         {
             //React to close window event, CTRL-C, kill, etc
             _handler += new CloseEventHandler(Handler);
-            SetConsoleCtrlHandler(_handler, true);
+            if (!IsMono)
+            {
+                SetConsoleCtrlHandler(_handler, true);
+            }
 
             //Catch unhandled exceptions
             CrashReporter.DefaultFileName = "ManicDiggerServerCrash.txt";
@@ -276,7 +279,7 @@ namespace ManicDiggerServer
             }
         }
 
-        public bool IsMono = Type.GetType("Mono.Runtime") != null;
+        public static bool IsMono = Type.GetType("Mono.Runtime") != null;
 
         void Restart()
         {
