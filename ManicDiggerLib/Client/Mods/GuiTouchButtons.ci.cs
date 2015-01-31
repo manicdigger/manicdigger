@@ -2,6 +2,7 @@
 {
     public ModGuiTouchButtons()
     {
+        touchButtonsEnabled = false;
         buttonMenu = new MenuWidget();
         buttonMenu.image = "TouchMenu.png";
         buttonInventory = new MenuWidget();
@@ -18,6 +19,7 @@
         touchIdRotate = -1;
     }
 
+    bool touchButtonsEnabled;
     MenuWidget buttonMenu;
     MenuWidget buttonInventory;
     MenuWidget buttonTalk;
@@ -25,6 +27,11 @@
 
     public override void OnNewFrameDraw2d(Game game_, float deltaTime)
     {
+        if (!touchButtonsEnabled)
+        {
+            return;
+        }
+
         game = game_;
         float dt = deltaTime;
         int buttonSize = 80;
@@ -109,6 +116,7 @@
 
     public override void OnTouchStart(Game game_, TouchEventArgs e)
     {
+        touchButtonsEnabled = true;
         ScreenOnTouchStart(e);
         if (e.GetHandled()) { return; }
         if (e.GetX() <= game.Width() / 2)

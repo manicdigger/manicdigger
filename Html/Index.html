@@ -1769,7 +1769,7 @@ PlatformJs.prototype.monitorExit = function(monitorObject) {
 }
 
 PlatformJs.prototype.mouseCursorIsVisible = function() {
-	return false;
+	return true;
 }
 
 PlatformJs.prototype.mouseCursorSetVisible = function(value) {
@@ -2447,8 +2447,8 @@ window.requestAnimFrame = (function() {
 
 	function handleMouseWheel(event) {
 		var args = new MouseEventArgs();
-		args.x = event.pageX;
-		args.y = event.pageY;
+		args.delta = event.wheelDelta;
+		args.deltaPrecise = event.wheelDelta;
 		mouseEventHandler.onMouseMove(args);
 	}
 	
@@ -2551,10 +2551,12 @@ function webGLStart() {
 	document.onkeypress = handleKeyPress;
 	document.onmousedown = handleMouseDown;
 	document.onmousemove = handleMouseMove;
+	document.onmousewheel = handleMouseWheel;
 	document.onmouseup = handleMouseUp;
 	document.addEventListener("touchstart", handleTouchStart, false);
 	document.addEventListener("touchmove", handleTouchMove, false);
 	document.addEventListener("touchend", handleTouchEnd, false);
+	document.addEventListener("contextmenu", function(e) { e.preventDefault(); });
         
 	var mainmenu = new MainMenu();
 	var platform = new PlatformJs();
