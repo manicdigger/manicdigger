@@ -157,9 +157,20 @@ PlatformJs.prototype.bitmapCreate = function(width, height) {
     };
 
 PlatformJs.prototype.bitmapCreateFromPng = function(data, dataLength) {
+	if (!data)
+	{
+		console.log("error");
+	}
 	var bmp = {};
 	bmp.image = new Image();
-	bmp.image.src = "data:image/png;base64," + toBase64(data);
+	if (data)
+	{
+		bmp.image.src = "data:image/png;base64," + toBase64(data);
+	}
+	else
+	{
+		bmp.image.src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+	}
 	var width = bmp.image.naturalWidth;
 	var height = bmp.image.naturalHeight;
 	textureCanvas.width = width;
