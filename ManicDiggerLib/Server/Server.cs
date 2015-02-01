@@ -2320,7 +2320,7 @@ public partial class Server : ICurrentTime, IDropItem
         int pos = MapUtilCi.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
         clients[clientid].chunksseen[pos] = true;
         clients[clientid].chunksseenTime[pos] = time;
-        Console.WriteLine("SeenChunk:   {0},{1},{2} Client: {3}", vx, vy, vz, clientid);
+        //Console.WriteLine("SeenChunk:   {0},{1},{2} Client: {3}", vx, vy, vz, clientid);
     }
     /// <summary>
     /// Sets a given chunk as unseen by the client<br/>
@@ -2336,7 +2336,7 @@ public partial class Server : ICurrentTime, IDropItem
         int pos = MapUtilCi.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
         clients[clientid].chunksseen[pos] = false;
         clients[clientid].chunksseenTime[pos] = 0;
-        Console.WriteLine("UnseenChunk: {0},{1},{2} Client: {3}", vx, vy, vz, clientid);
+        //Console.WriteLine("UnseenChunk: {0},{1},{2} Client: {3}", vx, vy, vz, clientid);
     }
     private void SendFillArea(int clientid, Vector3i a, Vector3i b, int blockType, int blockCount)
     {
