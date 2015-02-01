@@ -3,9 +3,9 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
 {
     public ServerSystemUnloadUnusedChunks()
     {
-        v = new Vector3IntRef();
+        chunkpos = new Vector3IntRef();
     }
-    Vector3IntRef v;
+    Vector3IntRef chunkpos;
     public override void Update(Server server, float dt)
     {
         int sizexchunks = server.mapsizexchunks();
@@ -14,12 +14,12 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
 
         for (int i = 0; i < 100; i++)
         {
-            MapUtilCi.PosInt(CompressUnusedIteration, sizexchunks, sizeychunks, v);
-            ServerChunk c = server.d_Map.GetChunkValid(v.X, v.Y, v.Z);
+            MapUtilCi.PosInt(CompressUnusedIteration, sizexchunks, sizeychunks, chunkpos);
+            ServerChunk c = server.d_Map.GetChunkValid(chunkpos.X, chunkpos.Y, chunkpos.Z);
             bool stop = false;
             if (c != null)
             {
-                var vg = new Vector3i(v.X * Server.chunksize, v.Y * Server.chunksize, v.Z * Server.chunksize);
+                var globalpos = new Vector3i(chunkpos.X * Server.chunksize, chunkpos.Y * Server.chunksize, chunkpos.Z * Server.chunksize);
                 bool unload = true;
                 foreach (var k in server.clients)
                 {
@@ -28,10 +28,11 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
                         // don't hold chunks in memory for bots
                         continue;
                     }
-                    // unload distance = view distance + 50% (prevents chunks from being unloaded too early)
-                    int viewdist = (int)(server.chunkdrawdistance * Server.chunksize * 1.5f);
-                    if (server.DistanceSquared(server.PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
+                    // unload distance = view distance + 60% (prevents chunks from being unloaded too early (square loading vs. circular unloading))
+                    int viewdist = (int)(server.chunkdrawdistance * Server.chunksize * 1.8f);
+                    if (server.DistanceSquared(server.PlayerBlockPosition(k.Value), globalpos) <= viewdist * viewdist)
                     {
+                        //System.Console.WriteLine("No Unload:   {0},{1},{2}", chunkpos.X, chunkpos.Y, chunkpos.Z);
                         unload = false;
                     }
                 }
@@ -40,15 +41,15 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
                     // unload if chunk isn't seen by anyone
                     if (c.DirtyForSaving)
                     {
-                        server.DoSaveChunk(v.X, v.Y, v.Z, c);
+                        // save changes to disk if necessary
+                        server.DoSaveChunk(chunkpos.X, chunkpos.Y, chunkpos.Z, c);
                     }
-                    server.d_Map.SetChunkValid(v.X, v.Y, v.Z, null);
+                    server.d_Map.SetChunkValid(chunkpos.X, chunkpos.Y, chunkpos.Z, null);
                     foreach (var client in server.clients)
                     {
                         // mark chunks unseen for all players
-                        server.ClientSeenChunkRemove(client.Key, v.X, v.Y, v.Z);
+                        server.ClientSeenChunkRemove(client.Key, chunkpos.X, chunkpos.Y, chunkpos.Z);
                     }
-                    System.Console.WriteLine("Unloaded chunk at: {0},{1},{2}", v.X, v.Y, v.Z);
                     stop = true;
                 }
             }

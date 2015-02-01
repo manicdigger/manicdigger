@@ -2290,31 +2290,60 @@ public partial class Server : ICurrentTime, IDropItem
         clients[player_id].usingFill = false;
         return true;
     }
+    /// <summary>
+    /// Determines if a given client can see the specified chunk<br/>
+    /// <b>Attention!</b> Chunk coordinates are NOT world coordinates!<br/>
+    /// chunk position = (world position / chunk size)
+    /// </summary>
+    /// <param name="clientid">Client ID</param>
+    /// <param name="vx">Chunk x coordinate</param>
+    /// <param name="vy">Chunk y coordinate</param>
+    /// <param name="vz">Chunk z coordinate</param>
+    /// <returns>true if client can see the chunk, false otherwise</returns>
     public bool ClientSeenChunk(int clientid, int vx, int vy, int vz)
     {
-        int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+        int pos = MapUtilCi.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
         return clients[clientid].chunksseen[pos];
     }
+    /// <summary>
+    /// Sets a given chunk as seen by the client<br/>
+    /// <b>Attention!</b> Chunk coordinates are NOT world coordinates!<br/>
+    /// chunk position = (world position / chunk size)
+    /// </summary>
+    /// <param name="clientid">Client ID</param>
+    /// <param name="vx">Chunk x coordinate</param>
+    /// <param name="vy">Chunk y coordinate</param>
+    /// <param name="vz">Chunk z coordinate</param>
+    /// <param name="time"></param>
     public void ClientSeenChunkSet(int clientid, int vx, int vy, int vz, int time)
     {
-        int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+        int pos = MapUtilCi.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
         clients[clientid].chunksseen[pos] = true;
         clients[clientid].chunksseenTime[pos] = time;
+        Console.WriteLine("SeenChunk:   {0},{1},{2} Client: {3}", vx, vy, vz, clientid);
     }
+    /// <summary>
+    /// Sets a given chunk as unseen by the client<br/>
+    /// <b>Attention!</b> Chunk coordinates are NOT world coordinates!<br/>
+    /// chunk position = (world position / chunk size)
+    /// </summary>
+    /// <param name="clientid">Client ID</param>
+    /// <param name="vx">Chunk x coordinate</param>
+    /// <param name="vy">Chunk y coordinate</param>
+    /// <param name="vz">Chunk z coordinate</param>
     public void ClientSeenChunkRemove(int clientid, int vx, int vy, int vz)
     {
-        int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+        int pos = MapUtilCi.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
         clients[clientid].chunksseen[pos] = false;
         clients[clientid].chunksseenTime[pos] = 0;
+        Console.WriteLine("UnseenChunk: {0},{1},{2} Client: {3}", vx, vy, vz, clientid);
     }
     private void SendFillArea(int clientid, Vector3i a, Vector3i b, int blockType, int blockCount)
     {
         // TODO: better to send a chunk?
 
-        Vector3i v = new Vector3i((a.x / chunksize) * chunksize,
-            (a.y / chunksize) * chunksize, (a.z / chunksize) * chunksize);
-        Vector3i w = new Vector3i((b.x / chunksize) * chunksize,
-            (b.y / chunksize) * chunksize, (b.z / chunksize) * chunksize);
+        Vector3i v = new Vector3i((int)(a.x / chunksize), (int)(a.y / chunksize), (int)(a.z / chunksize));
+        Vector3i w = new Vector3i((int)(b.x / chunksize), (int)(b.y / chunksize), (int)(b.z / chunksize));
 
         // TODO: Is it sufficient to regard only start- and endpoint?
         if (!ClientSeenChunk(clientid, v.x, v.y, v.z) && !ClientSeenChunk(clientid, w.x, w.y, w.z))
@@ -2704,9 +2733,9 @@ public partial class Server : ICurrentTime, IDropItem
     }
     private void SendSetBlock(int clientid, int x, int y, int z, int blocktype)
     {
-        if (!ClientSeenChunk(clientid, (x / chunksize) * chunksize,
-            (y / chunksize) * chunksize, (z / chunksize) * chunksize))
+    	if (!ClientSeenChunk(clientid, (int)(x / chunksize), (int)(y / chunksize), (int)(z / chunksize)))
         {
+    		// don't send block updates for chunks a player can not see
             return;
         }
         Packet_ServerSetBlock p = new Packet_ServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
