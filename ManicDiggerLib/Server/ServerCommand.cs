@@ -1421,7 +1421,7 @@ public partial class Server
         ClientOnServer targetClient = GetClient(target);
         if (targetClient != null)
         {
-            ResetPlayerInventory(targetClient.playername);
+            ResetPlayerInventory(targetClient);
             SendMessageToAll(string.Format(language.Get("Server_CommandResetInventorySuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant), targetClient.ColoredPlayername(colorImportant)));
             ServerEventLog(string.Format("{0} resets inventory of {1}.", GetClient(sourceClientId).playername, targetClient.playername));
             return true;

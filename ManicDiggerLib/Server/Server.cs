@@ -1017,16 +1017,18 @@ public partial class Server : ICurrentTime, IDropItem
         }
         return Inventory[playername];
     }
-    public void ResetPlayerInventory(string playername)
+    public void ResetPlayerInventory(ClientOnServer client)
     {
         if (Inventory == null)
         {
             Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
         }
-        this.Inventory[playername] = new PacketServerInventory()
+        this.Inventory[client.playername] = new PacketServerInventory()
         {
             Inventory = StartInventory(),
         };
+        client.IsInventoryDirty = true;
+        NotifyInventory(client.Id);
     }
 
     public PacketServerPlayerStats GetPlayerStats(string playername)
