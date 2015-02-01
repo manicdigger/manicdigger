@@ -744,17 +744,9 @@ public class UnloadRendererChunksCommit : Task
                 int loadedSubmesh = c.rendered.ids[k];
                 game.d_Batcher.Remove(loadedSubmesh);
             }
-            // reset chunk fields
             c.rendered.ids = null;
             c.rendered.dirty = true;
             c.rendered.light = null;
-            c.data = null;
-            c.dataInt = null;
-            c.IsPopulated = false;
-            c.LastChange = 0;
-            c.LastUpdate = 0;
-            // set empty reference in chunk array. garbage collector should do the rest
-            game.chunks[unloadChunkPos] = null;
 
             unloadChunkPos = -1;
         }
