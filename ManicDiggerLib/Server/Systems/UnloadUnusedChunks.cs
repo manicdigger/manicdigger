@@ -25,9 +25,10 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
                 {
                     if (k.Value.IsBot)
                     {
-                        //Don't hold chunks in memory for bots
+                        // don't hold chunks in memory for bots
                         continue;
                     }
+                    // unload distance = view distance + 50% (prevents chunks from being unloaded too early)
                     int viewdist = (int)(server.chunkdrawdistance * Server.chunksize * 1.5f);
                     if (server.DistanceSquared(server.PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
                     {
@@ -36,11 +37,18 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
                 }
                 if (unload)
                 {
+                    // unload if chunk isn't seen by anyone
                     if (c.DirtyForSaving)
                     {
                         server.DoSaveChunk(v.X, v.Y, v.Z, c);
                     }
                     server.d_Map.SetChunkValid(v.X, v.Y, v.Z, null);
+                    foreach (var client in server.clients)
+                    {
+                        // mark chunks unseen for all players
+                        server.ClientSeenChunkRemove(client.Key, v.X, v.Y, v.Z);
+                    }
+                    System.Console.WriteLine("Unloaded chunk at: {0},{1},{2}", v.X, v.Y, v.Z);
                     stop = true;
                 }
             }
@@ -51,6 +59,7 @@ public class ServerSystemUnloadUnusedChunks : ServerSystem
             }
             if (stop)
             {
+                // only unload one chunk at a time
                 return;
             }
         }

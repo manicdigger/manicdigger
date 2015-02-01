@@ -2301,6 +2301,12 @@ public partial class Server : ICurrentTime, IDropItem
         clients[clientid].chunksseen[pos] = true;
         clients[clientid].chunksseenTime[pos] = time;
     }
+    public void ClientSeenChunkRemove(int clientid, int vx, int vy, int vz)
+    {
+        int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+        clients[clientid].chunksseen[pos] = false;
+        clients[clientid].chunksseenTime[pos] = 0;
+    }
     private void SendFillArea(int clientid, Vector3i a, Vector3i b, int blockType, int blockCount)
     {
         // TODO: better to send a chunk?
