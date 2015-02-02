@@ -124,8 +124,38 @@ public class WebSocketGameServer : WebSocketBehavior
         }
     }
 
+    Queue<byte[]> toSend = new Queue<byte[]>();
+    bool isSending;
+    object sendLock = new object();
     public void Send1(byte[] data)
     {
-        Send(data);
+        lock (sendLock)
+        {
+            if (isSending)
+            {
+                toSend.Enqueue(data);
+            }
+            else
+            {
+                isSending = true;
+                SendAsync(data, f);
+            }
+        }
+    }
+
+    void f(bool completed)
+    {
+        lock (sendLock)
+        {
+            if (toSend.Count > 0)
+            {
+                byte[] data = toSend.Dequeue();
+                SendAsync(data, f);
+            }
+            else
+            {
+                isSending = false;
+            }
+        }
     }
 }

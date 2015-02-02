@@ -1483,10 +1483,21 @@ public class ScreenLogin : Screen
             loginResultData = new LoginData();
             if (serverHash != null)
             {
+                // Connect to server hash, through main game menu. Do login.
                 menu.Login(loginUsername.text, loginPassword.text, serverHash, "", loginResult, loginResultData);
             }
             else
             {
+                // Connect to IP. Don't login
+
+                // Save username
+                if (loginRememberMe.text == menu.lang.Get("MainMenu_ChoiceYes"))
+                {
+                    Preferences preferences = menu.p.GetPreferences();
+                    preferences.SetString("Username", loginUsername.text);
+                    menu.p.SetPreferences(preferences);
+                }
+
                 ConnectData connectdata = new ConnectData();
                 connectdata.Ip = serverIp;
                 connectdata.Port = serverPort;

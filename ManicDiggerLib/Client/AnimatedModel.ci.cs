@@ -422,7 +422,10 @@ public class AnimatedModelRenderer
             tempVec3[0] /= 16;
             tempVec3[1] /= 16;
             tempVec3[2] /= 16;
-            CuboidRenderer.DrawCuboid2(game, -tempVec3[0] / 2, -tempVec3[1] / 2, -tempVec3[2] / 2, tempVec3[0], tempVec3[1], tempVec3[2], r, light);
+            
+            // Use binary minus because unary minus is truncated to integer in cito
+            CuboidRenderer.DrawCuboid2(game, 0 - tempVec3[0] / 2, 0 - tempVec3[1] / 2, 0 - tempVec3[2] / 2, tempVec3[0], tempVec3[1], tempVec3[2], r, light);
+
             DrawNode(n.name, headDeg, light);
             game.GLPopMatrix();
         }

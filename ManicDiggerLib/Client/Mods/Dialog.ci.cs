@@ -110,6 +110,7 @@
                         game.dialogs[i] = null;
                     }
                 }
+                game.SendPacketClient(ClientPackets.DialogClick("Esc", new string[0], 0));
                 game.GuiStateBackToGame();
                 args.SetHandled(true);
             }
@@ -159,7 +160,7 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
             {
                 game.dialogs[game.GetDialogId(d.DialogId)] = null;
             }
-            if (game.DialogsCount() == 0)
+            if (game.DialogsCount_() == 0)
             {
                 game.SetFreeMouse(false);
             }

@@ -239,10 +239,10 @@
         }
         AddMod(sunmoonrenderer);
         AddMod(new ModDrawTestModel());
-        AddMod(new ModDrawPlayers());
         AddMod(new ModDrawLinesAroundSelectedBlock());
         AddMod(new ModDrawArea());
         AddMod(new ModDrawTerrain());
+        AddMod(new ModDrawPlayers());
         AddMod(new ModDrawPlayerNames());
         AddMod(new ModDrawText());
         AddMod(new ModDrawParticleEffectBlockBreak());
@@ -2036,7 +2036,7 @@
     internal VisibleDialog[] dialogs;
     internal int dialogsCount;
 
-    internal int DialogsCount()
+    internal int DialogsCount_()
     {
         int count = 0;
         for (int i = 0; i < dialogsCount; i++)
@@ -2288,6 +2288,8 @@
                 overheadcameraK.TurnUp(mouseDeltaY / 3);
             }
         }
+        mouseDeltaX = 0;
+        mouseDeltaY = 0;
     }
 
     internal string Follow;
@@ -2633,7 +2635,7 @@
     internal void MouseWheelChanged(MouseWheelEventArgs e)
     {
         float eDeltaPrecise = e.GetDeltaPrecise();
-        if (keyboardState[GetKey(GlKeys.LControl)])
+        if (keyboardState[GetKey(GlKeys.LShift)])
         {
             if (cameratype == CameraType.Overhead)
             {
@@ -2654,7 +2656,7 @@
             clientmods[i].OnMouseWheelChanged(this, e);
         }
         if ((guistate != GuiState.Inventory)
-            && (!keyboardState[GetKey(GlKeys.LControl)]))
+            && (!keyboardState[GetKey(GlKeys.LShift)]))
         {
             ActiveMaterial -= platform.FloatToInt(eDeltaPrecise);
             ActiveMaterial = ActiveMaterial % 10;
@@ -4715,6 +4717,8 @@
         if (mousePointerLockShouldBe)
         {
             platform.RequestMousePointerLock();
+            mouseDeltaX = 0;
+            mouseDeltaY = 0;
         }
         InvalidVersionAllow();
     }
@@ -4873,8 +4877,6 @@
             }
         }
         GotoDraw2d(deltaTime);
-        mouseDeltaX = 0;
-        mouseDeltaY = 0;
     }
 
     int lastWidth;
@@ -4990,8 +4992,8 @@
     {
         mouseCurrentX = e.GetX();
         mouseCurrentY = e.GetY();
-        mouseDeltaX = e.GetMovementX();
-        mouseDeltaY = e.GetMovementY();
+        mouseDeltaX += e.GetMovementX();
+        mouseDeltaY += e.GetMovementY();
         for (int i = 0; i < clientmodsCount; i++)
         {
             if (clientmods[i] == null) { continue; }
