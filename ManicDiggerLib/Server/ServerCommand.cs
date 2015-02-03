@@ -1337,7 +1337,6 @@ public partial class Server
         {
             string targetName = targetClient.playername;
             string sourcename = GetClient(sourceClientId).playername;
-            //int amount;
             if (amount < 0)
             {
                 return false;
@@ -1378,7 +1377,7 @@ public partial class Server
                             }
                             else
                             {
-                                currentItem.BlockCount = amount;
+                                currentItem.BlockCount += amount;
                             }
                             goto nextblock;
                         }
