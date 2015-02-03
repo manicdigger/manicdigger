@@ -1912,9 +1912,9 @@ PlatformJs.prototype.queueUserWorkItem = function(action) {
 
 PlatformJs.prototype.randomCreate = function() {
 	var random = {};
-	random.next = function() { return 0; };
-	random.maxNext = function() { return 0; };
-	random.nextFloat = function() { return 0; };
+	random.next = function() { return Math.floor(Math.random() * 2147483647); };
+	random.maxNext = function(max) { return Math.floor(Math.random() * max); };
+	random.nextFloat = function() { return Math.random(); };
 	return random;
 }
 

@@ -169,7 +169,7 @@
         }
         int aimwidth = 32;
         int aimheight = 32;
-
+        game.platform.BindTexture2d(0);
         if (game.CurrentAimRadius() > 1)
         {
             float fov_ = game.currentfov();
