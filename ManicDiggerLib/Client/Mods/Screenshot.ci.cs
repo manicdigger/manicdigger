@@ -1,15 +1,29 @@
 ﻿public class ModScreenshot : ClientMod
 {
-    public override void OnNewFrameDraw2d(Game game, float deltaTime)
+    public ModScreenshot()
     {
-        if (screenshotflash > 0)
-        {
-            DrawScreenshotFlash(game);
-            screenshotflash--;
-        }
+        takeScreenshot = false;
+        screenshotFlashFramesLeft = 0;
     }
 
-    internal int screenshotflash;
+    bool takeScreenshot;
+    int screenshotFlashFramesLeft;
+
+    public override void OnNewFrameDraw2d(Game game, float deltaTime)
+    {
+        if (takeScreenshot)
+        {
+            takeScreenshot = false;
+            // Must be done after rendering, but before SwapBuffers
+            game.platform.SaveScreenshot();
+            screenshotFlashFramesLeft = 5;
+        }
+        if (screenshotFlashFramesLeft > 0)
+        {
+            DrawScreenshotFlash(game);
+            screenshotFlashFramesLeft--;
+        }
+    }
 
     internal void DrawScreenshotFlash(Game game)
     {
@@ -23,13 +37,12 @@
         font.size = 50;
         game.Draw2dText(screenshottext, font, game.xcenter(textWidth.value), game.ycenter(textHeight.value), null, false);
     }
-
+    
     public override void OnKeyDown(Game game, KeyEventArgs args)
     {
         if (args.GetKeyCode() == game.GetKey(GlKeys.F12))
         {
-            game.platform.SaveScreenshot();
-            screenshotflash = 5;
+            takeScreenshot = true;
             args.SetHandled(true);
         }
     }

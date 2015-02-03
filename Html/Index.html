@@ -1934,7 +1934,51 @@ canvas.requestPointerLock = canvas.requestPointerLock ||
 PlatformJs.prototype.saveAssetToCache = function(tosave) {
 }
 
+// http://stackoverflow.com/a/18480879
+function download(canvas, filename) {
+
+    /// create an "off-screen" anchor tag
+    var lnk = document.createElement('a'),
+        e;
+
+    /// the key here is to set the download attribute of the a tag
+    lnk.download = filename;
+
+    /// convert canvas content to data-uri for link. When download
+    /// attribute is set the content pointed to by link will be
+    /// pushed as "download" in HTML5 capable browsers
+    lnk.href = canvas.toDataURL();
+
+    /// create a "fake" click-event to trigger the download
+    if (document.createEvent) {
+
+        e = document.createEvent("MouseEvents");
+        e.initMouseEvent("click", true, true, window,
+                         0, 0, 0, 0, 0, false, false, false,
+                         false, 0, null);
+
+        lnk.dispatchEvent(e);
+
+    } else if (lnk.fireEvent) {
+
+        lnk.fireEvent("onclick");
+    }
+}
+
+// http://stackoverflow.com/a/10632399
+Number.prototype.padLeft = function(base,chr){
+    var  len = (String(base || 10).length - String(this).length)+1;
+    return len > 0? new Array(len).join(chr || '0')+this : this;
+}
 PlatformJs.prototype.saveScreenshot = function() {
+var d = new Date,
+    dformat = [d.getFullYear(),
+               (d.getMonth()+1).padLeft(),
+               d.getDate().padLeft()].join('-') +'_' +
+              [d.getHours().padLeft(),
+               d.getMinutes().padLeft(),
+               d.getSeconds().padLeft()].join('-');
+	download(canvas, "Screenshot" + dformat + ".png");
 }
 
 PlatformJs.prototype.setMatrixUniformModelView = function(mvMatrix) {
