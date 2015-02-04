@@ -1,27 +1,10 @@
-﻿public abstract class IFrustumCulling
-{
-    public abstract bool SphereInFrustum(float x, float y, float z, float radius);
-    public abstract void CalcFrustumEquations();
-}
-
-public class FrustumCullingDummy : IFrustumCulling
-{
-    public override void CalcFrustumEquations()
-    {
-    }
-    public override bool SphereInFrustum(float x, float y, float z, float radius)
-    {
-        return true;
-    }
-}
-
-//This is from Mark Morley's tutorial on frustum culling.
+﻿//This is from Mark Morley's tutorial on frustum culling.
 //http://www.crownandcutlass.com/features/technicaldetails/frustum.html
 //"This page and its contents are Copyright 2000 by Mark Morley
 //Unless otherwise noted, you may use any and all code examples provided herein in any way you want.
 //All other content, including but not limited to text and images, may not be reproduced without consent.
 //This file was last edited on Wednesday, 24-Jan-2001 13:24:38 PST"
-public class FrustumCulling : IFrustumCulling
+public class FrustumCulling
 {
     internal GamePlatform platform;
     internal IGetCameraMatrix d_GetCameraMatrix;
@@ -54,7 +37,7 @@ public class FrustumCulling : IFrustumCulling
     float frustum51;
     float frustum52;
     float frustum53;
-    public override bool SphereInFrustum(float x, float y, float z, float radius)
+    public bool SphereInFrustum(float x, float y, float z, float radius)
     {
         float d = 0;
 
@@ -87,7 +70,7 @@ public class FrustumCulling : IFrustumCulling
     /// calculate the frustum plane equations (Ax+By+Cz+D=0, n=(A,B,C))
     /// The equations can then be used to see on which side points are.
     /// </remarks>
-    public override void CalcFrustumEquations()
+    public void CalcFrustumEquations()
     {
         float t;
 

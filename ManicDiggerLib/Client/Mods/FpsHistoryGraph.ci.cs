@@ -43,7 +43,7 @@
     {
         GamePlatform p = m.GetPlatform();
         fpscount++;
-        longestframedt = Game.MaxFloat(longestframedt, dt);
+        longestframedt = MathCi.MaxFloat(longestframedt, dt);
         float elapsed = one * (p.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
         if (elapsed >= 1)
         {

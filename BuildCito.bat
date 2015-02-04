@@ -16,7 +16,9 @@ CodeGenerator Packet.proto
 setlocal enabledelayedexpansion enableextensions
 set LIST=
 for %%x in (ManicDiggerLib\Client\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDiggerLib\Client\MainMenu\*.ci.cs) do set LIST=!LIST! %%x
 for %%x in (ManicDiggerLib\Client\Mods\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDiggerLib\Client\Misc\*.ci.cs) do set LIST=!LIST! %%x
 set LIST=%LIST:~1%
 echo %LIST%
 

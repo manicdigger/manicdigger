@@ -17,7 +17,7 @@
     }
 
     internal Game game;
-    internal IFrustumCulling d_FrustumCulling;
+    internal FrustumCulling d_FrustumCulling;
     internal bool BindTexture;
     ListInfo[] models;
     int modelsCount;

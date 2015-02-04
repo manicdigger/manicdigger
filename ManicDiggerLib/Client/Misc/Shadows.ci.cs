@@ -230,7 +230,7 @@ public class Shadows3x3x3 : IShadows3x3x3
                                     {
                                         lighttoflood.Push(Vector3IntRef.Create(xx, yy, zz));
                                     }
-                                    worklight[pos] = Game.IntToByte(Game.MaxInt(l, worklight[pos]));
+                                    worklight[pos] = Game.IntToByte(MathCi.MaxInt(l, worklight[pos]));
                                 }
                             }
                         }

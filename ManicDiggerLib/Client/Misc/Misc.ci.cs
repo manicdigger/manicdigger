@@ -176,178 +176,6 @@ public class BitTools
     }
 }
 
-public class DictionaryStringString
-{
-    public DictionaryStringString()
-    {
-        Start(64);
-    }
-
-    public void Start(int count_)
-    {
-        items = new KeyValueStringString[count_];
-        count = count_;
-    }
-
-    internal KeyValueStringString[] items;
-    internal int count;
-
-    public void Set(string key, string value)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                continue;
-            }
-            if (Game.StringEquals(items[i].key, key))
-            {
-                items[i].value = value;
-                return;
-            }
-        }
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                items[i] = new KeyValueStringString();
-                items[i].key = key;
-                items[i].value = value;
-                return;
-            }
-        }
-    }
-
-    internal bool ContainsKey(string key)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                continue;
-            }
-            if (Game.StringEquals(items[i].key, key))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    internal string Get(string key)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                continue;
-            }
-            if (Game.StringEquals(items[i].key, key))
-            {
-                return items[i].value;
-            }
-        }
-        return null;
-    }
-
-    internal void Remove(string key)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                continue;
-            }
-            if (Game.StringEquals(items[i].key, key))
-            {
-                items[i] = null;
-            }
-        }
-    }
-}
-
-public class KeyValueStringString
-{
-    internal string key;
-    internal string value;
-}
-
-public class DictionaryStringInt1024
-{
-    public DictionaryStringInt1024()
-    {
-        items = new KeyValueStringInt[max];
-        count = 0;
-    }
-    internal KeyValueStringInt[] items;
-    internal int count;
-    const int max = 1024;
-
-    public void Set(string key, int value)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                continue;
-            }
-            if (items[i].key == key)
-            {
-                items[i].value = value;
-                return;
-            }
-        }
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                items[i] = new KeyValueStringInt();
-                items[i].key = key;
-                items[i].value = value;
-                return;
-            }
-        }
-        KeyValueStringInt k = new KeyValueStringInt();
-        k.key = key;
-        k.value = value;
-        items[count++] = k;
-    }
-
-    internal bool Contains(string key)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (items[i] == null)
-            {
-                continue;
-            }
-            if (Game.StringEquals(items[i].key, key))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    internal int Get(string key)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (Game.StringEquals(items[i].key, key))
-            {
-                return items[i].value;
-            }
-        }
-        return -1;
-    }
-}
-
-public class KeyValueStringInt
-{
-    internal string key;
-    internal int value;
-}
-
 
 public class StringTools
 {
@@ -581,30 +409,6 @@ public class ServerInformation
     internal Ping_ ServerPing;
 }
 
-public class ListConnectedPlayer
-{
-    public ListConnectedPlayer()
-    {
-        items = new ConnectedPlayer[1024];
-        count = 0;
-    }
-    internal ConnectedPlayer[] items;
-    internal int count;
-
-    internal void Add(ConnectedPlayer connectedPlayer)
-    {
-        items[count++] = connectedPlayer;
-    }
-
-    internal void RemoveAt(int at)
-    {
-        for (int i = at; i < count - 1; i++)
-        {
-            items[i] = items[i + 1];
-        }
-        count--;
-    }
-}
 public class BitmapData_
 {
     public static BitmapData_ Create(int width, int height)
@@ -655,7 +459,7 @@ public class TextureAtlasConverter
 
         int tilesize = orig.width / tiles;
 
-        int atlasescount = Game.MaxInt(1, (tiles * tiles * tilesize) / atlassizezlimit);
+        int atlasescount = MathCi.MaxInt(1, (tiles * tiles * tilesize) / atlassizezlimit);
         BitmapCi[] atlases = new BitmapCi[128];
         int atlasesCount = 0;
 
@@ -730,5 +534,145 @@ public class VecCito3f
     public VecCito3f Add(float _x, float _y, float _z)
     {
         return CitoCtr(this.x + _x, this.y + _y, this.z + _z);
+    }
+}
+
+public class GameVersionHelper
+{
+    public static bool ServerVersionAtLeast(GamePlatform platform, string serverGameVersion, int year, int month, int day)
+    {
+        if (serverGameVersion == null)
+        {
+            return true;
+        }
+        if (VersionToInt(platform, serverGameVersion) < DateToInt(year, month, day))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    static bool IsVersionDate(GamePlatform platform, string version)
+    {
+        IntRef versionCharsCount = new IntRef();
+        int[] versionChars = platform.StringToCharArray(version, versionCharsCount);
+        if (versionCharsCount.value >= 10)
+        {
+            if (versionChars[4] == 45 && versionChars[7] == 45) // '-'
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static int VersionToInt(GamePlatform platform, string version)
+    {
+        int max = 1000 * 1000 * 1000;
+        if (!IsVersionDate(platform, version))
+        {
+            return max;
+        }
+        FloatRef year = new FloatRef();
+        FloatRef month = new FloatRef();
+        FloatRef day = new FloatRef();
+        if (platform.FloatTryParse(StringTools.StringSubstring(platform, version, 0, 4), year))
+        {
+            if (platform.FloatTryParse(StringTools.StringSubstring(platform, version, 5, 2), month))
+            {
+                if (platform.FloatTryParse(StringTools.StringSubstring(platform, version, 8, 2), day))
+                {
+                    int year_ = platform.FloatToInt(year.value);
+                    int month_ = platform.FloatToInt(month.value);
+                    int day_ = platform.FloatToInt(day.value);
+                    return year_ * 10000 + month_ * 100 + day_;
+                }
+            }
+        }
+        return max;
+    }
+
+    static int DateToInt(int year, int month, int day)
+    {
+        return year * 10000 + month * 100 + day;
+    }
+}
+
+public class MathCi
+{
+    public static float MinFloat(float a, float b)
+    {
+        if (a <= b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
+
+    public static float MaxFloat(float a, float b)
+    {
+        if (a >= b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
+
+    public static float AbsFloat(float b)
+    {
+        if (b >= 0)
+        {
+            return b;
+        }
+        else
+        {
+            return 0 - b;
+        }
+    }
+
+    public static int Sign(float q)
+    {
+        if (q < 0)
+        {
+            return -1;
+        }
+        else if (q == 0)
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
+    public static int MaxInt(int a, int b)
+    {
+        if (a >= b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
+
+    public static int MinInt(int a, int b)
+    {
+        if (a <= b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
     }
 }

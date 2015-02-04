@@ -29,7 +29,7 @@
                 n.EXTRAPOLATION_TIMEMILLISECONDS = 300;
                 e.playerDrawInfo.interpolation = n;
             }
-            e.playerDrawInfo.interpolation.DELAYMILLISECONDS = Game.MaxInt(100, game.ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds());
+            e.playerDrawInfo.interpolation.DELAYMILLISECONDS = MathCi.MaxInt(100, game.ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds());
             Entity p = e;
 
             PlayerDrawInfo info = p.playerDrawInfo;

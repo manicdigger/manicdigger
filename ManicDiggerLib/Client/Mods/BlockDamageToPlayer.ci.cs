@@ -73,7 +73,7 @@
             {
                 game.PlayerStats.CurrentOxygen = game.PlayerStats.MaxOxygen;
             }
-            if (game.ServerVersionAtLeast(2014, 3, 31))
+            if (GameVersionHelper.ServerVersionAtLeast(game.platform, game.serverGameVersion, 2014, 3, 31))
             {
                 game.SendPacketClient(ClientPackets.Oxygen(game.PlayerStats.CurrentOxygen));
             }
