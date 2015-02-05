@@ -526,41 +526,6 @@ public class GamePlatformNative : GamePlatform
         bmp_.bmp.Dispose();
     }
 
-    AudioOpenAl audio;
-    public GameExit gameexit;
-    void StartAudio()
-    {
-        if (audio == null)
-        {
-            audio = new AudioOpenAl();
-            audio.d_GameExit = gameexit;
-        }
-    }
-
-    public override AudioSampleCi AudioLoad(byte[] data)
-    {
-        StartAudio();
-        return audio.GetSampleFromArray(data);
-    }
-
-    public override void AudioPlay(AudioSampleCi sample, float x, float y, float z)
-    {
-        StartAudio();
-        audio.Play(sample, x, y, z);
-    }
-
-    public override void AudioPlayLoop(AudioSampleCi sample, bool play, bool restart)
-    {
-        StartAudio();
-        audio.PlayAudioLoop((AudioSample)sample, play, restart);
-    }
-
-    public override void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ)
-    {
-        StartAudio();
-        audio.UpdateListener(new Vector3(posX, posY, posZ), new Vector3(orientX, orientY, orientZ));
-    }
-
     public override void ConsoleWriteLine(string s)
     {
         Console.WriteLine(s);
@@ -1041,6 +1006,69 @@ public class GamePlatformNative : GamePlatform
     public override string QueryStringValue(string key)
     {
         return null;
+    }
+
+    #endregion
+
+    #region Audio
+
+    AudioOpenAl audio;
+    public GameExit gameexit;
+    void StartAudio()
+    {
+        if (audio == null)
+        {
+            audio = new AudioOpenAl();
+            audio.d_GameExit = gameexit;
+        }
+    }
+
+    public override AudioData AudioDataCreate(byte[] data, int dataLength)
+    {
+        StartAudio();
+        return audio.GetSampleFromArray(data);
+    }
+
+    public override bool AudioDataLoaded(AudioData data)
+    {
+        return true;
+    }
+
+    public override AudioCi AudioCreate(AudioData data)
+    {
+        return audio.CreateAudio((AudioDataCs)data);
+    }
+
+    public override void AudioPlay(AudioCi audio_)
+    {
+        StartAudio();
+        ((AudioOpenAl.AudioTask)audio_).Play();
+    }
+
+    public override void AudioPause(AudioCi audio_)
+    {
+        ((AudioOpenAl.AudioTask)audio_).Pause();
+    }
+
+    public override void AudioDelete(AudioCi audio_)
+    {
+        ((AudioOpenAl.AudioTask)audio_).Stop();
+    }
+
+    public override bool AudioFinished(AudioCi audio_)
+    {
+        return ((AudioOpenAl.AudioTask)audio_).Finished;
+    }
+
+    public override void AudioSetPosition(AudioCi audio_, float x, float y, float z)
+    {
+        ((AudioOpenAl.AudioTask)audio_).position = new Vector3(x, y, z);
+    }
+
+    public override void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ)
+    {
+        StartAudio();
+        audio.UpdateListener(new Vector3(posX, posY, posZ), new Vector3(orientX, orientY, orientZ));
     }
 
     #endregion

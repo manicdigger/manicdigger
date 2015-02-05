@@ -106,7 +106,6 @@
             mLightLevels[i] = one * i / 15;
         }
         scheduler = new TaskScheduler_();
-        audiosamples = new DictionaryStringAudioSample();
         soundnow = new BoolRef();
         acceleration = new Acceleration();
         camera = Mat4.Create();
@@ -118,11 +117,13 @@
         ChatLinesMax = 1;
         ChatLines = new Chatline[ChatLinesMax];
         ChatLineLength = 64;
+        audio = new AudioControl();
     }
 
     internal AssetList assets;
     internal FloatRef assetsLoadProgress;
     internal TextColorRenderer textColorRenderer;
+    internal AudioControl audio;
 
     public void Start()
     {
@@ -269,6 +270,7 @@
         AddMod(new ModGuiMapLoading());
         AddMod(new ModDraw2dMisc());
         AddMod(new ModScreenshot());
+        AddMod(new ModAudio());
 
         s = new BlockOctreeSearcher();
         s.platform = platform;
@@ -1744,20 +1746,6 @@
         AudioPlayAt(file, EyesPosX(), EyesPosY(), EyesPosZ());
     }
 
-    DictionaryStringAudioSample audiosamples;
-    AudioSampleCi GetAudioSample(string file)
-    {
-        if (!audiosamples.Contains(file))
-        {
-            byte[] data = GetFile(file);
-            AudioSampleCi sample = platform.AudioLoad(data);
-            audiosamples.Set(file, sample);
-        }
-
-        AudioSampleCi ret = audiosamples.Get(file);
-        return ret;
-    }
-
     public void AudioPlayAt(string file, float x, float y, float z)
     {
         if (file == null)
@@ -1768,6 +1756,10 @@
         {
             return;
         }
+        if (assetsLoadProgress.value != 1)
+        {
+            return;
+        }
         string file_ = platform.StringReplace(file, ".wav", ".ogg");
 
         if (GetFileLength(file_) == 0)
@@ -1776,8 +1768,12 @@
             return;
         }
 
-        AudioSampleCi sample = GetAudioSample(file_);
-        platform.AudioPlay(sample, EyesPosX(), EyesPosY(), EyesPosZ());
+        Sound_ s = new Sound_();
+        s.name = file_;
+        s.x = x;
+        s.y = y;
+        s.z = z;
+        audio.Add(s);
     }
 
     public void AudioPlayLoop(string file, bool play, bool restart)
@@ -1786,6 +1782,10 @@
         {
             return;
         }
+        if (assetsLoadProgress.value != 1)
+        {
+            return;
+        }
 
         string file_ = platform.StringReplace(file, ".wav", ".ogg");
 
@@ -1795,9 +1795,41 @@
             return;
         }
 
-        AudioSampleCi sample = GetAudioSample(file_);
-
-        platform.AudioPlayLoop(sample, play, restart);
+        if (play)
+        {
+            Sound_ s = null;
+            bool alreadyPlaying = false;
+            for (int i = 0; i < audio.soundsCount; i++)
+            {
+                if (audio.sounds[i] == null) { continue; }
+                if (audio.sounds[i].name == file_)
+                {
+                    alreadyPlaying = true;
+                    s = audio.sounds[i];
+                }
+            }
+            if (!alreadyPlaying)
+            {
+                s = new Sound_();
+                s.name = file_;
+                s.loop = true;
+                audio.Add(s);
+            }
+            s.x = EyesPosX();
+            s.y = EyesPosY();
+            s.z = EyesPosZ();
+        }
+        else
+        {
+            for (int i = 0; i < audio.soundsCount; i++)
+            {
+                if (audio.sounds[i] == null) { continue; }
+                if (audio.sounds[i].name == file_)
+                {
+                    audio.sounds[i].stop = true;
+                }
+            }
+        }
     }
 
     public int MaterialSlots_(int i)

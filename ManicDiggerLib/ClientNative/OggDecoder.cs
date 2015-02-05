@@ -3,7 +3,7 @@ using System.IO;
 using System;
 using csvorbis;
 
-public class AudioSample : AudioSampleCi
+public class AudioDataCs : AudioData
 {
     public byte[] Pcm;
     public int Channels;
@@ -24,9 +24,9 @@ public class OggDecoder
     /// The main entry point for the application.
     /// </summary>
     //[STAThread]
-    public AudioSample OggToWav(Stream ogg)
+    public AudioDataCs OggToWav(Stream ogg)
     {
-        AudioSample sample = new AudioSample();
+        AudioDataCs sample = new AudioDataCs();
         TextWriter s_err = new StringWriter();// Console.Error;
         Stream input = null;
         MemoryStream output = null;

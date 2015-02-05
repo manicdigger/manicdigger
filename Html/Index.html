@@ -1126,14 +1126,67 @@ PlatformJs.prototype.addOnTouchEvent = function(handler) {
 PlatformJs.prototype.applicationDoEvents = function() {
 }
 
-PlatformJs.prototype.audioLoad = function(data) {
-	return null;
+// Audio
+var audioContext;
+
+PlatformJs.prototype.audioDataCreate = function(data, dataLength) {
+	var sound = {};
+	sound.loaded = false;
+	var arr = new ArrayBuffer(dataLength);
+	var arr8 = new Uint8Array(arr);
+	for(var i=0;i<dataLength;i++)
+	{
+		arr8[i]=data[i];
+	}
+	audioContext.decodeAudioData(arr, function(buffer) {
+		sound.buffer = buffer;
+		sound.loaded = true;
+	});
+	return sound;
 }
 
-PlatformJs.prototype.audioPlay = function(sample, x, y, z) {
+PlatformJs.prototype.audioDataLoaded = function(data) {
+	return data.loaded;
 }
 
-PlatformJs.prototype.audioPlayLoop = function(sample, play, restart) {
+PlatformJs.prototype.audioCreate = function(data) {
+	var audio = {};
+	audio.data = data;
+	audio.pausedAt = null;
+	return audio;
+}
+
+PlatformJs.prototype.audioPlay = function(audio) {
+	audio.src = audioContext.createBufferSource();
+	audio.src.buffer = audio.data.buffer;
+	audio.src.connect(audioContext.destination);
+	if (audio.pausedAt)
+	{
+		audio.startedAt = Date.now() - audio.pausedAt;
+		audio.src.start(0, audio.pausedAt / 1000);
+		audio.pausedAt = null;
+	}
+	else
+	{
+		audio.startedAt = Date.now();
+		audio.src.start(0);
+	}
+}
+
+PlatformJs.prototype.audioPause = function(audio) {
+	audio.src.stop();
+	audio.pausedAt = Date.now() - audio.startedAt;
+}
+
+PlatformJs.prototype.audioDelete = function(audio) {
+	audio.src.stop();
+}
+
+PlatformJs.prototype.audioFinished = function(audio) {
+	return (Date.now() - audio.startedAt) > audio.data.buffer.duration * 1000;
+}
+
+PlatformJs.prototype.audioSetPosition = function(audio, x, y, z) {
 }
 
 PlatformJs.prototype.audioUpdateListener = function(posX, posY, posZ, orientX, orientY, orientZ) {
@@ -2693,6 +2746,7 @@ function webGLStart() {
 	
 	textureCanvas = document.getElementById("textureCanvas");
 	textureCanvasContext = textureCanvas.getContext("2d");
+  audioContext = new AudioContext();
 
 	initGL(canvas);
 	initShaders();

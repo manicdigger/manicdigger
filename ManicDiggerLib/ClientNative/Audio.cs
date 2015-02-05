@@ -90,19 +90,18 @@ namespace ManicDigger
                 default: throw new NotSupportedException("The specified sound format is not supported.");
             }
         }
-        Dictionary<string, AudioSample> cache = new Dictionary<string, AudioSample>();
-        class AudioTask
+
+        public class AudioTask : AudioCi
         {
-            public AudioTask(GameExit gameexit, AudioSample sample, AudioOpenAl audio, float x, float y, float z)
+            public AudioTask(GameExit gameexit, AudioDataCs sample, AudioOpenAl audio)
             {
                 this.gameexit = gameexit;
                 this.sample = sample;
                 this.audio = audio;
-                this.position = new Vector3(x, y, z);
             }
             AudioOpenAl audio;
             GameExit gameexit;
-            AudioSample sample;
+            AudioDataCs sample;
             public Vector3 position;
             public void Play()
             {
@@ -143,7 +142,6 @@ namespace ManicDigger
                     OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcef.ReferenceDistance, 1);
                     OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcef.MaxDistance, (int)(64 * 1));
                     OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcei.Buffer, buffer);
-                    OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSource3f.Position, position.X, position.Y, position.Z);
                     OpenTK.Audio.OpenAL.AL.SourcePlay(source);
 
                     // Query the source to find out when it stops playing.
@@ -151,6 +149,10 @@ namespace ManicDigger
                     {
                         OpenTK.Audio.OpenAL.AL.GetSource(source, OpenTK.Audio.OpenAL.ALGetSourcei.SourceState, out state);
                         if ((!loop) && (OpenTK.Audio.OpenAL.ALSourceState)state != OpenTK.Audio.OpenAL.ALSourceState.Playing)
+                        {
+                            break;
+                        }
+                        if (stop)
                         {
                             break;
                         }
@@ -174,6 +176,8 @@ namespace ManicDigger
                                 OpenTK.Audio.OpenAL.AL.SourcePlay(source);
                             }
                         }
+                        
+                        OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSource3f.Position, position.X, position.Y, position.Z);
          
                         /*
                         if (stop)
@@ -189,26 +193,35 @@ namespace ManicDigger
                         */
                         Thread.Sleep(1);
                     }
+                    Finished = true;
                     OpenTK.Audio.OpenAL.AL.SourceStop(source);
                     OpenTK.Audio.OpenAL.AL.DeleteSource(source);
                     OpenTK.Audio.OpenAL.AL.DeleteBuffer(buffer);
                 }
             }
             public bool loop = false;
-            //bool stop;
-            //public void Stop()
-            //{
-            //    stop = true;
-            //}
+            bool stop;
+            public void Stop()
+            {
+                stop = true;
+            }
             public bool shouldplay;
             public bool restart;
             public void Restart()
             {
                 restart = true;
             }
+
+            internal void Pause()
+            {
+                shouldplay = false;
+            }
+
+
+            internal bool Finished;
         }
-        
-        public AudioSample GetSampleFromArray(byte[] data)
+
+        public AudioDataCs GetSampleFromArray(byte[] data)
         {
             Stream stream = new MemoryStream(data);
             if (stream.ReadByte() == 'R'
@@ -219,7 +232,7 @@ namespace ManicDigger
                 stream.Position = 0;
                 int channels, bits_per_sample, sample_rate;
                 byte[] sound_data = LoadWave(stream, out channels, out bits_per_sample, out sample_rate);
-                AudioSample sample = new AudioSample()
+                AudioDataCs sample = new AudioDataCs()
                 {
                     Pcm = sound_data,
                     BitsPerSample = bits_per_sample,
@@ -231,58 +244,15 @@ namespace ManicDigger
             else
             {
                 stream.Position = 0;
-                AudioSample sample = new OggDecoder().OggToWav(stream);
+                AudioDataCs sample = new OggDecoder().OggToWav(stream);
                 return sample;
             }
         }
         Vector3 lastlistener;
         Vector3 lastorientation;
-        public void Play(AudioSampleCi sample, float x, float y, float z)
+        public AudioTask CreateAudio(AudioDataCs sample)
         {
-            if (sample == null)
-            {
-                return;
-            }
-            if (context == null)
-            {
-                return;
-            }
-            new AudioTask(d_GameExit, (AudioSample)sample, this, x, y, z).Play();
-        }
-        Dictionary<AudioSample, AudioTask> soundsplaying = new Dictionary<AudioSample, AudioTask>();
-        public void PlayAudioLoop(AudioSampleCi sample, bool play)
-        {
-            PlayAudioLoop((AudioSample)sample, play, false);
-        }
-        public void PlayAudioLoop(AudioSample sample, bool play, bool restart)
-        {
-            if (context == null)
-            {
-                return;
-            }
-            //todo: resume playing.
-            if (play)
-            {
-                if (!soundsplaying.ContainsKey(sample))
-                {
-                    var x = new AudioTask(d_GameExit, sample, this, lastlistener.X, lastlistener.Y, lastlistener.Z);
-                    x.loop = true;
-                    soundsplaying[sample] = x;
-                }
-                if (restart)
-                {
-                    soundsplaying[sample].Restart();
-                }
-                soundsplaying[sample].Play();
-            }
-            else
-            {
-                if (soundsplaying.ContainsKey(sample))
-                {
-                    soundsplaying[sample].shouldplay = false;
-                    //soundsplaying.Remove(filename);
-                }
-            }
+            return new AudioTask(d_GameExit, sample, this);
         }
         public void UpdateListener(Vector3 position, Vector3 orientation)
         {

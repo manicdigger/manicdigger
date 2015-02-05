@@ -106,6 +106,7 @@
     <Compile Include="Client\Misc\GameMisc.ci.cs" />
     <Compile Include="Client\Misc\Packets.ci.cs" />
     <Compile Include="Client\Misc\TaskScheduler.ci.cs" />
+    <Compile Include="Client\Mods\Audio.ci.cs" />
     <Compile Include="Client\Mods\Draw2dMisc.ci.cs" />
     <Compile Include="Client\Mods\DrawArea.ci.cs" />
     <Compile Include="Client\Mods\GuiCrafting.ci.cs" />

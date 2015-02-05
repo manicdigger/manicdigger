@@ -60,10 +60,6 @@
     public abstract float BitmapGetWidth(BitmapCi bmp);
     public abstract float BitmapGetHeight(BitmapCi bmp);
     public abstract void BitmapDelete(BitmapCi bmp);
-    public abstract AudioSampleCi AudioLoad(byte[] data);
-    public abstract void AudioPlay(AudioSampleCi sample, float x, float y, float z);
-    public abstract void AudioPlayLoop(AudioSampleCi sample, bool play, bool restart);
-    public abstract void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ);
     public abstract void ConsoleWriteLine(string p);
     public abstract MonitorObject MonitorCreate();
     public abstract void MonitorEnter(MonitorObject monitorObject);
@@ -122,6 +118,17 @@
     public abstract bool IsChecksum(string checksum);
     public abstract string DecodeHTMLEntities(string htmlencodedstring);
     public abstract string QueryStringValue(string key);
+
+    // Audio
+    public abstract AudioData AudioDataCreate(byte[] data, int dataLength);
+    public abstract bool AudioDataLoaded(AudioData data);
+    public abstract AudioCi AudioCreate(AudioData data);
+    public abstract void AudioPlay(AudioCi audio);
+    public abstract void AudioPause(AudioCi audio);
+    public abstract void AudioDelete(AudioCi audioCi);
+    public abstract bool AudioFinished(AudioCi audio);
+    public abstract void AudioSetPosition(AudioCi audio, float x, float y, float z);
+    public abstract void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ);
     
     // Tcp
     public abstract bool TcpAvailable();
@@ -699,5 +706,13 @@ public class IntRef
 }
 
 public class AudioSampleCi
+{
+}
+
+public abstract class AudioData
+{
+}
+
+public abstract class AudioCi
 {
 }
