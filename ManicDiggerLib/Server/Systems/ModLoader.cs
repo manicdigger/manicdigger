@@ -122,12 +122,53 @@ namespace ManicDigger
         public void CompileScripts(Dictionary<string, string> scripts, bool restart)
         {
             CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v3.5" } });
-            var parms = new CompilerParameters
+            var parms = new CompilerParameters();
+            parms.GenerateExecutable = false;
+            parms.CompilerOptions = "/unsafe";
+
+#if !DEBUG
+            parms.GenerateInMemory = true;
+#else
+            //Prepare for mod debugging
+            //IMPORTANT: Visual Studio breakpoints will not jump into a generatet .cs file
+            //Instead, call "System.Diagnostics.Debugger.Break()" to create a breakpoint in the mod-class
+
+            //Generate files to debug
+            parms.GenerateInMemory = false;
+            parms.IncludeDebugInformation = true;
+
+            //Use a local temp folder
+            DirectoryInfo dirTemp = new DirectoryInfo(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "ModDebugInfos"));
+
+            //Prepare temp directory
+            if (!dirTemp.Exists)
             {
-                GenerateExecutable = false,
-                GenerateInMemory = true,
-                CompilerOptions = "/unsafe"
-            };
+                Directory.CreateDirectory(dirTemp.FullName);
+            }
+            else
+            {
+                try
+                {
+                    //Clear temp files
+                    foreach (FileInfo f in dirTemp.EnumerateFiles())
+                    {
+                        f.Delete();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    //meh, maybe next time
+                }
+            }
+
+            //created locally, this allows the debugger to find the .pdb
+            parms.OutputAssembly = Path.Combine(new DirectoryInfo(new FileInfo(GetType().Assembly.Location).DirectoryName).FullName ,"Mods.dll");
+
+            //generatet .cs files are stored here
+            //they are rather important for this debug session, since the .pdb link to them
+            parms.TempFiles = new TempFileCollection(dirTemp.FullName, true);
+#endif
+
             parms.ReferencedAssemblies.Add("System.dll");
             parms.ReferencedAssemblies.Add("System.Drawing.dll");
             parms.ReferencedAssemblies.Add("ScriptingApi.dll");
