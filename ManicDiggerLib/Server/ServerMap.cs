@@ -69,7 +69,7 @@ public class ServerMap : IMapStorage2
     public override void SetBlock(int x, int y, int z, int tileType)
     {
         ServerChunk chunk = GetChunk(x, y, z);
-        chunk.data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+        chunk.data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (ushort)tileType;
         chunk.LastChange = d_CurrentTime.GetSimulationCurrentFrame();
         chunk.DirtyForSaving = true;
         UpdateColumnHeight(x, y);
@@ -91,7 +91,7 @@ public class ServerMap : IMapStorage2
     public void SetBlockNotMakingDirty(int x, int y, int z, int tileType)
     {
         ServerChunk chunk = GetChunk(x, y, z);
-        chunk.data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+        chunk.data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (ushort)tileType;
         chunk.DirtyForSaving = true;
         UpdateColumnHeight(x, y);
     }
