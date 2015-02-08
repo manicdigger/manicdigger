@@ -517,23 +517,6 @@ public class VecCito3i
     }
 }
 
-public class VecCito3f
-{
-    public float x;
-    public float y;
-    public float z;
-
-    public static VecCito3f CitoCtr(float _x, float _y, float _z)
-    {
-        VecCito3f v = new VecCito3f();
-        v.x = _x;
-        v.y = _y;
-        v.z = _z;
-
-        return v;
-    }
-}
-
 public class GameVersionHelper
 {
     public static bool ServerVersionAtLeast(GamePlatform platform, string serverGameVersion, int year, int month, int day)

@@ -4473,10 +4473,10 @@
     {
         //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
         //UpdateTerrain();
+        NewFrameEventArgs args_ = new NewFrameEventArgs();
+        args_.SetDt(dt);
         for (int i = 0; i < clientmodsCount; i++)
         {
-            NewFrameEventArgs args_ = new NewFrameEventArgs();
-            args_.SetDt(dt);
             clientmods[i].OnNewFrameFixed(this, args_);
         }
         OnNewFrame(dt);
@@ -4786,10 +4786,10 @@
         SetAmbientLight(Game.ColorFromArgb(255, 255, 255, 255));
         Draw2d(dt);
 
+        NewFrameEventArgs args_ = new NewFrameEventArgs();
+        args_.SetDt(dt);
         for (int i = 0; i < clientmodsCount; i++)
         {
-            NewFrameEventArgs args_ = new NewFrameEventArgs();
-            args_.SetDt(dt);
             clientmods[i].OnNewFrame(this, args_);
         }
 

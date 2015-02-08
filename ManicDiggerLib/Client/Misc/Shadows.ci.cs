@@ -15,7 +15,7 @@ public class Shadows3x3x3 : IShadows3x3x3
         worklightArr = new byte[worklightArrLength];
         q = new FastQueueInt();
         q.Initialize(1024);
-        lighttoflood = new FastStackVector3IntRef();
+        lighttoflood = new FastStackInt();
         lighttoflood.Initialize(1024);
         blocksnear = new int[6];
         blocksnear[0] = -1;
@@ -228,7 +228,9 @@ public class Shadows3x3x3 : IShadows3x3x3
                                     if (xx > 1 && yy > 1 && zz > 1
                                         && xx < portionsize - 1 && yy < portionsize - 1 && zz < portionsize - 1)
                                     {
-                                        lighttoflood.Push(Vector3IntRef.Create(xx, yy, zz));
+                                        lighttoflood.Push(xx);
+                                        lighttoflood.Push(yy);
+                                        lighttoflood.Push(zz);
                                     }
                                     worklight[pos] = Game.IntToByte(MathCi.MaxInt(l, worklight[pos]));
                                 }
@@ -278,9 +280,17 @@ public class Shadows3x3x3 : IShadows3x3x3
                             if (xx > 1 && yy > 1 && zz > 1
                                 && xx < portionsize - 1 && yy < portionsize - 1 && zz < portionsize - 1)
                             {
-                                lighttoflood.Push(Vector3IntRef.Create(xx, yy, zz));
-                                lighttoflood.Push(Vector3IntRef.Create(xx + 1, yy, zz));
-                                lighttoflood.Push(Vector3IntRef.Create(xx, yy + 1, zz));
+                                lighttoflood.Push(xx);
+                                lighttoflood.Push(yy);
+                                lighttoflood.Push(zz);
+
+                                lighttoflood.Push(xx + 1);
+                                lighttoflood.Push(yy);
+                                lighttoflood.Push(zz);
+
+                                lighttoflood.Push(xx);
+                                lighttoflood.Push(yy + 1);
+                                lighttoflood.Push(zz);
                             }
                         }
                     }
@@ -298,8 +308,10 @@ public class Shadows3x3x3 : IShadows3x3x3
     {
         while (lighttoflood.Count_() > 0)
         {
-            Vector3IntRef k = lighttoflood.Pop();
-            FloodLight_(workportionArr, worklightArr, k.X, k.Y, k.Z);
+            int z = lighttoflood.Pop();
+            int y = lighttoflood.Pop();
+            int x = lighttoflood.Pop();
+            FloodLight_(workportionArr, worklightArr, x, y, z);
         }
     }
 
@@ -439,7 +451,7 @@ public class Shadows3x3x3 : IShadows3x3x3
         return true;
     }
 
-    FastStackVector3IntRef lighttoflood;
+    FastStackInt lighttoflood;
 }
 
 
@@ -487,21 +499,21 @@ public class FastQueueInt
 
 
 
-public class FastStackVector3IntRef
+public class FastStackInt
 {
     public void Initialize(int maxCount)
     {
         valuesLength = maxCount;
-        values = new Vector3IntRef[maxCount];
+        values = new int[maxCount];
     }
-    Vector3IntRef[] values;
+    int[] values;
     int valuesLength;
     internal int count;
-    public void Push(Vector3IntRef value)
+    public void Push(int value)
     {
         while (count >= valuesLength)
         {
-            Vector3IntRef[] values2 = new Vector3IntRef[valuesLength * 2];
+            int[] values2 = new int[valuesLength * 2];
             for (int i = 0; i < valuesLength; i++)
             {
                 values2[i] = values[i];
@@ -512,7 +524,7 @@ public class FastStackVector3IntRef
         values[count] = value;
         count++;
     }
-    public Vector3IntRef Pop()
+    public int Pop()
     {
         count--;
         return values[count];

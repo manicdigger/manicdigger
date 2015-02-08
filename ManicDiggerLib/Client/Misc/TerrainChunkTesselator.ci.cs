@@ -77,6 +77,7 @@ public class TerrainChunkTesselatorCi
         tmpoccupied = new bool[TileDirectionEnum.DirectionCounts];
         tmpfShadowRation = new float[4];
         tmpv = new VecCito3i();
+        ref_blockCornerHeight = new float[4];
 
         c_OcclusionNeighbors = new VecCito3i[TileSideEnum.SideCount][];
 
@@ -608,7 +609,8 @@ public class TerrainChunkTesselatorCi
     bool[] tmpoccupied;
     int[] tmpshadowration;
     float[] tmpfShadowRation;
-    void BuildBlockFace(int x, int y, int z, int tileType, VecCito3f vOffset, VecCito3f vScale, int[] currentChunk, int tileSide)
+    void BuildBlockFace(int x, int y, int z, int tileType, float vOffsetX, float vOffsetY, float vOffsetZ,
+        float vScaleX, float vScaleY, float vScaleZ, int[] currentChunk, int tileSide)
     {
         int xx = x % chunksize + 1;
         int yy = y % chunksize + 1;
@@ -662,7 +664,7 @@ public class TerrainChunkTesselatorCi
         {//no smoothing
         }
 
-        DrawBlockFace(x, y, z, tileType, tileSide, vOffset, vScale, vNeighbors, fShadowRation);
+        DrawBlockFace(x, y, z, tileType, tileSide, vOffsetX, vOffsetY, vOffsetZ, vScaleX, vScaleY, vScaleZ, vNeighbors, fShadowRation);
     }
 
     void CalcShadowRation(int nDir1, int nDirBetween, int nDir2, int nCorner, float[] fShadowRation, bool[] occupied, int[] shadowRationInt)
@@ -687,7 +689,7 @@ public class TerrainChunkTesselatorCi
     }
 
     VecCito3i tmpv;
-    void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, VecCito3f vOffset, VecCito3f vScale, VecCito3i[] vNeighbors, float[] fShadowRation)
+    void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, float vOffsetX, float vOffsetY, float vOffsetZ, float vScaleX, float vScaleY, float vScaleZ, VecCito3i[] vNeighbors, float[] fShadowRation)
     {
         int color = _colorWhite;
 
@@ -714,30 +716,30 @@ public class TerrainChunkTesselatorCi
         //Calculate the corner points
         vNeighbors[TileDirectionEnum.TopRight].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopRight);
-        float xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        float zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
-        float yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        float xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        float zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        float yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
         ModelDataTool.AddVertex(toreturn, xPos, zPos , yPos, _texrecRight, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopRight]));
 
         vNeighbors[TileDirectionEnum.TopLeft].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopLeft);
-        xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
-        yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopLeft]));
 
         vNeighbors[TileDirectionEnum.BottomRight].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomRight);
-        xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
-        yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecRight, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomRight]));
 
         vNeighbors[TileDirectionEnum.BottomLeft].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomLeft);
-        xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
-        zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
-        yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
+        xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomLeft]));
 
         if (tileSide == TileSideEnum.Right)
@@ -798,7 +800,10 @@ public class TerrainChunkTesselatorCi
     public void BuildSingleBlockPolygon(int x, int y, int z, int[] currentChunk)
     {
         //slope height
-        ref_blockCornerHeight = new float[4];
+        for (int i = 0; i < 4; i++)
+        {
+            ref_blockCornerHeight[i] = 0;
+        }
 
         int xx = x % chunksize + 1;
         int yy = y % chunksize + 1;
@@ -807,8 +812,12 @@ public class TerrainChunkTesselatorCi
         int nToDraw = GetToDrawFlags(xx, yy, zz);
         int tiletype = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
 
-        VecCito3f vOffset = VecCito3f.CitoCtr(0, 0, 0);
-        VecCito3f vScale = VecCito3f.CitoCtr(1, 1, 1);
+        float vOffsetX = 0;
+        float vOffsetY = 0;
+        float vOffsetZ = 0;
+        float vScaleX = 1;
+        float vScaleY = 1;
+        float vScaleZ = 1;
 
         if (!isvalid(tiletype))
         {
@@ -837,11 +846,13 @@ public class TerrainChunkTesselatorCi
             //Draw nothing but 2 faces. Prevents flickering.
             nToDraw = TileSideFlagsEnum.Front | TileSideFlagsEnum.Right;
 
-            vScale = VecCito3f.CitoCtr(0.9f, 0.9f, 1f);
+            vScaleX = 0.9f;
+            vScaleY = 0.9f;
+            vScaleZ = 1f;
 
             //Draw Front and Left side
-            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0.05f, 0f), vScale, currentChunk, TileSideEnum.Left);
-            BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.05f, 0.5f, 0f), vScale, currentChunk, TileSideEnum.Back);
+            BuildBlockFace(x, y, z, tiletype, 0.5f, 0.05f, 0f, vScaleX, vScaleY, vScaleZ, currentChunk, TileSideEnum.Left);
+            BuildBlockFace(x, y, z, tiletype, 0.05f, 0.5f, 0f, vScaleX, vScaleY, vScaleZ, currentChunk, TileSideEnum.Back);
             return;//done
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Cactus)
@@ -851,19 +862,27 @@ public class TerrainChunkTesselatorCi
             float fOffset = (1f - fScale) / 2f;
 
             //left right
-            VecCito3f vLROffset = VecCito3f.CitoCtr(fOffset, 0, 0);
-            VecCito3f vLRScale = VecCito3f.CitoCtr(fScale, 1f, 1f);
+            float vLROffsetX = fOffset;
+            float vLROffsetY = 0;
+            float vLROffsetZ = 0;
+            float vLRScaleX = fScale;
+            float vLRScaleY = 1f;
+            float vLRScaleZ = 1f;
 
             //front back
-            VecCito3f vFBOffset = VecCito3f.CitoCtr(0, fOffset, 0);
-            VecCito3f vFBScale = VecCito3f.CitoCtr(1f, fScale, 1f);
+            float vFBOffsetX = 0;
+            float vFBOffsetY = fOffset;
+            float vFBOffsetZ = 0;
+            float vFBScaleX = 1f;
+            float vFBScaleY = fScale;
+            float vFBScaleZ = 1f;
 
             //Cactus sides need always to be drawn
-            BuildBlockFace(x, y, z, tiletype, vLROffset, vLRScale, currentChunk, TileSideEnum.Left);
-            BuildBlockFace(x, y, z, tiletype, vLROffset, vLRScale, currentChunk, TileSideEnum.Right);
+            BuildBlockFace(x, y, z, tiletype, vLROffsetX, vLROffsetY, vLROffsetZ, vLRScaleX, vLRScaleY, vLRScaleZ, currentChunk, TileSideEnum.Left);
+            BuildBlockFace(x, y, z, tiletype, vLROffsetX, vLROffsetY, vLROffsetZ, vLRScaleX, vLRScaleY, vLRScaleZ, currentChunk, TileSideEnum.Right);
 
-            BuildBlockFace(x, y, z, tiletype, vFBOffset, vFBScale, currentChunk, TileSideEnum.Front);
-            BuildBlockFace(x, y, z, tiletype, vFBOffset, vFBScale, currentChunk, TileSideEnum.Back);
+            BuildBlockFace(x, y, z, tiletype, vFBOffsetX, vFBOffsetY, vFBOffsetZ, vFBScaleX, vFBScaleY, vFBScaleZ, currentChunk, TileSideEnum.Front);
+            BuildBlockFace(x, y, z, tiletype, vFBOffsetX, vFBOffsetY, vFBOffsetZ, vFBScaleX, vFBScaleY, vFBScaleZ, currentChunk, TileSideEnum.Back);
 
             //continue to draw top and bottom
             nToDraw = nToDraw & (TileSideFlagsEnum.Top | TileSideFlagsEnum.Bottom);
@@ -881,7 +900,9 @@ public class TerrainChunkTesselatorCi
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 nToDraw = TileSideFlagsEnum.Left;
-                vOffset = VecCito3f.CitoCtr(0, fOffset, 0);//do not stuck in the wall
+                vOffsetX = 0;
+                vOffsetY = fOffset; //do not stuck in the wall
+                vOffsetZ = 0;
                 blnDrawn = true;
             }
             //front to back
@@ -889,7 +910,9 @@ public class TerrainChunkTesselatorCi
                 currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
-                vOffset = VecCito3f.CitoCtr(fOffset, 0, 0);
+                vOffsetX = fOffset;
+                vOffsetY = 0;
+                vOffsetZ = 0;
                 nToDraw = TileSideFlagsEnum.Front;//do not stuck in the wall
             }
         }
@@ -902,7 +925,7 @@ public class TerrainChunkTesselatorCi
             if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0 ||
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
             {
-                BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0, -0.5f, 0), vScale, currentChunk, TileSideEnum.Front);
+                BuildBlockFace(x, y, z, tiletype, 0, -0.5f, 0, vScaleX, vScaleY, vScaleZ, currentChunk, TileSideEnum.Front);
                 blnSideDrawn = true;
             }
 
@@ -911,7 +934,7 @@ public class TerrainChunkTesselatorCi
                 currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0 ||
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
             {
-                BuildBlockFace(x, y, z, tiletype, VecCito3f.CitoCtr(0.5f, 0, 0), vScale, currentChunk, TileSideEnum.Left);
+                BuildBlockFace(x, y, z, tiletype, 0.5f, 0, 0, vScaleX, vScaleY, vScaleZ, currentChunk, TileSideEnum.Left);
             }
 
             return;
@@ -919,8 +942,12 @@ public class TerrainChunkTesselatorCi
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
         {
             //bring it away from the wall
-            vOffset = VecCito3f.CitoCtr(0.025f, 0.025f, 0);
-            vScale = VecCito3f.CitoCtr(0.95f, 0.95f, 1f);
+            vOffsetX = 0.025f;
+            vOffsetY = 0.025f;
+            vOffsetZ = 0;
+            vScaleX = 0.95f;
+            vScaleY = 0.95f;
+            vScaleZ = 1f;
 
             nToDraw = TileSideFlagsEnum.None;
 
@@ -950,11 +977,15 @@ public class TerrainChunkTesselatorCi
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.HalfHeight)
         {
-            vScale = VecCito3f.CitoCtr(1, 1, 0.5f);
+            vScaleX = 1;
+            vScaleY = 1;
+            vScaleZ = 0.5f;
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Flat)
         {
-            vScale = VecCito3f.CitoCtr(1, 1, 0.05f);
+            vScaleX = 1;
+            vScaleY = 1;
+            vScaleZ = 0.05f;
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Torch)
         {
@@ -974,12 +1005,16 @@ public class TerrainChunkTesselatorCi
             if (currentChunk[Index3d(xx, yy, zz - 1, chunksize + 2, chunksize + 2)] == 8)
             {
                 //flow down in the lower block
-                vOffset = VecCito3f.CitoCtr(0, 0, -0.1f);
+                vOffsetX = 0;
+                vOffsetY = 0;
+                vOffsetZ = -0.1f;
             }
             else
             {
                 //lower than a normal block
-                vScale = VecCito3f.CitoCtr(1, 1, 0.9f);
+                vScaleX = 1;
+                vScaleY = 1;
+                vScaleZ = 0.9f;
             }
         }
         else
@@ -990,7 +1025,9 @@ public class TerrainChunkTesselatorCi
             {
                 int slope = GetRailSlope(xx, yy, zz);
                 float fSlopeMod = 1.0f;
-                vScale = VecCito3f.CitoCtr(1f, 1f, 0.3f);
+                vScaleX = 1f;
+                vScaleY = 1f;
+                vScaleZ = 0.3f;
                 if (slope == RailSlopeEnum.TwoRightRaised)
                 {
                     ref_blockCornerHeight[CornerEnum.TopRight] = fSlopeMod;
@@ -1019,7 +1056,7 @@ public class TerrainChunkTesselatorCi
         {
             if ((nToDraw & TileSideEnum.ToFlags(i)) != TileSideFlagsEnum.None)
             {
-                BuildBlockFace(x, y, z, tiletype, vOffset, vScale, currentChunk, i);
+                BuildBlockFace(x, y, z, tiletype, vOffsetX, vOffsetY, vOffsetZ, vScaleX, vScaleY, vScaleZ, currentChunk, i);
             }
         }
 
