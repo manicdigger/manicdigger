@@ -4719,6 +4719,10 @@
         platform.ApplicationDoEvents();
 
         accumulator += deltaTime;
+        if (accumulator > 1)
+        {
+            accumulator = 1;
+        }
         float dt = one / 75;
 
         while (accumulator >= dt)
