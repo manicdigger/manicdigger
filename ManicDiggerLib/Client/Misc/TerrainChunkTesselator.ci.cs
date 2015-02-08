@@ -59,6 +59,7 @@ public class TerrainChunkTesselatorCi
     VecCito3i[][] c_OcclusionNeighbors;
 
     float[] ref_blockCornerHeight;
+    int[] tmpnPos;
 
     public TerrainChunkTesselatorCi()
     {
@@ -71,6 +72,11 @@ public class TerrainChunkTesselatorCi
         AtiArtifactFix = 0.995f;
         occ = 0.7f;
         halfocc = 0.4f;
+        tmpnPos = new int[7];
+        tmpshadowration = new int[TileDirectionEnum.DirectionCounts];
+        tmpoccupied = new bool[TileDirectionEnum.DirectionCounts];
+        tmpfShadowRation = new float[4];
+        tmpv = new VecCito3i();
 
         c_OcclusionNeighbors = new VecCito3i[TileSideEnum.SideCount][];
 
@@ -182,11 +188,6 @@ public class TerrainChunkTesselatorCi
     }
 #endif
 
-    static int Index3dVec(VecCito3i v)
-    {
-        return Index3d(v.x, v.y, v.z, chunksize + 2, chunksize + 2);
-    }
-
     public void Start()
     {
         currentChunk18 = new int[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
@@ -274,7 +275,7 @@ public class TerrainChunkTesselatorCi
                     int draw = TileSideFlagsEnum.None;
 
                     //calculate neighbor block positions
-                    int[] nPos = new int[7];
+                    int[] nPos = tmpnPos;
                     nPos[TileSideEnum.Top] = pos + movez;
                     nPos[TileSideEnum.Bottom] = pos - movez;
                     nPos[TileSideEnum.Front] = pos + (chunksize + 2);
@@ -604,6 +605,9 @@ public class TerrainChunkTesselatorCi
     internal float occ;
     internal float halfocc;
 
+    bool[] tmpoccupied;
+    int[] tmpshadowration;
+    float[] tmpfShadowRation;
     void BuildBlockFace(int x, int y, int z, int tileType, VecCito3f vOffset, VecCito3f vScale, int[] currentChunk, int tileSide)
     {
         int xx = x % chunksize + 1;
@@ -611,14 +615,15 @@ public class TerrainChunkTesselatorCi
         int zz = z % chunksize + 1;
         VecCito3i[] vNeighbors = c_OcclusionNeighbors[tileSide];
 
-        int[] shadowration = new int[TileDirectionEnum.DirectionCounts];
-        bool[] occupied = new bool[TileDirectionEnum.DirectionCounts];
+        int[] shadowration = tmpshadowration;
+        bool[] occupied = tmpoccupied;
 
-        //TODO: is this one bad for performance?
-        int shadowratio = GetShadowRatioVec(vNeighbors[TileDirectionEnum.Center].Add(xx, yy, zz));
+        int shadowratio = GetShadowRatio(vNeighbors[TileDirectionEnum.Center].x + xx,
+            vNeighbors[TileDirectionEnum.Center].y + yy,
+            vNeighbors[TileDirectionEnum.Center].z + zz);
 
         //initialize shadow values
-        float[] fShadowRation = new float[4];
+        float[] fShadowRation = tmpfShadowRation;
         float shadowratiomain = lightlevels[shadowratio];
         fShadowRation[0] = shadowratiomain;
         fShadowRation[1] = shadowratiomain;
@@ -630,8 +635,10 @@ public class TerrainChunkTesselatorCi
             //Get occupation and int shadowRation
             for (int i = 0; i < TileDirectionEnum.DirectionCounts; i++)
             {
-                VecCito3i vPos = vNeighbors[i].Add(xx, yy, zz);
-                int nBlockType = currentChunk[Index3dVec(vPos)];
+                int vPosX = vNeighbors[i].x + xx;
+                int vPosY = vNeighbors[i].y + yy;
+                int vPosZ = vNeighbors[i].z + zz;
+                int nBlockType = currentChunk[Index3d(vPosX, vPosY, vPosZ, chunksize + 2, chunksize + 2)];
 
                 if (nBlockType != 0)
                 {
@@ -641,7 +648,7 @@ public class TerrainChunkTesselatorCi
                 else
                 {
                     occupied[i] = false;
-                    shadowration[i] = GetShadowRatioVec(vPos);
+                    shadowration[i] = GetShadowRatio(vPosX, vPosY, vPosZ);
                 }
             }
 
@@ -679,6 +686,7 @@ public class TerrainChunkTesselatorCi
         }
     }
 
+    VecCito3i tmpv;
     void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, VecCito3f vOffset, VecCito3f vScale, VecCito3i[] vNeighbors, float[] fShadowRation)
     {
         int color = _colorWhite;
@@ -700,32 +708,32 @@ public class TerrainChunkTesselatorCi
         float texrecBottom = texrecTop + _texrecHeight;
         int lastelement = toreturn.verticesCount;
 
-        VecCito3i v;
+        VecCito3i v = tmpv;
         float fSlopeModifier = 0f;
 
         //Calculate the corner points
-        v = vNeighbors[TileDirectionEnum.TopRight].Add(1, 1, 1);
+        vNeighbors[TileDirectionEnum.TopRight].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopRight);
         float xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
         float zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
         float yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
         ModelDataTool.AddVertex(toreturn, xPos, zPos , yPos, _texrecRight, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopRight]));
 
-        v = vNeighbors[TileDirectionEnum.TopLeft].Add(1, 1, 1);
+        vNeighbors[TileDirectionEnum.TopLeft].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.TopLeft);
         xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
         zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
         yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecTop, ColorMultiply(color, fShadowRation[CornerEnum.TopLeft]));
 
-        v = vNeighbors[TileDirectionEnum.BottomRight].Add(1, 1, 1);
+        vNeighbors[TileDirectionEnum.BottomRight].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomRight);
         xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
         zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;
         yPos = y + vOffset.y + ((v.y * 0.5f) * vScale.y);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecRight, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomRight]));
 
-        v = vNeighbors[TileDirectionEnum.BottomLeft].Add(1, 1, 1);
+        vNeighbors[TileDirectionEnum.BottomLeft].Add(1, 1, 1, v);
         fSlopeModifier = GetCornerHeightModifier(tileSide, CornerEnum.BottomLeft);
         xPos = x + vOffset.x + ((v.x * 0.5f) * vScale.x);
         zPos = z + vOffset.z + ((v.z * 0.5f) * vScale.z) + fSlopeModifier;

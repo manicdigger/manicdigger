@@ -509,9 +509,11 @@ public class VecCito3i
         return v;
     }
 
-    public VecCito3i Add(int _x, int _y, int _z)
+    public void Add(int _x, int _y, int _z, VecCito3i result)
     {
-        return CitoCtr(this.x + _x, this.y + _y, this.z + _z);
+        result.x = x + _x;
+        result.y = y + _y;
+        result.z = z + _z;
     }
 }
 
@@ -529,11 +531,6 @@ public class VecCito3f
         v.z = _z;
 
         return v;
-    }
-
-    public VecCito3f Add(float _x, float _y, float _z)
-    {
-        return CitoCtr(this.x + _x, this.y + _y, this.z + _z);
     }
 }
 
