@@ -357,7 +357,9 @@ public class TerrainChunkTesselatorCi
                 if (top != 0 && !IsWater(top))
                 {
                     //Is surrounded and has a solid block above
-                    nReturn |= TileSideEnum.ToFlags(TileSideEnum.Top);
+                    
+                    //Commented out because it is causing unnecessary lava layer rendering of map bottom
+                    //nReturn |= TileSideEnum.ToFlags(TileSideEnum.Top);
                 }
             }
             //water below?
