@@ -299,7 +299,7 @@ public class TerrainChunkTesselatorCi
                         if (!TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Top))
                         {
                             //if one side is visible, top needs to be rendered
-                            if (TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Left | TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back))
+                            if (TileSideFlagsEnum.HasFlag(draw, TileSideFlagsEnum.Front | TileSideFlagsEnum.Back | TileSideFlagsEnum.Right | TileSideFlagsEnum.Left))
                             {
                                 draw |= TileSideFlagsEnum.Top;
                             }
@@ -315,10 +315,10 @@ public class TerrainChunkTesselatorCi
                             //always draw raised slope sides
                             switch (nSlope)
                             {
-                                case RailSlopeEnum.TwoDownRaised: draw |= TileSideFlagsEnum.Front | TileSideFlagsEnum.Left | TileSideFlagsEnum.Right; break;
-                                case RailSlopeEnum.TwoUpRaised: draw |= TileSideFlagsEnum.Back | TileSideFlagsEnum.Left | TileSideFlagsEnum.Right; break;
-                                case RailSlopeEnum.TwoLeftRaised: draw |= TileSideFlagsEnum.Left | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
-                                case RailSlopeEnum.TwoRightRaised: draw |= TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
+                                case RailSlopeEnum.TwoDownRaised: draw |= TileSideFlagsEnum.Right | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
+                                case RailSlopeEnum.TwoUpRaised: draw |= TileSideFlagsEnum.Left | TileSideFlagsEnum.Front | TileSideFlagsEnum.Back; break;
+                                case RailSlopeEnum.TwoLeftRaised: draw |= TileSideFlagsEnum.Front | TileSideFlagsEnum.Right | TileSideFlagsEnum.Left; break;
+                                case RailSlopeEnum.TwoRightRaised: draw |= TileSideFlagsEnum.Back | TileSideFlagsEnum.Right | TileSideFlagsEnum.Left; break;
                             }
                         }
                     }
@@ -452,22 +452,22 @@ public class TerrainChunkTesselatorCi
                             int shadowratioTop = GetShadowRatio(xx, yy, zz - 1);
                             currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = 1;
                         }
-                        if ((draw & TileSideFlagsEnum.Front) != 0)
+                        if ((draw & TileSideFlagsEnum.Right) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx - 1, yy, zz);
                             currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;
                         }
-                        if ((draw & TileSideFlagsEnum.Back) != 0)
+                        if ((draw & TileSideFlagsEnum.Left) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx + 1, yy, zz);
                             currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;
                         }
-                        if ((draw & TileSideFlagsEnum.Left) != 0)
+                        if ((draw & TileSideFlagsEnum.Front) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx, yy - 1, zz);
                             currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;
                         }
-                        if ((draw & TileSideFlagsEnum.Right) != 0)
+                        if ((draw & TileSideFlagsEnum.Back) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx, yy + 1, zz);
                             currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;
@@ -762,10 +762,10 @@ public class TerrainChunkTesselatorCi
 
         nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Top, nToDraw, TileSideFlagsEnum.Top);
         nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Bottom, nToDraw, TileSideFlagsEnum.Bottom);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Left, nToDraw, TileSideFlagsEnum.Front);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Right, nToDraw, TileSideFlagsEnum.Back);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Back, nToDraw, TileSideFlagsEnum.Left);
-        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Front, nToDraw, TileSideFlagsEnum.Right);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Left, nToDraw, TileSideFlagsEnum.Right);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Right, nToDraw, TileSideFlagsEnum.Left);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Back, nToDraw, TileSideFlagsEnum.Front);
+        nToDraw = SetVisibleFlag(drawFlags, TileSideEnum.Front, nToDraw, TileSideFlagsEnum.Back);
 
         return nToDraw;
     }
@@ -815,17 +815,17 @@ public class TerrainChunkTesselatorCi
         {
             //On finite map don't draw borders:
             //they can't be seen without freemove cheat.
-            if (z == 0) { nToDraw ^= TileSideFlagsEnum.Bottom; }
-            if (x == 0) { nToDraw ^= TileSideFlagsEnum.Front; }
-            if (x == mapsizex - 1) { nToDraw ^= TileSideFlagsEnum.Back; }
-            if (y == 0) { nToDraw ^= TileSideFlagsEnum.Left; }
-            if (y == mapsizey - 1) { nToDraw ^= TileSideFlagsEnum.Right; }
+            if (z == 0) { nToDraw &= ~TileSideFlagsEnum.Bottom; }
+            if (x == 0) { nToDraw &= ~TileSideFlagsEnum.Front; }
+            if (x == mapsizex - 1) { nToDraw &= ~TileSideFlagsEnum.Back; }
+            if (y == 0) { nToDraw &= ~TileSideFlagsEnum.Left; }
+            if (y == mapsizey - 1) { nToDraw &= ~TileSideFlagsEnum.Right; }
         }
         
         if (IsFlower(tiletype))
         {
             //Draw nothing but 2 faces. Prevents flickering.
-            nToDraw = TileSideFlagsEnum.Left | TileSideFlagsEnum.Front;
+            nToDraw = TileSideFlagsEnum.Front | TileSideFlagsEnum.Right;
 
             vScale = VecCito3f.CitoCtr(0.9f, 0.9f, 1f);
 
@@ -870,7 +870,7 @@ public class TerrainChunkTesselatorCi
             if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0 &&
                 currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
-                nToDraw = TileSideFlagsEnum.Back;
+                nToDraw = TileSideFlagsEnum.Left;
                 vOffset = VecCito3f.CitoCtr(0, fOffset, 0);//do not stuck in the wall
                 blnDrawn = true;
             }
@@ -880,7 +880,7 @@ public class TerrainChunkTesselatorCi
                 currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 vOffset = VecCito3f.CitoCtr(fOffset, 0, 0);
-                nToDraw = TileSideFlagsEnum.Left;//do not stuck in the wall
+                nToDraw = TileSideFlagsEnum.Front;//do not stuck in the wall
             }
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence ||
@@ -932,10 +932,10 @@ public class TerrainChunkTesselatorCi
             switch (ladderAtPositionMatchWall)
             {
                     //TODO: remove magic numbers
-                case 1: nToDraw |= TileSideFlagsEnum.Front; break;
-                case 2: nToDraw |= TileSideFlagsEnum.Left; break;
-                case 3: nToDraw |= TileSideFlagsEnum.Right; break;
-                default: nToDraw |= TileSideFlagsEnum.Back; break;
+                case 1: nToDraw |= TileSideFlagsEnum.Right; break;
+                case 2: nToDraw |= TileSideFlagsEnum.Front; break;
+                case 3: nToDraw |= TileSideFlagsEnum.Back; break;
+                default: nToDraw |= TileSideFlagsEnum.Left; break;
             }
         }
         else if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.HalfHeight)
@@ -1599,10 +1599,10 @@ public class TileSideEnum
         {
             case Top: return TileSideFlagsEnum.Top;
             case Bottom: return TileSideFlagsEnum.Bottom;
-            case Left: return TileSideFlagsEnum.Left;
-            case Right: return TileSideFlagsEnum.Right;
-            case Back: return TileSideFlagsEnum.Back;
-            case Front: return TileSideFlagsEnum.Front;
+            case Left: return TileSideFlagsEnum.Front;
+            case Right: return TileSideFlagsEnum.Back;
+            case Back: return TileSideFlagsEnum.Left;
+            case Front: return TileSideFlagsEnum.Right;
             default: return TileSideFlagsEnum.None;
         }
     }
@@ -1613,10 +1613,10 @@ public class TileSideFlagsEnum
     public const int None = 0;
     public const int Top = 1;
     public const int Bottom = 2;
-    public const int Front = 4;
-    public const int Back = 8;
-    public const int Left = 16;
-    public const int Right = 32;
+    public const int Right = 4;
+    public const int Left = 8;
+    public const int Front = 16;
+    public const int Back = 32;
 
     public static bool HasFlag(int nFlagA, int nFlagB)
     {
