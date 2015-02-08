@@ -2,7 +2,6 @@
 {
     public CharacterPhysicsState()
     {
-        float one = 1;
         movedz = 0;
         curspeed = new Vector3Ref();
         jumpacceleration = 0;
@@ -12,20 +11,13 @@
     internal Vector3Ref curspeed;
     internal float jumpacceleration;
     internal bool isplayeronground;
-
-    static float GetPi()
-    {
-        float a = 3141592;
-        return a / 1000000;
-    }
 }
 
 public class Acceleration
 {
     public Acceleration()
     {
-        float one = 1;
-        acceleration1 = one * 9 / 10;
+        acceleration1 = 0.9f;
         acceleration2 = 2;
         acceleration3 = 700;
     }
@@ -169,14 +161,11 @@ public class CharacterPhysicsCi
         enable_acceleration = true;
         jumpconst = one * 21 / 10;
 
-        diff = new float[3];
-        previousposition = new float[3];
         playerposition = new float[3];
     }
     internal Game game;
     internal bool swimmingtop;
     internal float walldistance;
-    internal bool reachedceiling;
     internal bool reachedwall_1blockhigh;
     internal bool reachedwall;
     internal float gravity;
@@ -215,8 +204,7 @@ public class CharacterPhysicsCi
         if (game.IsFluid(blocktype) &&
             !game.IsFluid(blocktypeabove)) { return true; }
         int blockabove2 = game.GetBlock(x, y, z + 2);
-        return (blocktype.DrawType == Packet_DrawTypeEnum.HalfHeight && blockabove2 == 0 && blockabove == 0) // also check if the block above the stair is empty
-            || (game.IsFluid(blocktype) && (!swimmingtop))
+        return (game.IsFluid(blocktype) && (!swimmingtop))
             || game.IsEmptyForPhysics(blocktype)
             || game.IsRail(blocktype);
     }
@@ -343,22 +331,14 @@ public class CharacterPhysicsCi
         if (!move.ENABLE_NOCLIP)
         {
             swimmingtop = move.wantsjump && !move.Swimming;
-            // This is a temporary workaround for crashing at the top of the map.
-            // This needs to be cleaned up some other way.
-            //try
-            {
-                float[] v = WallSlide(state,
-                    Vec3.FromValues(stateplayerposition.x, stateplayerposition.y, stateplayerposition.z),
-                    Vec3.FromValues(newposition.X, newposition.Y, newposition.Z),
-                    modelheight);
-                stateplayerposition.x = v[0];
-                stateplayerposition.y = v[1];
-                stateplayerposition.z = v[2];
-            }
-            //catch
-            {
-                // The block probably doesn't exist...
-            }
+
+            float[] v = WallSlide(state,
+                Vec3.FromValues(stateplayerposition.x, stateplayerposition.y, stateplayerposition.z),
+                Vec3.FromValues(newposition.X, newposition.Y, newposition.Z),
+                modelheight);
+            stateplayerposition.x = v[0];
+            stateplayerposition.y = v[1];
+            stateplayerposition.z = v[2];
         }
         else
         {
@@ -399,19 +379,7 @@ public class CharacterPhysicsCi
         }
         if (state.isplayeronground)
         {
-            state.movedz = Max(0, state.movedz);
-        }
-    }
-
-    float Max(int a, float b)
-    {
-        if (a > b)
-        {
-            return a;
-        }
-        else
-        {
-            return b;
+            state.movedz = MathCi.MaxFloat(0, state.movedz);
         }
     }
 
@@ -442,369 +410,113 @@ public class CharacterPhysicsCi
         }
     }
 
-    float[] diff;
-    float[] previousposition;
     float[] playerposition;		//Temporarily stores the player's position. Used in WallSlide()
     public float[] WallSlide(CharacterPhysicsState state, float[] oldposition, float[] newposition, float modelheight)
     {
         bool high = false;
-        float stairjumpacceleration = one * 110 / 40;
         if (modelheight >= 2) { high = true; }	//Set high to true if player model is bigger than standard height
         oldposition[1] += walldistance;		//Add walldistance temporarily for ground collisions
         newposition[1] += walldistance;		//Add walldistance temporarily for ground collisions
 
-        reachedceiling = false;
         reachedwall = false;
         reachedwall_1blockhigh = false;
-        
-        int oldPosX = FloatToInt(Floor(oldposition[0]));
-        int oldPosY = FloatToInt(Floor(oldposition[2]));
-        int oldPosZ = FloatToInt(Floor(oldposition[1]));
-        bool wasonstairs = isHalfHeight(oldPosX, oldPosY, oldPosZ);	//Checks if player is coming from a half height block
-        bool steppedonstair = false;	//Indicates if the player just stepped on a stair in this collision tick
-        float half = one * 1 / 2;
 
-        playerposition[0] = newposition[0];	//MD: X
-        playerposition[1] = newposition[1];	//MD: Z - top axis
-        playerposition[2] = newposition[2];	//MD: Y
+        playerposition[0] = oldposition[0];
+        playerposition[1] = oldposition[1];
+        playerposition[2] = oldposition[2];
 
-        //left - positive Y axis
+        // X
+        if (IsEmptySpaceForPlayer(high, newposition[0], oldposition[1], oldposition[2]))
         {
-            float p0 = newposition[0] + 0;
-            float p1 = newposition[1] + 0;
-            float p2 = newposition[2] + walldistance;	//Add walldistance so player is kept at a little distance
-            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
-            if (newposition[2] - oldposition[2] > 0)
-            {
-            	if (!wasonstairs)
-            	{
-                	if (!newempty)	//Block is solid
-                	{
-                		//New Y coordinate of position not valid. Set back to old coordinate.
-                	    reachedwall = true;
-                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
-                	    playerposition[2] = oldposition[2];
-                	}
-                	else	//Block is empty or halfstep
-                	{
-                		int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool newstairs = isHalfHeight(x, y, z);
-                		if (newstairs)
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos < half && !steppedonstair)
-                			{
-                	            state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-                	}
-            	}
-            	else
-            	{
-            		if (!NewEmpty(high, p0, p1, newposition[2]))	//Block is solid
-            		{
-            			int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool nextempty = IsTileEmptyForPhysics(x, y, z + 1) && !isHalfHeight(x, y, z + 1); //Ensure that block is empty and not a halfstep
-                		if (!nextempty)
-                		{
-                			reachedwall = true;
-                			playerposition[2] = oldposition[2];
-                		}
-                		else	//Block is empty
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos >= half && !steppedonstair)
-                			{
-                				state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-            		}
-            	}
-            }
-        }
-        //front - positive X axis
-        {
-            float p0 = newposition[0] + walldistance;	//Add walldistance so player is kept at a little distance
-            float p1 = newposition[1] + 0;
-            float p2 = newposition[2] + 0;
-            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
-            if (newposition[0] - oldposition[0] > 0)
-            {
-                if (!wasonstairs)
-            	{
-                	if (!newempty)	//Block is solid
-                	{
-                		//New X coordinate of position not valid. Set back to old coordinate.
-                	    reachedwall = true;
-                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
-                	    playerposition[0] = oldposition[0];
-                	}
-                	else	//Block is empty or halfstep
-                	{
-                		int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool newstairs = isHalfHeight(x, y, z);
-                		if (newstairs)
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos < half && !steppedonstair)
-                			{
-                				state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-                	}
-            	}
-            	else
-            	{
-            		if (!NewEmpty(high, newposition[0], p1, p2))	//Block is solid
-            		{
-            			int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool nextempty = IsTileEmptyForPhysics(x, y, z + 1) && !isHalfHeight(x, y, z + 1); //Ensure that block is empty and not a halfstep
-                		if (!nextempty)
-                		{
-                			reachedwall = true;
-                			playerposition[0] = oldposition[0];
-                		}
-                		else	//Block is empty
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos >= half && !steppedonstair)
-                			{
-                				state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-            		}
-            	}
-            }
-        }
-        //top - negative Z axis. Floor collision.
-        {
-            float qnewposition0 = newposition[0] + 0;
-            float qnewposition1 = newposition[1] - walldistance;
-            float qnewposition2 = newposition[2] + 0;
-            int x = FloatToInt(Floor(qnewposition0));
-            int y = FloatToInt(Floor(qnewposition2));
-            int z = FloatToInt(Floor(qnewposition1));
-            float a = walldistance;
-            //Check if block at new Z coordinate is NOT empty for physics (check for solid block)
-            bool newfull = (!IsTileEmptyForPhysics(x, y, z))
-            	//These 4 lines let you walk a little over the block's edge. Also part of the 2 block high jump problem
-                || (qnewposition0 - Floor(qnewposition0) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)) && shiftkeypressed)
-                || (qnewposition0 - Floor(qnewposition0) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)) && shiftkeypressed)
-                || (qnewposition2 - Floor(qnewposition2) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)) && shiftkeypressed)
-                || (qnewposition2 - Floor(qnewposition2) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)) && shiftkeypressed);
-            bool newhalf = isHalfHeight(x, y, z);
-            if (newposition[1] - oldposition[1] < 0)
-            {
-                if (newfull && !steppedonstair)
-                {
-                	//If new block is solid, don't change height of position (no falling through solid blocks)
-                	playerposition[1] = oldposition[1];
-                    standingontheground = true;
-                }
-                else if (newhalf && !steppedonstair)
-                {
-                	//Block is half height
-                	float relPos = qnewposition1 - z;	//relative position inside block (between 0 and 1)
-                	if (relPos < half)
-                	{
-                		playerposition[1] = oldposition[1];
-                    	standingontheground = true;
-                	}
-                }
-            }
-        }
-        //right - negative Y axis
-        {
-            float p0 = newposition[0] + 0;
-            float p1 = newposition[1] + 0;
-            float p2 = newposition[2] - walldistance;	//Add walldistance so player is kept at a little distance
-            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
-            if (newposition[2] - oldposition[2] < 0)
-            {
-                if (!wasonstairs)
-            	{
-                	if (!newempty)	//Block is solid
-                	{
-                		//New Y coordinate of position not valid. Set back to old coordinate.
-                	    reachedwall = true;
-                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
-                	    playerposition[2] = oldposition[2];
-                	}
-                	else	//Block is empty or halfstep
-                	{
-                		int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool newstairs = isHalfHeight(x, y, z);
-                		if (newstairs)
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos < half && !steppedonstair)
-                			{
-                				state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-                	}
-            	}
-            	else
-            	{
-            		if (!NewEmpty(high, p0, p1, newposition[2]))	//Block is solid
-            		{
-            			int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool nextempty = IsTileEmptyForPhysics(x, y, z + 1) && !isHalfHeight(x, y, z + 1); //Ensure that block is empty and not a halfstep
-                		if (!nextempty)
-                		{
-                			reachedwall = true;
-                			playerposition[2] = oldposition[2];
-                		}
-                		else	//Block is empty
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos >= half && !steppedonstair)
-                			{
-                				state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-            		}
-            	}
-            }
-        }
-        //back - negative X axis
-        {
-            float p0 = newposition[0] - walldistance;	//Add walldistance so player is kept at a little distance
-            float p1 = newposition[1] + 0;
-            float p2 = newposition[2] + 0;
-            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
-            if (newposition[0] - oldposition[0] < 0)
-            {
-                if (!wasonstairs)
-            	{
-                	if (!newempty)	//Block is solid
-                	{
-                		//New X coordinate of position not valid. Set back to old coordinate.
-                	    reachedwall = true;
-                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
-                	    playerposition[0] = oldposition[0];
-                	}
-                	else	//Block is empty or halfstep
-                	{
-                		int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool newstairs = isHalfHeight(x, y, z);
-                		if (newstairs)
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos < half && !steppedonstair)
-                			{
-                				state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-                	}
-            	}
-            	else
-            	{
-            		if (!NewEmpty(high, newposition[0], p1, p2))	//Block is solid
-            		{
-            			int x = FloatToInt(Floor(newposition[0]));
-                		int y = FloatToInt(Floor(newposition[2]));
-                		int z = FloatToInt(Floor(newposition[1]));
-                		bool nextempty = IsTileEmptyForPhysics(x, y, z + 1) && !isHalfHeight(x, y, z + 1); //Ensure that block is empty and not a halfstep
-                		if (!nextempty)
-                		{
-                			reachedwall = true;
-                			playerposition[0] = oldposition[0];
-                		}
-                		else	//Block is empty
-                		{
-                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
-                			if (relPos >= half && !steppedonstair)
-                			{
-                				state.jumpacceleration = stairjumpacceleration;
-                	            standingontheground = false;
-                				steppedonstair = true;
-                			}
-                		}
-            		}
-            	}
-            }
-        }
-        //bottom - positive Z axis. Ceiling collision.
-        {
-            float p0 = newposition[0] + 0;
-            float p1 = newposition[1] + modelheight;	//Add model height to correctly determine ceiling collisions
-            float p2 = newposition[2] + 0;
-            bool newempty = IsTileEmptyForPhysics(FloatToInt(p0), FloatToInt(p2), FloatToInt(p1));	//Check if block at new position is empty for physics
-            if (newposition[1] - oldposition[1] > 0)
-            {
-                if (!newempty)
-                {
-                    reachedwall = true;
-                    if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
-                    playerposition[1] = oldposition[1];
-                }
-            }
-        }
-        playerposition[1] -= walldistance;	//Remove the temporary walldistance again
-        return playerposition;	//Return valid position
-    }
-    
-    bool isHalfHeight(int x, int y, int z)
-    {
-        int block = game.GetBlock(x, y, z);
-    	return (game.blocktypes[block].DrawType == Packet_DrawTypeEnum.HalfHeight
-    	        || game.IsRail(game.blocktypes[block]));
-    }
-
-    float Floor(float aFloat)
-    {
-        if (aFloat > 0)
-        {
-            return FloatToInt(aFloat);
+            playerposition[0] = newposition[0];
         }
         else
         {
-            return FloatToInt(aFloat) - 1;
+            // For autojump
+            reachedwall = true;
+            if (IsEmptyPoint(newposition[0], oldposition[1] + 1, oldposition[2])) { reachedwall_1blockhigh = true; }
         }
+        // Y
+        if (IsEmptySpaceForPlayer(high, oldposition[0], newposition[1], oldposition[2]))
+        {
+            playerposition[1] = newposition[1];
+        }
+        // Z
+        if (IsEmptySpaceForPlayer(high, oldposition[0], oldposition[1], newposition[2]))
+        {
+            playerposition[2] = newposition[2];
+        }
+        else
+        {
+            // For autojump
+            reachedwall = true;
+            if (IsEmptyPoint(oldposition[0], oldposition[1] + 1, newposition[2])) { reachedwall_1blockhigh = true; }
+        }
+        
+        standingontheground = (playerposition[1] == oldposition[1]) && (newposition[1] < oldposition[1]);
+
+        playerposition[1] -= walldistance;	//Remove the temporary walldistance again
+        return playerposition;	//Return valid position
     }
 
-    bool NewEmpty(bool high, float qnewposition0, float qnewposition1, float qnewposition2)
+    bool IsEmptySpaceForPlayer(bool high, float x, float y, float z)
     {
-        int x = FloatToInt(Floor(qnewposition0));
-        int y = FloatToInt(Floor(qnewposition1));
-        int z = FloatToInt(Floor(qnewposition2));
-        return IsTileEmptyForPhysics(x, z, y)
-                    && IsTileEmptyForPhysics(x, z, y + 1)
-                    && (!high || IsTileEmptyForPhysics(x, z, y + 2));
+        return IsEmptyPoint(x, y, z)
+            && IsEmptyPoint(x, y + 1, z)
+            && (!high || IsEmptyPoint(x, y + 2, z));
+    }
+    
+    // Checks if there are no solid blocks in walldistance area around the point
+    bool IsEmptyPoint(float x, float y, float z)
+    {
+        // Test 3x3x3 blocks around the point
+        for (int xx = 0; xx < 3; xx++)
+        {
+            for (int yy = 0; yy < 3; yy++)
+            {
+                for (int zz = 0; zz < 3; zz++)
+                {
+                    if (!IsTileEmptyForPhysics(FloatToInt(x + xx - 1), FloatToInt(z + zz - 1), FloatToInt(y + yy - 1)))
+                    {
+                        // Found a solid block
+
+                        // Get bounding box of the block
+                        float minX = FloatToInt(x + xx - 1);
+                        float minY = FloatToInt(y + yy - 1);
+                        float minZ = FloatToInt(z + zz - 1);
+                        float maxX = minX + 1;
+                        float maxY = minY + game.getblockheight(FloatToInt(x + xx - 1), FloatToInt(z + zz - 1), FloatToInt(y + yy - 1));
+                        float maxZ = minZ + 1;
+
+                        // Check if the block is too close
+                        if (BoxPointDistance(minX, minY, minZ, maxX, maxY, maxZ, x, y, z) < walldistance)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
-    int FloatToInt(float qnewposition0)
+    // Using chebyshev distance
+    float BoxPointDistance(float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float pX, float pY, float pZ)
     {
-        return game.platform.FloatToInt(qnewposition0);
+        float dx = Max3(minX - pX, 0, pX - maxX);
+        float dy = Max3(minY - pY, 0, pY - maxY);
+        float dz = Max3(minZ - pZ, 0, pZ - maxZ);
+        return Max3(dx, dy, dz);
+    }
+
+    float Max3(float a, float b, float c)
+    {
+        return MathCi.MaxFloat(MathCi.MaxFloat(a, b), c);
+    }
+
+    int FloatToInt(float value)
+    {
+        return game.platform.FloatToInt(value);
     }
 }
 
