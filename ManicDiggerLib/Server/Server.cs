@@ -1144,10 +1144,10 @@ public partial class Server : ICurrentTime, IDropItem
         {
             this.serverMonitor.RemoveMonitorClient(clientid);
         }
-        //foreach (var kk in clients)
-        //{
-        //    SendDespawnPlayer(kk.Key, clientid);
-        //}
+        foreach (var k in clients)
+        {
+            SendPacket(k.Key, ServerPackets.EntityDespawn(clientid));
+        }
         if (name != "invalid")
         {
             SendMessageToAll(string.Format(language.ServerPlayerDisconnect(), coloredName));

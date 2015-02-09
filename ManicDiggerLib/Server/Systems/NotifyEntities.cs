@@ -48,7 +48,6 @@ public class ServerSystemNotifyEntities : ServerSystem
                 c.playersDirty[k.Key] = false;
             }
         }
-        // EntityDespawn
     }
 
     int PlayerPositionUpdatesPerSecond = 10;
