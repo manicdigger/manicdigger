@@ -68,21 +68,33 @@ public class ServerSystemNotifyEntities : ServerSystem
             {
                 continue;
             }
-            if (k.Key == clientid && (k.Value.positionOverride == null))
+            if (k.Key == clientid)
             {
-                continue;
+                if (k.Value.positionOverride == null)
+                {
+                    continue;
+                }
+                else
+                {
+                    k.Value.entity.position = k.Value.positionOverride;
+                    k.Value.positionOverride = null;
+                    k.Value.positionOverrideTime = 2;
+                }
             }
-            if (server.DistanceSquared(server.PlayerBlockPosition(server.clients[k.Key]), server.PlayerBlockPosition(server.clients[clientid])) > server.config.PlayerDrawDistance * server.config.PlayerDrawDistance)
+            else
             {
-                continue;
-            }
-            if (k.Value.positionOverride != null)
-            {
-                k.Value.entity.position = k.Value.positionOverride;
-                k.Value.positionOverride = null;
+                if (server.DistanceSquared(server.PlayerBlockPosition(server.clients[k.Key]), server.PlayerBlockPosition(server.clients[clientid])) > server.config.PlayerDrawDistance * server.config.PlayerDrawDistance)
+                {
+                    continue;
+                }
             }
             Packet_PositionAndOrientation position = ToNetworkEntityPosition(server.serverPlatform, server.clients[k.Key].entity.position);
             server.SendPacket(clientid, ServerPackets.EntityPositionAndOrientation(k.Key, position));
+        }
+        c.positionOverrideTime -= dt;
+        if (c.positionOverrideTime < 0)
+        {
+            c.positionOverrideTime = 0;
         }
     }
 
