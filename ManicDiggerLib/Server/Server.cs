@@ -336,11 +336,11 @@ public partial class Server : ICurrentTime, IDropItem
             mainSockets[0] = new EnetNetServer() { platform = gameplatform };
             if (mainSockets[1] == null)
             {
-                mainSockets[1] = new TcpNetServer();
+                mainSockets[1] = new WebSocketNetServer();
             }
             if (mainSockets[2] == null)
             {
-                mainSockets[2] = new WebSocketNetServer();
+                mainSockets[2] = new TcpNetServer();
             }
         }
 
