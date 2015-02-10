@@ -2201,28 +2201,31 @@
     float rotationspeed;
     internal void UpdateMouseViewportControl(float dt)
     {
-        if (!overheadcamera)
+        if (guistate == GuiState.Normal && enableCameraControl && platform.Focused())
         {
-            if (platform.IsMousePointerLocked())
+            if (!overheadcamera)
             {
-                player.position.roty += mouseDeltaX * rotationspeed * (one / 75);
-                player.position.rotx += mouseDeltaY * rotationspeed * (one / 75);
-                player.position.rotx = MathCi.ClampFloat(player.position.rotx,
-                    Game.GetPi() / 2 + (one * 15 / 1000),
-                    (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
-            }
+                if (platform.IsMousePointerLocked())
+                {
+                    player.position.roty += mouseDeltaX * rotationspeed * (one / 75);
+                    player.position.rotx += mouseDeltaY * rotationspeed * (one / 75);
+                    player.position.rotx = MathCi.ClampFloat(player.position.rotx,
+                        Game.GetPi() / 2 + (one * 15 / 1000),
+                        (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
+                }
 
-            player.position.rotx += touchOrientationDy * constRotationSpeed * (one / 75);
-            player.position.roty += touchOrientationDx * constRotationSpeed * (one / 75);
-            touchOrientationDx = 0;
-            touchOrientationDy = 0;
-        }
-        if (guistate == GuiState.Normal && platform.Focused() && cameratype == CameraType.Overhead)
-        {
-            if (mouseMiddle || mouseRight)
+                player.position.rotx += touchOrientationDy * constRotationSpeed * (one / 75);
+                player.position.roty += touchOrientationDx * constRotationSpeed * (one / 75);
+                touchOrientationDx = 0;
+                touchOrientationDy = 0;
+            }
+            if (cameratype == CameraType.Overhead)
             {
-                overheadcameraK.TurnLeft(mouseDeltaX / 70);
-                overheadcameraK.TurnUp(mouseDeltaY / 3);
+                if (mouseMiddle || mouseRight)
+                {
+                    overheadcameraK.TurnLeft(mouseDeltaX / 70);
+                    overheadcameraK.TurnUp(mouseDeltaY / 3);
+                }
             }
         }
         mouseDeltaX = 0;
@@ -4705,10 +4708,7 @@
             platform.GlClearColorRgbaf(one * Game.clearcolorR / 255, one * Game.clearcolorG / 255, one * Game.clearcolorB / 255, one * Game.clearcolorA / 255);
         }
 
-        if (guistate == GuiState.Normal && enableCameraControl)
-        {
-            UpdateMouseViewportControl(deltaTime);
-        }
+        UpdateMouseViewportControl(deltaTime);
 
         //Sleep is required in Mono for running the terrain background thread.
         platform.ApplicationDoEvents();
