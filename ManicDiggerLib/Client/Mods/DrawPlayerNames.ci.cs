@@ -51,8 +51,7 @@
                     //{
                     //    GLTranslate(0, 1, 0);
                     //}
-                    game.GLRotate(-game.player.position.roty * 360 / (2 * Game.GetPi()), 0, 1, 0);
-                    game.GLRotate(-game.player.position.rotx * 360 / (2 * Game.GetPi()), 1, 0, 0);
+                    ModDrawSprites.Billboard(game);
                     float scale = game.one * 2 / 100;
                     game.GLScale(scale, scale, scale);
 
