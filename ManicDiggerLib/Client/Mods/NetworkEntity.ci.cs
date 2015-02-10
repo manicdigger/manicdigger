@@ -31,7 +31,8 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         if (packet.EntitySpawn.Id == game.LocalPlayerId)
         {
             entity.networkPosition = null;
-            entity.physicsState = new CharacterPhysicsState();
+            entity.scriptsCount = 0;
+            entity.scripts[entity.scriptsCount++] = new ScriptCharacterPhysics();
             game.player = entity;
             if (!game.spawned)
             {

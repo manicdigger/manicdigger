@@ -55,7 +55,7 @@
         int deltaTime = game.platform.FloatToInt(one * (game.platform.TimeMillisecondsFromStart() - game.lastOxygenTickMilliseconds)); //Time in milliseconds
         if (deltaTime >= 1000)
         {
-            if (game.WaterSwimming())
+            if (game.WaterSwimmingEyes())
             {
                 game.PlayerStats.CurrentOxygen -= 1;
                 if (game.PlayerStats.CurrentOxygen <= 0)

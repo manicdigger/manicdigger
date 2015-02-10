@@ -751,13 +751,20 @@ public class DrawName
 
 public class Entity
 {
+    public Entity()
+    {
+        scripts = new EntityScript[8];
+        scriptsCount = 0;
+    }
     internal Expires expires;
     internal Sprite sprite;
     internal Grenade_ grenade;
     internal Bullet_ bullet;
     internal Minecart minecart;
     internal PlayerDrawInfo playerDrawInfo;
-    internal CharacterPhysicsState physicsState;
+
+    internal EntityScript[] scripts;
+    internal int scriptsCount;
 
     // network
     internal EntityPosition_ networkPosition;
@@ -1634,30 +1641,30 @@ public class ClientModManager1 : ClientModManager
     {
         if (level == FreemoveLevelEnum.None)
         {
-            game.ENABLE_FREEMOVE = false;
-            game.ENABLE_NOCLIP = false;
+            game.controls.freemove = false;
+            game.controls.noclip = false;
         }
 
         if (level == FreemoveLevelEnum.Freemove)
         {
-            game.ENABLE_FREEMOVE = true;
-            game.ENABLE_NOCLIP = false;
+            game.controls.freemove = true;
+            game.controls.noclip = false;
         }
 
         if (level == FreemoveLevelEnum.Noclip)
         {
-            game.ENABLE_FREEMOVE = true;
-            game.ENABLE_NOCLIP = true;
+            game.controls.freemove = true;
+            game.controls.noclip = true;
         }
     }
 
     public override int GetFreemove()
     {
-        if (!game.ENABLE_FREEMOVE)
+        if (!game.controls.freemove)
         {
             return FreemoveLevelEnum.None;
         }
-        if (game.ENABLE_NOCLIP)
+        if (game.controls.noclip)
         {
             return FreemoveLevelEnum.Noclip;
         }
@@ -1784,6 +1791,11 @@ public abstract class ClientMod
     public virtual void OnTouchEnd(Game game, TouchEventArgs e) { }
     public virtual void OnUseEntity(Game game, OnUseEntityArgs e) { }
     public virtual void OnHitEntity(Game game, OnUseEntityArgs e) { }
+}
+
+public abstract class EntityScript
+{
+    public virtual void OnNewFrameFixed(Game game, int entity, float dt) { }
 }
 
 public class OnUseEntityArgs

@@ -256,6 +256,11 @@ public class MiscCi
         }
         return output;
     }
+
+    public static float Vec3Length(float x, float y, float z)
+    {
+        return Platform.Sqrt(x * x + y * y + z * z);
+    }
 }
 
 public class ConnectData
@@ -655,4 +660,99 @@ public class MathCi
             return b;
         }
     }
+
+    public static float ClampFloat(float value, float min, float max)
+    {
+        float result = value;
+        if (value > max)
+        {
+            result = max;
+        }
+        if (value < min)
+        {
+            result = min;
+        }
+        return result;
+    }
+
+    public static int ClampInt(int value, int min, int max)
+    {
+        int result = value;
+        if (value > max)
+        {
+            result = max;
+        }
+        if (value < min)
+        {
+            result = min;
+        }
+        return result;
+    }
+}
+
+public class Vector3Ref
+{
+    internal float X;
+    internal float Y;
+    internal float Z;
+
+    internal float Length()
+    {
+        return Platform.Sqrt(X * X + Y * Y + Z * Z);
+    }
+
+    internal void Normalize()
+    {
+        float length = Length();
+        X = X / length;
+        Y = Y / length;
+        Z = Z / length;
+    }
+
+    internal static Vector3Ref Create(float x, float y, float z)
+    {
+        Vector3Ref v = new Vector3Ref();
+        v.X = x;
+        v.Y = y;
+        v.Z = z;
+        return v;
+    }
+
+    public float GetX()
+    {
+        return X;
+    }
+
+    public float GetY()
+    {
+        return Y;
+    }
+
+    public float GetZ()
+    {
+        return Z;
+    }
+}
+
+public class Vector3IntRef
+{
+    internal int X;
+    internal int Y;
+    internal int Z;
+
+    internal static Vector3IntRef Create(int x, int y, int z)
+    {
+        Vector3IntRef v = new Vector3IntRef();
+        v.X = x;
+        v.Y = y;
+        v.Z = z;
+        return v;
+    }
+}
+
+public class BoolRef
+{
+    internal bool value;
+    public bool GetValue() { return value; }
+    public void SetValue(bool value_) { value = value_; }
 }

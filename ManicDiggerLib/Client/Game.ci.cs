@@ -107,17 +107,19 @@
         }
         scheduler = new TaskScheduler_();
         soundnow = new BoolRef();
-        acceleration = new Acceleration();
         camera = Mat4.Create();
         packetHandlers = new ClientPacketHandler[256];
         player = new Entity();
         player.position = new EntityPosition_();
-        player.physicsState = new CharacterPhysicsState();
         currentlyAttackedEntity = -1;
         ChatLinesMax = 1;
         ChatLines = new Chatline[ChatLinesMax];
         ChatLineLength = 64;
         audio = new AudioControl();
+        CameraEyeX = -1;
+        CameraEyeY = -1;
+        CameraEyeZ = -1;
+        controls = new Controls();
     }
 
     internal AssetList assets;
@@ -142,7 +144,6 @@
         {
             config3d.viewdistance = 32;
         }
-        CharacterPhysicsCi physics = new CharacterPhysicsCi();
         //network.d_ResetMap = this;
         ITerrainTextures terrainTextures = new ITerrainTextures();
         terrainTextures.game = this;
@@ -162,7 +163,6 @@
         d_Batcher.game = this;
         d_FrustumCulling = frustumculling;
         //w.d_Map = clientgame.mapforphysics;
-        d_Physics = physics;
         d_Data = gamedata;
         d_DataMonsters = new GameDataMonsters();
         d_Config3d = config3d;
@@ -205,7 +205,6 @@
         d_InventoryUtil = inventoryUtil;
         inventoryUtil.d_Inventory = inventory;
         inventoryUtil.d_Items = dataItems;
-        d_Physics.game = this;
         d_Inventory = inventory;
         platform.AddOnCrash(OnCrashHandlerLeave.Create(this));
 
@@ -256,10 +255,6 @@
         AddMod(new ModPicking());
         AddMod(new ModClearInactivePlayersDrawInfo());
         AddMod(new ModCameraKeys());
-        AddMod(new ModTrampoline());
-        AddMod(new ModSlipperyWalk());
-        AddMod(new ModNoAirControl());
-        AddMod(new ModCharacterPhysics());
         AddMod(new ModSendActiveMaterial());
         AddMod(new ModCamera());
         AddMod(new ModNetworkEntity());
@@ -1281,15 +1276,16 @@
     }
 
     internal bool ENABLE_DRAW2D;
-    internal bool ENABLE_FREEMOVE;
-    internal bool ENABLE_NOCLIP;
+    internal bool ENABLENOCLIP;
     internal bool AllowFreemove;
     internal bool enableCameraControl;
+
+    internal bool stopPlayerMove;
 
     internal void Respawn()
     {
         SendPacketClient(ClientPackets.SpecialKeyRespawn());
-        player.physicsState.movedz = 0;
+        stopPlayerMove = true;
     }
 
     public static bool IsTransparentForLight(Packet_BlockType b)
@@ -1651,34 +1647,6 @@
         return PointFloatRef.Create(x, y);
     }
 
-    public static float ClampFloat(float value, float min, float max)
-    {
-        float result = value;
-        if (value > max)
-        {
-            result = max;
-        }
-        if (value < min)
-        {
-            result = min;
-        }
-        return result;
-    }
-
-    public static int ClampInt(int value, int min, int max)
-    {
-        int result = value;
-        if (value > max)
-        {
-            result = max;
-        }
-        if (value < min)
-        {
-            result = min;
-        }
-        return result;
-    }
-
     internal GameData d_Data;
     internal TerrainRenderer terrainRenderer;
 
@@ -1851,11 +1819,11 @@
         }
         if (x < 0 || y < 0 || z < 0)// || z >= mapsizez)
         {
-            return ENABLE_FREEMOVE;
+            return controls.freemove;
         }
         if (x >= MapSizeX || y >= MapSizeY)// || z >= mapsizez)
         {
-            return ENABLE_FREEMOVE;
+            return controls.freemove;
         }
         int block = GetBlockValid(x, y, z);
         return block == SpecialBlockId.Empty
@@ -2101,7 +2069,6 @@
         SendPacketClient(ClientPackets.Leave(reason));
     }
     internal FrustumCulling d_FrustumCulling;
-    internal CharacterPhysicsCi d_Physics;
     internal ClientModManager1 modmanager;
     internal ClientMod[] clientmods;
     internal int clientmodsCount;
@@ -2240,7 +2207,7 @@
             {
                 player.position.roty += mouseDeltaX * rotationspeed * (one / 75);
                 player.position.rotx += mouseDeltaY * rotationspeed * (one / 75);
-                player.position.rotx = Game.ClampFloat(player.position.rotx,
+                player.position.rotx = MathCi.ClampFloat(player.position.rotx,
                     Game.GetPi() / 2 + (one * 15 / 1000),
                     (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
             }
@@ -2415,22 +2382,48 @@
     public const int KeyAltLeft = 5;
     public const int KeyAltRight = 6;
 
-    internal bool Swimming()
+    internal bool SwimmingEyes()
     {
         int eyesBlock = GetPlayerEyesBlock();
         if (eyesBlock == -1) { return true; }
         return d_Data.WalkableType1()[eyesBlock] == Packet_WalkableTypeEnum.Fluid;
     }
 
-    internal bool WaterSwimming()
+    internal bool SwimmingBody()
+    {
+        int block = GetBlock(platform.FloatToInt(player.position.x), platform.FloatToInt(player.position.z), platform.FloatToInt(player.position.y + 1));
+        if (block == -1) { return true; }
+        return d_Data.WalkableType1()[block] == Packet_WalkableTypeEnum.Fluid;
+    }
+
+    internal bool WaterSwimmingEyes()
     {
         if (GetPlayerEyesBlock() == -1) { return true; }
         return IsWater(GetPlayerEyesBlock());
     }
 
-    internal bool LavaSwimming()
+    internal bool WaterSwimmingCamera()
     {
-        return IsLava(GetPlayerEyesBlock());
+        if (GetCameraBlock() == -1) { return true; }
+        return IsWater(GetCameraBlock());
+    }
+
+    internal bool LavaSwimmingCamera()
+    {
+        return IsLava(GetCameraBlock());
+    }
+
+    int GetCameraBlock()
+    {
+        int bx = MathFloor(CameraEyeX);
+        int by = MathFloor(CameraEyeZ);
+        int bz = MathFloor(CameraEyeY);
+
+        if (!IsValidPos(bx, by, bz))
+        {
+            return 0;
+        }
+        return GetBlockValid(bx, by, bz);
     }
 
     internal int GetPlayerEyesBlock()
@@ -2463,11 +2456,11 @@
 
     internal int terraincolor()
     {
-        if (WaterSwimming())
+        if (WaterSwimmingCamera())
         {
             return Game.ColorFromArgb(255, 78, 95, 140);
         }
-        else if (LavaSwimming())
+        else if (LavaSwimmingCamera())
         {
             return Game.ColorFromArgb(255, 222, 101, 46);
         }
@@ -3221,13 +3214,13 @@
                 }
                 else if (cmd == "noclip")
                 {
-                    ENABLE_NOCLIP = BoolCommandArgument(arguments);
+                    controls.noclip = BoolCommandArgument(arguments);
                 }
                 else if (cmd == "freemove")
                 {
                     if (this.AllowFreemove)
                     {
-                        ENABLE_FREEMOVE = BoolCommandArgument(arguments);
+                        controls.freemove = BoolCommandArgument(arguments);
                     }
                     else
                     {
@@ -3585,8 +3578,8 @@
                     this.AllowFreemove = packet.Freemove.IsEnabled != 0;
                     if (!this.AllowFreemove)
                     {
-                        ENABLE_FREEMOVE = false;
-                        ENABLE_NOCLIP = false;
+                        controls.freemove = false;
+                        controls.noclip = false;
                         movespeed = basemovespeed;
                         Log(language.MoveNormal());
                     }
@@ -4142,21 +4135,21 @@
                     Log(strFreemoveNotAllowed);
                     return;
                 }
-                player.physicsState.movedz = 0;
-                if (!ENABLE_FREEMOVE)
+                stopPlayerMove = true;
+                if (!controls.freemove)
                 {
-                    ENABLE_FREEMOVE = true;
+                    controls.freemove = true;
                     Log(language.MoveFree());
                 }
-                else if (ENABLE_FREEMOVE && (!ENABLE_NOCLIP))
+                else if (controls.freemove && (!controls.noclip))
                 {
-                    ENABLE_NOCLIP = true;
+                    controls.noclip = true;
                     Log(language.MoveFreeNoclip());
                 }
-                else if (ENABLE_FREEMOVE && ENABLE_NOCLIP)
+                else if (controls.freemove && controls.noclip)
                 {
-                    ENABLE_FREEMOVE = false;
-                    ENABLE_NOCLIP = false;
+                    controls.freemove = false;
+                    controls.noclip = false;
                     Log(language.MoveNormal());
                 }
             }
@@ -4233,7 +4226,7 @@
                             player.position.x = posX + (one / 2);
                             player.position.y = posZ + 1;
                             player.position.z = posY + (one / 2);
-                            ENABLE_FREEMOVE = false;
+                            controls.freemove = false;
                         }
                         else
                         {
@@ -4457,17 +4450,10 @@
 
     internal BoolRef soundnow;
 
-    internal float movedx;
-    internal float movedy;
+    internal Controls controls;
     internal float pushX;
     internal float pushY;
     internal float pushZ;
-    internal bool wantsjump;
-    internal bool shiftkeydown;
-    internal bool moveup;
-    internal bool movedown;
-    internal float jumpstartacceleration;
-    internal Acceleration acceleration;
 
     internal void FrameTick(float dt)
     {
@@ -4478,6 +4464,15 @@
         for (int i = 0; i < clientmodsCount; i++)
         {
             clientmods[i].OnNewFrameFixed(this, args_);
+        }
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity e = entities[i];
+            if (e == null) { continue; }
+            for (int k = 0; k < e.scriptsCount; k++)
+            {
+                e.scripts[k].OnNewFrameFixed(this, i, dt);
+            }
         }
         OnNewFrame(dt);
 
@@ -4990,4 +4985,13 @@
     {
         return (value / (2 * GetPi())) * 255;
     }
+
+    internal float CameraEyeX;
+    internal float CameraEyeY;
+    internal float CameraEyeZ;
+
+    internal bool isplayeronground;
+
+    internal bool reachedwall;
+    internal bool reachedwall_1blockhigh;
 }

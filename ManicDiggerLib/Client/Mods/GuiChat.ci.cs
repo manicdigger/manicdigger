@@ -167,7 +167,7 @@
             ChatPageScroll--;
             args.SetHandled(true);
         }
-        ChatPageScroll = Game.ClampInt(ChatPageScroll, 0, game.ChatLinesCount / ChatLinesMaxToDraw);
+        ChatPageScroll = MathCi.ClampInt(ChatPageScroll, 0, game.ChatLinesCount / ChatLinesMaxToDraw);
         if (eKey == game.GetKey(GlKeys.Enter) || eKey == game.GetKey(GlKeys.KeypadEnter))
         {
             if (game.GuiTyping == TypingState.Typing)

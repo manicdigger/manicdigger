@@ -11,19 +11,19 @@
         bool angledown = false;
         float overheadcameraanglemovearea = one * 5 / 100;
         float overheadcameraspeed = 3;
-        game.wantsjump = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)];
-        game.shiftkeydown = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.ShiftLeft)];
-        game.movedx = 0;
-        game.movedy = 0;
-        game.moveup = false;
-        game.movedown = false;
+        game.controls.wantsjump = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)];
+        game.controls.shiftkeydown = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.ShiftLeft)];
+        game.controls.movedx = 0;
+        game.controls.movedy = 0;
+        game.controls.moveup = false;
+        game.controls.movedown = false;
         if (game.guistate == GuiState.Normal)
         {
             if (game.GuiTyping == TypingState.None)
             {
-                if (game.d_Physics.reachedwall_1blockhigh && (game.AutoJumpEnabled || (!game.platform.IsMousePointerLocked())))
+                if (game.reachedwall_1blockhigh && (game.AutoJumpEnabled || (!game.platform.IsMousePointerLocked())))
                 {
-                    game.wantsjump = true;
+                    game.controls.wantsjump = true;
                 }
                 if (game.overheadcamera)
                 {
@@ -43,10 +43,10 @@
                     game.playerdestination.X + one / 2, game.playerdestination.Y - one / 2, game.playerdestination.Z + one / 2);
                     if (toDest >= 1)
                     {
-                        game.movedy += 1;
-                        if (game.d_Physics.reachedwall)
+                        game.controls.movedy += 1;
+                        if (game.reachedwall)
                         {
-                            game.wantsjump = true;
+                            game.controls.wantsjump = true;
                         }
                         //player orientation
                         float qX = game.playerdestination.X - game.player.position.x;
@@ -59,27 +59,27 @@
                 }
                 else if (game.enable_move)
                 {
-                    if (game.keyboardState[game.GetKey(GlKeys.W)]) { game.movedy += 1; }
-                    if (game.keyboardState[game.GetKey(GlKeys.S)]) { game.movedy += -1; }
-                    if (game.keyboardState[game.GetKey(GlKeys.A)]) { game.movedx += -1; game.localplayeranimationhint.leanleft = true; game.localstance = 1; }
+                    if (game.keyboardState[game.GetKey(GlKeys.W)]) { game.controls.movedy += 1; }
+                    if (game.keyboardState[game.GetKey(GlKeys.S)]) { game.controls.movedy += -1; }
+                    if (game.keyboardState[game.GetKey(GlKeys.A)]) { game.controls.movedx += -1; game.localplayeranimationhint.leanleft = true; game.localstance = 1; }
                     else { game.localplayeranimationhint.leanleft = false; }
-                    if (game.keyboardState[game.GetKey(GlKeys.D)]) { game.movedx += 1; game.localplayeranimationhint.leanright = true; game.localstance = 2; }
+                    if (game.keyboardState[game.GetKey(GlKeys.D)]) { game.controls.movedx += 1; game.localplayeranimationhint.leanright = true; game.localstance = 2; }
                     else { game.localplayeranimationhint.leanright = false; }
                     if (!game.localplayeranimationhint.leanleft && !game.localplayeranimationhint.leanright) { game.localstance = 0; }
 
-                    game.movedx += game.touchMoveDx;
-                    game.movedy += game.touchMoveDy;
+                    game.controls.movedx += game.touchMoveDx;
+                    game.controls.movedy += game.touchMoveDy;
                 }
             }
-            if (game.ENABLE_FREEMOVE || game.Swimming())
+            if (game.controls.freemove || game.SwimmingEyes())
             {
                 if (game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)])
                 {
-                    game.moveup = true;
+                    game.controls.moveup = true;
                 }
                 if (game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.ControlLeft)])
                 {
-                    game.movedown = true;
+                    game.controls.movedown = true;
                 }
             }
         }

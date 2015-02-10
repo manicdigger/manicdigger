@@ -3,6 +3,7 @@
     public ModFallDamageToPlayer()
     {
         one = 1;
+        lastPlayerY = -1000;
     }
     public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
     {
@@ -10,24 +11,34 @@
         {
             return;
         }
+        if (game.controls.freemove)
+        {
+            return;
+        }
         if (game.FollowId() == null)
         {
-            UpdateFallDamageToPlayer(game);
+            UpdateFallDamageToPlayer(game, args.GetDt());
         }
     }
     float one;
     int lastfalldamagetimeMilliseconds;
-    internal void UpdateFallDamageToPlayer(Game game)
+    float lastPlayerY;
+    internal void UpdateFallDamageToPlayer(Game game, float dt)
     {
+        float movedz;
+        if (lastPlayerY == -1000)
+        {
+            movedz = 0;
+        }
+        else
+        {
+            movedz = (game.player.position.y - lastPlayerY) / dt;
+        }
+        lastPlayerY = game.player.position.y;
+
         //fallspeed 4 is 10 blocks high
         //fallspeed 5.5 is 20 blocks high
-        float fallspeed = game.player.physicsState.movedz / (-game.basemovespeed);
-
-        //test = false;
-        //if (fallspeed > 5.5f)
-        //{
-        //    test = true;
-        //}
+        float fallspeed = movedz / (-game.basemovespeed);
 
         int posX = game.GetPlayerEyesBlockX();
         int posY = game.GetPlayerEyesBlockY();
