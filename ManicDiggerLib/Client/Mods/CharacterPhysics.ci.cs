@@ -146,6 +146,7 @@
                 movedz += -constGravity * constWaterGravityMultiplier; //more gravity because it's slippery.
             }
         }
+        game.movedz = movedz;
         if (constEnableAcceleration)
         {
             curspeed.X *= acceleration.acceleration1;

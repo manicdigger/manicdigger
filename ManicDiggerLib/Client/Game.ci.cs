@@ -120,6 +120,7 @@
         CameraEyeY = -1;
         CameraEyeZ = -1;
         controls = new Controls();
+        movedz = 0;
     }
 
     internal AssetList assets;
@@ -4994,4 +4995,5 @@
 
     internal bool reachedwall;
     internal bool reachedwall_1blockhigh;
+    internal float movedz;
 }
