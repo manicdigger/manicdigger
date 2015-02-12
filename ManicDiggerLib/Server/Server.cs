@@ -50,6 +50,8 @@ public class ManicDiggerSave
     public int LastMonsterId;
     [ProtoMember(11, IsRequired = false)]
     public Dictionary<string, byte[]> moddata;
+    [ProtoMember(12, IsRequired = false)]
+    public long TimeOfDay;
 }
 public partial class Server : ICurrentTime, IDropItem
 {
@@ -220,33 +222,72 @@ public partial class Server : ICurrentTime, IDropItem
             lastsave = DateTime.UtcNow;
         }
     }
+
+    /// <summary>
+    /// Tell the clients the time
+    /// </summary>
+    private void NotifySeason(int clientid)
+    {
+        if (clients[clientid].state == ClientStateOnServer.Connecting)
+        {
+            return;
+        }
+
+        Packet_ServerSeason p = new Packet_ServerSeason()
+        {
+            Hour = _time.GetQuarterHourPartOfDay(),
+
+            //DayNightCycleSpeedup is used by the client like this:
+            //day_length_in_seconds = SecondsInADay / packet.Season.DayNightCycleSpeedup;
+
+            //Set it to 1 if we froze the time, to prevent a division by zero
+            DayNightCycleSpeedup = (_time.SpeedOfTime != 0) ? _time.SpeedOfTime : 1,
+            Moon = 0,
+        };
+        SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Season, Season = p }));
+    }
+
+    private GameTime _time = null;
+    private int _nLastHourChangeNotify = 0;
+
     public void ProcessMain()
     {
         if (server.mainSockets == null)
         {
             return;
         }
+
+
+        if (_time.Tick())
         {
-            double currenttime = gettime() - starttime;
-            double deltaTime = currenttime - oldtime;
-            accumulator += deltaTime;
-            double dt = SIMULATION_STEP_LENGTH;
-            while (accumulator > dt)
+            if (_time.GetQuarterHourPartOfDay() != _nLastHourChangeNotify)
             {
-                simulationcurrentframe++;
-                if (//(GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
-                    //||
-                    GetHour(simulationcurrentframe) != GetHour(simulationcurrentframe - 1))
+#if DEBUG
+                SendMessageToAll("Time of day: " + _time.Time.ToString(@"hh\:mm\:ss") + " Day: " + (int)_time.Time.Days);
+#endif
+                //notify clients about the time
+                _nLastHourChangeNotify = _time.GetQuarterHourPartOfDay();
+
+                foreach (var c in clients)
                 {
-                    foreach (var c in clients)
-                    {
-                        NotifySeason(c.Key);
-                    }
+                    NotifySeason(c.Key);
                 }
-                accumulator -= dt;
             }
-            oldtime = currenttime;
         }
+        else
+        {//not ticked yet
+        }
+
+        double currenttime = gettime() - starttime;
+        double deltaTime = currenttime - oldtime;
+        accumulator += deltaTime;
+        double dt = SIMULATION_STEP_LENGTH;
+        while (accumulator > dt)
+        {
+            simulationcurrentframe++;
+            accumulator -= dt;
+        }
+        oldtime = currenttime;
 
         NetIncomingMessage msg;
         Stopwatch s = new Stopwatch();
@@ -519,6 +560,7 @@ public partial class Server : ICurrentTime, IDropItem
         else this.Inventory = save.Inventory;
         this.PlayerStats = save.PlayerStats;
         this.simulationcurrentframe = (int)save.SimulationCurrentFrame;
+        this._time = new GameTime(save.TimeOfDay);
         this.LastMonsterId = save.LastMonsterId;
         this.moddata = save.moddata;
     }
@@ -542,6 +584,7 @@ public partial class Server : ICurrentTime, IDropItem
         save.PlayerStats = PlayerStats;
         save.Seed = Seed;
         save.SimulationCurrentFrame = simulationcurrentframe;
+        save.TimeOfDay = _time.Time.Ticks;
         save.LastMonsterId = LastMonsterId;
         save.moddata = moddata;
         Serializer.Serialize(s, save);
@@ -767,32 +810,6 @@ public partial class Server : ICurrentTime, IDropItem
         SendPacket(recipientClientId, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.PlayerPing, PlayerPing = p }));
     }
 
-    private void NotifySeason(int clientid)
-    {
-        if (clients[clientid].state == ClientStateOnServer.Connecting)
-        {
-            return;
-        }
-        Packet_ServerSeason p = new Packet_ServerSeason()
-        {
-            //Season = GetSeason(simulationcurrentframe),
-            Hour = GetHour(simulationcurrentframe) + 1,
-            DayNightCycleSpeedup = (60 * 60 * 24) / DAY_EVERY_SECONDS,
-            //Moon = GetMoon(simulationcurrentframe),
-            Moon = 0,
-        };
-        SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Season, Season = p }));
-    }
-
-    int DAY_EVERY_SECONDS = 60 * 60;//1 hour
-    public int HourDetail = 4;
-    public int GameStartHour = 9; //9 am
-    int GetHour(long frame)
-    {
-        long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS / (24 * HourDetail);
-        long startframe = (everyframes * HourDetail * GameStartHour);
-        return (int)(((frame + startframe) / everyframes) % (24 * HourDetail));
-    }
 
     //on exit
     public void SaveAll()
@@ -3472,6 +3489,11 @@ public partial class Server : ICurrentTime, IDropItem
         return simulationcurrentframe;
     }
 
+    public GameTime GetTime()
+    {
+        return _time;
+    }
+
     internal void PlayerEntitySetDirty(int player)
     {
         foreach (var k in clients.Values)
@@ -3693,25 +3715,110 @@ public class ModEventHandlers
     public List<ModDelegates.HitEntity> onhitentity = new List<ModDelegates.HitEntity>();
     public List<ModDelegates.Permission> onpermission = new List<ModDelegates.Permission>();
 }
+
 public class GameTime
 {
-    public long Ticks;
-    public int TicksPerSecond = 64;
-    public double GameYearRealHours = 24;
-    public double GameDayRealHours = 1;
-    public double HourTotal // 0 - 23
+    private Stopwatch _watchIngameTime = null;
+    private TimeSpan _time = TimeSpan.Zero;
+
+    internal GameTime(long ticks)
     {
-        get
-        {
-            return ((double)Ticks / TicksPerSecond) / (GameDayRealHours * 60 * 60);
-        }
+        _time = TimeSpan.FromTicks(ticks);
+        _watchIngameTime = Stopwatch.StartNew();
     }
+
+    internal void Start()
+    {
+        _watchIngameTime.Start();
+    }
+
+    internal void Stop()
+    {
+        _watchIngameTime.Stop();
+    }
+
+    public TimeSpan Time
+    {
+        get { return _time; }
+    }
+
+    public double HourTotal
+    {
+        get { return _time.Hours; }
+    }
+
     public double YearTotal
     {
-        get
+        get { return _time.TotalDays; }
+    }
+
+    private int _nIngameSecondsEveryRealTimeSecond = 60;
+
+    private long _nLastIngameSecond = 0;
+
+    public int GetQuarterHourPartOfDay()
+    {
+        //(_tsIngameTime.Hours * 4)
+        //for every hour of the current day, we got 4 x 15minutes
+
+        //(_tsIngameTime.Minutes / 15)
+        //add the 15 minutes of the current hour
+
+        //TODO: +1 at the end beacause midnight causes daylight :/
+
+        int nReturn = (_time.Hours * 4) + (_time.Minutes / 15) + 1;
+        return nReturn;
+    }
+
+    /// <summary>
+    /// This changes how fast time goes on
+    /// 0 freezes the time
+    /// can be negative to let time run backwards
+    /// </summary>
+    public int SpeedOfTime
+    {
+        get { return _nIngameSecondsEveryRealTimeSecond; }
+        set{ _nIngameSecondsEveryRealTimeSecond = value;}
+    }
+
+    /// <summary>
+    /// Ticks the clock if neccesarry.
+    /// Returns true if time changed
+    /// </summary>
+    /// <returns></returns>
+    internal bool Tick()
+    {
+        bool blnTicked = false;
+
+        //update the time of day every second
+        while (_nLastIngameSecond < (_watchIngameTime.ElapsedMilliseconds / 1000))
         {
-            return ((double)Ticks / TicksPerSecond) / (GameYearRealHours * 60 * 60);
+            //Update gametime
+            _time += TimeSpan.FromSeconds(_nIngameSecondsEveryRealTimeSecond);
+
+            ++_nLastIngameSecond;
+
+            blnTicked = true;
         }
+
+        return blnTicked;
+    }
+
+    /// <summary>
+    /// change the time of the day
+    /// </summary>
+    internal void Set(TimeSpan time)
+    {
+        _time = time;
+    }
+
+    /// <summary>
+    /// Adds the given time
+    /// </summary>
+    /// <param name="time"></param>
+    internal void Add(TimeSpan time)
+    {
+        _time = _time.Add(time);
     }
 }
 

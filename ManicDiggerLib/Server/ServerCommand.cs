@@ -557,6 +557,11 @@ public partial class Server
                     this.SetFillAreaLimit(sourceClientId, ss[0], ss[1], maxFill);
                 }
                 return;
+            case "time":
+                {
+                    TimeCommand(sourceClientId, argument);
+                }
+                break;
             default:
                 for (int i = 0; i < systemsCount; i++)
                 {
@@ -589,6 +594,87 @@ public partial class Server
                 }
                 SendMessage(sourceClientId, colorError + language.Get("Server_CommandUnknown") + command);
                 return;
+        }
+    }
+
+    /// <summary>
+    /// Handle a time command
+    /// </summary>
+    private void TimeCommand(int sourceClientId, string argument)
+    {
+        string[] strSplit = argument.Split(' ');
+
+        if (strSplit.Length == 2)
+        {
+            //We expect a operation and a value
+            string strValue = strSplit[1];
+
+            switch (strSplit[0])
+            {
+                case "set":
+                    {
+                        TimeSpan time;
+
+                        if (!strValue.Contains(":"))
+                        {
+                            //If only a number is present, the days will be set to the given number
+                            //since we don't want that, a ":" is enforced
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
+                        }
+                        else if (TimeSpan.TryParse(strValue, out time))
+                        {
+                            _time.Set(time);
+                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
+                        }
+                        else
+                        {
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
+                        }
+                    }
+                    break;
+                case "add":
+                    {
+                        TimeSpan time;
+
+                        int nMinuts = 0;
+                        if (int.TryParse(strValue, out nMinuts))
+                        {
+                            //only a number
+                            //take it as minutes
+                            _time.Add(TimeSpan.FromMinutes(nMinuts));
+                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
+                        }
+                        if (TimeSpan.TryParse(strValue, out time))
+                        {
+                            _time.Add(time);
+                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
+                        }
+                        else
+                        {
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
+                        }
+                    }
+                    break;
+                case "speed":
+                    {
+                        int nSpeed = 0;
+
+                        if (!int.TryParse(strValue, out nSpeed))
+                        {
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a number");
+                        }
+                        else
+                        {
+                            _time.SpeedOfTime = nSpeed;
+                            SendMessage(sourceClientId, "speed of time changed");
+                        }
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " 2 arguments expected");
         }
     }
 
@@ -1337,6 +1423,7 @@ public partial class Server
         {
             string targetName = targetClient.playername;
             string sourcename = GetClient(sourceClientId).playername;
+            //int amount;
             if (amount < 0)
             {
                 return false;
@@ -1377,7 +1464,7 @@ public partial class Server
                             }
                             else
                             {
-                                currentItem.BlockCount += amount;
+                                currentItem.BlockCount = amount;
                             }
                             goto nextblock;
                         }
@@ -1420,7 +1507,7 @@ public partial class Server
         ClientOnServer targetClient = GetClient(target);
         if (targetClient != null)
         {
-            ResetPlayerInventory(targetClient);
+            ResetPlayerInventory(targetClient.playername);
             SendMessageToAll(string.Format(language.Get("Server_CommandResetInventorySuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant), targetClient.ColoredPlayername(colorImportant)));
             ServerEventLog(string.Format("{0} resets inventory of {1}.", GetClient(sourceClientId).playername, targetClient.playername));
             return true;

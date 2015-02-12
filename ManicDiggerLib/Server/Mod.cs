@@ -398,18 +398,14 @@ namespace ManicDigger
             return server.GetSimulationCurrentFrame();
         }
 
-        GameTime t = new GameTime();
-
         public double GetCurrentYearTotal()
         {
-            t.Ticks = server.GetSimulationCurrentFrame();
-            return t.YearTotal;
+            return server.GetTime().YearTotal;
         }
 
         public double GetCurrentHourTotal()
         {
-            t.Ticks = server.GetSimulationCurrentFrame();
-            return t.HourTotal;
+            return server.GetTime().HourTotal;
         }
 
         public void UpdateBlockTypes()
@@ -422,22 +418,27 @@ namespace ManicDigger
 
         public double GetGameYearRealHours()
         {
-            return t.GameYearRealHours;
+            //TODO:
+            //return t.GameYearRealHours;
+            return 0;
         }
 
         public void SetGameYearRealHours(double hours)
         {
-            t.GameYearRealHours = hours;
+            //TODO:
+            //t.GameYearRealHours = hours;
         }
 
         public double GetGameDayRealHours()
         {
-            return t.GameDayRealHours;
+            //TODO:
+            //return t.GameDayRealHours;
+            return 0;
         }
 
         public void SetGameDayRealHours(double hours)
         {
-            t.GameDayRealHours = hours;
+            //TODO: t.GameDayRealHours = hours;
         }
 
         public void EnableShadows(bool value)
