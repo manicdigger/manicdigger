@@ -155,7 +155,7 @@
                 int posx = game.SelectedBlockPositionX;
                 int posy = game.SelectedBlockPositionZ;
                 int posz = game.SelectedBlockPositionY;
-                if (game.GetBlock(posx, posy, posz) == game.d_Data.BlockIdCraftingTable())
+                if (game.map.GetBlock(posx, posy, posz) == game.d_Data.BlockIdCraftingTable())
                 {
                     //draw crafting recipes list.
                     IntRef tableCount = new IntRef();

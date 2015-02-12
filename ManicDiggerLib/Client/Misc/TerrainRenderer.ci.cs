@@ -5,7 +5,6 @@
         currentChunk = new int[18 * 18 * 18];
         currentChunkShadows = new byte[18 * 18 * 18];
         tempnearestpos = new int[3];
-        chunksizebits = 4;
         ids = new int[1024];
         idsCount = 0;
         redraw = new TerrainRendererRedraw[128];
@@ -49,10 +48,9 @@
     int centerAreaSize() { return game.platform.FloatToInt(game.d_Config3d.viewdistance) / 2; }
     int mapAreaSizeZ() { return mapAreaSize(); }
 
-    int chunksizebits;
-    int mapsizexchunks() { return game.MapSizeX >> chunksizebits; }
-    int mapsizeychunks() { return game.MapSizeY >> chunksizebits; }
-    int mapsizezchunks() { return game.MapSizeZ >> chunksizebits; }
+    int mapsizexchunks() { return game.map.mapsizexchunks(); }
+    int mapsizeychunks() { return game.map.mapsizeychunks(); }
+    int mapsizezchunks() { return game.map.mapsizezchunks(); }
 
     public override void Run(float dt)
     {
@@ -99,9 +97,9 @@
                 int yy = ChunksToRedraw.values[i].Y;
                 int zz = ChunksToRedraw.values[i].Z;
                 if (xx >= 0 && yy >= 0 && zz >= 0
-                    && xx < game.MapSizeX / chunksize && yy < game.MapSizeY / chunksize && zz < game.MapSizeZ / chunksize)
+                    && xx < game.map.MapSizeX / chunksize && yy < game.map.MapSizeY / chunksize && zz < game.map.MapSizeZ / chunksize)
                 {
-                    Chunk chunk = game.chunks[MapUtilCi.Index3d(xx, yy, zz, mapsizexchunks(), mapsizeychunks())];
+                    Chunk chunk = game.map.chunks[MapUtilCi.Index3d(xx, yy, zz, mapsizexchunks(), mapsizeychunks())];
                     if (chunk == null || chunk.rendered == null)
                     {
                         continue;
@@ -184,7 +182,7 @@
             {
                 for (int z = startz; z <= endz; z++)
                 {
-                    Chunk c = game.chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks(), mapsizeychunks())];
+                    Chunk c = game.map.chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks(), mapsizeychunks())];
                     if (c == null || c.rendered == null)
                     {
                         continue;
@@ -215,7 +213,7 @@
 
     public bool IsChunkRendered(int cx, int cy, int cz)
     {
-        Chunk c = game.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
+        Chunk c = game.map.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
         if (c == null)
         {
             return false;
@@ -229,34 +227,7 @@
         {
             return;
         }
-
-        if (!IsValidChunkPos(cx, cy, cz))
-        {
-            return;
-        }
-
-        Chunk c = game.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
-        if (c == null)
-        {
-            return;
-        }
-        if (c.rendered == null)
-        {
-            c.rendered = new RenderedChunk();
-        }
-        c.rendered.dirty = dirty;
-        if (blockschanged)
-        {
-            c.rendered.shadowsdirty = true;
-        }
-    }
-
-    public bool IsValidChunkPos(int cx, int cy, int cz)
-    {
-        return cx >= 0 && cy >= 0 && cz >= 0
-            && cx < game.MapSizeX / chunksize
-            && cy < game.MapSizeY / chunksize
-            && cz < game.MapSizeZ / chunksize;
+        game.map.SetChunkDirty(cx, cy, cz, dirty, blockschanged);
     }
 
     public void RedrawBlock(int x, int y, int z)
@@ -268,7 +239,7 @@
             int xx = a.X;
             int yy = a.Y;
             int zz = a.Z;
-            if (xx < 0 || yy < 0 || zz < 0 || xx >= game.MapSizeX || yy >= game.MapSizeY || zz >= game.MapSizeZ)
+            if (xx < 0 || yy < 0 || zz < 0 || xx >= game.map.MapSizeX || yy >= game.map.MapSizeY || zz >= game.map.MapSizeZ)
             {
                 return;
             }
@@ -282,12 +253,12 @@
         {
             StartTerrain();
         }
-        int chunksLength = (game.MapSizeX / chunksize)
-            * (game.MapSizeY / chunksize)
-            * (game.MapSizeZ / chunksize);
+        int chunksLength = (game.map.MapSizeX / chunksize)
+            * (game.map.MapSizeY / chunksize)
+            * (game.map.MapSizeZ / chunksize);
         for (int i = 0; i < chunksLength; i++)
         {
-            Chunk c = game.chunks[i];
+            Chunk c = game.map.chunks[i];
             if (c == null)
             {
                 continue;
@@ -308,9 +279,9 @@
         int cx = x / chunksize;
         int cy = y / chunksize;
         int cz = z / chunksize;
-        if (game.IsValidPos(x, y, z) && game.IsValidChunkPos(cx, cy, cz, chunksize))
+        if (game.map.IsValidPos(x, y, z) && game.map.IsValidChunkPos(cx, cy, cz))
         {
-            Chunk c = game.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
+            Chunk c = game.map.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
             if (c == null
                 || c.rendered == null
                 || c.rendered.light == null)
@@ -325,8 +296,8 @@
 
         if (l == 0)
         {
-            if ((x >= 0 && x < game.MapSizeX)
-                && (y >= 0 && y < game.MapSizeY)
+            if ((x >= 0 && x < game.map.MapSizeX)
+                && (y >= 0 && y < game.map.MapSizeY)
                 && (z >= game.d_Heightmap.GetBlock(x, y)))
             {
                 return IntRef.Create(game.sunlight_);
@@ -385,7 +356,7 @@
 
     void RedrawChunk(int x, int y, int z)
     {
-        Chunk c = game.chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks(), mapsizeychunks())];
+        Chunk c = game.map.chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks(), mapsizeychunks())];
         if (c == null)
         {
             return;
@@ -486,7 +457,7 @@
     //So it's needed to copy 16x16x16 chunk and its Borders to make a 18x18x18 "extended" chunk.
     void GetExtendedChunk(int x, int y, int z)
     {
-        game.GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
+        game.map.GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
             chunksize + 2, chunksize + 2, chunksize + 2);
     }
 
@@ -524,16 +495,16 @@
             {
                 for (int z = 0; z < 3; z++)
                 {
-                    if (cx + x - 1 < 0 || cx + x - 1 >= game.MapSizeX / chunksize
-                        || cy + y - 1 < 0 || cy + y - 1 >= game.MapSizeY / chunksize
-                        || cz + z - 1 < 0 || cz + z - 1 >= game.MapSizeZ / chunksize)
+                    if (cx + x - 1 < 0 || cx + x - 1 >= game.map.MapSizeX / chunksize
+                        || cy + y - 1 < 0 || cy + y - 1 >= game.map.MapSizeY / chunksize
+                        || cz + z - 1 < 0 || cz + z - 1 >= game.map.MapSizeZ / chunksize)
                     {
                         continue;
                     }
-                    Chunk chunk = game.chunks[MapUtilCi.Index3d(cx + x - 1, cy + y - 1, cz + z - 1, game.MapSizeX / chunksize, game.MapSizeY / chunksize)];
+                    Chunk chunk = game.map.chunks[MapUtilCi.Index3d(cx + x - 1, cy + y - 1, cz + z - 1, game.map.MapSizeX / chunksize, game.map.MapSizeY / chunksize)];
                     if (chunk != null)
                     {
-                        game.CopyChunk(chunk, chunks3x3x3[MapUtilCi.Index3d(x, y, z, 3, 3)]);
+                        game.map.CopyChunk(chunk, chunks3x3x3[MapUtilCi.Index3d(x, y, z, 3, 3)]);
                     }
                     else
                     {
@@ -546,12 +517,12 @@
         {
             for (int y = 0; y < 3; y++)
             {
-                if (cx + x - 1 < 0 || cx + x - 1 >= game.MapSizeX / chunksize
-                    || cy + y - 1 < 0 || cy + y - 1 >= game.MapSizeY / chunksize)
+                if (cx + x - 1 < 0 || cx + x - 1 >= game.map.MapSizeX / chunksize
+                    || cy + y - 1 < 0 || cy + y - 1 >= game.map.MapSizeY / chunksize)
                 {
                     continue;
                 }
-                int[] chunk = game.d_Heightmap.chunks[MapUtilCi.Index2d(cx + x - 1, cy + y - 1, game.MapSizeX / chunksize)];
+                int[] chunk = game.d_Heightmap.chunks[MapUtilCi.Index2d(cx + x - 1, cy + y - 1, game.map.MapSizeX / chunksize)];
                 heightchunks3x3[MapUtilCi.Index2d(x, y, 3)] = chunk;
             }
         }
@@ -569,7 +540,7 @@
         shadows.Update(currentChunkShadows, chunks3x3x3, heightchunks3x3, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight, game.sunlight_, cz * chunksize - chunksize);
 
         //for MaybeGetLight
-        Chunk chunkLight = game.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
+        Chunk chunkLight = game.map.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
         if (chunkLight.rendered != null)
         {
             if (chunkLight.rendered.light == null)
@@ -636,9 +607,9 @@ public class UnloadRendererChunks : Task
     public override void Run(float dt)
     {
         chunksize = Game.chunksize;
-        mapsizexchunks = game.MapSizeX / chunksize;
-        mapsizeychunks = game.MapSizeY / chunksize;
-        mapsizezchunks = game.MapSizeZ / chunksize;
+        mapsizexchunks = game.map.MapSizeX / chunksize;
+        mapsizeychunks = game.map.MapSizeY / chunksize;
+        mapsizezchunks = game.map.MapSizeZ / chunksize;
 
         int px = game.platform.FloatToInt(game.player.position.x) / chunksize;
         int py = game.platform.FloatToInt(game.player.position.z) / chunksize;
@@ -689,7 +660,7 @@ public class UnloadRendererChunks : Task
             int pos = MapUtilCi.Index3d(x, y, z, mapsizexchunks_, mapsizeychunks_);
             bool unloaded = false;
 
-            Chunk c = game.chunks[pos];
+            Chunk c = game.map.chunks[pos];
             if (c == null
                 || c.rendered == null
                 || c.rendered.ids == null)
@@ -738,7 +709,7 @@ public class UnloadRendererChunksCommit : Task
     {
         if (unloadChunkPos != -1)
         {
-            Chunk c = game.chunks[unloadChunkPos];
+            Chunk c = game.map.chunks[unloadChunkPos];
             for (int k = 0; k < c.rendered.idsCount; k++)
             {
                 int loadedSubmesh = c.rendered.ids[k];

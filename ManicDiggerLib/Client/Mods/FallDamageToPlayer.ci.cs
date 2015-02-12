@@ -44,9 +44,9 @@
 
         //fall damage
 
-        if (game.IsValidPos(posX, posY, posZ - 3))
+        if (game.map.IsValidPos(posX, posY, posZ - 3))
         {
-            int blockBelow = game.GetBlock(posX, posY, posZ - 3);
+            int blockBelow = game.map.GetBlock(posX, posY, posZ - 3);
             if ((blockBelow != 0) && (!game.IsWater(blockBelow)))
             {
                 float severity = 0;

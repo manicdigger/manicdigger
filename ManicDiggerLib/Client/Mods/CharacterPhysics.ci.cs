@@ -122,11 +122,11 @@
         int cx = game.platform.FloatToInt(game.player.position.x / Game.chunksize);
         int cy = game.platform.FloatToInt(game.player.position.z / Game.chunksize);
         int cz = game.platform.FloatToInt(game.player.position.y / Game.chunksize);
-        if (game.IsValidChunkPos(cx, cy, cz, Game.chunksize))
+        if (game.map.IsValidChunkPos(cx, cy, cz))
         {
-            if (game.chunks[MapUtilCi.Index3d(cx, cy, cz,
-                game.MapSizeX / Game.chunksize,
-                game.MapSizeY / Game.chunksize)] != null)
+            if (game.map.chunks[MapUtilCi.Index3d(cx, cy, cz,
+                game.map.MapSizeX / Game.chunksize,
+                game.map.MapSizeY / Game.chunksize)] != null)
             {
                 loaded = true;
             }
@@ -263,7 +263,7 @@
 
     public bool IsTileEmptyForPhysics(int x, int y, int z)
     {
-        if (z >= game.MapSizeZ)
+        if (z >= game.map.MapSizeZ)
         {
             return true;
         }
@@ -272,11 +272,11 @@
         {
             return enableFreemove;
         }
-        if (x >= game.MapSizeX || y >= game.MapSizeY)// || z >= mapsizez)
+        if (x >= game.map.MapSizeX || y >= game.map.MapSizeY)// || z >= mapsizez)
         {
             return enableFreemove;
         }
-        int block = game.GetBlockValid(x, y, z);
+        int block = game.map.GetBlockValid(x, y, z);
         if (block == 0)
         {
             return true;

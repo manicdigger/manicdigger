@@ -30,13 +30,13 @@
         pY += game.entities[game.LocalPlayerId].drawModel.eyeHeight;
         int block1 = 0;
         int block2 = 0;
-        if (game.IsValidPos(game.MathFloor(pX), game.MathFloor(pZ), game.MathFloor(pY)))
+        if (game.map.IsValidPos(game.MathFloor(pX), game.MathFloor(pZ), game.MathFloor(pY)))
         {
-            block1 = game.GetBlock(game.platform.FloatToInt(pX), game.platform.FloatToInt(pZ), game.platform.FloatToInt(pY));
+            block1 = game.map.GetBlock(game.platform.FloatToInt(pX), game.platform.FloatToInt(pZ), game.platform.FloatToInt(pY));
         }
-        if (game.IsValidPos(game.MathFloor(pX), game.MathFloor(pZ), game.MathFloor(pY) - 1))
+        if (game.map.IsValidPos(game.MathFloor(pX), game.MathFloor(pZ), game.MathFloor(pY) - 1))
         {
-            block2 = game.GetBlock(game.platform.FloatToInt(pX), game.platform.FloatToInt(pZ), game.platform.FloatToInt(pY) - 1);
+            block2 = game.map.GetBlock(game.platform.FloatToInt(pX), game.platform.FloatToInt(pZ), game.platform.FloatToInt(pY) - 1);
         }
 
         int damage = game.d_Data.DamageToPlayer()[block1] + game.d_Data.DamageToPlayer()[block2];

@@ -3,6 +3,7 @@
     public Game()
     {
         one = 1;
+        map = new Map();
         performanceinfo = new DictionaryStringString();
         AudioEnabled = true;
         AutoJumpEnabled = false;
@@ -173,7 +174,7 @@
         this.d_Data = gamedata;
         d_TerrainTextures = terrainTextures;
 
-        this.Reset(10 * 1000, 10 * 1000, 128);
+        map.Reset(256, 256, 128);
 
         //w.d_CurrentShadows = this;
         SunMoonRenderer sunmoonrenderer = new SunMoonRenderer();
@@ -296,15 +297,6 @@
         ENABLE_DRAW_TEST_CHARACTER = platform.IsDebuggerAttached();
     }
 
-#if CITO
-    macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
-#else
-    static int Index3d(int x, int y, int h, int sizex, int sizey)
-    {
-        return (h * sizey + y) * sizex + x;
-    }
-#endif
-
     void AddMod(ClientMod mod)
     {
         clientmods[clientmodsCount++] = mod;
@@ -320,10 +312,7 @@
     internal Language language;
     internal TerrainChunkTesselatorCi d_TerrainChunkTesselator;
 
-    internal Chunk[] chunks;
-    internal int MapSizeX;
-    internal int MapSizeY;
-    internal int MapSizeZ;
+    internal Map map;
     internal const int chunksize = 16;
     internal const int chunksizebits = 4;
 
@@ -344,152 +333,17 @@
         return (block.DrawType == Packet_DrawTypeEnum.Ladder)
             || (block.WalkableType != Packet_WalkableTypeEnum.Solid && block.WalkableType != Packet_WalkableTypeEnum.Fluid);
     }
-
-    public int GetBlock(int x, int y, int z)
-    {
-        if (!IsValidPos(x, y, z))
-        {
-            return 0;
-        }
-        return GetBlockValid(x, y, z);
-    }
-
-    public int GetBlockValid(int x, int y, int z)
-    {
-        int cx = x >> chunksizebits;
-        int cy = y >> chunksizebits;
-        int cz = z >> chunksizebits;
-        int chunkpos = Index3d(cx, cy, cz, MapSizeX >> chunksizebits, MapSizeY >> chunksizebits);
-        if (chunks[chunkpos] == null)
-        {
-            return 0;
-        }
-        else
-        {
-            int pos = Index3d(x & (chunksize - 1), y & (chunksize - 1), z & (chunksize - 1), chunksize, chunksize);
-            return GetBlockInChunk(chunks[chunkpos], pos);
-        }
-    }
-
-    public int GetBlockInChunk(Chunk chunk, int pos)
-    {
-        if (chunk.dataInt != null)
-        {
-            return chunk.dataInt[pos];
-        }
-        else
-        {
-            return chunk.data[pos];
-        }
-    }
-
-    public void SetBlockRaw(int x, int y, int z, int tileType)
-    {
-        Chunk chunk = GetChunk(x, y, z);
-        int pos = Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize);
-        SetBlockInChunk(chunk, pos, tileType);
-    }
-
-    public void SetBlockInChunk(Chunk chunk, int pos, int block)
-    {
-        if (chunk.dataInt == null)
-        {
-            if (block < 255)
-            {
-                chunk.data[pos] = IntToByte(block);
-            }
-            else
-            {
-                int n = chunksize * chunksize * chunksize;
-                chunk.dataInt = new int[n];
-                for (int i = 0; i < n; i++)
-                {
-                    chunk.dataInt[i] = chunk.data[i];
-                }
-                chunk.data = null;
-
-                chunk.dataInt[pos] = block;
-            }
-        }
-        else
-        {
-            chunk.dataInt[pos] = block;
-        }
-    }
-
-    internal bool ChunkHasData(Chunk chunk)
-    {
-        return chunk.data != null || chunk.dataInt != null;
-    }
-
-    public Chunk GetChunk(int x, int y, int z)
-    {
-        x = x / chunksize;
-        y = y / chunksize;
-        z = z / chunksize;
-        int mapsizexchunks = MapSizeX / chunksize;
-        int mapsizeychunks = MapSizeY / chunksize;
-        Chunk chunk = chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
-        if (chunk == null)
-        {
-            Chunk c = new Chunk();
-            c.data = new byte[chunksize * chunksize * chunksize];
-            chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = c;
-            return chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
-        }
-        return chunk;
-    }
-
-    public bool IsValidPos(int x, int y, int z)
-    {
-        if (x < 0 || y < 0 || z < 0)
-        {
-            return false;
-        }
-        if (x >= MapSizeX || y >= MapSizeY || z >= MapSizeZ)
-        {
-            return false;
-        }
-        return true;
-    }
-
+    
     public int blockheight(int x, int y, int z_)
     {
         for (int z = z_; z >= 0; z--)
         {
-            if (GetBlock(x, y, z) != 0)
+            if (map.GetBlock(x, y, z) != 0)
             {
                 return z + 1;
             }
         }
         return 0;
-    }
-
-    public bool IsValidChunkPos(int cx, int cy, int cz, int chunksize_)
-    {
-        return cx >= 0 && cy >= 0 && cz >= 0
-            && cx < MapSizeX / chunksize_
-            && cy < MapSizeY / chunksize_
-            && cz < MapSizeZ / chunksize_;
-    }
-
-    public void CopyChunk(Chunk chunk, int[] output)
-    {
-        int n = chunksize * chunksize * chunksize;
-        if (chunk.dataInt != null)
-        {
-            for (int i = 0; i < n; i++)
-            {
-                output[i] = chunk.dataInt[i];
-            }
-        }
-        else
-        {
-            for (int i = 0; i < n; i++)
-            {
-                output[i] = chunk.data[i];
-            }
-        }
     }
 
     public static byte IntToByte(int a)
@@ -543,66 +397,6 @@
 
     internal int terrainTexturesPerAtlas;
 
-    public void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
-    {
-        int outPortionCount = portionsizex * portionsizey * portionsizez;
-        for (int i = 0; i < outPortionCount; i++)
-        {
-            outPortion[i] = 0;
-        }
-
-        //int chunksizebits = p.FloatToInt(p.MathLog(chunksize, 2));
-        if (chunksize != 16)
-        {
-            platform.ThrowException("GetMapPortion");
-        }
-
-        int mapchunksx = MapSizeX / chunksize;
-        int mapchunksy = MapSizeY / chunksize;
-        int mapchunksz = MapSizeZ / chunksize;
-        int mapsizechunks = mapchunksx * mapchunksy * mapchunksz;
-
-        for (int xx = 0; xx < portionsizex; xx++)
-        {
-            for (int yy = 0; yy < portionsizey; yy++)
-            {
-                for (int zz = 0; zz < portionsizez; zz++)
-                {
-                    //Find chunk.
-                    int cx = (x + xx) >> chunksizebits;
-                    int cy = (y + yy) >> chunksizebits;
-                    int cz = (z + zz) >> chunksizebits;
-                    //int cpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
-                    int cpos = (cz * mapchunksy + cy) * mapchunksx + cx;
-                    //if (cpos < 0 || cpos >= ((MapSizeX / chunksize) * (MapSizeY / chunksize) * (MapSizeZ / chunksize)))
-                    if (cpos < 0 || cpos >= mapsizechunks)
-                    {
-                        continue;
-                    }
-                    Chunk chunk = chunks[cpos];
-                    if (chunk == null || !ChunkHasData(chunk))
-                    {
-                        continue;
-                    }
-                    //int pos = MapUtil.Index3d((x + xx) % chunksize, (y + yy) % chunksize, (z + zz) % chunksize, chunksize, chunksize);
-                    int chunkGlobalX = cx << chunksizebits;
-                    int chunkGlobalY = cy << chunksizebits;
-                    int chunkGlobalZ = cz << chunksizebits;
-
-                    int inChunkX = (x + xx) - chunkGlobalX;
-                    int inChunkY = (y + yy) - chunkGlobalY;
-                    int inChunkZ = (z + zz) - chunkGlobalZ;
-
-                    //int pos = MapUtil.Index3d(inChunkX, inChunkY, inChunkZ, chunksize, chunksize);
-                    int pos = (((inChunkZ << chunksizebits) + inChunkY) << chunksizebits) + inChunkX;
-
-                    int block = GetBlockInChunk(chunk, pos);
-                    //outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
-                    outPortion[(zz * portionsizey + yy) * portionsizex + xx] = block;
-                }
-            }
-        }
-    }
     internal int texturesPacked() { return GlobalVar.MAX_BLOCKTYPES_SQRT; } //16x16
     internal int terrainTexture;
     internal int[] terrainTextures1d;
@@ -988,19 +782,19 @@
     public float getblockheight(int x, int y, int z)
     {
         float RailHeight = one * 3 / 10;
-        if (!IsValidPos(x, y, z))
+        if (!map.IsValidPos(x, y, z))
         {
             return 1;
         }
-        if (blocktypes[GetBlock(x, y, z)].Rail != 0)
+        if (blocktypes[map.GetBlock(x, y, z)].Rail != 0)
         {
             return RailHeight;
         }
-        if (blocktypes[GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
+        if (blocktypes[map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
         {
             return one / 2;
         }
-        if (blocktypes[GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.Flat)
+        if (blocktypes[map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.Flat)
         {
             return one / 20;
         }
@@ -1277,7 +1071,6 @@
     }
 
     internal bool ENABLE_DRAW2D;
-    internal bool ENABLENOCLIP;
     internal bool AllowFreemove;
     internal bool enableCameraControl;
 
@@ -1479,13 +1272,13 @@
 
     internal int BlockUnderPlayer()
     {
-        if (!IsValidPos(platform.FloatToInt(player.position.x),
+        if (!map.IsValidPos(platform.FloatToInt(player.position.x),
             platform.FloatToInt(player.position.z),
             platform.FloatToInt(player.position.y) - 1))
         {
             return -1;
         }
-        int blockunderplayer = GetBlock(platform.FloatToInt(player.position.x),
+        int blockunderplayer = map.GetBlock(platform.FloatToInt(player.position.x),
             platform.FloatToInt(player.position.z),
             platform.FloatToInt(player.position.y) - 1);
         return blockunderplayer;
@@ -1814,7 +1607,7 @@
 
     internal bool IsTileEmptyForPhysics(int x, int y, int z)
     {
-        if (z >= MapSizeZ)
+        if (z >= map.MapSizeZ)
         {
             return true;
         }
@@ -1822,11 +1615,11 @@
         {
             return controls.freemove;
         }
-        if (x >= MapSizeX || y >= MapSizeY)// || z >= mapsizez)
+        if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
         {
             return controls.freemove;
         }
-        int block = GetBlockValid(x, y, z);
+        int block = map.GetBlockValid(x, y, z);
         return block == SpecialBlockId.Empty
             || block == d_Data.BlockIdFillArea()
             || IsWater(block);
@@ -1835,8 +1628,8 @@
     internal bool IsTileEmptyForPhysicsClose(int x, int y, int z)
     {
         return IsTileEmptyForPhysics(x, y, z)
-            || (IsValidPos(x, y, z) && blocktypes[GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
-            || (IsValidPos(x, y, z) && IsEmptyForPhysics(blocktypes[GetBlock(x, y, z)]));
+            || (map.IsValidPos(x, y, z) && blocktypes[map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
+            || (map.IsValidPos(x, y, z) && IsEmptyForPhysics(blocktypes[map.GetBlock(x, y, z)]));
     }
 
     internal bool IsUsableBlock(int blocktype)
@@ -1890,35 +1683,15 @@
             return platform.FloatToInt(a) - 1;
         }
     }
-
-    internal void SetChunksAroundDirty(int cx, int cy, int cz)
-    {
-        if (IsValidChunkPos(cx, cy, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx - 1, cy, cz, true, false); }
-        if (IsValidChunkPos(cx - 1, cy, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx - 1, cy, cz, true, false); }
-        if (IsValidChunkPos(cx + 1, cy, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx + 1, cy, cz, true, false); }
-        if (IsValidChunkPos(cx, cy - 1, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy - 1, cz, true, false); }
-        if (IsValidChunkPos(cx, cy + 1, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy + 1, cz, true, false); }
-        if (IsValidChunkPos(cx, cy, cz - 1, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy, cz - 1, true, false); }
-        if (IsValidChunkPos(cx, cy, cz + 1, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy, cz + 1, true, false); }
-    }
-
-    internal void Reset(int sizex, int sizey, int sizez)
-    {
-        MapSizeX = sizex;
-        MapSizeY = sizey;
-        MapSizeZ = sizez;
-        chunks = new Chunk[(sizex / chunksize) * (sizey / chunksize) * (sizez / chunksize)];
-        // SetAllChunksNotDirty();
-    }
-
+    
     internal void UpdateColumnHeight(int x, int y)
     {
         //todo faster
-        int height = MapSizeZ - 1;
-        for (int i = MapSizeZ - 1; i >= 0; i--)
+        int height = map.MapSizeZ - 1;
+        for (int i = map.MapSizeZ - 1; i >= 0; i--)
         {
             height = i;
-            if (!Game.IsTransparentForLight(blocktypes[GetBlock(x, y, i)]))
+            if (!Game.IsTransparentForLight(blocktypes[map.GetBlock(x, y, i)]))
             {
                 break;
             }
@@ -1954,7 +1727,7 @@
                     int cx = x / chunksize + xx - 1;
                     int cy = y / chunksize + yy - 1;
                     int cz = z / chunksize + zz - 1;
-                    if (IsValidChunkPos(cx, cy, cz, chunksize))
+                    if (map.IsValidChunkPos(cx, cy, cz))
                     {
                         terrainRenderer.SetChunkDirty(cx, cy, cz, true, false);
                     }
@@ -1965,7 +1738,7 @@
 
     internal void SetBlock(int x, int y, int z, int tileType)
     {
-        SetBlockRaw(x, y, z, tileType);
+        map.SetBlockRaw(x, y, z, tileType);
         terrainRenderer.SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
         //d_Shadows.OnSetBlock(x, y, z);
         ShadowsOnSetBlock(x, y, z);
@@ -2014,7 +1787,7 @@
         {
             return blockHealth.Get(x, y, z);
         }
-        int blocktype = GetBlock(x, y, z);
+        int blocktype = map.GetBlock(x, y, z);
         return d_Data.Strength()[blocktype];
     }
 
@@ -2395,7 +2168,7 @@
 
     internal bool SwimmingBody()
     {
-        int block = GetBlock(platform.FloatToInt(player.position.x), platform.FloatToInt(player.position.z), platform.FloatToInt(player.position.y + 1));
+        int block = map.GetBlock(platform.FloatToInt(player.position.x), platform.FloatToInt(player.position.z), platform.FloatToInt(player.position.y + 1));
         if (block == -1) { return true; }
         return d_Data.WalkableType1()[block] == Packet_WalkableTypeEnum.Fluid;
     }
@@ -2423,11 +2196,11 @@
         int by = MathFloor(CameraEyeZ);
         int bz = MathFloor(CameraEyeY);
 
-        if (!IsValidPos(bx, by, bz))
+        if (!map.IsValidPos(bx, by, bz))
         {
             return 0;
         }
-        return GetBlockValid(bx, by, bz);
+        return map.GetBlockValid(bx, by, bz);
     }
 
     internal int GetPlayerEyesBlock()
@@ -2440,7 +2213,7 @@
         int by = MathFloor(pZ);
         int bz = MathFloor(pY);
 
-        if (!IsValidPos(bx, by, bz))
+        if (!map.IsValidPos(bx, by, bz))
         {
             if (pY < WaterLevel())
             {
@@ -2448,10 +2221,10 @@
             }
             return 0;
         }
-        return GetBlockValid(bx, by, bz);
+        return map.GetBlockValid(bx, by, bz);
     }
 
-    public float WaterLevel() { return MapSizeZ / 2; }
+    public float WaterLevel() { return map.MapSizeZ / 2; }
 
     internal bool IsLava(int blockType)
     {
@@ -2716,59 +2489,6 @@
 
     internal Kamera overheadcameraK;
 
-    internal void FillChunk(Chunk destination, int destinationchunksize, int sourcex, int sourcey, int sourcez, int[] source, int sourcechunksizeX, int sourcechunksizeY, int sourcechunksizeZ)
-    {
-        for (int x = 0; x < destinationchunksize; x++)
-        {
-            for (int y = 0; y < destinationchunksize; y++)
-            {
-                for (int z = 0; z < destinationchunksize; z++)
-                {
-                    //if (x + sourcex < source.GetUpperBound(0) + 1
-                    //    && y + sourcey < source.GetUpperBound(1) + 1
-                    //    && z + sourcez < source.GetUpperBound(2) + 1)
-                    {
-                        SetBlockInChunk(destination, Index3d(x, y, z, destinationchunksize, destinationchunksize)
-                            , source[Index3d(x + sourcex, y + sourcey, z + sourcez, sourcechunksizeX, sourcechunksizeY)]);
-                    }
-                }
-            }
-        }
-    }
-
-    internal void SetMapPortion(int x, int y, int z, int[] chunk, int sizeX, int sizeY, int sizeZ)
-    {
-        int chunksizex = sizeX;
-        int chunksizey = sizeY;
-        int chunksizez = sizeZ;
-        if (chunksizex % chunksize != 0) { platform.ThrowException(""); }
-        if (chunksizey % chunksize != 0) { platform.ThrowException(""); }
-        if (chunksizez % chunksize != 0) { platform.ThrowException(""); }
-        Chunk[] localchunks = new Chunk[(chunksizex / chunksize) * (chunksizey / chunksize) * (chunksizez / chunksize)];
-        for (int cx = 0; cx < chunksizex / chunksize; cx++)
-        {
-            for (int cy = 0; cy < chunksizey / chunksize; cy++)
-            {
-                for (int cz = 0; cz < chunksizex / chunksize; cz++)
-                {
-                    localchunks[Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))] = GetChunk(x + cx * chunksize, y + cy * chunksize, z + cz * chunksize);
-                    FillChunk(localchunks[Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))], chunksize, cx * chunksize, cy * chunksize, cz * chunksize, chunk, sizeX, sizeY, sizeZ);
-                }
-            }
-        }
-        for (int xxx = 0; xxx < chunksizex; xxx += chunksize)
-        {
-            for (int yyy = 0; yyy < chunksizex; yyy += chunksize)
-            {
-                for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
-                {
-                    terrainRenderer.SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true, true);
-                    SetChunksAroundDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize);
-                }
-            }
-        }
-    }
-
     internal void ChatLog(string p)
     {
         if (!platform.ChatLog(this.ServerInfo.ServerName, p))
@@ -2817,9 +2537,9 @@
                         ClearFillArea();
                         return;
                     }
-                    if (!IsFillBlock(GetBlock(x, y, z)))
+                    if (!IsFillBlock(map.GetBlock(x, y, z)))
                     {
-                        fillarea.Set(x, y, z, GetBlock(x, y, z));
+                        fillarea.Set(x, y, z, map.GetBlock(x, y, z));
                         SetBlock(x, y, z, d_Data.BlockIdFillArea());
                         RedrawBlock(x, y, z);
                     }
@@ -2926,7 +2646,7 @@
             s_.x = x;
             s_.y = y;
             s_.z = z;
-            s_.blocktype = GetBlock(x, y, z);
+            s_.blocktype = map.GetBlock(x, y, z);
             s_.timeMilliseconds = platform.TimeMillisecondsFromStart();
             AddSpeculative(s_);
             SetBlock(x, y, z, blockid);
@@ -2986,7 +2706,7 @@
             {
                 dirnew = PickCorners(xfract, zfract);
             }
-            int dir = d_Data.Rail()[GetBlock(blockposoldX, blockposoldY, blockposoldZ)];
+            int dir = d_Data.Rail()[map.GetBlock(blockposoldX, blockposoldY, blockposoldZ)];
             if (dir != 0)
             {
                 blockposX = blockposoldX;
@@ -3029,18 +2749,18 @@
                     if (fillstart != null)
                     {
                         Vector3IntRef f = fillstart;
-                        if (!IsFillBlock(GetBlock(f.X, f.Y, f.Z)))
+                        if (!IsFillBlock(map.GetBlock(f.X, f.Y, f.Z)))
                         {
-                            fillarea.Set(f.X, f.Y, f.Z, GetBlock(f.X, f.Y, f.Z));
+                            fillarea.Set(f.X, f.Y, f.Z, map.GetBlock(f.X, f.Y, f.Z));
                         }
                         SetBlock(f.X, f.Y, f.Z, d_Data.BlockIdFillStart());
 
 
                         FillFill(v, fillstart);
                     }
-                    if (!IsFillBlock(GetBlock(v.X, v.Y, v.Z)))
+                    if (!IsFillBlock(map.GetBlock(v.X, v.Y, v.Z)))
                     {
-                        fillarea.Set(v.X, v.Y, v.Z, GetBlock(v.X, v.Y, v.Z));
+                        fillarea.Set(v.X, v.Y, v.Z, map.GetBlock(v.X, v.Y, v.Z));
                     }
                     SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdCuboid());
                     fillend = v;
@@ -3050,9 +2770,9 @@
                 if (activematerial == d_Data.BlockIdFillStart())
                 {
                     ClearFillArea();
-                    if (!IsFillBlock(GetBlock(v.X, v.Y, v.Z)))
+                    if (!IsFillBlock(map.GetBlock(v.X, v.Y, v.Z)))
                     {
-                        fillarea.Set(v.X, v.Y, v.Z, GetBlock(v.X, v.Y, v.Z));
+                        fillarea.Set(v.X, v.Y, v.Z, map.GetBlock(v.X, v.Y, v.Z));
                     }
                     SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdFillStart());
                     fillstart = v;
@@ -3417,11 +3137,11 @@
         sendResize = true;
         SendRequestBlob(getAsset, getCount);
         ChatLog("[GAME] Sent BLOB request");
-        if (packet.Identification.MapSizeX != MapSizeX
-            || packet.Identification.MapSizeY != MapSizeY
-            || packet.Identification.MapSizeZ != MapSizeZ)
+        if (packet.Identification.MapSizeX != map.MapSizeX
+            || packet.Identification.MapSizeY != map.MapSizeY
+            || packet.Identification.MapSizeZ != map.MapSizeZ)
         {
-            Reset(packet.Identification.MapSizeX,
+            map.Reset(packet.Identification.MapSizeX,
                 packet.Identification.MapSizeY,
                 packet.Identification.MapSizeZ);
             d_Heightmap.Restart();
@@ -4163,8 +3883,8 @@
             }
             int playerx = platform.FloatToInt(player.position.x);
             int playery = platform.FloatToInt(player.position.z);
-            if ((playerx >= 0 && playerx < MapSizeX)
-                && (playery >= 0 && playery < MapSizeY))
+            if ((playerx >= 0 && playerx < map.MapSizeX)
+                && (playery >= 0 && playery < map.MapSizeY))
             {
                 performanceinfo.Set("height", platform.StringFormat("height:{0}", platform.IntToString(d_Heightmap.GetBlock(playerx, playery))));
             }
@@ -4222,7 +3942,7 @@
                     int posX = currentAttackedBlock.X;
                     int posY = currentAttackedBlock.Y;
                     int posZ = currentAttackedBlock.Z;
-                    int blocktype = GetBlock(currentAttackedBlock.X, currentAttackedBlock.Y, currentAttackedBlock.Z);
+                    int blocktype = map.GetBlock(currentAttackedBlock.X, currentAttackedBlock.Y, currentAttackedBlock.Z);
                     if (IsUsableBlock(blocktype))
                     {
                         if (d_Data.IsRailTile(blocktype))
@@ -4398,54 +4118,18 @@
 
     internal void Draw2d(float dt)
     {
-        OrthoMode(Width(), Height());
-        switch (guistate)
+        if (!ENABLE_DRAW2D)
         {
-            case GuiState.Normal:
-                {
-                    if (!ENABLE_DRAW2D)
-                    {
-                        PerspectiveMode();
-                        return;
-                    }
-                }
-                break;
-            case GuiState.Inventory:
-                {
-                    //d_The3d.ResizeGraphics(Width, Height);
-                    //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
-                    //d_The3d.PerspectiveMode();
-                }
-                break;
-            case GuiState.MapLoading:
-                {
-                }
-                break;
-            case GuiState.ModalDialog:
-                {
-                }
-                break;
-            case GuiState.EscapeMenu:
-                {
-                    if (!ENABLE_DRAW2D)
-                    {
-                        PerspectiveMode();
-                        return;
-                    }
-                }
-                break;
-            case GuiState.CraftingRecipes:
-                {
-                }
-                break;
+            return;
         }
+
+        OrthoMode(Width(), Height());
+
         for (int i = 0; i < clientmodsCount; i++)
         {
             if (clientmods[i] == null) { continue; }
             clientmods[i].OnNewFrameDraw2d(this, dt);
         }
-
-        //d_The3d.OrthoMode(Width, Height);
 
         PerspectiveMode();
     }
@@ -4540,9 +4224,9 @@
         int maxX = platform.FloatToInt(MathCi.MaxFloat(line.Start[0], line.End[0]));
         int maxY = platform.FloatToInt(MathCi.MaxFloat(line.Start[1], line.End[1]));
         int maxZ = platform.FloatToInt(MathCi.MaxFloat(line.Start[2], line.End[2]));
-        if (maxX > MapSizeX) { maxX = MapSizeX; }
-        if (maxY > MapSizeZ) { maxY = MapSizeZ; }
-        if (maxZ > MapSizeY) { maxZ = MapSizeY; }
+        if (maxX > map.MapSizeX) { maxX = map.MapSizeX; }
+        if (maxY > map.MapSizeZ) { maxY = map.MapSizeZ; }
+        if (maxZ > map.MapSizeY) { maxZ = map.MapSizeY; }
         int sizex = maxX - minX + 1;
         int sizey = maxY - minY + 1;
         int sizez = maxZ - minZ + 1;

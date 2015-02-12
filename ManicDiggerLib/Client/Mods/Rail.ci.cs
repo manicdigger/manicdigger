@@ -122,13 +122,13 @@
             currentrailblockX = game.platform.FloatToInt(game.player.position.x);
             currentrailblockY = game.platform.FloatToInt(game.player.position.z);
             currentrailblockZ = game.platform.FloatToInt(game.player.position.y) - 1;
-            if (!game.IsValidPos(currentrailblockX, currentrailblockY, currentrailblockZ))
+            if (!game.map.IsValidPos(currentrailblockX, currentrailblockY, currentrailblockZ))
             {
                 ExitVehicle(game);
             }
             else
             {
-                int railunderplayer = game.d_Data.Rail()[game.GetBlock(currentrailblockX, currentrailblockY, currentrailblockZ)];
+                int railunderplayer = game.d_Data.Rail()[game.map.GetBlock(currentrailblockX, currentrailblockY, currentrailblockZ)];
                 railriding = true;
                 originalmodelheight = game.GetCharacterEyesHeight();
                 game.SetCharacterEyesHeight(minecartheight());
@@ -371,7 +371,7 @@
     internal RailMapUtil d_RailMapUtil;
     internal int GetUpDownMove(Game game, int railblockX, int railblockY, int railblockZ, TileEnterDirection dir)
     {
-        if (!game.IsValidPos(railblockX, railblockY, railblockZ))
+        if (!game.map.IsValidPos(railblockX, railblockY, railblockZ))
         {
             return UpDown.None;
         }
@@ -438,10 +438,10 @@
     internal int PossibleRails(Game game, TileEnterData enter)
     {
         int possible_railsVehicleDirection12Flags = 0;
-        if (game.IsValidPos(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ))
+        if (game.map.IsValidPos(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ))
         {
             int newpositionrail = game.d_Data.Rail()[
-                game.GetBlock(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ)];
+                game.map.GetBlock(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ)];
             VehicleDirection12[] all_possible_rails = new VehicleDirection12[3];
             int all_possible_railsCount = 0;
             VehicleDirection12[] possibleRails3 = DirectionUtils.PossibleNewRails3(enter.EnterDirection);

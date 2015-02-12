@@ -186,7 +186,7 @@
             int ntileX = game.platform.FloatToInt(pick0.Current()[0]);
             int ntileY = game.platform.FloatToInt(pick0.Current()[1]);
             int ntileZ = game.platform.FloatToInt(pick0.Current()[2]);
-            if (game.IsUsableBlock(game.GetBlock(ntileX, ntileZ, ntileY)))
+            if (game.IsUsableBlock(game.map.GetBlock(ntileX, ntileZ, ntileY)))
             {
                 game.currentAttackedBlock = Vector3IntRef.Create(ntileX, ntileZ, ntileY);
             }
@@ -448,9 +448,9 @@
                     int newtileX = game.platform.FloatToInt(pick0.Current()[0]);
                     int newtileY = game.platform.FloatToInt(pick0.Current()[1]);
                     int newtileZ = game.platform.FloatToInt(pick0.Current()[2]);
-                    if (game.IsValidPos(newtileX, newtileZ, newtileY))
+                    if (game.map.IsValidPos(newtileX, newtileZ, newtileY))
                     {
-                        int clonesource = game.GetBlock(newtileX, newtileZ, newtileY);
+                        int clonesource = game.map.GetBlock(newtileX, newtileZ, newtileY);
                         int clonesource2 = game.d_Data.WhenPlayerPlacesGetsConvertedTo()[clonesource];
                         bool gotoDone = false;
                         //find this block in another right hand.
@@ -524,7 +524,7 @@
                         newtileY = game.platform.FloatToInt(tile.Current()[1]);
                         newtileZ = game.platform.FloatToInt(tile.Current()[2]);
                     }
-                    if (game.IsValidPos(newtileX, newtileZ, newtileY))
+                    if (game.map.IsValidPos(newtileX, newtileZ, newtileY))
                     {
                         //Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock(newtileX, newtileZ, newtileY));
                         if (!(pick0.blockPos[0] == -1
@@ -532,7 +532,7 @@
                             && pick0.blockPos[2] == -1))
                         {
                             int blocktype;
-                            if (left) { blocktype = game.GetBlock(newtileX, newtileZ, newtileY); }
+                            if (left) { blocktype = game.map.GetBlock(newtileX, newtileZ, newtileY); }
                             else { blocktype = ((game.BlockInHand() == null) ? 1 : game.BlockInHand().value); }
                             if (left && blocktype == game.d_Data.BlockIdAdminium())
                             {
@@ -578,7 +578,7 @@
                         {
                             game.particleEffectBlockBreak.StartParticleEffect(newtileX, newtileY, newtileZ);//must be before deletion - gets ground type.
                         }
-                        if (!game.IsValidPos(newtileX, newtileZ, newtileY))
+                        if (!game.map.IsValidPos(newtileX, newtileZ, newtileY))
                         {
                             game.platform.ThrowException("");
                         }

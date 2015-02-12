@@ -29,11 +29,11 @@
         int y = game.SelectedBlockPositionZ;
         int z = game.SelectedBlockPositionY;
         //string info = "None";
-        if (!game.IsValidPos(x, y, z))
+        if (!game.map.IsValidPos(x, y, z))
         {
             return;
         }
-        int blocktype = game.GetBlock(x, y, z);
+        int blocktype = game.map.GetBlock(x, y, z);
         if (!game.IsValid(blocktype))
         {
             return;
@@ -61,7 +61,7 @@
             int x = game.currentAttackedBlock.X;
             int y = game.currentAttackedBlock.Y;
             int z = game.currentAttackedBlock.Z;
-            int blocktype = game.GetBlock(x, y, z);
+            int blocktype = game.map.GetBlock(x, y, z);
             float health = game.GetCurrentBlockHealth(x, y, z);
             float progress = health / game.d_Data.Strength()[blocktype];
             if (game.IsUsableBlock(blocktype))

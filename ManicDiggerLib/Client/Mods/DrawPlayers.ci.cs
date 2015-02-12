@@ -44,7 +44,7 @@
             int cx = game.platform.FloatToInt(p_.position.x) / Game.chunksize;
             int cy = game.platform.FloatToInt(p_.position.z) / Game.chunksize;
             int cz = game.platform.FloatToInt(p_.position.y) / Game.chunksize;
-            if (game.IsValidChunkPos(cx, cy, cz, Game.chunksize))
+            if (game.map.IsValidChunkPos(cx, cy, cz))
             {
                 if (!game.terrainRenderer.IsChunkRendered(cx, cy, cz))
                 {
