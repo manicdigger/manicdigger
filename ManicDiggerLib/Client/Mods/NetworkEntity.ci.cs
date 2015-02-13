@@ -26,16 +26,15 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         {
             entity = new Entity();
         }
-        ToClientEntity(game, packet.EntitySpawn.Entity_, entity);
+        ToClientEntity(game, packet.EntitySpawn.Entity_, entity, packet.EntitySpawn.Id != game.LocalPlayerId);
         game.entities[packet.EntitySpawn.Id] = entity;
         if (packet.EntitySpawn.Id == game.LocalPlayerId)
         {
             entity.networkPosition = null;
-            entity.scriptsCount = 0;
-            entity.scripts[entity.scriptsCount++] = new ScriptCharacterPhysics();
             game.player = entity;
             if (!game.spawned)
             {
+                entity.scripts[entity.scriptsCount++] = new ScriptCharacterPhysics();
                 game.MapLoaded();
                 game.spawned = true;
             }
@@ -54,14 +53,17 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         return p;
     }
 
-    public static Entity ToClientEntity(Game game, Packet_ServerEntity entity, Entity old)
+    public static Entity ToClientEntity(Game game, Packet_ServerEntity entity, Entity old, bool updatePosition)
     {
         if (entity.Position != null)
         {
-            old.networkPosition = ToClientEntityPosition(entity.Position);
-            old.networkPosition.PositionLoaded = true;
-            old.networkPosition.LastUpdateMilliseconds = game.platform.TimeMillisecondsFromStart();
-            old.position = ToClientEntityPosition(entity.Position);
+            if (old.position == null || updatePosition)
+            {
+                old.networkPosition = ToClientEntityPosition(entity.Position);
+                old.networkPosition.PositionLoaded = true;
+                old.networkPosition.LastUpdateMilliseconds = game.platform.TimeMillisecondsFromStart();
+                old.position = ToClientEntityPosition(entity.Position);
+            }
         }
         if (entity.DrawModel != null)
         {

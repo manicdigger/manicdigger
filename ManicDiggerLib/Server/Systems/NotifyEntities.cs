@@ -78,7 +78,6 @@ public class ServerSystemNotifyEntities : ServerSystem
                 {
                     k.Value.entity.position = k.Value.positionOverride;
                     k.Value.positionOverride = null;
-                    k.Value.positionOverrideTime = 2;
                 }
             }
             else
@@ -90,11 +89,6 @@ public class ServerSystemNotifyEntities : ServerSystem
             }
             Packet_PositionAndOrientation position = ToNetworkEntityPosition(server.serverPlatform, server.clients[k.Key].entity.position);
             server.SendPacket(clientid, ServerPackets.EntityPositionAndOrientation(k.Key, position));
-        }
-        c.positionOverrideTime -= dt;
-        if (c.positionOverrideTime < 0)
-        {
-            c.positionOverrideTime = 0;
         }
     }
 
