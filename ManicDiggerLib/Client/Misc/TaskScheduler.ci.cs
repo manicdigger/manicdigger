@@ -1,148 +1,107 @@
-﻿public class TaskScheduler_
+﻿public class TaskScheduler
 {
-    public TaskScheduler_()
+    public TaskScheduler()
     {
-        mainTasks = QueueTask.Create(128);
-        backgroundPerFrameTasks = ListTask.Create(128);
-        commitTasks = QueueTask.Create(16 * 1024);
-        tasks = QueueTask.Create(16 * 1024);
-        newPerFrameTasks = QueueTask.Create(128);
+        actions = null;
     }
 
-    public void Start(GamePlatform platform_)
+    BackgroundAction[] actions;
+
+    public void Update(Game game, float dt)
     {
-        platform = platform_;
-        lockObject = platform.MonitorCreate();
-    }
-
-    GamePlatform platform;
-    MonitorObject lockObject;
-
-    public void QueueTaskReadOnlyMainThread(Task task)
-    {
-        platform.MonitorEnter(lockObject);
-        mainTasks.Enqueue(task);
-        platform.MonitorExit(lockObject);
-    }
-
-    QueueTask newPerFrameTasks;
-
-    public void QueueTaskReadOnlyBackgroundPerFrame(Task task)
-    {
-        platform.MonitorEnter(lockObject);
-        newPerFrameTasks.Enqueue(task);
-        platform.MonitorExit(lockObject);
-    }
-
-    public void QueueTaskCommit(Task task)
-    {
-        platform.MonitorEnter(lockObject);
-        commitTasks.Enqueue(task);
-        platform.MonitorExit(lockObject);
-    }
-
-    QueueTask mainTasks;
-    ListTask backgroundPerFrameTasks;
-    QueueTask commitTasks;
-
-    QueueTask tasks;
-
-    public void Update(float dt)
-    {
-        Move(mainTasks, tasks);
-        while (tasks.Count() > 0)
+        if (actions == null)
         {
-            tasks.Dequeue().Run(dt);
+            actions = new BackgroundAction[game.clientmodsCount];
+            for (int i = 0; i < game.clientmodsCount; i++)
+            {
+                actions[i] = new BackgroundAction();
+            }
         }
 
-        if (platform.MultithreadingAvailable())
+        if (game.platform.MultithreadingAvailable())
         {
-            for (int i = backgroundPerFrameTasks.count - 1; i >= 0; i--)
+            for (int i = 0; i < game.clientmodsCount; i++)
             {
-                if (backgroundPerFrameTasks.items[i].Done)
+                game.clientmods[i].OnReadOnlyMainThread(game, dt);
+            }
+
+            bool allDone = true;
+            for (int i = 0; i < game.clientmodsCount; i++)
+            {
+                if (actions[i] != null && actions[i].active && (!actions[i].finished))
                 {
-                    backgroundPerFrameTasks.RemoveAt(i);
+                    allDone = false;
                 }
             }
-            if (backgroundPerFrameTasks.Count() == 0)
-            {
-                Move(commitTasks, tasks);
-                while (tasks.Count() > 0)
-                {
-                    tasks.Dequeue().Run(dt);
-                }
 
-                Move(newPerFrameTasks, tasks);
-                while (tasks.Count() > 0)
+            if (allDone)
+            {
+                for (int i = 0; i < game.clientmodsCount; i++)
                 {
-                    Task task = tasks.Dequeue();
-                    backgroundPerFrameTasks.Add(task);
-                    task.Done = false;
-                    platform.QueueUserWorkItem(TaskAction.Create(task));
+                    game.clientmods[i].OnReadWriteMainThread(game, dt);
+                }
+                for (int i = 0; i < game.commitActions.count; i++)
+                {
+                    game.commitActions.items[i].Run();
+                }
+                game.commitActions.Clear();
+                for (int i = 0; i < game.clientmodsCount; i++)
+                {
+                    BackgroundAction a = actions[i];
+                    a.game = game;
+                    a.dt = dt;
+                    a.i = i;
+                    a.active = true;
+                    a.finished = false;
+                    game.platform.QueueUserWorkItem(a);
                 }
             }
         }
         else
         {
-            for (int i = 0; i < backgroundPerFrameTasks.count; i++)
+            for (int i = 0; i < game.clientmodsCount; i++)
             {
-                backgroundPerFrameTasks.items[i].Run(dt);
-            }
-            backgroundPerFrameTasks.Clear();
-
-            Move(commitTasks, tasks);
-            while (tasks.Count() > 0)
-            {
-                tasks.Dequeue().Run(dt);
+                game.clientmods[i].OnReadOnlyMainThread(game, dt);
             }
 
-            Move(newPerFrameTasks, tasks);
-            while (tasks.Count() > 0)
+            for (int i = 0; i < game.clientmodsCount; i++)
             {
-                Task task = tasks.Dequeue();
-                backgroundPerFrameTasks.Add(task);
-                task.Done = false;
+                game.clientmods[i].OnReadOnlyBackgroundThread(game, dt);
             }
+
+            for (int i = 0; i < game.clientmodsCount; i++)
+            {
+                game.clientmods[i].OnReadWriteMainThread(game, dt);
+            }
+
+            for (int i = 0; i < game.commitActions.count; i++)
+            {
+                game.commitActions.items[i].Run();
+            }
+            game.commitActions.Clear();
         }
-    }
-
-    void Move(QueueTask from, QueueTask to)
-    {
-        platform.MonitorEnter(lockObject);
-        int count = from.count_;
-        for (int i = 0; i < count; i++)
-        {
-            Task task = from.Dequeue();
-            to.Enqueue(task);
-        }
-        platform.MonitorExit(lockObject);
     }
 }
 
-public abstract class Action_
+public class BackgroundAction : Action_
 {
-    public abstract void Run();
-}
-
-public class TaskAction : Action_
-{
-    public static TaskAction Create(Task task)
+    public BackgroundAction()
     {
-        TaskAction action = new TaskAction();
-        action.task = task;
-        return action;
+        game = null;
+        i = -1;
+        dt = 1;
+        active = false;
+        finished = false;
     }
-    internal Task task;
+    internal Game game;
+    internal int i;
+    internal float dt;
+    internal bool active;
+    internal bool finished;
+
     public override void Run()
     {
-        task.Run(1);
-        task.Done = true;
+        game.clientmods[i].OnReadOnlyBackgroundThread(game, dt);
+        finished = true;
     }
-}
-
-public class Task
-{
-    internal Game game;
-    public virtual void Run(float dt) { }
-    internal bool Done;
 }

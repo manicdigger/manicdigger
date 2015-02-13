@@ -20,11 +20,10 @@
 
         game.Start();
         Connect(platform);
-        game.OnLoad();
     }
 
     ServerSimple serverSimple;
-    ServerSimpleTask serverSimpleTask;
+    ModServerSimple serverSimpleMod;
 
     void Connect(GamePlatform platform)
     {
@@ -45,10 +44,9 @@
                 server.Start();
                 serverSimple.Start(server, singleplayerSavePath, platform);
 
-                serverSimpleTask = new ServerSimpleTask();
-                serverSimpleTask.server = serverSimple;
-                serverSimpleTask.game = game;
-                game.QueueTaskReadOnlyBackgroundPerFrame(serverSimpleTask);
+                serverSimpleMod = new ModServerSimple();
+                serverSimpleMod.server = serverSimple;
+                game.AddMod(serverSimpleMod);
                 platform.SinglePlayerServerGetNetwork().ServerReceiveBuffer.Enqueue(new ByteArray());
             }
 

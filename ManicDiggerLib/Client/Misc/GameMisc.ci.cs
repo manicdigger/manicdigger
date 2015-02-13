@@ -232,176 +232,14 @@
     internal int screeny;
 }
 
-public class UpdateTask : Task
+public class ProcessPacketTask : Action_
 {
-    public override void Run(float dt)
-    {
-        game.Update(dt);
-        game.QueueTaskReadOnlyMainThread(this); // todo
-    }
-}
-
-public class NetworkProcessTask : Task
-{
-    public NetworkProcessTask()
-    {
-        CurrentChunk = new byte[1024 * 64];
-        CurrentChunkCount = 0;
-        receivedchunk = new int[32 * 32 * 32];
-        decompressedchunk = new byte[32 * 32 * 32 * 2];
-    }
-    internal byte[] CurrentChunk;
-    internal int CurrentChunkCount;
-    int[] receivedchunk;
-    byte[] decompressedchunk;
-
-#if CITO
-    macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
-#else
-    static int Index3d(int x, int y, int h, int sizex, int sizey)
-    {
-        return (h * sizey + y) * sizex + x;
-    }
-#endif
-
-    public override void Run(float dt)
-    {
-        NetworkProcess();
-        game.QueueTaskReadOnlyBackgroundPerFrame(this);
-    }
-
-    public void NetworkProcess()
-    {
-        game.currentTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
-        if (game.main == null)
-        {
-            return;
-        }
-        NetIncomingMessage msg;
-        for (; ; )
-        {
-            if (game.invalidVersionPacketIdentification != null)
-            {
-                break;
-            }
-            msg = game.main.ReadMessage();
-            if (msg == null)
-            {
-                break;
-            }
-            TryReadPacket(msg.message, msg.messageLength);
-        }
-    }
-
-    public void TryReadPacket(byte[] data, int dataLength)
-    {
-        Packet_Server packet = new Packet_Server();
-        Packet_ServerSerializer.DeserializeBuffer(data, dataLength, packet);
-
-        ProcessInBackground(packet);
-
-        ProcessPacketTask task = new ProcessPacketTask();
-        task.game = game;
-        task.packet = packet;
-        game.QueueTaskCommit(task);
-
-        game.LastReceivedMilliseconds = game.currentTimeMilliseconds;
-        //return lengthPrefixLength + packetLength;
-    }
-
-    void ProcessInBackground(Packet_Server packet)
-    {
-        switch (packet.Id)
-        {
-            case Packet_ServerIdEnum.ChunkPart:
-                byte[] arr = packet.ChunkPart.CompressedChunkPart;
-                int arrLength = game.platform.ByteArrayLength(arr); // todo
-                for (int i = 0; i < arrLength; i++)
-                {
-                    CurrentChunk[CurrentChunkCount++] = arr[i];
-                }
-                break;
-            case Packet_ServerIdEnum.Chunk_:
-                {
-                    Packet_ServerChunk p = packet.Chunk_;
-                    if (CurrentChunkCount != 0)
-                    {
-                        game.platform.GzipDecompress(CurrentChunk, CurrentChunkCount, decompressedchunk);
-                        {
-                            int i = 0;
-                            for (int zz = 0; zz < p.SizeZ; zz++)
-                            {
-                                for (int yy = 0; yy < p.SizeY; yy++)
-                                {
-                                    for (int xx = 0; xx < p.SizeX; xx++)
-                                    {
-                                        receivedchunk[Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
-                                        i += 2;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        int size = p.SizeX * p.SizeY * p.SizeZ;
-                        for (int i = 0; i < size; i++)
-                        {
-                            receivedchunk[i] = 0;
-                        }
-                    }
-                    {
-                        game.map.SetMapPortion(p.X, p.Y, p.Z, receivedchunk, p.SizeX, p.SizeY, p.SizeZ);
-                        for (int xx = 0; xx < 2; xx++)
-                        {
-                            for (int yy = 0; yy < 2; yy++)
-                            {
-                                for (int zz = 0; zz < 2; zz++)
-                                {
-                                    //d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
-                                }
-                            }
-                        }
-                    }
-                    game.ReceivedMapLength += CurrentChunkCount;// lengthPrefixLength + packetLength;
-                    CurrentChunkCount = 0;
-                }
-                break;
-            case Packet_ServerIdEnum.HeightmapChunk:
-                {
-                    Packet_ServerHeightmapChunk p = packet.HeightmapChunk;
-                    game.platform.GzipDecompress(p.CompressedHeightmap, game.platform.ByteArrayLength(p.CompressedHeightmap), decompressedchunk);
-                    int[] decompressedchunk1 = Game.ByteArrayToUshortArray(decompressedchunk, p.SizeX * p.SizeY * 2);
-                    for (int xx = 0; xx < p.SizeX; xx++)
-                    {
-                        for (int yy = 0; yy < p.SizeY; yy++)
-                        {
-                            int height = decompressedchunk1[MapUtilCi.Index2d(xx, yy, p.SizeX)];
-                            game.d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
-                        }
-                    }
-                }
-                break;
-        }
-    }
-}
-
-public class ProcessPacketTask : Task
-{
+    internal Game game;
     internal Packet_Server packet;
 
-    public override void Run(float dt)
+    public override void Run()
     {
         game.ProcessPacket(packet);
-    }
-}
-
-public class DrawTask : Task
-{
-    public override void Run(float dt)
-    {
-        game.MainThreadOnRenderFrame(dt);
-        game.QueueTaskReadOnlyMainThread(this);
     }
 }
 
@@ -1813,6 +1651,11 @@ public class FreemoveLevelEnum
 public abstract class ClientMod
 {
     public virtual void Start(ClientModManager modmanager) { }
+    
+    public virtual void OnReadOnlyMainThread(Game game, float dt) { }
+    public virtual void OnReadOnlyBackgroundThread(Game game, float dt) { }
+    public virtual void OnReadWriteMainThread(Game game, float dt) { }
+    
     public virtual bool OnClientCommand(Game game, ClientCommandArgs args) { return false; }
     public virtual void OnNewFrame(Game game, NewFrameEventArgs args) { }
     public virtual void OnNewFrameFixed(Game game, NewFrameEventArgs args) { }
@@ -1832,6 +1675,24 @@ public abstract class ClientMod
     public virtual void OnTouchEnd(Game game, TouchEventArgs e) { }
     public virtual void OnUseEntity(Game game, OnUseEntityArgs e) { }
     public virtual void OnHitEntity(Game game, OnUseEntityArgs e) { }
+    public virtual void Dispose(Game game) { }
+}
+
+public class ModDrawMain : ClientMod
+{
+    public override void OnReadOnlyMainThread(Game game, float dt)
+    {
+        game.MainThreadOnRenderFrame(dt);
+    }
+}
+
+public class ModUpdateMain : ClientMod
+{
+    // Should use ReadWrite to be correct but that would be too slow
+    public override void OnReadOnlyMainThread(Game game, float dt)
+    {
+        game.Update(dt);
+    }
 }
 
 public abstract class EntityScript
@@ -2960,7 +2821,7 @@ public class Map
         if (IsValidChunkPos(cx, cy, cz + 1)) { SetChunkDirty(cx, cy, cz + 1, true, false); }
     }
 
-    internal void SetMapPortion(int x, int y, int z, int[] chunk, int sizeX, int sizeY, int sizeZ)
+    public void SetMapPortion(int x, int y, int z, int[] chunk, int sizeX, int sizeY, int sizeZ)
     {
         int chunksizex = sizeX;
         int chunksizey = sizeY;
@@ -2994,7 +2855,7 @@ public class Map
         }
     }
 
-    internal void FillChunk(Chunk destination, int destinationchunksize, int sourcex, int sourcey, int sourcez, int[] source, int sourcechunksizeX, int sourcechunksizeY, int sourcechunksizeZ)
+    public void FillChunk(Chunk destination, int destinationchunksize, int sourcex, int sourcey, int sourcez, int[] source, int sourcechunksizeX, int sourcechunksizeY, int sourcechunksizeZ)
     {
         for (int x = 0; x < destinationchunksize; x++)
         {
@@ -3012,5 +2873,55 @@ public class Map
                 }
             }
         }
+    }
+
+    public int MaybeGetLight(int x, int y, int z)
+    {
+        int light = -1;
+        int cx = x / Game.chunksize;
+        int cy = y / Game.chunksize;
+        int cz = z / Game.chunksize;
+        if (IsValidPos(x, y, z) && IsValidChunkPos(cx, cy, cz))
+        {
+            Chunk c = chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
+            if (c == null
+                || c.rendered == null
+                || c.rendered.light == null)
+            {
+                light = -1;
+            }
+            else
+            {
+                light = c.rendered.light[MapUtilCi.Index3d((x % Game.chunksize) + 1, (y % Game.chunksize) + 1, (z % Game.chunksize) + 1, Game.chunksize + 2, Game.chunksize + 2)];
+            }
+        }
+        return light;
+    }
+
+    public void SetBlockDirty(int x, int y, int z)
+    {
+        Vector3IntRef[] around = ModDrawTerrain.BlocksAround7(Vector3IntRef.Create(x, y, z));
+        for (int i = 0; i < 7; i++)
+        {
+            Vector3IntRef a = around[i];
+            int xx = a.X;
+            int yy = a.Y;
+            int zz = a.Z;
+            if (xx < 0 || yy < 0 || zz < 0 || xx >= MapSizeX || yy >= MapSizeY || zz >= MapSizeZ)
+            {
+                return;
+            }
+            SetChunkDirty((xx / Game.chunksize), (yy / Game.chunksize), (zz / Game.chunksize), true, true);
+        }
+    }
+
+    public bool IsChunkRendered(int cx, int cy, int cz)
+    {
+        Chunk c = chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
+        if (c == null)
+        {
+            return false;
+        }
+        return c.rendered != null && c.rendered.ids != null;
     }
 }

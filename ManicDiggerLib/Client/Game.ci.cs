@@ -106,7 +106,6 @@
         {
             mLightLevels[i] = one * i / 15;
         }
-        scheduler = new TaskScheduler_();
         soundnow = new BoolRef();
         camera = Mat4.Create();
         packetHandlers = new ClientPacketHandler[256];
@@ -122,6 +121,8 @@
         CameraEyeZ = -1;
         controls = new Controls();
         movedz = 0;
+        taskScheduler = new TaskScheduler();
+        commitActions = ListAction.Create(16 * 1024);
     }
 
     internal AssetList assets;
@@ -146,12 +147,11 @@
         {
             config3d.viewdistance = 32;
         }
-        //network.d_ResetMap = this;
+
         ITerrainTextures terrainTextures = new ITerrainTextures();
         terrainTextures.game = this;
         d_TextureAtlasConverter = new TextureAtlasConverter();
         d_TerrainTextures = terrainTextures;
-        //InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
 
         FrustumCulling frustumculling = new FrustumCulling();
         frustumculling.d_GetCameraMatrix = this.CameraMatrix;
@@ -164,7 +164,6 @@
         d_Batcher.d_FrustumCulling = frustumculling;
         d_Batcher.game = this;
         d_FrustumCulling = frustumculling;
-        //w.d_Map = clientgame.mapforphysics;
         d_Data = gamedata;
         d_DataMonsters = new GameDataMonsters();
         d_Config3d = config3d;
@@ -176,30 +175,17 @@
 
         map.Reset(256, 256, 128);
 
-        //w.d_CurrentShadows = this;
         SunMoonRenderer sunmoonrenderer = new SunMoonRenderer();
         d_SunMoonRenderer = sunmoonrenderer;
         d_SunMoonRenderer = sunmoonrenderer;
         d_Heightmap = new InfiniteMapChunked2d();
         d_Heightmap.d_Map = this;
         d_Heightmap.Restart();
-        //this.light = new InfiniteMapChunkedSimple() { d_Map = map };
-        //light.Restart();
         d_TerrainChunkTesselator = terrainchunktesselator;
         terrainchunktesselator.game = this;
 
-        //if (fullshadows)
-        //{
-        //    UseShadowsFull();
-        //}
-        //else
-        //{
-        //    UseShadowsSimple();
-        //}
         Packet_Inventory inventory = new Packet_Inventory();
         inventory.RightHand = new Packet_Item[10];
-        terrainRenderer = new TerrainRenderer();
-        terrainRenderer.game = this;
         GameDataItemsClient dataItems = new GameDataItemsClient();
         dataItems.game = this;
         InventoryUtilClient inventoryUtil = new InventoryUtilClient();
@@ -215,6 +201,10 @@
         clientmods = new ClientMod[128];
         clientmodsCount = 0;
         modmanager.game = this;
+        AddMod(new ModDrawMain());
+        AddMod(new ModUpdateMain());
+        AddMod(new ModNetworkProcess());
+        AddMod(new ModUnloadRendererChunks());
         AddMod(new ModAutoCamera());
         AddMod(new ModFpsHistoryGraph());
         AddMod(new ModWalkSound());
@@ -224,7 +214,6 @@
         AddMod(new ModSendPosition());
         AddMod(new ModInterpolatePositions());
         AddMod(new ModRail());
-
         AddMod(new ModCompass());
         AddMod(new ModGrenade());
         AddMod(new ModBullet());
@@ -272,35 +261,115 @@
         s = new BlockOctreeSearcher();
         s.platform = platform;
 
-        scheduler.Start(platform);
-        DrawTask drawTask = new DrawTask();
-        drawTask.game = this;
-        QueueTaskReadOnlyMainThread(drawTask);
-
-        UnloadRendererChunks unloadRendererChunks = new UnloadRendererChunks();
-        unloadRendererChunks.game = this;
-        QueueTaskReadOnlyMainThread(unloadRendererChunks);
-
-        QueueTaskReadOnlyMainThread(terrainRenderer);
-
-        UpdateTask update = new UpdateTask();
-        update.game = this;
-        QueueTaskCommit(update);
-
-        NetworkProcessTask networkProcessTask = new NetworkProcessTask();
-        networkProcessTask.game = this;
-        QueueTaskReadOnlyBackgroundPerFrame(networkProcessTask);
-
         //Prevent loding screen from immediately displaying lag symbol
         LastReceivedMilliseconds = platform.TimeMillisecondsFromStart();
 
         ENABLE_DRAW_TEST_CHARACTER = platform.IsDebuggerAttached();
+
+        int maxTextureSize_ = platform.GlGetMaxTextureSize();
+        if (maxTextureSize_ < 1024)
+        {
+            maxTextureSize_ = 1024;
+        }
+        maxTextureSize = maxTextureSize_;
+        MapLoadingStart();
+        platform.GlClearColorRgbaf(0, 0, 0, 1);
+        if (d_Config3d.ENABLE_BACKFACECULLING)
+        {
+            platform.GlDepthMask(true);
+            platform.GlEnableDepthTest();
+            platform.GlCullFaceBack();
+            platform.GlEnableCullFace();
+        }
+        platform.GlEnableLighting();
+        platform.GlEnableColorMaterial();
+        platform.GlColorMaterialFrontAndBackAmbientAndDiffuse();
+        platform.GlShadeModelSmooth();
     }
 
-    void AddMod(ClientMod mod)
+    public void AddMod(ClientMod mod)
     {
         clientmods[clientmodsCount++] = mod;
         mod.Start(modmanager);
+    }
+
+    // Main game loop
+    public void OnRenderFrame(float deltaTime)
+    {
+        taskScheduler.Update(this, deltaTime);
+    }
+    TaskScheduler taskScheduler;
+
+    internal float[] camera;
+    float accumulator;
+    internal void MainThreadOnRenderFrame(float deltaTime)
+    {
+        UpdateResize();
+
+        if (guistate == GuiState.MapLoading)
+        {
+            platform.GlClearColorRgbaf(0, 0, 0, 1);
+        }
+        else
+        {
+            platform.GlClearColorRgbaf(one * Game.clearcolorR / 255, one * Game.clearcolorG / 255, one * Game.clearcolorB / 255, one * Game.clearcolorA / 255);
+        }
+
+        UpdateMouseViewportControl(deltaTime);
+
+        //Sleep is required in Mono for running the terrain background thread.
+        platform.ApplicationDoEvents();
+
+        accumulator += deltaTime;
+        if (accumulator > 1)
+        {
+            accumulator = 1;
+        }
+        float dt = one / 75;
+
+        while (accumulator >= dt)
+        {
+            FrameTick(dt);
+            accumulator -= dt;
+        }
+
+        if (guistate == GuiState.MapLoading)
+        {
+            GotoDraw2d(deltaTime);
+            return;
+        }
+
+        if (ENABLE_LAG == 2)
+        {
+            platform.ThreadSpinWait(20 * 1000 * 1000);
+        }
+
+        SetAmbientLight(terraincolor());
+        platform.GlClearColorBufferAndDepthBuffer();
+        platform.BindTexture2d(d_TerrainTextures.terrainTexture());
+
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].OnBeforeNewFrameDraw3d(this, deltaTime);
+        }
+        GLMatrixModeModelView();
+        GLLoadMatrix(camera);
+        CameraMatrix.lastmvmatrix = camera;
+
+        d_FrustumCulling.CalcFrustumEquations();
+
+        bool drawgame = guistate != GuiState.MapLoading;
+        if (drawgame)
+        {
+            platform.GlEnableDepthTest();
+            for (int i = 0; i < clientmodsCount; i++)
+            {
+                if (clientmods[i] == null) { continue; }
+                clientmods[i].OnNewFrameDraw3d(this, deltaTime);
+            }
+        }
+        GotoDraw2d(deltaTime);
     }
 
     internal float one;
@@ -1442,18 +1511,31 @@
     }
 
     internal GameData d_Data;
-    internal TerrainRenderer terrainRenderer;
 
+    public const int minlight = 0;
     public const int maxlight = 15;
 
-    public int MaybeGetLight(int x, int y, int z)
+    public int GetLight(int x, int y, int z)
     {
-        IntRef ret = terrainRenderer.MaybeGetLight(x, y, z);
-        if (ret == null)
+        int light = map.MaybeGetLight(x, y, z);
+
+        if (light == -1)
         {
-            return maxlight;
+            if ((x >= 0 && x < map.MapSizeX)
+                && (y >= 0 && y < map.MapSizeY)
+                && (z >= d_Heightmap.GetBlock(x, y)))
+            {
+                return sunlight_;
+            }
+            else
+            {
+                return minlight;
+            }
         }
-        return ret.value;
+        else
+        {
+            return light;
+        }
     }
 
     public void Draw2dBitmapFile(string filename, float x, float y, float w, float h)
@@ -1475,12 +1557,12 @@
             if (d_Config3d.viewdistance == drawDistances[i])
             {
                 d_Config3d.viewdistance = drawDistances[(i + 1) % drawDistancesCount];
-                terrainRenderer.StartTerrain();
+                RedrawAllBlocks();
                 return;
             }
         }
         d_Config3d.viewdistance = drawDistances[0];
-        terrainRenderer.StartTerrain();
+        RedrawAllBlocks();
     }
 
     internal int LocalPlayerId;
@@ -1711,7 +1793,7 @@
         {
             if (i / chunksize != z / chunksize)
             {
-                terrainRenderer.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, false);
+                map.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, false);
             }
         }
         //Todo: too many redraws. Optimize.
@@ -1729,7 +1811,7 @@
                     int cz = z / chunksize + zz - 1;
                     if (map.IsValidChunkPos(cx, cy, cz))
                     {
-                        terrainRenderer.SetChunkDirty(cx, cy, cz, true, false);
+                        map.SetChunkDirty(cx, cy, cz, true, false);
                     }
                 }
             }
@@ -1739,7 +1821,7 @@
     internal void SetBlock(int x, int y, int z, int tileType)
     {
         map.SetBlockRaw(x, y, z, tileType);
-        terrainRenderer.SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
+        map.SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
         //d_Shadows.OnSetBlock(x, y, z);
         ShadowsOnSetBlock(x, y, z);
         lastplacedblockX = x;
@@ -1848,8 +1930,6 @@
     internal int clientmodsCount;
     internal bool SkySphereNight;
     internal ModDrawParticleEffectBlockBreak particleEffectBlockBreak;
-    internal int lastchunkupdates;
-    internal int lasttitleupdateMilliseconds;
     internal bool ENABLE_DRAWPOSITION;
 
     public int SerializeFloat(float p)
@@ -1912,7 +1992,7 @@
 
     internal void RedrawBlock(int x, int y, int z)
     {
-        terrainRenderer.RedrawBlock(x, y, z);
+        map.SetBlockDirty(x, y, z);
     }
 
     internal bool IsFillBlock(int blocktype)
@@ -2405,9 +2485,11 @@
         SendPacketClient(ClientPackets.CreateLoginPacket_(platform, username, auth, serverPassword));
     }
 
+    internal bool shadowssimple;
+    internal bool shouldRedrawAllBlocks;
     internal void RedrawAllBlocks()
     {
-        terrainRenderer.RedrawAllBlocks();
+        shouldRedrawAllBlocks = true;
     }
 
     //public const int clearcolorR = 171;
@@ -2435,7 +2517,7 @@
         int fogB;
         int fogA;
 
-        if (SkySphereNight && (!terrainRenderer.shadowssimple))
+        if (SkySphereNight && (!shadowssimple))
         {
             fogR = 0;
             fogG = 0;
@@ -2577,7 +2659,6 @@
 
     internal void MapLoaded()
     {
-        terrainRenderer.StartTerrain();
         RedrawAllBlocks();
         materialSlots = d_Data.DefaultMaterialSlots();
         GuiStateBackToGame();
@@ -2671,7 +2752,7 @@
         speculative[speculativeCount++] = s_;
     }
 
-    internal void OnNewFrame(float dt)
+    internal void RevertSpeculative(float dt)
     {
         for (int i = 0; i < speculativeCount; i++)
         {
@@ -3146,7 +3227,7 @@
                 packet.Identification.MapSizeZ);
             d_Heightmap.Restart();
         }
-        terrainRenderer.shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
+        shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
         maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
         if (maxdrawdistance == 0)
         {
@@ -4097,25 +4178,6 @@
     }
     internal bool drawblockinfo;
 
-    internal void UpdateTitleFps(float dt)
-    {
-        float elapsed = one * (platform.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
-        if (elapsed >= 1)
-        {
-            lasttitleupdateMilliseconds = platform.TimeMillisecondsFromStart();
-            int chunkupdates = terrainRenderer.ChunkUpdates();
-            performanceinfo.Set("chunk updates", platform.StringFormat(language.ChunkUpdates(), platform.IntToString(chunkupdates - lastchunkupdates)));
-            lastchunkupdates = terrainRenderer.ChunkUpdates();
-            performanceinfo.Set("triangles", platform.StringFormat(language.Triangles(), platform.IntToString(terrainRenderer.TrianglesCount())));
-        }
-        if (!titleset)
-        {
-            platform.SetTitle(language.GameName());
-            titleset = true;
-        }
-    }
-    bool titleset;
-
     internal void Draw2d(float dt)
     {
         if (!ENABLE_DRAW2D)
@@ -4145,8 +4207,6 @@
 
     internal void FrameTick(float dt)
     {
-        //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
-        //UpdateTerrain();
         NewFrameEventArgs args_ = new NewFrameEventArgs();
         args_.SetDt(dt);
         for (int i = 0; i < clientmodsCount; i++)
@@ -4162,26 +4222,9 @@
                 e.scripts[k].OnNewFrameFixed(this, i, dt);
             }
         }
-        OnNewFrame(dt);
+        RevertSpeculative(dt);
 
         if (guistate == GuiState.MapLoading) { return; }
-
-        if (guistate == GuiState.EscapeMenu)
-        {
-        }
-        else if (guistate == GuiState.Inventory)
-        {
-        }
-        else if (guistate == GuiState.MapLoading)
-        {
-            //todo back to game when escape key pressed.
-        }
-        else if (guistate == GuiState.CraftingRecipes)
-        {
-        }
-        else if (guistate == GuiState.ModalDialog)
-        {
-        }
 
         float orientationX = platform.MathSin(player.position.roty);
         float orientationY = 0;
@@ -4335,31 +4378,6 @@
         }
     }
 
-    internal void OnLoad()
-    {
-        int maxTextureSize_ = platform.GlGetMaxTextureSize();
-        if (maxTextureSize_ < 1024)
-        {
-            maxTextureSize_ = 1024;
-        }
-        maxTextureSize = maxTextureSize_;
-        //Start();
-        //Connect();
-        MapLoadingStart();
-        platform.GlClearColorRgbaf(0, 0, 0, 1);
-        if (d_Config3d.ENABLE_BACKFACECULLING)
-        {
-            platform.GlDepthMask(true);
-            platform.GlEnableDepthTest();
-            platform.GlCullFaceBack();
-            platform.GlEnableCullFace();
-        }
-        platform.GlEnableLighting();
-        platform.GlEnableColorMaterial();
-        platform.GlColorMaterialFrontAndBackAmbientAndDiffuse();
-        platform.GlShadeModelSmooth();
-    }
-
     internal void Connect__()
     {
         if (connectdata.ServerPassword == null || connectdata.ServerPassword == "")
@@ -4371,84 +4389,6 @@
             Connect_(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth, connectdata.ServerPassword);
         }
         MapLoadingStart();
-    }
-
-    public void OnRenderFrame(float deltaTime)
-    {
-        TaskScheduler(deltaTime);
-    }
-
-    internal float[] camera;
-    float accumulator;
-    internal void MainThreadOnRenderFrame(float deltaTime)
-    {
-        UpdateResize();
-
-        if (guistate == GuiState.MapLoading)
-        {
-            platform.GlClearColorRgbaf(0, 0, 0, 1);
-        }
-        else
-        {
-            platform.GlClearColorRgbaf(one * Game.clearcolorR / 255, one * Game.clearcolorG / 255, one * Game.clearcolorB / 255, one * Game.clearcolorA / 255);
-        }
-
-        UpdateMouseViewportControl(deltaTime);
-
-        //Sleep is required in Mono for running the terrain background thread.
-        platform.ApplicationDoEvents();
-
-        accumulator += deltaTime;
-        if (accumulator > 1)
-        {
-            accumulator = 1;
-        }
-        float dt = one / 75;
-
-        while (accumulator >= dt)
-        {
-            FrameTick(dt);
-            accumulator -= dt;
-        }
-
-        if (guistate == GuiState.MapLoading)
-        {
-            GotoDraw2d(deltaTime);
-            return;
-        }
-
-        if (ENABLE_LAG == 2)
-        {
-            platform.ThreadSpinWait(20 * 1000 * 1000);
-        }
-
-        SetAmbientLight(terraincolor());
-        UpdateTitleFps(deltaTime);
-        platform.GlClearColorBufferAndDepthBuffer();
-        platform.BindTexture2d(d_TerrainTextures.terrainTexture());
-
-        for (int i = 0; i < clientmodsCount; i++)
-        {
-            if (clientmods[i] == null) { continue; }
-            clientmods[i].OnBeforeNewFrameDraw3d(this, deltaTime);
-        }
-        GLMatrixModeModelView();
-        GLLoadMatrix(camera);
-        CameraMatrix.lastmvmatrix = camera;
-
-        d_FrustumCulling.CalcFrustumEquations();
-
-        bool drawgame = guistate != GuiState.MapLoading;
-        if (drawgame)
-        {
-            platform.GlEnableDepthTest();
-            for (int i = 0; i < clientmodsCount; i++)
-            {
-                if (clientmods[i] == null) { continue; }
-                clientmods[i].OnNewFrameDraw3d(this, deltaTime);
-            }
-        }
-        GotoDraw2d(deltaTime);
     }
 
     int lastWidth;
@@ -4573,26 +4513,10 @@
         }
     }
 
-    TaskScheduler_ scheduler;
-
-    void TaskScheduler(float deltaTime)
+    internal ListAction commitActions;
+    public void QueueActionCommit(Action_ action)
     {
-        scheduler.Update(deltaTime);
-    }
-
-    public void QueueTaskReadOnlyBackgroundPerFrame(Task task)
-    {
-        scheduler.QueueTaskReadOnlyBackgroundPerFrame(task);
-    }
-
-    public void QueueTaskCommit(Task task)
-    {
-        scheduler.QueueTaskCommit(task);
-    }
-
-    public void QueueTaskReadOnlyMainThread(Task task)
-    {
-        scheduler.QueueTaskReadOnlyMainThread(task);
+        commitActions.Add(action);
     }
 
     public void DrawModel(Model model)
@@ -4615,7 +4539,11 @@
 
     public void Dispose()
     {
-        terrainRenderer.Clear();
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            if (clientmods[i] == null) { continue; }
+            clientmods[i].Dispose(this);
+        }
         for (int i = 0; i < textures.count; i++)
         {
             if (textures.items[i] == null)

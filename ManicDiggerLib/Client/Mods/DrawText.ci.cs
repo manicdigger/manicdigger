@@ -29,7 +29,7 @@
                 string text = p.text;
                 {
 
-                    float shadow = (game.one * game.MaybeGetLight(game.platform.FloatToInt(posX), game.platform.FloatToInt(posZ), game.platform.FloatToInt(posY))) / Game.maxlight;
+                    float shadow = (game.one * game.GetLight(game.platform.FloatToInt(posX), game.platform.FloatToInt(posZ), game.platform.FloatToInt(posY))) / Game.maxlight;
 
                     game.GLPushMatrix();
                     game.GLTranslate(posX, posY, posZ);

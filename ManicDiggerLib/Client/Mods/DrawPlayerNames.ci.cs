@@ -37,7 +37,7 @@
                 string name = p.Name;
                 {
 
-                    float shadow = (game.one * game.MaybeGetLight(game.platform.FloatToInt(posX), game.platform.FloatToInt(posZ), game.platform.FloatToInt(posY))) / Game.maxlight;
+                    float shadow = (game.one * game.GetLight(game.platform.FloatToInt(posX), game.platform.FloatToInt(posZ), game.platform.FloatToInt(posY))) / Game.maxlight;
                     //do not interpolate player position if player is controlled by game world
                     //if (EnablePlayerUpdatePositionContainsKey(kKey) && !EnablePlayerUpdatePosition(kKey))
                     //{

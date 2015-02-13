@@ -30,6 +30,7 @@
         lang = new Language();
         lang.platform = p;
         lang.LoadTranslations();
+        p.SetTitle(lang.GameName());
 
         textColorRenderer = new TextColorRenderer();
         textColorRenderer.platform = p_;

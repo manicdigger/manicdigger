@@ -31,7 +31,7 @@
             game.platform.BitmapDelete(skysphereNightBmp);
         }
         int texture = game.SkySphereNight ? skyspherenighttexture : skyspheretexture;
-        if (game.terrainRenderer.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
+        if (game.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
         {
             texture = skyspheretexture;
         }

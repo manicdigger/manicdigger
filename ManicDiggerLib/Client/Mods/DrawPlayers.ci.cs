@@ -46,12 +46,12 @@
             int cz = game.platform.FloatToInt(p_.position.y) / Game.chunksize;
             if (game.map.IsValidChunkPos(cx, cy, cz))
             {
-                if (!game.terrainRenderer.IsChunkRendered(cx, cy, cz))
+                if (!game.map.IsChunkRendered(cx, cy, cz))
                 {
                     continue;
                 }
             }
-            float shadow = (one * game.MaybeGetLight(game.platform.FloatToInt(p_.position.x), game.platform.FloatToInt(p_.position.z), game.platform.FloatToInt(p_.position.y))) / Game.maxlight;
+            float shadow = (one * game.GetLight(game.platform.FloatToInt(p_.position.x), game.platform.FloatToInt(p_.position.z), game.platform.FloatToInt(p_.position.y))) / Game.maxlight;
             if (p_.playerDrawInfo == null)
             {
                 p_.playerDrawInfo = new PlayerDrawInfo();

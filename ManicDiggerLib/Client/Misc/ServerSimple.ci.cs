@@ -461,13 +461,12 @@ class NotifyMapAction : Action_
     }
 }
 
-public class ServerSimpleTask : Task
+public class ModServerSimple : ClientMod
 {
     internal ServerSimple server;
-    public override void Run(float dt)
+    public override void OnReadOnlyBackgroundThread(Game game, float dt)
     {
         server.Update();
-        game.QueueTaskReadOnlyBackgroundPerFrame(this);
     }
 }
 

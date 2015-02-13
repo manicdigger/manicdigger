@@ -140,6 +140,7 @@
     <Compile Include="Client\Mods\MinecartRenderer.ci.cs" />
     <Compile Include="Client\Mods\Dialog.ci.cs" />
     <Compile Include="Client\Mods\NetworkEntity.ci.cs" />
+    <Compile Include="Client\Mods\NetworkProcess.ci.cs" />
     <Compile Include="Client\Mods\Picking.ci.cs" />
     <Compile Include="Client\Mods\Push.ci.cs" />
     <Compile Include="Client\Mods\Rail.ci.cs" />
@@ -176,7 +177,6 @@
     <Compile Include="Client\Mods\SkySphereStatic.ci.cs" />
     <Compile Include="Client\Mods\SunMoonRenderer.ci.cs" />
     <Compile Include="Client\Misc\TerrainChunkTesselator.ci.cs" />
-    <Compile Include="Client\Misc\TerrainRenderer.ci.cs" />
     <Compile Include="Client\Misc\GlMatrix.ci.cs" />
     <Compile Include="Client\Misc\NetworkWebSocket.ci.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />

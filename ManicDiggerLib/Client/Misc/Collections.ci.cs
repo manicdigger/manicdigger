@@ -426,11 +426,11 @@ public class KeyValueStringInt
     internal int value;
 }
 
-public class ListTask
+public class ListAction
 {
-    public static ListTask Create(int max_)
+    public static ListAction Create(int max_)
     {
-        ListTask l = new ListTask();
+        ListAction l = new ListAction();
         l.Start(max_);
         return l;
     }
@@ -438,12 +438,12 @@ public class ListTask
     public void Start(int max_)
     {
         max = max_;
-        items = new Task[max_];
+        items = new Action_[max_];
         count = 0;
     }
 
     internal int max;
-    internal Task[] items;
+    internal Action_[] items;
     internal int count;
 
     internal void Clear()
@@ -469,9 +469,9 @@ public class ListTask
         return count;
     }
 
-    internal void Add(Task task)
+    internal void Add(Action_ action)
     {
-        items[count++] = task;
+        items[count++] = action;
     }
 }
 
@@ -497,72 +497,6 @@ public class ListConnectedPlayer
             items[i] = items[i + 1];
         }
         count--;
-    }
-}
-
-
-public class QueueTask
-{
-    public QueueTask()
-    {
-        Start(128);
-    }
-    public static QueueTask Create(int max_)
-    {
-        QueueTask queue = new QueueTask();
-        queue.Start(max_);
-        return queue;
-    }
-
-    void Start(int max)
-    {
-        max_ = max;
-        items = new Task[max_];
-        count_ = 0;
-    }
-
-    internal Task[] items;
-    internal int start_;
-    internal int count_;
-    internal int max_;
-
-    public void Enqueue(Task value)
-    {
-        if (count_ == max_)
-        {
-            Resize(max_ * 2);
-        }
-        int pos = start_ + count_;
-        pos = pos % max_;
-        count_++;
-        items[pos] = value;
-    }
-
-    void Resize(int newSize)
-    {
-        Task[] items2 = new Task[newSize];
-        for (int i = 0; i < max_; i++)
-        {
-            items2[i] = items[(start_ + i) % max_];
-        }
-        items = items2;
-        start_ = 0;
-        max_ = newSize;
-    }
-
-    public Task Dequeue()
-    {
-        Task ret = items[start_];
-        items[start_] = null;
-        start_++;
-        start_ = start_ % max_;
-        count_--;
-        return ret;
-    }
-
-    public int Count()
-    {
-        return count_;
     }
 }
 

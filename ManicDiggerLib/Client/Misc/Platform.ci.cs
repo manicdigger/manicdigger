@@ -716,3 +716,8 @@ public abstract class AudioData
 public abstract class AudioCi
 {
 }
+
+public abstract class Action_
+{
+    public abstract void Run();
+}

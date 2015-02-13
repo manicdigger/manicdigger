@@ -74,7 +74,7 @@
         float posx = game.player.position.x;
         float posy = game.player.position.y;
         float posz = game.player.position.z;
-        int light = game.MaybeGetLight(game.platform.FloatToInt(posx), game.platform.FloatToInt(posz), game.platform.FloatToInt(posy));
+        int light = game.GetLight(game.platform.FloatToInt(posx), game.platform.FloatToInt(posz), game.platform.FloatToInt(posy));
         return (one * light) / maxlight;
     }
     public bool IsTorch()
