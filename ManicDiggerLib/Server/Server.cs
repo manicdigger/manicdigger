@@ -1415,13 +1415,16 @@ public partial class Server : ICurrentTime, IDropItem
                 break;
             case Packet_ClientIdEnum.PositionandOrientation:
                 {
-                    var p = packet.PositionAndOrientation;
-                    clients[clientid].PositionMul32GlX = p.X;
-                    clients[clientid].PositionMul32GlY = p.Y;
-                    clients[clientid].PositionMul32GlZ = p.Z;
-                    clients[clientid].positionheading = p.Heading;
-                    clients[clientid].positionpitch = p.Pitch;
-                    clients[clientid].stance = (byte)p.Stance;
+                    if (clients[clientid].positionOverrideTime == 0)
+                    {
+                        var p = packet.PositionAndOrientation;
+                        clients[clientid].PositionMul32GlX = p.X;
+                        clients[clientid].PositionMul32GlY = p.Y;
+                        clients[clientid].PositionMul32GlZ = p.Z;
+                        clients[clientid].positionheading = p.Heading;
+                        clients[clientid].positionpitch = p.Pitch;
+                        clients[clientid].stance = (byte)p.Stance;
+                    }
                 }
                 break;
             case Packet_ClientIdEnum.Message:
@@ -3580,6 +3583,7 @@ public class ClientOnServer
         spawnedEntities = new ServerEntityId[64];
         spawnedEntitiesCount = 64;
         updateEntity = new bool[spawnedEntitiesCount];
+        positionOverrideTime = 0;
     }
     internal int Id;
     internal int state; // ClientStateOnServer
@@ -3647,6 +3651,8 @@ public class ClientOnServer
     internal bool[] playersDirty;
     internal ServerEntity entity;
     internal ServerEntityPositionAndOrientation positionOverride;
+    // If greater than zero, stop receiving positions from client. Wait until client acknowledges position override.
+    internal float positionOverrideTime;
     internal float notifyEntitiesAccum;
     internal ServerEntityId[] spawnedEntities;
     internal int spawnedEntitiesCount;
