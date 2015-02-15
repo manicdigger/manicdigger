@@ -68,7 +68,7 @@
         constRotationSpeed = one * 180 / 20;
         modmanager = new ClientModManager1();
         particleEffectBlockBreak = new ModDrawParticleEffectBlockBreak();
-        PICK_DISTANCE = one * 37 / 10;
+        PICK_DISTANCE = 4.1f;
         selectedmodelid = -1;
         grenadetime = 3;
         rotationspeed = one * 15 / 100;
@@ -123,6 +123,7 @@
         movedz = 0;
         taskScheduler = new TaskScheduler();
         commitActions = ListAction.Create(16 * 1024);
+        constWallDistance = 0.3f;
     }
 
     internal AssetList assets;
@@ -386,6 +387,7 @@
     internal const int chunksizebits = 4;
 
     internal Entity player;
+    internal float constWallDistance;
 
     public bool IsFluid(Packet_BlockType block)
     {
@@ -2006,38 +2008,39 @@
     {
         for (int i = 0; i < entitiesCount; i++)
         {
-            if (entities[i] == null)
+            Entity e = entities[i];
+            if (e == null)
             {
                 continue;
             }
-            if (entities[i].drawModel == null)
+            if (e.drawModel == null)
             {
                 continue;
             }
-            Entity p = entities[i];
-            if (p.networkPosition == null || (p.networkPosition != null && p.networkPosition.PositionLoaded))
+            if (e.networkPosition == null || (e.networkPosition != null && e.networkPosition.PositionLoaded))
             {
-                if (IsPlayerInPos(p.position.x, p.position.y, p.position.z,
-                    blockposX, blockposY, blockposZ))
+                if (IsPlayerInPos(e.position.x, e.position.y, e.position.z,
+                    blockposX, blockposY, blockposZ, e.drawModel.ModelHeight))
                 {
                     return true;
                 }
             }
         }
         return IsPlayerInPos(player.position.x, player.position.y, player.position.z,
-            blockposX, blockposY, blockposZ);
+            blockposX, blockposY, blockposZ, player.drawModel.ModelHeight);
     }
 
     bool IsPlayerInPos(float playerposX, float playerposY, float playerposZ,
-                       int blockposX, int blockposY, int blockposZ)
+                       int blockposX, int blockposY, int blockposZ, float playerHeight)
     {
-        if (FloorFloat(playerposX) == blockposX
-            &&
-            (FloorFloat(playerposY + (one / 2)) == blockposZ
-             || FloorFloat(playerposY + 1 + (one / 2)) == blockposZ)
-            && FloorFloat(playerposZ) == blockposY)
+        for (int i = 0; i < FloorFloat(playerHeight) + 1; i++)
         {
-            return true;
+            if (ScriptCharacterPhysics.BoxPointDistance(blockposX, blockposZ, blockposY,
+                blockposX + 1, blockposZ + 1, blockposY + 1,
+                playerposX, playerposY + i + constWallDistance, playerposZ) < constWallDistance)
+            {
+                return true;
+            }
         }
         return false;
     }

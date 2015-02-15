@@ -12,7 +12,6 @@
 
         tmpPlayerPosition = new float[3];
 
-        constWallDistance = 0.3f;
         constGravity = 0.3f;
         constWaterGravityMultiplier = 3;
         constEnableAcceleration = true;
@@ -29,7 +28,6 @@
     internal float jumpstartacceleration;
     internal float movespeednow;
 
-    internal float constWallDistance;
     internal float constGravity;
     internal float constWaterGravityMultiplier;
     internal bool constEnableAcceleration;
@@ -292,8 +290,8 @@
     {
         bool high = false;
         if (modelheight >= 2) { high = true; }	//Set high to true if player model is bigger than standard height
-        oldposition[1] += constWallDistance;		//Add walldistance temporarily for ground collisions
-        newposition[1] += constWallDistance;		//Add walldistance temporarily for ground collisions
+        oldposition[1] += game.constWallDistance;		//Add walldistance temporarily for ground collisions
+        newposition[1] += game.constWallDistance;		//Add walldistance temporarily for ground collisions
 
         game.reachedwall = false;
         game.reachedwall_1blockhigh = false;
@@ -332,7 +330,7 @@
 
         isplayeronground = (tmpPlayerPosition[1] == oldposition[1]) && (newposition[1] < oldposition[1]);
 
-        tmpPlayerPosition[1] -= constWallDistance;	//Remove the temporary walldistance again
+        tmpPlayerPosition[1] -= game.constWallDistance;	//Remove the temporary walldistance again
         return tmpPlayerPosition;	//Return valid position
     }
 
@@ -366,7 +364,7 @@
                         float maxZ = minZ + 1;
 
                         // Check if the block is too close
-                        if (BoxPointDistance(minX, minY, minZ, maxX, maxY, maxZ, x, y, z) < constWallDistance)
+                        if (BoxPointDistance(minX, minY, minZ, maxX, maxY, maxZ, x, y, z) < game.constWallDistance)
                         {
                             return false;
                         }
@@ -378,7 +376,7 @@
     }
 
     // Using chebyshev distance
-    float BoxPointDistance(float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float pX, float pY, float pZ)
+    public static float BoxPointDistance(float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float pX, float pY, float pZ)
     {
         float dx = Max3(minX - pX, 0, pX - maxX);
         float dy = Max3(minY - pY, 0, pY - maxY);
@@ -408,7 +406,7 @@
         }
     }
 
-    float Max3(float a, float b, float c)
+    static float Max3(float a, float b, float c)
     {
         return MathCi.MaxFloat(MathCi.MaxFloat(a, b), c);
     }
