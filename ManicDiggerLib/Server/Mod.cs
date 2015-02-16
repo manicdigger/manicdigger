@@ -400,12 +400,12 @@ namespace ManicDigger
 
         public double GetCurrentYearTotal()
         {
-            return server.GetTime().YearTotal;
+            return server.GetTime().Year;
         }
 
         public double GetCurrentHourTotal()
         {
-            return server.GetTime().HourTotal;
+            return server.GetTime().Hour;
         }
 
         public void UpdateBlockTypes()
@@ -416,29 +416,27 @@ namespace ManicDigger
             }
         }
 
-        public double GetGameYearRealHours()
-        {
-            //TODO:
-            //return t.GameYearRealHours;
-            return 0;
-        }
-
-        public void SetGameYearRealHours(double hours)
-        {
-            //TODO:
-            //t.GameYearRealHours = hours;
-        }
-
         public double GetGameDayRealHours()
         {
-            //TODO:
-            //return t.GameDayRealHours;
-            return 0;
+            double nSecondsPerDay = TimeSpan.FromDays(1).TotalSeconds;
+
+            int nSpeed = server.GetTime().SpeedOfTime;
+            double nSeconds = nSecondsPerDay / nSpeed;
+
+            double nHours = TimeSpan.FromSeconds(nSeconds).TotalHours;
+
+            return nHours;
         }
 
         public void SetGameDayRealHours(double hours)
         {
-            //TODO: t.GameDayRealHours = hours;
+            double nSecondsPerDay = TimeSpan.FromDays(1).TotalSeconds;
+
+            double nSecondsGiven = TimeSpan.FromHours(hours).TotalSeconds;
+
+            server.GetTime().SpeedOfTime = (int)(nSecondsPerDay / nSecondsGiven);
+
+            GetGameDayRealHours();
         }
 
         public void EnableShadows(bool value)

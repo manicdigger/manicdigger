@@ -644,7 +644,7 @@ public partial class Server
                             _time.Add(TimeSpan.FromMinutes(nMinuts));
                             SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
                         }
-                        if (TimeSpan.TryParse(strValue, out time))
+                        else if (TimeSpan.TryParse(strValue, out time))
                         {
                             _time.Add(time);
                             SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());

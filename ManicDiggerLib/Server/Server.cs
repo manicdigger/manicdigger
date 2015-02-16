@@ -262,9 +262,9 @@ public partial class Server : ICurrentTime, IDropItem
         {
             if (_time.GetQuarterHourPartOfDay() != _nLastHourChangeNotify)
             {
-#if DEBUG
-                SendMessageToAll("Time of day: " + _time.Time.ToString(@"hh\:mm\:ss") + " Day: " + (int)_time.Time.Days);
-#endif
+//#if DEBUG
+//                SendMessageToAll("Time of day: " + _time.Time.ToString(@"hh\:mm\:ss") + " Day: " + (int)_time.Time.Days);
+//#endif
                 //notify clients about the time
                 _nLastHourChangeNotify = _time.GetQuarterHourPartOfDay();
 
@@ -3716,59 +3716,15 @@ public class ModEventHandlers
     public List<ModDelegates.Permission> onpermission = new List<ModDelegates.Permission>();
 }
 
+#region GameTime
 public class GameTime
 {
-    private Stopwatch _watchIngameTime = null;
-    private TimeSpan _time = TimeSpan.Zero;
-
-    internal GameTime(long ticks)
-    {
-        _time = TimeSpan.FromTicks(ticks);
-        _watchIngameTime = Stopwatch.StartNew();
-    }
-
-    internal void Start()
-    {
-        _watchIngameTime.Start();
-    }
-
-    internal void Stop()
-    {
-        _watchIngameTime.Stop();
-    }
-
-    public TimeSpan Time
-    {
-        get { return _time; }
-    }
-
-    public double HourTotal
-    {
-        get { return _time.Hours; }
-    }
-
-    public double YearTotal
-    {
-        get { return _time.TotalDays; }
-    }
-
     private int _nIngameSecondsEveryRealTimeSecond = 60;
-
+    private int _nDaysPerYear = 4;
     private long _nLastIngameSecond = 0;
 
-    public int GetQuarterHourPartOfDay()
-    {
-        //(_tsIngameTime.Hours * 4)
-        //for every hour of the current day, we got 4 x 15minutes
-
-        //(_tsIngameTime.Minutes / 15)
-        //add the 15 minutes of the current hour
-
-        //TODO: +1 at the end beacause midnight causes daylight :/
-
-        int nReturn = (_time.Hours * 4) + (_time.Minutes / 15) + 1;
-        return nReturn;
-    }
+    private Stopwatch _watchIngameTime = null;
+    private TimeSpan _time = TimeSpan.Zero;
 
     /// <summary>
     /// This changes how fast time goes on
@@ -3778,7 +3734,116 @@ public class GameTime
     public int SpeedOfTime
     {
         get { return _nIngameSecondsEveryRealTimeSecond; }
-        set{ _nIngameSecondsEveryRealTimeSecond = value;}
+        set { _nIngameSecondsEveryRealTimeSecond = value; }
+    }
+
+    /// <summary>
+    /// Days of a year
+    /// </summary>
+    public int DaysPerYear
+    {
+        get { return _nDaysPerYear; }
+        set { _nDaysPerYear = value; }
+    }
+
+    /// <summary>
+    /// ctor
+    /// </summary>
+    /// <param name="ticks"></param>
+    internal GameTime(long ticks)
+    {
+        _time = TimeSpan.FromTicks(ticks);
+        _watchIngameTime = Stopwatch.StartNew();
+    }
+
+    /// <summary>
+    /// Allows the time to tick
+    /// </summary>
+    internal void Start()
+    {
+        _watchIngameTime.Start();
+    }
+
+    /// <summary>
+    /// Stops the time from ticking
+    /// </summary>
+    internal void Stop()
+    {
+        _watchIngameTime.Stop();
+    }
+
+    /// <summary>
+    /// returns the time
+    /// </summary>
+    public TimeSpan Time
+    {
+        get { return _time; }
+    }
+
+    /// <summary>
+    /// Hour of the day
+    /// </summary>
+    public double Hour
+    {
+        get { return _time.Hours; }
+    }
+
+    /// <summary>
+    /// Total hours
+    /// </summary>
+    public double HourTotal
+    {
+        get { return _time.TotalHours; }
+    }
+
+    /// <summary>
+    /// Day of the year
+    /// </summary>
+    public int Day
+    {
+        get { return (int)(_time.TotalDays % _nDaysPerYear); }
+    }
+
+    /// <summary>
+    /// Total days
+    /// </summary>
+    public double DaysTotal
+    {
+        get { return _time.TotalDays; }
+    }
+
+    /// <summary>
+    /// The current year
+    /// </summary>
+    public double Year
+    {
+        get { return _time.TotalDays / _nDaysPerYear; }
+    }
+
+    /// <summary>
+    /// Gets the current season
+    /// fromt 0 to 3
+    /// </summary>
+    public int Season
+    {
+        get { return Day / 4; } 
+    }
+
+    /// <summary>
+    /// Returns the amount of 15 mins that passed for this day
+    /// </summary>
+    /// <returns></returns>
+    public int GetQuarterHourPartOfDay()
+    {
+        //(_tsIngameTime.Hours * 4)
+        //for every hour of the current day, we got 4 x 15minutes
+
+        //(_tsIngameTime.Minutes / 15)
+        //add the 15 minutes of the current hour
+
+        //TODO: +1 at the end beacause midnight causes daylight :/
+        int nReturn = (_time.Hours * 4) + (_time.Minutes / 15) + 1;
+        return nReturn;
     }
 
     /// <summary>
@@ -3818,9 +3883,10 @@ public class GameTime
     /// <param name="time"></param>
     internal void Add(TimeSpan time)
     {
-        _time = _time.Add(time);
+        _time += time;
     }
 }
+#endregion
 
 public class BlockTypeConverter
 {
