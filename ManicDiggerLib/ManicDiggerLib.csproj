@@ -179,13 +179,13 @@
     <Compile Include="Client\Misc\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\Misc\GlMatrix.ci.cs" />
     <Compile Include="Client\Misc\NetworkWebSocket.ci.cs" />
+    <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\ServerEntity.cs" />
     <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
-    <Compile Include="Server\Mods\Fortress\Sign.cs" />
     <Compile Include="Server\Systems\LoadConfig.cs" />
     <Compile Include="Server\Systems\LoadServerClient.cs" />
     <Compile Include="Server\Systems\ModLoader.cs" />

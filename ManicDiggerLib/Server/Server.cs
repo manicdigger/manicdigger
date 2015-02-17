@@ -70,9 +70,11 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemModLoader();
         systems[systemsCount++] = new ServerSystemLoadServerClient();
         systems[systemsCount++] = new ServerSystemNotifyEntities();
-        systems[systemsCount++] = new ServerSystemSign();
-        systems[systemsCount++] = new ServerSystemPermissionSign();
         systems[systemsCount++] = new ServerSystemMonsterWalk();
+
+        // Not finished
+        // systems[systemsCount++] = new ServerSystemSign();
+        // systems[systemsCount++] = new ServerSystemPermissionSign();
 
         //Load translations
         gameplatform = new GamePlatformNative();
