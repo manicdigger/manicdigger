@@ -4610,5 +4610,6 @@
 
     internal bool reachedwall;
     internal bool reachedwall_1blockhigh;
+    internal bool reachedHalfBlock;
     internal float movedz;
 }

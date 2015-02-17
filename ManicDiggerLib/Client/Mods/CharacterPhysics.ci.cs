@@ -8,9 +8,11 @@
         isplayeronground = false;
         acceleration = new Acceleration();
         jumpstartacceleration = 0;
+        jumpstartaccelerationhalf = 0;
         movespeednow = 0;
 
         tmpPlayerPosition = new float[3];
+        tmpBlockingBlockType = new IntRef();
 
         constGravity = 0.3f;
         constWaterGravityMultiplier = 3;
@@ -26,6 +28,7 @@
     internal bool isplayeronground;
     internal Acceleration acceleration;
     internal float jumpstartacceleration;
+    internal float jumpstartaccelerationhalf;
     internal float movespeednow;
 
     internal float constGravity;
@@ -45,6 +48,7 @@
         game.controls.movedy = MathCi.ClampFloat(game.controls.movedy, -1, 1);
         Controls move = game.controls;
         jumpstartacceleration = 13.333f * constGravity; // default
+        jumpstartaccelerationhalf = 9 * constGravity;
         acceleration.SetDefault();
         game.soundnow = new BoolRef();
         if (game.FollowId() != null && game.FollowId().value == game.LocalPlayerId)
@@ -235,9 +239,9 @@
                 jumpacceleration = 0;
                 movedz = 0;
             }
-            if (move.wantsjump && (((jumpacceleration == 0 && isplayeronground) || game.SwimmingBody()) && loaded) && (!game.SwimmingEyes()))
+            if ((move.wantsjump || move.wantsjumphalf) && (((jumpacceleration == 0 && isplayeronground) || game.SwimmingBody()) && loaded) && (!game.SwimmingEyes()))
             {
-                jumpacceleration = jumpstartacceleration;
+                jumpacceleration = move.wantsjumphalf ? jumpstartaccelerationhalf : jumpstartacceleration;
                 soundnow.value = true;
             }
 
@@ -286,6 +290,7 @@
     }
 
     float[] tmpPlayerPosition;		//Temporarily stores the player's position. Used in WallSlide()
+    IntRef tmpBlockingBlockType;
     public float[] WallSlide(float[] oldposition, float[] newposition, float modelheight)
     {
         bool high = false;
@@ -295,13 +300,16 @@
 
         game.reachedwall = false;
         game.reachedwall_1blockhigh = false;
+        game.reachedHalfBlock = false;
 
         tmpPlayerPosition[0] = oldposition[0];
         tmpPlayerPosition[1] = oldposition[1];
         tmpPlayerPosition[2] = oldposition[2];
 
+        tmpBlockingBlockType.value = 0;
+
         // X
-        if (IsEmptySpaceForPlayer(high, newposition[0], oldposition[1], oldposition[2]))
+        if (IsEmptySpaceForPlayer(high, newposition[0], oldposition[1], oldposition[2], tmpBlockingBlockType))
         {
             tmpPlayerPosition[0] = newposition[0];
         }
@@ -309,15 +317,20 @@
         {
             // For autojump
             game.reachedwall = true;
-            if (IsEmptyPoint(newposition[0], oldposition[1] + 1, oldposition[2])) { game.reachedwall_1blockhigh = true; }
+            if (IsEmptyPoint(newposition[0], oldposition[1] + 1, oldposition[2], null))
+            {
+                game.reachedwall_1blockhigh = true;
+                if (game.blocktypes[tmpBlockingBlockType.value].DrawType == Packet_DrawTypeEnum.HalfHeight) { game.reachedHalfBlock = true; }
+                if (StandingOnHalfBlock(newposition[0], oldposition[1], oldposition[2])) { game.reachedHalfBlock = true; }
+            }
         }
         // Y
-        if (IsEmptySpaceForPlayer(high, oldposition[0], newposition[1], oldposition[2]))
+        if (IsEmptySpaceForPlayer(high, oldposition[0], newposition[1], oldposition[2], tmpBlockingBlockType))
         {
             tmpPlayerPosition[1] = newposition[1];
         }
         // Z
-        if (IsEmptySpaceForPlayer(high, oldposition[0], oldposition[1], newposition[2]))
+        if (IsEmptySpaceForPlayer(high, oldposition[0], oldposition[1], newposition[2], tmpBlockingBlockType))
         {
             tmpPlayerPosition[2] = newposition[2];
         }
@@ -325,7 +338,12 @@
         {
             // For autojump
             game.reachedwall = true;
-            if (IsEmptyPoint(oldposition[0], oldposition[1] + 1, newposition[2])) { game.reachedwall_1blockhigh = true; }
+            if (IsEmptyPoint(oldposition[0], oldposition[1] + 1, newposition[2], null))
+            {
+                game.reachedwall_1blockhigh = true;
+                if (game.blocktypes[tmpBlockingBlockType.value].DrawType == Packet_DrawTypeEnum.HalfHeight) { game.reachedHalfBlock = true; }
+                if (StandingOnHalfBlock(oldposition[0], oldposition[1], newposition[2])) { game.reachedHalfBlock = true; }
+            }
         }
 
         isplayeronground = (tmpPlayerPosition[1] == oldposition[1]) && (newposition[1] < oldposition[1]);
@@ -334,15 +352,23 @@
         return tmpPlayerPosition;	//Return valid position
     }
 
-    bool IsEmptySpaceForPlayer(bool high, float x, float y, float z)
+    bool StandingOnHalfBlock(float x, float y, float z)
     {
-        return IsEmptyPoint(x, y, z)
-            && IsEmptyPoint(x, y + 1, z)
-            && (!high || IsEmptyPoint(x, y + 2, z));
+        int under = game.map.GetBlock(game.platform.FloatToInt(x),
+            game.platform.FloatToInt(z),
+            game.platform.FloatToInt(y));
+        return game.blocktypes[under].DrawType == Packet_DrawTypeEnum.HalfHeight;
+    }
+    
+    bool IsEmptySpaceForPlayer(bool high, float x, float y, float z, IntRef blockingBlockType)
+    {
+        return IsEmptyPoint(x, y, z, blockingBlockType)
+            && IsEmptyPoint(x, y + 1, z, blockingBlockType)
+            && (!high || IsEmptyPoint(x, y + 2, z, blockingBlockType));
     }
 
     // Checks if there are no solid blocks in walldistance area around the point
-    bool IsEmptyPoint(float x, float y, float z)
+    bool IsEmptyPoint(float x, float y, float z, IntRef blockingBlocktype)
     {
         // Test 3x3x3 blocks around the point
         for (int xx = 0; xx < 3; xx++)
@@ -366,6 +392,10 @@
                         // Check if the block is too close
                         if (BoxPointDistance(minX, minY, minZ, maxX, maxY, maxZ, x, y, z) < game.constWallDistance)
                         {
+                            if (blockingBlocktype != null)
+                            {
+                                blockingBlocktype.value = game.map.GetBlock(FloatToInt(x + xx - 1), FloatToInt(z + zz - 1), FloatToInt(y + yy - 1));
+                            }
                             return false;
                         }
                     }
@@ -441,6 +471,7 @@ public class Controls
     internal float movedx;
     internal float movedy;
     internal bool wantsjump;
+    internal bool wantsjumphalf;
     internal bool moveup;
     internal bool movedown;
     internal bool shiftkeydown;

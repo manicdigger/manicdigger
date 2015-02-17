@@ -12,6 +12,7 @@
         float overheadcameraanglemovearea = one * 5 / 100;
         float overheadcameraspeed = 3;
         game.controls.wantsjump = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)];
+        game.controls.wantsjumphalf = false;
         game.controls.shiftkeydown = game.guistate == GuiState.Normal && game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.ShiftLeft)];
         game.controls.movedx = 0;
         game.controls.movedy = 0;
@@ -24,6 +25,10 @@
                 if (game.reachedwall_1blockhigh && (game.AutoJumpEnabled || (!game.platform.IsMousePointerLocked())))
                 {
                     game.controls.wantsjump = true;
+                }
+                if (game.reachedHalfBlock)
+                {
+                    game.controls.wantsjumphalf = true;
                 }
                 if (game.overheadcamera)
                 {
