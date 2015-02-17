@@ -235,7 +235,7 @@
                 jumpacceleration = 0;
                 movedz = 0;
             }
-            if (move.wantsjump && ((jumpacceleration == 0 && isplayeronground || game.SwimmingBody()) && loaded))
+            if (move.wantsjump && (((jumpacceleration == 0 && isplayeronground) || game.SwimmingBody()) && loaded) && (!game.SwimmingEyes()))
             {
                 jumpacceleration = jumpstartacceleration;
                 soundnow.value = true;
