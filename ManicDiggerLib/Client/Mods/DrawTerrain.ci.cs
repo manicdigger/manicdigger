@@ -11,6 +11,8 @@
         redrawCount = 0;
         CalculateShadowslightRadius = new int[GlobalVar.MAX_BLOCKTYPES];
         CalculateShadowsisTransparentForLight = new bool[GlobalVar.MAX_BLOCKTYPES];
+        shadowsBase = new ShadowsBase();
+        shadowsBetweenChunks = new ShadowsBetweenChunks();
 
         lastPerformanceInfoupdateMilliseconds = 0;
         lastchunkupdates = 0;
@@ -23,7 +25,6 @@
     public int ChunkUpdates() { return chunkupdates; }
     public int maxlight() { return 15; }
 
-    IShadows3x3x3 shadows;
     bool terrainRendererStarted;
 
 
@@ -68,15 +69,6 @@
     {
         sqrt3half = game.platform.MathSqrt(3) / 2;
         game.d_TerrainChunkTesselator.Start();
-        if (game.shadowssimple)
-        {
-            shadows = new Shadows3x3x3Simple();
-        }
-        else
-        {
-            shadows = new Shadows3x3x3();
-        }
-        shadows.Start();
         terrainRendererStarted = true;
         chunksize = Game.chunksize;
     }
@@ -250,15 +242,6 @@
         game.d_Batcher.Draw(game.player.position.x, game.player.position.y, game.player.position.z);
     }
 
-    public void SetChunkDirty(int cx, int cy, int cz, bool dirty, bool blockschanged)
-    {
-        if (!terrainRendererStarted)
-        {
-            return;
-        }
-        game.map.SetChunkDirty(cx, cy, cz, dirty, blockschanged);
-    }
-
     public void RedrawAllBlocks()
     {
         if (!terrainRendererStarted)
@@ -280,6 +263,7 @@
                 c.rendered = new RenderedChunk();
             }
             c.rendered.dirty = true;
+            c.baseLightDirty = true;
         }
     }
 
@@ -429,68 +413,10 @@
     bool[] CalculateShadowsisTransparentForLight;
     int[][] chunks3x3x3;
     int[][] heightchunks3x3;
+    ShadowsBase shadowsBase;
+    ShadowsBetweenChunks shadowsBetweenChunks;
     void CalculateShadows(int cx, int cy, int cz)
     {
-        if (chunks3x3x3 == null)
-        {
-            chunks3x3x3 = new int[3 * 3 * 3][]; //(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3 * 3);
-            for (int i = 0; i < 3 * 3 * 3; i++)
-            {
-                chunks3x3x3[i] = new int[chunksize * chunksize * chunksize];
-            }
-            heightchunks3x3 = new int[3 * 3][];//(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3);
-        }
-        for (int i = 0; i < 3 * 3 * 3; i++)
-        {
-            int n = chunksize * chunksize * chunksize;
-            int[] c = chunks3x3x3[i];
-            for (int k = 0; k < n; k++)
-            {
-                c[k] = 0;
-            }
-        }
-        for (int i = 0; i < 3 * 3; i++)
-        {
-            heightchunks3x3[i] = null;
-        }
-        for (int x = 0; x < 3; x++)
-        {
-            for (int y = 0; y < 3; y++)
-            {
-                for (int z = 0; z < 3; z++)
-                {
-                    if (cx + x - 1 < 0 || cx + x - 1 >= game.map.MapSizeX / chunksize
-                        || cy + y - 1 < 0 || cy + y - 1 >= game.map.MapSizeY / chunksize
-                        || cz + z - 1 < 0 || cz + z - 1 >= game.map.MapSizeZ / chunksize)
-                    {
-                        continue;
-                    }
-                    Chunk chunk = game.map.chunks[MapUtilCi.Index3d(cx + x - 1, cy + y - 1, cz + z - 1, game.map.MapSizeX / chunksize, game.map.MapSizeY / chunksize)];
-                    if (chunk != null)
-                    {
-                        game.map.CopyChunk(chunk, chunks3x3x3[MapUtilCi.Index3d(x, y, z, 3, 3)]);
-                    }
-                    else
-                    {
-                        //chunks[0] = null;
-                    }
-                }
-            }
-        }
-        for (int x = 0; x < 3; x++)
-        {
-            for (int y = 0; y < 3; y++)
-            {
-                if (cx + x - 1 < 0 || cx + x - 1 >= game.map.MapSizeX / chunksize
-                    || cy + y - 1 < 0 || cy + y - 1 >= game.map.MapSizeY / chunksize)
-                {
-                    continue;
-                }
-                int[] chunk = game.d_Heightmap.chunks[MapUtilCi.Index2d(cx + x - 1, cy + y - 1, game.map.MapSizeX / chunksize)];
-                heightchunks3x3[MapUtilCi.Index2d(x, y, 3)] = chunk;
-            }
-        }
-
         for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
         {
             if (game.blocktypes[i] == null)
@@ -501,21 +427,45 @@
             CalculateShadowsisTransparentForLight[i] = IsTransparentForLight(i);
         }
 
-        shadows.Update(currentChunkShadows, chunks3x3x3, heightchunks3x3, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight, game.sunlight_, cz * chunksize - chunksize);
-
-        //for MaybeGetLight
-        Chunk chunkLight = game.map.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
-        if (chunkLight.rendered != null)
+        for (int xx = 0; xx < 3; xx++)
         {
-            if (chunkLight.rendered.light == null)
+            for (int yy = 0; yy < 3; yy++)
             {
-                chunkLight.rendered.light = new byte[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
+                for (int zz = 0; zz < 3; zz++)
+                {
+                    int cx1 = cx + xx - 1;
+                    int cy1 = cy + yy - 1;
+                    int cz1 = cz + zz - 1;
+                    if (!game.map.IsValidChunkPos(cx1, cy1, cz1))
+                    {
+                        continue;
+                    }
+                    Chunk c = game.map.GetChunk(cx1 * chunksize, cy1 * chunksize, cz1 * chunksize);
+                    if (c.baseLightDirty)
+                    {
+                        shadowsBase.CalculateChunkBaseLight(game, cx1, cy1, cz1, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight);
+                        c.baseLightDirty = false;
+                    }
+                }
             }
-            int length = (chunksize + 2) * (chunksize + 2) * (chunksize + 2);
-            for (int i = 0; i < length; i++)
+        }
+
+        Chunk chunk = game.map.GetChunk(cx * chunksize, cy * chunksize, cz * chunksize);
+
+        if (chunk.rendered.light == null)
+        {
+            chunk.rendered.light = new byte[18 * 18 * 18];
+            for (int i = 0; i < 18 * 18 * 18; i++)
             {
-                chunkLight.rendered.light[i] = currentChunkShadows[i];
+                chunk.rendered.light[i] = 15;
             }
+        }
+        
+        shadowsBetweenChunks.CalculateShadowsBetweenChunks(game, cx, cy, cz, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight);
+
+        for (int i = 0; i < 18 * 18 * 18; i++)
+        {
+            currentChunkShadows[i] = chunk.rendered.light[i];
         }
     }
 

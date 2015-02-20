@@ -1221,8 +1221,15 @@ public class Draw2dData
 
 public class Chunk
 {
+    public Chunk()
+    {
+        baseLightDirty = true;
+    }
+
     internal byte[] data;
     internal int[] dataInt;
+    internal byte[] baseLight;
+    internal bool baseLightDirty;
     internal RenderedChunk rendered;
 
     public int GetBlockInChunk(int pos)
@@ -1280,12 +1287,10 @@ public class RenderedChunk
     public RenderedChunk()
     {
         dirty = true;
-        shadowsdirty = true;
     }
     internal int[] ids;
     internal int idsCount;
     internal bool dirty;
-    internal bool shadowsdirty;
     internal byte[] light;
 }
 
@@ -1352,6 +1357,21 @@ public class MapUtilCi
         ret.X = x;
         ret.Y = y;
         ret.Z = h;
+    }
+
+    public static int PosX(int index, int sizex, int sizey)
+    {
+        return index % sizex;
+    }
+
+    public static int PosY(int index, int sizex, int sizey)
+    {
+        return (index / sizex) % sizey;
+    }
+
+    public static int PosZ(int index, int sizex, int sizey)
+    {
+        return index / (sizex * sizey);
     }
 }
 
@@ -2649,15 +2669,21 @@ public class Map
         x = x / Game.chunksize;
         y = y / Game.chunksize;
         z = z / Game.chunksize;
+        return GetChunk_(x, y, z);
+    }
+
+    public Chunk GetChunk_(int cx, int cy, int cz)
+    {
         int mapsizexchunks = MapSizeX / Game.chunksize;
         int mapsizeychunks = MapSizeY / Game.chunksize;
-        Chunk chunk = chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+        Chunk chunk = chunks[Index3d(cx, cy, cz, mapsizexchunks, mapsizeychunks)];
         if (chunk == null)
         {
             Chunk c = new Chunk();
             c.data = new byte[Game.chunksize * Game.chunksize * Game.chunksize];
-            chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = c;
-            return chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+            c.baseLight = new byte[Game.chunksize * Game.chunksize * Game.chunksize];
+            chunks[Index3d(cx, cy, cz, mapsizexchunks, mapsizeychunks)] = c;
+            return chunks[Index3d(cx, cy, cz, mapsizexchunks, mapsizeychunks)];
         }
         return chunk;
     }
@@ -2802,7 +2828,7 @@ public class Map
         c.rendered.dirty = dirty;
         if (blockschanged)
         {
-            c.rendered.shadowsdirty = true;
+            c.baseLightDirty = true;
         }
     }
 

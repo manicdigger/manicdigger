@@ -749,3 +749,89 @@ public class QueueINetOutgoingMessage
         items[count++] = p;
     }
 }
+
+
+public class FastQueueInt
+{
+    public void Initialize(int maxCount)
+    {
+        this.maxCount = maxCount;
+        values = new int[maxCount];
+        Count = 0;
+        start = 0;
+        end = 0;
+    }
+    int maxCount;
+    int[] values;
+    internal int Count;
+    int start;
+    int end;
+    public void Push(int value)
+    {
+        values[end] = value;
+        Count++;
+        end++;
+        if (end >= maxCount)
+        {
+            end = 0;
+        }
+    }
+    public int Pop()
+    {
+        int value = values[start];
+        Count--;
+        start++;
+        if (start >= maxCount)
+        {
+            start = 0;
+        }
+        return value;
+    }
+    public void Clear()
+    {
+        Count = 0;
+    }
+}
+
+
+
+public class FastStackInt
+{
+    public void Initialize(int maxCount)
+    {
+        valuesLength = maxCount;
+        values = new int[maxCount];
+    }
+    int[] values;
+    int valuesLength;
+    internal int count;
+    public void Push(int value)
+    {
+        while (count >= valuesLength)
+        {
+            int[] values2 = new int[valuesLength * 2];
+            for (int i = 0; i < valuesLength; i++)
+            {
+                values2[i] = values[i];
+            }
+            values = values2;
+            valuesLength = valuesLength * 2;
+        }
+        values[count] = value;
+        count++;
+    }
+    public int Pop()
+    {
+        count--;
+        return values[count];
+    }
+    public void Clear()
+    {
+        count = 0;
+    }
+
+    internal int Count_()
+    {
+        return count;
+    }
+}

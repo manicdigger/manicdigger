@@ -232,6 +232,7 @@
         AddMod(sunmoonrenderer);
         AddMod(new ModDrawTestModel());
         AddMod(new ModDrawLinesAroundSelectedBlock());
+        AddMod(new ModDebugChunk());
         AddMod(new ModDrawArea());
         AddMod(new ModDrawTerrain());
         AddMod(new ModDrawPlayers());
@@ -1795,7 +1796,7 @@
         {
             if (i / chunksize != z / chunksize)
             {
-                map.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, false);
+                map.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, true);
             }
         }
         //Todo: too many redraws. Optimize.
@@ -2092,6 +2093,10 @@
     internal string Follow;
     internal IntRef FollowId()
     {
+        if (Follow == null)
+        {
+            return null;
+        }
         for (int i = 0; i < entitiesCount; i++)
         {
             if (entities[i] == null)
@@ -2311,7 +2316,12 @@
 
     internal bool IsLava(int blockType)
     {
-        return platform.StringContains(blocktypes[blockType].Name, "Lava"); // todo
+        string name = blocktypes[blockType].Name;
+        if (name == null)
+        {
+            return false;
+        }
+        return platform.StringContains(name, "Lava"); // todo
     }
 
     internal int terraincolor()
