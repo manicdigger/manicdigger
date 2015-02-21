@@ -30,6 +30,10 @@
         whitetexture = -1;
         cachedTextTexturesMax = 1024;
         cachedTextTextures = new CachedTextTexture[cachedTextTexturesMax];
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            cachedTextTextures[i] = null;
+        }
         packetLen = new IntRef();
         ENABLE_DRAW2D = true;
         AllowFreemove = true;
@@ -73,6 +77,10 @@
         grenadetime = 3;
         rotationspeed = one * 15 / 100;
         entities = new Entity[entitiesMax];
+        for (int i = 0; i < entitiesMax; i++)
+        {
+            entities[i] = null;
+        }
         entitiesCount = 512;
         PlayerPushDistance = 2;
         keyboardState = new bool[256];

@@ -47,6 +47,7 @@ public class TerrainChunkTesselatorCi
     internal float maxlightInverse;
     internal bool[] istransparent;
     internal bool[] isLowered;
+    internal bool[] isFluid;
     internal float[] lightlevels;
 
     internal ModelData[] toreturnatlas1d;
@@ -201,7 +202,20 @@ public class TerrainChunkTesselatorCi
         started = true;
 
         istransparent = new bool[GlobalVar.MAX_BLOCKTYPES];
+        for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
+        {
+            istransparent[i] = false;
+        }
         isLowered = new bool[GlobalVar.MAX_BLOCKTYPES];
+        for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
+        {
+            isLowered[i] = false;
+        }
+        isFluid = new bool[GlobalVar.MAX_BLOCKTYPES];
+        for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
+        {
+            isFluid[i] = false;
+        }
         maxlightInverse = 1f / maxlight;
         terrainTexturesPerAtlas = game.terrainTexturesPerAtlas;
         terrainTexturesPerAtlasInverse = 1f / game.terrainTexturesPerAtlas;
@@ -248,11 +262,6 @@ public class TerrainChunkTesselatorCi
         }
     }
 
-    public bool IsWater(int tt2)
-    {
-        return game.IsFluid(game.blocktypes[tt2]);
-    }
-
     // <summary>
     // Calculate visible block faces for a chunk
     // This method checks which faces of a block should be drawn
@@ -284,7 +293,7 @@ public class TerrainChunkTesselatorCi
                     nPos[TileSideEnum.Left] = pos - 1;
                     nPos[TileSideEnum.Right] = pos + 1;
 
-                    bool blnIsFluid = IsWater(tt);
+                    bool blnIsFluid = isFluid[tt];
                     bool blnIsLowered = isLowered[tt];
 
                     //check which faces are visible
@@ -338,11 +347,12 @@ public class TerrainChunkTesselatorCi
     int GetFaceVisibility(int nSide, int[] currentChunk, int[] nPos, bool blnIsFluid, bool blnIsLowered)
     {
         int nReturn = TileSideFlagsEnum.None;
+
         int nIndex = nPos[nSide];
 
         int tt2 = currentChunk[nIndex];
 
-        if (tt2 == 0 || (istransparent[tt2] && !isLowered[tt2]) || (IsWater(tt2) && !blnIsFluid))
+        if (tt2 == 0 || (istransparent[tt2] && !isLowered[tt2]) || (isFluid[tt2] && !blnIsFluid))
         {
             //Transparent or none block nearby
             nReturn |= TileSideEnum.ToFlags(nSide);
@@ -350,30 +360,29 @@ public class TerrainChunkTesselatorCi
         else if (blnIsFluid && nSide != TileSideEnum.Bottom)
         {
             //fluid branch
+            
+            //Commented out because it is causing unnecessary lava layer rendering of map bottom
+            //int top = currentChunk[nPos[TileSideEnum.Top]];
+            //if (nSide == TileSideEnum.Top)
+            //{
+            //    //a fluids topside maybe needs to be drawn, even if it is completly surrounded
+            //    if (top != 0 && !isFluid[top])
+            //    {
+            //        //Is surrounded and has a solid block above
+            //        nReturn |= TileSideEnum.ToFlags(TileSideEnum.Top);
+            //    }
+            //}
 
-            int top = currentChunk[nPos[TileSideEnum.Top]];
-
-            if (nSide == TileSideEnum.Top)
-            {
-                //a fluids topside maybe needs to be drawn, even if it is completly surrounded
-                if (top != 0 && !IsWater(top))
-                {
-                    //Is surrounded and has a solid block above
-                    
-                    //Commented out because it is causing unnecessary lava layer rendering of map bottom
-                    //nReturn |= TileSideEnum.ToFlags(TileSideEnum.Top);
-                }
-            }
             //water below?
-            if (IsWater(currentChunk[nPos[TileSideEnum.Bottom]]))
+            if (isFluid[currentChunk[nPos[TileSideEnum.Bottom]]])
             {
                 //check if a lowered waterblock is below the neighbor
-                if (!IsWater(tt2))
+                if (!isFluid[tt2])
                 {
                     int movez = (chunksize + 2) * (chunksize + 2);
                     int nPos2 = nPos[nSide] - movez;
 
-                    if (nPos2 > 0 && IsWater(currentChunk[nPos2]))
+                    if (nPos2 > 0 && isFluid[currentChunk[nPos2]])
                     {
                         nReturn |= TileSideEnum.ToFlags(nSide);
                     }
@@ -383,9 +392,9 @@ public class TerrainChunkTesselatorCi
             {//no water below, nothing to do
             }
         }
-        
-        
-        if (nSide != TileSideEnum.Top && isLowered[tt2])
+
+
+        if (isLowered[tt2] && nSide != TileSideEnum.Top)
         {
             //the other block is lowered
 
@@ -406,10 +415,10 @@ public class TerrainChunkTesselatorCi
                 nReturn |= TileSideFlagsEnum.Top;
             }
         }
-        else
-        {//hidden
-        }
-        
+        //else
+        //{//hidden
+        //}
+
         return nReturn;
     }
 
@@ -1073,7 +1082,7 @@ public class TerrainChunkTesselatorCi
     // </summary>
     public ModelData GetModelData(int tiletype, int textureid)
     {
-        if (IsWater(tiletype) || (istransparent[tiletype] && !isLowered[tiletype]))
+        if (isFluid[tiletype] || (istransparent[tiletype] && !isLowered[tiletype]))
         {
             return toreturnatlas1dtransparent[textureid / game.terrainTexturesPerAtlas];
         }
@@ -1486,7 +1495,7 @@ public class TerrainChunkTesselatorCi
             {
                 isLowered[i] = true;
             }
-            
+            isFluid[i] = b.DrawType == Packet_DrawTypeEnum.Fluid;
         }
 
         if (x < 0 || y < 0 || z < 0) { retCount.value = 0; return new VerticesIndicesToLoad[0]; }
