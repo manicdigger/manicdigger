@@ -284,7 +284,7 @@
             return true;
         }
         Packet_BlockType blocktype = game.blocktypes[block];
-        return game.IsFluid(blocktype)
+        return blocktype.WalkableType == Packet_WalkableTypeEnum.Fluid
             || game.IsEmptyForPhysics(blocktype)
             || game.IsRail(blocktype);
     }

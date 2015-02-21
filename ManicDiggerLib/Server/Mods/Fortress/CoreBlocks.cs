@@ -1078,37 +1078,45 @@ namespace ManicDigger.Mods
 			if (currentSeason != lastseason)
 			{
 				// spring
-				if (currentSeason == 0)
-				{
-					m.SetBlockType(2, "Grass", new BlockType()
-						{
-							TextureIdTop = "SpringGrass",
-							TextureIdBack = "SpringGrassSide",
-							TextureIdFront = "SpringGrassSide",
-							TextureIdLeft = "SpringGrassSide",
-							TextureIdRight = "SpringGrassSide",
-							TextureIdForInventory = "SpringGrassSide",
-							TextureIdBottom = "Dirt",
-							DrawType = DrawType.Solid,
-							WalkableType = WalkableType.Solid,
-							Sounds = snowSounds,
-							WhenPlayerPlacesGetsConvertedTo = 3,
-						});
-					m.SetBlockType(18, "OakLeaves", new BlockType()
-						{
-							AllTextures = "OakLeaves",
-							DrawType = DrawType.Transparent,
-							WalkableType = WalkableType.Solid,
-							Sounds = solidSounds,
-						});
-					m.SetBlockType(106, "Apples", new BlockType()
-						{
-							AllTextures = "Apples",
-							DrawType = DrawType.Transparent,
-							WalkableType = WalkableType.Solid,
-							Sounds = solidSounds,
-						});
-				}
+                if (currentSeason == 0)
+                {
+                    m.SetBlockType(2, "Grass", new BlockType()
+                        {
+                            TextureIdTop = "SpringGrass",
+                            TextureIdBack = "SpringGrassSide",
+                            TextureIdFront = "SpringGrassSide",
+                            TextureIdLeft = "SpringGrassSide",
+                            TextureIdRight = "SpringGrassSide",
+                            TextureIdForInventory = "SpringGrassSide",
+                            TextureIdBottom = "Dirt",
+                            DrawType = DrawType.Solid,
+                            WalkableType = WalkableType.Solid,
+                            Sounds = snowSounds,
+                            WhenPlayerPlacesGetsConvertedTo = 3,
+                        });
+                    m.SetBlockType(18, "OakLeaves", new BlockType()
+                        {
+                            AllTextures = "OakLeaves",
+                            DrawType = DrawType.Transparent,
+                            WalkableType = WalkableType.Solid,
+                            Sounds = solidSounds,
+                        });
+                    m.SetBlockType(106, "Apples", new BlockType()
+                        {
+                            AllTextures = "Apples",
+                            DrawType = DrawType.Transparent,
+                            WalkableType = WalkableType.Solid,
+                            Sounds = solidSounds,
+                        });
+                    m.SetBlockType(8, "Water", new BlockType()
+                    {
+                        AllTextures = "Water",
+                        DrawType = DrawType.Fluid,
+                        WalkableType = WalkableType.Fluid,
+                        Sounds = noSound,
+                    });
+                }
+
 				// summer
 				if (currentSeason == 1)
 				{
@@ -1139,13 +1147,6 @@ namespace ManicDigger.Mods
 							DrawType = DrawType.Transparent,
 							WalkableType = WalkableType.Solid,
 							Sounds = solidSounds,
-						});
-					m.SetBlockType(8, "Water", new BlockType()
-						{
-							AllTextures = "Water",
-							DrawType = DrawType.Fluid,
-							WalkableType = WalkableType.Fluid,
-							Sounds = noSound,
 						});
 				}
 				// autumn
@@ -1214,7 +1215,7 @@ namespace ManicDigger.Mods
 					m.SetBlockType(8, "Water", new BlockType()
 						{
 							AllTextures = "Ice",
-							DrawType = DrawType.Solid,
+							DrawType = DrawType.Fluid,
 							WalkableType = WalkableType.Solid,
 							Sounds = snowSounds,
 							IsSlipperyWalk = true,
