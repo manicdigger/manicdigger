@@ -28,9 +28,9 @@ script:
  - git init
  - git config user.name "Travis-CI"
  - git config user.email "travis@example.com"
- - cp ../ManicDiggerBinary.zip ./ManicDiggerBinary`date +%Y-%m-%d`.zip
- - cp ../ManicDiggerBinary.zip ./ManicDiggerBinaryLatest.zip
- - cp ../ManicDiggerSetup.exe ./ManicDiggerSetup`date +%Y-%m-%d`.exe
+ - cp ../ManicDiggerBinary.zip ./ManicDigger`date +%Y-%m-%d`Binary.zip
+ - cp ../ManicDiggerBinary.zip ./ManicDiggerLatestBinary.zip
+ - cp ../ManicDiggerSetup.exe ./ManicDigger`date +%Y-%m-%d`Setup.exe
  - cp ../Html/* .
  - git add .
  - git commit -m "Deployed to Github Pages"
@@ -46,8 +46,8 @@ deploy:
   api_key:
     secure: nCSaKiJTAiONcbbZ3/PJ3IhDd4VMhI8DNvnoX5zxUI3nJ2Y1BonoCdkmRy4y0mXr6UHS/apNY6yGl2oSEZotp2GjmH88obBE4D83JL+mQmrDY/eIy6963/Hp+615p6nOXm8K/wxX3NVRr1dPKGV5v9bRu6GF+UsPT7piMOBWqpo=
   file:
-    - ManicDiggerBinary.zip
-    - ManicDiggerSetup.exe
+    - ManicDigger`date +%Y-%m-%d`Binary.zip
+    - ManicDigger`date +%Y-%m-%d`Setup.exe
   skip_cleanup: true
   on:
     tags: true
