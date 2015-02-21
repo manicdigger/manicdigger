@@ -3241,11 +3241,12 @@
             d_Heightmap.Restart();
         }
         shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
-        maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
-        if (maxdrawdistance == 0)
-        {
-            maxdrawdistance = 128;
-        }
+        //maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
+        //if (maxdrawdistance == 0)
+        //{
+        //    maxdrawdistance = 128;
+        //}
+        maxdrawdistance = 256;
         ChatLog("[GAME] Map initialized");
     }
 
