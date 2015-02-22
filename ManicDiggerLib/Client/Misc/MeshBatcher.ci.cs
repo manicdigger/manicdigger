@@ -217,15 +217,12 @@
     public int TotalTriangleCount()
     {
         int sum = 0;
-        for (int i = 0; i < modelsCount; i++)
+        int count = modelsCount;
+        for (int i = 0; i < count; i++)
         {
-            if (!EmptyContains(i))
+            if (!models[i].empty)
             {
                 ListInfo li = models[i];
-                if (li == null)
-                {
-                    continue;
-                }
                 if (li.render)
                 {
                     sum += li.indicescount;
@@ -235,29 +232,13 @@
         return sum / 3;
     }
 
-    bool EmptyContains(int id)
+    public void Clear()
     {
-        for (int i = 0; i < emptyCount; i++)
+        int count = modelsCount;
+        for (int i = 0; i < count; i++)
         {
-            if (empty[i] == id)
+            if (!models[i].empty)
             {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    internal void Clear()
-    {
-        for (int i = 0; i < modelsCount; i++)
-        {
-            if (!EmptyContains(i))
-            {
-                ListInfo li = models[i];
-                if (li == null)
-                {
-                    continue;
-                }
                 Remove(i);
             }
         }

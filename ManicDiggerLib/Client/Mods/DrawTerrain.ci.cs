@@ -50,13 +50,14 @@
     internal void UpdatePerformanceInfo(float dt)
     {
         float elapsed = 1f * (game.platform.TimeMillisecondsFromStart() - lastPerformanceInfoupdateMilliseconds) / 1000;
+        int triangles = TrianglesCount();
         if (elapsed >= 1)
         {
             lastPerformanceInfoupdateMilliseconds = game.platform.TimeMillisecondsFromStart();
             int chunkupdates_ = ChunkUpdates();
             game.performanceinfo.Set("chunk updates", game.platform.StringFormat(game.language.ChunkUpdates(), game.platform.IntToString(chunkupdates_ - lastchunkupdates)));
             lastchunkupdates = ChunkUpdates();
-            game.performanceinfo.Set("triangles", game.platform.StringFormat(game.language.Triangles(), game.platform.IntToString(TrianglesCount())));
+            game.performanceinfo.Set("triangles", game.platform.StringFormat(game.language.Triangles(), game.platform.IntToString(triangles)));
         }
     }
 
