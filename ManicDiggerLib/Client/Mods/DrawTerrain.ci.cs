@@ -19,7 +19,6 @@
         started = false;
     }
 
-
     internal Game game;
     int chunkupdates;
     public int ChunkUpdates() { return chunkupdates; }
@@ -27,10 +26,19 @@
 
     bool terrainRendererStarted;
 
-
     bool started;
     int lastPerformanceInfoupdateMilliseconds;
     int lastchunkupdates;
+
+#if CITO
+    macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
+#else
+    static int Index3d(int x, int y, int h, int sizex, int sizey)
+    {
+        return (h * sizey + y) * sizex + x;
+    }
+#endif
+
     public override void  OnNewFrameDraw3d(Game game_, float deltaTime)
     {
         game = game_;
@@ -131,7 +139,7 @@
                 if (xx >= 0 && yy >= 0 && zz >= 0
                     && xx < game.map.MapSizeX / chunksize && yy < game.map.MapSizeY / chunksize && zz < game.map.MapSizeZ / chunksize)
                 {
-                    Chunk chunk = game.map.chunks[MapUtilCi.Index3d(xx, yy, zz, mapsizexchunks(), mapsizeychunks())];
+                    Chunk chunk = game.map.chunks[Index3d(xx, yy, zz, mapsizexchunks(), mapsizeychunks())];
                     if (chunk == null || chunk.rendered == null)
                     {
                         continue;
@@ -207,6 +215,8 @@
         if (endx >= mapsizexchunks()) { endx = mapsizexchunks() - 1; }
         if (endy >= mapsizeychunks()) { endy = mapsizeychunks() - 1; }
         if (endz >= mapsizezchunks()) { endz = mapsizezchunks() - 1; }
+        int mapsizexchunks_ = mapsizexchunks();
+        int mapsizeychunks_ = mapsizeychunks();
 
         for (int x = startx; x <= endx; x++)
         {
@@ -214,7 +224,7 @@
             {
                 for (int z = startz; z <= endz; z++)
                 {
-                    Chunk c = game.map.chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks(), mapsizeychunks())];
+                    Chunk c = game.map.chunks[Index3d(x, y, z, mapsizexchunks_, mapsizeychunks_)];
                     if (c == null || c.rendered == null)
                     {
                         continue;
