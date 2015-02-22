@@ -65,32 +65,32 @@
     public void DrawChatLines(bool all)
     {
         chatlines2Count = 0;
+        int timeNow = game.platform.TimeMillisecondsFromStart();
+        int scroll;
         if (!all)
         {
-            for (int i = 0; i < game.ChatLinesCount; i++)
-            {
-                Chatline c = game.ChatLines[i];
-                if ((one * (game.platform.TimeMillisecondsFromStart() - c.timeMilliseconds) / 1000) < ChatScreenExpireTimeSeconds)
-                {
-                    chatlines2[chatlines2Count++] = c;
-                }
-            }
+            scroll = 0;
         }
         else
         {
-            int first = game.ChatLinesCount - ChatLinesMaxToDraw * (ChatPageScroll + 1);
-            if (first < 0)
+            scroll = ChatPageScroll;
+        }
+        int first = game.ChatLinesCount - ChatLinesMaxToDraw * (scroll + 1);
+        if (first < 0)
+        {
+            first = 0;
+        }
+        int count = game.ChatLinesCount;
+        if (count > ChatLinesMaxToDraw)
+        {
+            count = ChatLinesMaxToDraw;
+        }
+        for (int i = first; i < first + count; i++)
+        {
+            Chatline c = game.ChatLines[i];
+            if (all || ((one * (timeNow - c.timeMilliseconds) / 1000) < ChatScreenExpireTimeSeconds))
             {
-                first = 0;
-            }
-            int count = game.ChatLinesCount;
-            if (count > ChatLinesMaxToDraw)
-            {
-                count = ChatLinesMaxToDraw;
-            }
-            for (int i = first; i < first + count; i++)
-            {
-                chatlines2[chatlines2Count++] = game.ChatLines[i];
+                chatlines2[chatlines2Count++] = c;
             }
         }
         font.size = ChatFontSize * game.Scale();
