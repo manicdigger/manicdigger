@@ -93,7 +93,11 @@
                                 {
                                     for (int xx = 0; xx < p.SizeX; xx++)
                                     {
-                                        receivedchunk[Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
+                                        int block = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
+                                        if (block < GlobalVar.MAX_BLOCKTYPES)
+                                        {
+                                            receivedchunk[Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = block;
+                                        }
                                         i += 2;
                                     }
                                 }
