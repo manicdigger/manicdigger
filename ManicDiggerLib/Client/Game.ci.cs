@@ -132,6 +132,7 @@
         taskScheduler = new TaskScheduler();
         commitActions = ListAction.Create(16 * 1024);
         constWallDistance = 0.3f;
+        mouseSmoothing = true;
     }
 
     internal AssetList assets;
@@ -325,7 +326,13 @@
             platform.GlClearColorRgbaf(one * Game.clearcolorR / 255, one * Game.clearcolorG / 255, one * Game.clearcolorB / 255, one * Game.clearcolorA / 255);
         }
 
-        UpdateMouseViewportControl(deltaTime);
+        mouseSmoothingAccum += deltaTime;
+        float constMouseDt = 1f / 300;
+        while (mouseSmoothingAccum > constMouseDt)
+        {
+            mouseSmoothingAccum -= constMouseDt;
+            UpdateMouseViewportControl(constMouseDt);
+        }
 
         //Sleep is required in Mono for running the terrain background thread.
         platform.ApplicationDoEvents();
@@ -2065,16 +2072,36 @@
     internal float mouseDeltaX;
     internal float mouseDeltaY;
     float rotationspeed;
+    float mouseSmoothingVelX;
+    float mouseSmoothingVelY;
+    bool mouseSmoothing;
+    float mouseSmoothingAccum;
+
     internal void UpdateMouseViewportControl(float dt)
     {
+        if (mouseSmoothing)
+        {
+            float constMouseSmoothing1 = 0.85f;
+            float constMouseSmoothing2 = 0.8f;
+            mouseSmoothingVelX = mouseSmoothingVelX + mouseDeltaX / (300 / 75) * constMouseSmoothing2;
+            mouseSmoothingVelY = mouseSmoothingVelY + mouseDeltaY / (300 / 75) * constMouseSmoothing2;
+            mouseSmoothingVelX = mouseSmoothingVelX * constMouseSmoothing1;
+            mouseSmoothingVelY = mouseSmoothingVelY * constMouseSmoothing1;
+        }
+        else
+        {
+            mouseSmoothingVelX = mouseDeltaX;
+            mouseSmoothingVelY = mouseDeltaY;
+        }
+
         if (guistate == GuiState.Normal && enableCameraControl && platform.Focused())
         {
             if (!overheadcamera)
             {
                 if (platform.IsMousePointerLocked())
                 {
-                    player.position.roty += mouseDeltaX * rotationspeed * (one / 75);
-                    player.position.rotx += mouseDeltaY * rotationspeed * (one / 75);
+                    player.position.roty += mouseSmoothingVelX * rotationspeed * 1f / 75;
+                    player.position.rotx += mouseSmoothingVelY * rotationspeed * 1f / 75;
                     player.position.rotx = MathCi.ClampFloat(player.position.rotx,
                         Game.GetPi() / 2 + (one * 15 / 1000),
                         (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
@@ -2094,6 +2121,7 @@
                 }
             }
         }
+
         mouseDeltaX = 0;
         mouseDeltaY = 0;
     }
@@ -3118,6 +3146,12 @@
                 else if (cmd == "reconnect")
                 {
                     Reconnect();
+                }
+                else if (cmd == "m")
+                {
+                    mouseSmoothing = !mouseSmoothing;
+                    if (mouseSmoothing) { Log("Mouse smoothing enabled."); }
+                    else { Log("Mouse smoothing disabled."); }
                 }
                 else if (cmd == "serverinfo")
                 {

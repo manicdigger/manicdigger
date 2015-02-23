@@ -2732,7 +2732,7 @@ function tick() {
 	requestAnimFrame(tick);	
 	
 	resizeCanvas();	
-	var timeNow = new Date().getTime();
+	var timeNow = getTimestamp();
 	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
 		newFrameArgs.dt = elapsed / 1000;

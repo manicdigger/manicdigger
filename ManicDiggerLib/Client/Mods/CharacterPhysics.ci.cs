@@ -414,7 +414,7 @@
         return Max3(dx, dy, dz);
     }
 
-    public float MakeCloserToZero(float a, float b)
+    public static float MakeCloserToZero(float a, float b)
     {
         if (a > 0)
         {
