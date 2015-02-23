@@ -70,7 +70,6 @@ public class TerrainChunkTesselatorCi
         _colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
         BlockShadow = 0.6f;
         option_DoNotDrawEdges = true;
-        AtiArtifactFix = 0.995f;
         occ = 0.7f;
         halfocc = 0.4f;
         tmpnPos = new int[7];
@@ -220,9 +219,19 @@ public class TerrainChunkTesselatorCi
         terrainTexturesPerAtlas = game.terrainTexturesPerAtlas;
         terrainTexturesPerAtlasInverse = 1f / game.terrainTexturesPerAtlas;
 
-        _texrecWidth = AtiArtifactFix;
-        _texrecHeight = terrainTexturesPerAtlasInverse * AtiArtifactFix;
-        _texrecLeft = 0f;
+        if (game.platform.IsFastSystem())
+        {
+            AtiArtifactFix = 1 / 32f * 0.25f;  // 32 pixels in block texture
+        }
+        else
+        {
+            // WebGL
+            AtiArtifactFix = 1 / 32f * 1.5f;  // 32 pixels in block texture
+        }
+
+        _texrecWidth = 1 - (AtiArtifactFix * 2);
+        _texrecHeight = terrainTexturesPerAtlasInverse * (1 - (AtiArtifactFix * 2));
+        _texrecLeft = AtiArtifactFix;
         _texrecRight = _texrecLeft + _texrecWidth;
 
         toreturnatlas1dLength = Max(1, GlobalVar.MAX_BLOCKTYPES / game.terrainTexturesPerAtlas);
@@ -715,8 +724,8 @@ public class TerrainChunkTesselatorCi
 
         int sidetexture = TextureId(tileType, tileSide);
         ModelData toreturn = GetModelData(tileType, sidetexture);
-        float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas));
-        float texrecBottom = texrecTop + _texrecHeight;
+        float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas)) + (AtiArtifactFix * terrainTexturesPerAtlasInverse);
+        float texrecBottom = texrecTop +_texrecHeight;
         int lastelement = toreturn.verticesCount;
 
         VecCito3i v = tmpv;
@@ -838,7 +847,6 @@ public class TerrainChunkTesselatorCi
             return;
         }
 
-        _texrecLeft = 0;
         if (option_DoNotDrawEdges)
         {
             //On finite map don't draw borders:
@@ -1318,8 +1326,6 @@ public class TerrainChunkTesselatorCi
         Vector3Ref bottom01 = Vector3Ref.Create(bottomx, z + 0, bottomy + torchsizexy);
         Vector3Ref bottom10 = Vector3Ref.Create(bottomx + torchsizexy, z + 0, bottomy);
         Vector3Ref bottom11 = Vector3Ref.Create(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
-
-        _texrecLeft = 0;
 
         //top
         {

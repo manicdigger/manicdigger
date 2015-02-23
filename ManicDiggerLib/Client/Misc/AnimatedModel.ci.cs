@@ -620,13 +620,18 @@ public class CuboidRenderer
         }
         return coords;
     }
+
     //Divides CuboidNet() result by texture size, to get relative coordinates. (0-1, not 0-32 pixels).
     public static void CuboidNetNormalize(RectangleFloat[] coords, float texturewidth, float textureheight)
     {
+        float AtiArtifactFix = 0.15f;
         for (int i = 0; i < 6; i++)
         {
-            coords[i] = RectangleFloat.Create((coords[i].X / texturewidth), (coords[i].Y / textureheight),
-                (coords[i].Width / texturewidth), (coords[i].Height / textureheight));
+            float x = ((coords[i].X + AtiArtifactFix) / texturewidth);
+            float y = ((coords[i].Y + AtiArtifactFix) / textureheight);
+            float w = ((coords[i].X + coords[i].Width - AtiArtifactFix) / texturewidth) - x;
+            float h = ((coords[i].Y + coords[i].Height - AtiArtifactFix) / textureheight) - y;
+            coords[i] = RectangleFloat.Create(x, y, w, h);
         }
     }
     public static void DrawCuboid(Game game, float posX, float posY, float posZ,
