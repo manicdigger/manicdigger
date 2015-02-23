@@ -326,14 +326,14 @@
         }
     }
 
-    public void PageUp()
+    public void PageUp_()
     {
         if (pageUp.visible && page < serverButtonsCount / serversPerPage - 1)
         {
             page++;
         }
     }
-    public void PageDown()
+    public void PageDown_()
     {
         if (page > 0)
         {
@@ -394,12 +394,12 @@
         if (e.GetDelta() < 0)
         {
             //Mouse wheel turned down
-            PageUp();
+            PageUp_();
         }
         else if (e.GetDelta() > 0)
         {
             //Mouse wheel turned up
-            PageDown();
+            PageDown_();
         }
     }
     string selectedServerHash;
@@ -419,11 +419,11 @@
         }
         if (w == pageUp)
         {
-            PageUp();
+            PageUp_();
         }
         if (w == pageDown)
         {
-            PageDown();
+            PageDown_();
         }
         if (w == back)
         {
