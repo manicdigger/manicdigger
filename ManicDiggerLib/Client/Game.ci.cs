@@ -260,12 +260,12 @@
         AddMod(new ModSendActiveMaterial());
         AddMod(new ModCamera());
         AddMod(new ModNetworkEntity());
-        AddMod(new ModGuiChat());
         AddMod(new ModGuiInventory());
         AddMod(new ModGuiTouchButtons());
         AddMod(new ModGuiEscapeMenu());
         AddMod(new ModGuiMapLoading());
         AddMod(new ModDraw2dMisc());
+        AddMod(new ModGuiChat());
         AddMod(new ModScreenshot());
         AddMod(new ModAudio());
 
