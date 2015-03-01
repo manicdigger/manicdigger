@@ -83,7 +83,17 @@
         }
         entitiesCount = 512;
         PlayerPushDistance = 2;
-        keyboardState = new bool[256];
+        const int KeysMax = 256;
+        keyboardState = new bool[KeysMax];
+        for (int i = 0; i < KeysMax; i++)
+        {
+            keyboardState[i] = false;
+        }
+        keyboardStateRaw = new bool[KeysMax];
+        for (int i = 0; i < KeysMax; i++)
+        {
+            keyboardStateRaw[i] = false;
+        }
         overheadcameradistance = 10;
         tppcameradistance = 3;
         TPP_CAMERA_DISTANCE_MIN = 1;
@@ -2279,6 +2289,7 @@
     }
 
     internal bool[] keyboardState;
+    internal bool[] keyboardStateRaw;
 
     public const int KeyAltLeft = 5;
     public const int KeyAltRight = 6;
@@ -2686,6 +2697,7 @@
 
     internal void KeyUp(int eKey)
     {
+        keyboardStateRaw[eKey] = false;
         for (int i = 0; i < clientmodsCount; i++)
         {
             KeyEventArgs args_ = new KeyEventArgs();
@@ -3941,6 +3953,7 @@
     public const int DISCONNECTED_ICON_AFTER_SECONDS = 10;
     internal void KeyDown(int eKey)
     {
+        keyboardStateRaw[eKey] = true;
         for (int i = 0; i < clientmodsCount; i++)
         {
             KeyEventArgs args_ = new KeyEventArgs();

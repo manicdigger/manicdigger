@@ -205,7 +205,7 @@
                 args.SetHandled(true);
                 return;
             }
-            if (game.keyboardState[game.GetKey(GlKeys.ControlLeft)] || game.keyboardState[game.GetKey(GlKeys.ControlRight)])
+            if (game.keyboardStateRaw[game.GetKey(GlKeys.ControlLeft)] || game.keyboardStateRaw[game.GetKey(GlKeys.ControlRight)])
             {
                 if (key == game.GetKey(GlKeys.V))
                 {
