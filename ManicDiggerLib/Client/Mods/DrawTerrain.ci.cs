@@ -11,8 +11,8 @@
         redrawCount = 0;
         CalculateShadowslightRadius = new int[GlobalVar.MAX_BLOCKTYPES];
         CalculateShadowsisTransparentForLight = new bool[GlobalVar.MAX_BLOCKTYPES];
-        shadowsBase = new ShadowsBase();
-        shadowsBetweenChunks = new ShadowsBetweenChunks();
+        lightBase = new LightBase();
+        lightBetweenChunks = new LightBetweenChunks();
 
         lastPerformanceInfoupdateMilliseconds = 0;
         lastchunkupdates = 0;
@@ -424,8 +424,8 @@
     bool[] CalculateShadowsisTransparentForLight;
     int[][] chunks3x3x3;
     int[][] heightchunks3x3;
-    ShadowsBase shadowsBase;
-    ShadowsBetweenChunks shadowsBetweenChunks;
+    LightBase lightBase;
+    LightBetweenChunks lightBetweenChunks;
     void CalculateShadows(int cx, int cy, int cz)
     {
         for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
@@ -454,7 +454,7 @@
                     Chunk c = game.map.GetChunk(cx1 * chunksize, cy1 * chunksize, cz1 * chunksize);
                     if (c.baseLightDirty)
                     {
-                        shadowsBase.CalculateChunkBaseLight(game, cx1, cy1, cz1, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight);
+                        lightBase.CalculateChunkBaseLight(game, cx1, cy1, cz1, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight);
                         c.baseLightDirty = false;
                     }
                 }
@@ -472,7 +472,7 @@
             }
         }
         
-        shadowsBetweenChunks.CalculateShadowsBetweenChunks(game, cx, cy, cz, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight);
+        lightBetweenChunks.CalculateLightBetweenChunks(game, cx, cy, cz, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight);
 
         for (int i = 0; i < 18 * 18 * 18; i++)
         {
