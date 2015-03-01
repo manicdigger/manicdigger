@@ -232,17 +232,6 @@
     internal int screeny;
 }
 
-public class ProcessPacketTask : Action_
-{
-    internal Game game;
-    internal Packet_Server packet;
-
-    public override void Run()
-    {
-        game.ProcessPacket(packet);
-    }
-}
-
 public class LoginData
 {
     internal string ServerAddress;

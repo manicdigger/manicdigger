@@ -6,7 +6,9 @@
         tempViewport = new float[4];
         tempRay = new float[4];
         tempRayStartPoint = new float[4];
+        fillarea = new DictionaryVector3Float();
     }
+
     public override void OnNewFrameReadOnlyMainThread(Game game, float deltaTime)
     {
         if (game.guistate == GuiState.Normal)
@@ -14,6 +16,7 @@
             UpdatePicking(game);
         }
     }
+
     public override void OnMouseUp(Game game, MouseEventArgs args)
     {
         if (game.guistate == GuiState.Normal)
@@ -21,6 +24,7 @@
             UpdatePicking(game);
         }
     }
+
     public override void OnMouseDown(Game game, MouseEventArgs args)
     {
         if (game.guistate == GuiState.Normal)
@@ -200,7 +204,7 @@
             return;
         }
 
-        if ((one * (game.platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= game.BuildDelay()
+        if ((one * (game.platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay(game)
             || IsNextShot)
         {
             if (left && game.d_Inventory.RightHand[game.ActiveMaterial] == null)
@@ -566,7 +570,7 @@
                                     game.blockHealth.Remove(posx, posy, posz);
                                 }
                                 game.currentAttackedBlock = null;
-                                game.OnPick(game.platform.FloatToInt(newtileX), game.platform.FloatToInt(newtileZ), game.platform.FloatToInt(newtileY),
+                                OnPick(game, game.platform.FloatToInt(newtileX), game.platform.FloatToInt(newtileZ), game.platform.FloatToInt(newtileY),
                                     game.platform.FloatToInt(tile.Current()[0]), game.platform.FloatToInt(tile.Current()[2]), game.platform.FloatToInt(tile.Current()[1]),
                                     tile.collisionPos,
                                     right);
@@ -582,7 +586,7 @@
                         {
                             game.platform.ThrowException("");
                         }
-                        game.OnPick(game.platform.FloatToInt(newtileX), game.platform.FloatToInt(newtileZ), game.platform.FloatToInt(newtileY),
+                        OnPick(game, game.platform.FloatToInt(newtileX), game.platform.FloatToInt(newtileZ), game.platform.FloatToInt(newtileY),
                             game.platform.FloatToInt(tile.Current()[0]), game.platform.FloatToInt(tile.Current()[2]), game.platform.FloatToInt(tile.Current()[1]),
                             tile.collisionPos,
                             right);
@@ -593,6 +597,231 @@
             }
         }
         PickingEnd(left, right, middle, ispistol);
+    }
+
+    internal float BuildDelay(Game game)
+    {
+        float default_ = (1f * 95 / 100) * (1 / game.basemovespeed);
+        Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+        if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
+        {
+            return default_;
+        }
+        float delay = game.DeserializeFloat(game.blocktypes[item.BlockId].DelayFloat);
+        if (delay == 0)
+        {
+            return default_;
+        }
+        return delay;
+    }
+
+    //value is original block.
+    internal DictionaryVector3Float fillarea;
+    internal Vector3IntRef fillstart;
+    internal Vector3IntRef fillend;
+
+    internal void OnPick(Game game, int blockposX, int blockposY, int blockposZ, int blockposoldX, int blockposoldY, int blockposoldZ, float[] collisionPos, bool right)
+    {
+        float xfract = collisionPos[0] - game.MathFloor(collisionPos[0]);
+        float zfract = collisionPos[2] - game.MathFloor(collisionPos[2]);
+        int activematerial = game.MaterialSlots_(game.ActiveMaterial);
+        int railstart = game.d_Data.BlockIdRailstart();
+        if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
+            || activematerial == railstart + RailDirectionFlags.Corners)
+        {
+            RailDirection dirnew;
+            if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical)
+            {
+                dirnew = PickHorizontalVertical(xfract, zfract);
+            }
+            else
+            {
+                dirnew = PickCorners(xfract, zfract);
+            }
+            int dir = game.d_Data.Rail()[game.map.GetBlock(blockposoldX, blockposoldY, blockposoldZ)];
+            if (dir != 0)
+            {
+                blockposX = blockposoldX;
+                blockposY = blockposoldY;
+                blockposZ = blockposoldZ;
+            }
+            activematerial = railstart + (dir | DirectionUtils.ToRailDirectionFlags(dirnew));
+        }
+        int x = game.platform.FloatToInt(blockposX);
+        int y = game.platform.FloatToInt(blockposY);
+        int z = game.platform.FloatToInt(blockposZ);
+        int mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
+        {
+            if (game.IsAnyPlayerInPos(x, y, z) || activematerial == 151)
+            {
+                return;
+            }
+            Vector3IntRef v = Vector3IntRef.Create(x, y, z);
+            Vector3IntRef oldfillstart = fillstart;
+            Vector3IntRef oldfillend = fillend;
+            if (mode == Packet_BlockSetModeEnum.Create)
+            {
+                if (game.blocktypes[activematerial].IsTool)
+                {
+                    OnPickUseWithTool(game, blockposX, blockposY, blockposZ);
+                    return;
+                }
+
+                if (activematerial == game.d_Data.BlockIdCuboid())
+                {
+                    ClearFillArea(game);
+
+                    if (fillstart != null)
+                    {
+                        Vector3IntRef f = fillstart;
+                        if (!game.IsFillBlock(game.map.GetBlock(f.X, f.Y, f.Z)))
+                        {
+                            fillarea.Set(f.X, f.Y, f.Z, game.map.GetBlock(f.X, f.Y, f.Z));
+                        }
+                        game.SetBlock(f.X, f.Y, f.Z, game.d_Data.BlockIdFillStart());
+
+
+                        FillFill(game, v, fillstart);
+                    }
+                    if (!game.IsFillBlock(game.map.GetBlock(v.X, v.Y, v.Z)))
+                    {
+                        fillarea.Set(v.X, v.Y, v.Z, game.map.GetBlock(v.X, v.Y, v.Z));
+                    }
+                    game.SetBlock(v.X, v.Y, v.Z, game.d_Data.BlockIdCuboid());
+                    fillend = v;
+                    game.RedrawBlock(v.X, v.Y, v.Z);
+                    return;
+                }
+                if (activematerial == game.d_Data.BlockIdFillStart())
+                {
+                    ClearFillArea(game);
+                    if (!game.IsFillBlock(game.map.GetBlock(v.X, v.Y, v.Z)))
+                    {
+                        fillarea.Set(v.X, v.Y, v.Z, game.map.GetBlock(v.X, v.Y, v.Z));
+                    }
+                    game.SetBlock(v.X, v.Y, v.Z, game.d_Data.BlockIdFillStart());
+                    fillstart = v;
+                    fillend = null;
+                    game.RedrawBlock(v.X, v.Y, v.Z);
+                    return;
+                }
+                if (fillarea.ContainsKey(v.X, v.Y, v.Z))// && fillarea[v])
+                {
+                    game.SendFillArea(fillstart.X, fillstart.Y, fillstart.Z, fillend.X, fillend.Y, fillend.Z, activematerial);
+                    ClearFillArea(game);
+                    fillstart = null;
+                    fillend = null;
+                    return;
+                }
+            }
+            else
+            {
+                if (game.blocktypes[activematerial].IsTool)
+                {
+                    OnPickUseWithTool(game, blockposX, blockposY, blockposoldZ);
+                    return;
+                }
+                //delete fill start
+                if (fillstart != null && fillstart.X == v.X && fillstart.Y == v.Y && fillstart.Z == v.Z)
+                {
+                    ClearFillArea(game);
+                    fillstart = null;
+                    fillend = null;
+                    return;
+                }
+                //delete fill end
+                if (fillend != null && fillend.X == v.X && fillend.Y == v.Y && fillend.Z == v.Z)
+                {
+                    ClearFillArea(game);
+                    fillend = null;
+                    return;
+                }
+            }
+            game.SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
+        }
+    }
+
+    internal void ClearFillArea(Game game)
+    {
+        for (int i = 0; i < fillarea.itemsCount; i++)
+        {
+            Vector3Float k = fillarea.items[i];
+            if (k == null)
+            {
+                continue;
+            }
+            game.SetBlock(k.x, k.y, k.z, game.platform.FloatToInt(k.value));
+            game.RedrawBlock(k.x, k.y, k.z);
+        }
+        fillarea.Clear();
+    }
+
+    internal void FillFill(Game game, Vector3IntRef a_, Vector3IntRef b_)
+    {
+        int startx = MathCi.MinInt(a_.X, b_.X);
+        int endx = MathCi.MaxInt(a_.X, b_.X);
+        int starty = MathCi.MinInt(a_.Y, b_.Y);
+        int endy = MathCi.MaxInt(a_.Y, b_.Y);
+        int startz = MathCi.MinInt(a_.Z, b_.Z);
+        int endz = MathCi.MaxInt(a_.Z, b_.Z);
+        for (int x = startx; x <= endx; x++)
+        {
+            for (int y = starty; y <= endy; y++)
+            {
+                for (int z = startz; z <= endz; z++)
+                {
+                    if (fillarea.Count() > game.fillAreaLimit)
+                    {
+                        ClearFillArea(game);
+                        return;
+                    }
+                    if (!game.IsFillBlock(game.map.GetBlock(x, y, z)))
+                    {
+                        fillarea.Set(x, y, z, game.map.GetBlock(x, y, z));
+                        game.SetBlock(x, y, z, game.d_Data.BlockIdFillArea());
+                        game.RedrawBlock(x, y, z);
+                    }
+                }
+            }
+        }
+    }
+
+    internal void OnPickUseWithTool(Game game, int posX, int posY, int posZ)
+    {
+        game.SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.UseWithTool, game.d_Inventory.RightHand[game.ActiveMaterial].BlockId, game.ActiveMaterial);
+    }
+
+    internal RailDirection PickHorizontalVertical(float xfract, float yfract)
+    {
+        float x = xfract;
+        float y = yfract;
+        if (y >= x && y >= (1 - x))
+        {
+            return RailDirection.Vertical;
+        }
+        if (y < x && y < (1 - x))
+        {
+            return RailDirection.Vertical;
+        }
+        return RailDirection.Horizontal;
+    }
+
+    internal RailDirection PickCorners(float xfract, float zfract)
+    {
+        float half = 0.5f;
+        if (xfract < half && zfract < half)
+        {
+            return RailDirection.UpLeft;
+        }
+        if (xfract >= half && zfract < half)
+        {
+            return RailDirection.UpRight;
+        }
+        if (xfract < half && zfract >= half)
+        {
+            return RailDirection.DownLeft;
+        }
+        return RailDirection.DownRight;
     }
 
     void PickEntity(Game game, Line3D pick, BlockPosSide[] pick2, IntRef pick2count)
@@ -672,7 +901,7 @@
             }
         }
     }
-    
+
     void UpdateEntityHit(Game game)
     {
         //Only single hit when mouse clicked
@@ -727,7 +956,7 @@
             mouseY = game.mouseCurrentY;
         }
 
-        PointFloatRef aim = game.GetAim();
+        PointFloatRef aim = GetAim(game);
         if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
         {
             mouseX += game.platform.FloatToInt(aim.X);
@@ -761,6 +990,28 @@
         retPick.End[0] = tempRayStartPoint[0] + raydirX * pickDistance1;
         retPick.End[1] = tempRayStartPoint[1] + raydirY * pickDistance1;
         retPick.End[2] = tempRayStartPoint[2] + raydirZ * pickDistance1;
+    }
+
+    internal PointFloatRef GetAim(Game game)
+    {
+        if (game.CurrentAimRadius() <= 1)
+        {
+            return PointFloatRef.Create(0, 0);
+        }
+        float half = 0.5f;
+        float x;
+        float y;
+        for (; ; )
+        {
+            x = (game.rnd.NextFloat() - half) * game.CurrentAimRadius() * 2;
+            y = (game.rnd.NextFloat() - half) * game.CurrentAimRadius() * 2;
+            float dist1 = game.platform.MathSqrt(x * x + y * y);
+            if (dist1 <= game.CurrentAimRadius())
+            {
+                break;
+            }
+        }
+        return PointFloatRef.Create(x, y);
     }
 
     float CurrentPickDistance(Game game)

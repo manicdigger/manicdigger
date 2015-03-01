@@ -100,7 +100,6 @@
         TPP_CAMERA_DISTANCE_MAX = 10;
         options = new OptionsCi();
         overheadcameraK = new Kamera();
-        fillarea = new DictionaryVector3Float();
         fillAreaLimit = 200;
         speculativeCount = 0;
         speculative = new Speculative[speculativeMax];
@@ -1410,21 +1409,6 @@
     }
     internal float basemovespeed;
     internal float movespeed;
-    internal float BuildDelay()
-    {
-        float default_ = (one * 95 / 100) * (1 / basemovespeed);
-        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
-        if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
-        {
-            return default_;
-        }
-        float delay = DeserializeFloat(blocktypes[item.BlockId].DelayFloat);
-        if (delay == 0)
-        {
-            return default_;
-        }
-        return delay;
-    }
 
     internal Packet_InventoryPosition InventoryPositionMaterialSelector(int materialId)
     {
@@ -1441,39 +1425,6 @@
         pos.AreaX = x;
         pos.AreaY = y;
         return pos;
-    }
-
-    internal RailDirection PickHorizontalVertical(float xfract, float yfract)
-    {
-        float x = xfract;
-        float y = yfract;
-        if (y >= x && y >= (1 - x))
-        {
-            return RailDirection.Vertical;
-        }
-        if (y < x && y < (1 - x))
-        {
-            return RailDirection.Vertical;
-        }
-        return RailDirection.Horizontal;
-    }
-
-    internal RailDirection PickCorners(float xfract, float zfract)
-    {
-        float half = one / 2;
-        if (xfract < half && zfract < half)
-        {
-            return RailDirection.UpLeft;
-        }
-        if (xfract >= half && zfract < half)
-        {
-            return RailDirection.UpRight;
-        }
-        if (xfract < half && zfract >= half)
-        {
-            return RailDirection.DownLeft;
-        }
-        return RailDirection.DownRight;
     }
 
     internal IntRef BlockInHand()
@@ -1515,28 +1466,6 @@
     }
 
     internal RandomCi rnd;
-
-    internal PointFloatRef GetAim()
-    {
-        if (CurrentAimRadius() <= 1)
-        {
-            return PointFloatRef.Create(0, 0);
-        }
-        float half = one / 2;
-        float x;
-        float y;
-        for (; ; )
-        {
-            x = (rnd.NextFloat() - half) * CurrentAimRadius() * 2;
-            y = (rnd.NextFloat() - half) * CurrentAimRadius() * 2;
-            float dist1 = platform.MathSqrt(x * x + y * y);
-            if (dist1 <= CurrentAimRadius())
-            {
-                break;
-            }
-        }
-        return PointFloatRef.Create(x, y);
-    }
 
     internal GameData d_Data;
 
@@ -2639,61 +2568,7 @@
         }
     }
 
-    //value is original block.
-    internal DictionaryVector3Float fillarea;
-    internal Vector3IntRef fillstart;
-    internal Vector3IntRef fillend;
     internal int fillAreaLimit;
-
-    internal void ClearFillArea()
-    {
-        for (int i = 0; i < fillarea.itemsCount; i++)
-        {
-            Vector3Float k = fillarea.items[i];
-            if (k == null)
-            {
-                continue;
-            }
-            SetBlock(k.x, k.y, k.z, platform.FloatToInt(k.value));
-            RedrawBlock(k.x, k.y, k.z);
-        }
-        fillarea.Clear();
-    }
-
-    internal void FillFill(Vector3IntRef a_, Vector3IntRef b_)
-    {
-        int startx = MathCi.MinInt(a_.X, b_.X);
-        int endx = MathCi.MaxInt(a_.X, b_.X);
-        int starty = MathCi.MinInt(a_.Y, b_.Y);
-        int endy = MathCi.MaxInt(a_.Y, b_.Y);
-        int startz = MathCi.MinInt(a_.Z, b_.Z);
-        int endz = MathCi.MaxInt(a_.Z, b_.Z);
-        for (int x = startx; x <= endx; x++)
-        {
-            for (int y = starty; y <= endy; y++)
-            {
-                for (int z = startz; z <= endz; z++)
-                {
-                    if (fillarea.Count() > fillAreaLimit)
-                    {
-                        ClearFillArea();
-                        return;
-                    }
-                    if (!IsFillBlock(map.GetBlock(x, y, z)))
-                    {
-                        fillarea.Set(x, y, z, map.GetBlock(x, y, z));
-                        SetBlock(x, y, z, d_Data.BlockIdFillArea());
-                        RedrawBlock(x, y, z);
-                    }
-                }
-            }
-        }
-    }
-
-    internal void OnPickUseWithTool(int posX, int posY, int posZ)
-    {
-        SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.UseWithTool, d_Inventory.RightHand[ActiveMaterial].BlockId, ActiveMaterial);
-    }
 
     internal void KeyUp(int eKey)
     {
@@ -2829,145 +2704,7 @@
             }
         }
     }
-
-    internal void OnPick(int blockposX, int blockposY, int blockposZ, int blockposoldX, int blockposoldY, int blockposoldZ, float[] collisionPos, bool right)
-    {
-        float xfract = collisionPos[0] - MathFloor(collisionPos[0]);
-        float zfract = collisionPos[2] - MathFloor(collisionPos[2]);
-        int activematerial = MaterialSlots_(ActiveMaterial);
-        int railstart = d_Data.BlockIdRailstart();
-        if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
-            || activematerial == railstart + RailDirectionFlags.Corners)
-        {
-            RailDirection dirnew;
-            if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical)
-            {
-                dirnew = PickHorizontalVertical(xfract, zfract);
-            }
-            else
-            {
-                dirnew = PickCorners(xfract, zfract);
-            }
-            int dir = d_Data.Rail()[map.GetBlock(blockposoldX, blockposoldY, blockposoldZ)];
-            if (dir != 0)
-            {
-                blockposX = blockposoldX;
-                blockposY = blockposoldY;
-                blockposZ = blockposoldZ;
-            }
-            activematerial = railstart + (dir | DirectionUtils.ToRailDirectionFlags(dirnew));
-            //Console.WriteLine(blockposold);
-            //Console.WriteLine(xfract + ":" + zfract + ":" + activematerial + ":" + dirnew);
-        }
-        int x = platform.FloatToInt(blockposX);
-        int y = platform.FloatToInt(blockposY);
-        int z = platform.FloatToInt(blockposZ);
-        int mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
-        {
-            if (IsAnyPlayerInPos(x, y, z) || activematerial == 151)
-            {
-                return;
-            }
-            Vector3IntRef v = Vector3IntRef.Create(x, y, z);
-            Vector3IntRef oldfillstart = fillstart;
-            Vector3IntRef oldfillend = fillend;
-            if (mode == Packet_BlockSetModeEnum.Create)
-            {
-                if (blocktypes[activematerial].IsTool)
-                {
-                    OnPickUseWithTool(blockposX, blockposY, blockposZ);
-                    return;
-                }
-
-                //if (GameDataManicDigger.IsDoorTile(activematerial))
-                //{
-                //    if (z + 1 == d_Map.MapSizeZ || z == 0) return;
-                //}
-
-                if (activematerial == d_Data.BlockIdCuboid())
-                {
-                    ClearFillArea();
-
-                    if (fillstart != null)
-                    {
-                        Vector3IntRef f = fillstart;
-                        if (!IsFillBlock(map.GetBlock(f.X, f.Y, f.Z)))
-                        {
-                            fillarea.Set(f.X, f.Y, f.Z, map.GetBlock(f.X, f.Y, f.Z));
-                        }
-                        SetBlock(f.X, f.Y, f.Z, d_Data.BlockIdFillStart());
-
-
-                        FillFill(v, fillstart);
-                    }
-                    if (!IsFillBlock(map.GetBlock(v.X, v.Y, v.Z)))
-                    {
-                        fillarea.Set(v.X, v.Y, v.Z, map.GetBlock(v.X, v.Y, v.Z));
-                    }
-                    SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdCuboid());
-                    fillend = v;
-                    RedrawBlock(v.X, v.Y, v.Z);
-                    return;
-                }
-                if (activematerial == d_Data.BlockIdFillStart())
-                {
-                    ClearFillArea();
-                    if (!IsFillBlock(map.GetBlock(v.X, v.Y, v.Z)))
-                    {
-                        fillarea.Set(v.X, v.Y, v.Z, map.GetBlock(v.X, v.Y, v.Z));
-                    }
-                    SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdFillStart());
-                    fillstart = v;
-                    fillend = null;
-                    RedrawBlock(v.X, v.Y, v.Z);
-                    return;
-                }
-                if (fillarea.ContainsKey(v.X, v.Y, v.Z))// && fillarea[v])
-                {
-                    SendFillArea(fillstart.X, fillstart.Y, fillstart.Z, fillend.X, fillend.Y, fillend.Z, activematerial);
-                    ClearFillArea();
-                    fillstart = null;
-                    fillend = null;
-                    return;
-                }
-            }
-            else
-            {
-                if (blocktypes[activematerial].IsTool)
-                {
-                    OnPickUseWithTool(blockposX, blockposY, blockposoldZ);
-                    return;
-                }
-                //delete fill start
-                if (fillstart != null && fillstart.X == v.X && fillstart.Y == v.Y && fillstart.Z == v.Z)
-                {
-                    ClearFillArea();
-                    fillstart = null;
-                    fillend = null;
-                    return;
-                }
-                //delete fill end
-                if (fillend != null && fillend.X == v.X && fillend.Y == v.Y && fillend.Z == v.Z)
-                {
-                    ClearFillArea();
-                    fillend = null;
-                    return;
-                }
-            }
-            if (mode == Packet_BlockSetModeEnum.Create && activematerial == d_Data.BlockIdMinecart())
-            {
-                //CommandRailVehicleBuild cmd2 = new CommandRailVehicleBuild();
-                //cmd2.x = (short)x;
-                //cmd2.y = (short)y;
-                //cmd2.z = (short)z;
-                //TrySendCommand(MakeCommand(CommandId.RailVehicleBuild, cmd2));
-                return;
-            }
-            //if (TrySendCommand(MakeCommand(CommandId.Build, cmd)))
-            SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
-        }
-    }
-
+    
     internal void Set3dProjection1(float zfar_)
     {
         Set3dProjection(zfar_, currentfov());
@@ -3325,402 +3062,6 @@
     internal bool handSetAttackDestroy;
 
     internal string serverGameVersion;
-    internal void ProcessPacket(Packet_Server packet)
-    {
-        if (packetHandlers[packet.Id] != null)
-        {
-            packetHandlers[packet.Id].Handle(this, packet);
-        }
-        switch (packet.Id)
-        {
-            case Packet_ServerIdEnum.ServerIdentification:
-                {
-                    string invalidversionstr = language.InvalidVersionConnectAnyway();
-
-                    serverGameVersion = packet.Identification.MdProtocolVersion;
-                    if (serverGameVersion != platform.GetGameVersion())
-                    {
-                        ChatLog("[GAME] Different game versions");
-                        string q = platform.StringFormat2(invalidversionstr, platform.GetGameVersion(), serverGameVersion);
-                        invalidVersionDrawMessage = q;
-                        invalidVersionPacketIdentification = packet;
-                    }
-                    else
-                    {
-                        ProcessServerIdentification(packet);
-                    }
-                    ReceivedMapLength = 0;
-                }
-                break;
-            case Packet_ServerIdEnum.Ping:
-                {
-                    this.SendPingReply();
-                    this.ServerInfo.ServerPing.Send(platform);
-                }
-                break;
-            case Packet_ServerIdEnum.PlayerPing:
-                {
-                    this.ServerInfo.ServerPing.Receive(platform);
-                }
-                break;
-            case Packet_ServerIdEnum.LevelInitialize:
-                {
-                    ChatLog("[GAME] Initialized map loading");
-                    ReceivedMapLength = 0;
-                    InvokeMapLoadingProgress(0, 0, language.Connecting());
-                }
-                break;
-            case Packet_ServerIdEnum.LevelDataChunk:
-                {
-                    InvokeMapLoadingProgress(packet.LevelDataChunk.PercentComplete, ReceivedMapLength, packet.LevelDataChunk.Status);
-                }
-                break;
-            case Packet_ServerIdEnum.LevelFinalize:
-                {
-                    ChatLog("[GAME] Finished map loading");
-                }
-                break;
-            case Packet_ServerIdEnum.SetBlock:
-                {
-                    int x = packet.SetBlock.X;
-                    int y = packet.SetBlock.Y;
-                    int z = packet.SetBlock.Z;
-                    int type = packet.SetBlock.BlockType;
-                    //try
-                    {
-                        SetTileAndUpdate(x, y, z, type);
-                    }
-                    //catch { Console.WriteLine("Cannot update tile!"); }
-                }
-                break;
-            case Packet_ServerIdEnum.FillArea:
-                {
-                    int ax = packet.FillArea.X1;
-                    int ay = packet.FillArea.Y1;
-                    int az = packet.FillArea.Z1;
-                    int bx = packet.FillArea.X2;
-                    int by = packet.FillArea.Y2;
-                    int bz = packet.FillArea.Z2;
-
-                    int startx = MathCi.MinInt(ax, bx);
-                    int endx = MathCi.MaxInt(ax, bx);
-                    int starty = MathCi.MinInt(ay, by);
-                    int endy = MathCi.MaxInt(ay, by);
-                    int startz = MathCi.MinInt(az, bz);
-                    int endz = MathCi.MaxInt(az, bz);
-
-                    int blockCount = packet.FillArea.BlockCount;
-                    {
-                        for (int x = startx; x <= endx; x++)
-                        {
-                            for (int y = starty; y <= endy; y++)
-                            {
-                                for (int z = startz; z <= endz; z++)
-                                {
-                                    // if creative mode is off and player run out of blocks
-                                    if (blockCount == 0)
-                                    {
-                                        return;
-                                    }
-                                    //try
-                                    {
-                                        SetTileAndUpdate(x, y, z, packet.FillArea.BlockType);
-                                    }
-                                    //catch
-                                    //{
-                                    //    Console.WriteLine("Cannot update tile!");
-                                    //}
-                                    blockCount--;
-                                }
-                            }
-                        }
-                    }
-                }
-                break;
-            case Packet_ServerIdEnum.FillAreaLimit:
-                {
-                    this.fillAreaLimit = packet.FillAreaLimit.Limit;
-                    if (this.fillAreaLimit > 100000)
-                    {
-                        this.fillAreaLimit = 100000;
-                    }
-                }
-                break;
-            case Packet_ServerIdEnum.Freemove:
-                {
-                    this.AllowFreemove = packet.Freemove.IsEnabled != 0;
-                    if (!this.AllowFreemove)
-                    {
-                        controls.freemove = false;
-                        controls.noclip = false;
-                        movespeed = basemovespeed;
-                        Log(language.MoveNormal());
-                    }
-                }
-                break;
-            case Packet_ServerIdEnum.PlayerSpawnPosition:
-                {
-                    int x = packet.PlayerSpawnPosition.X;
-                    int y = packet.PlayerSpawnPosition.Y;
-                    int z = packet.PlayerSpawnPosition.Z;
-                    this.playerPositionSpawnX = x;
-                    this.playerPositionSpawnY = z;
-                    this.playerPositionSpawnZ = y;
-                    Log(platform.StringFormat(language.SpawnPositionSetTo(), platform.StringFormat3("{0},{1},{2}", platform.IntToString(x), platform.IntToString(y), platform.IntToString(z))));
-                }
-                break;
-            case Packet_ServerIdEnum.Message:
-                {
-                    AddChatline(packet.Message.Message);
-                    ChatLog(packet.Message.Message);
-                }
-                break;
-            case Packet_ServerIdEnum.DisconnectPlayer:
-                {
-                    ChatLog(platform.StringFormat("[GAME] Disconnected by the server ({0})", packet.DisconnectPlayer.DisconnectReason));
-                    //When server disconnects player, return to main menu
-                    platform.MessageBoxShowError(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server");
-                    ExitToMainMenu_();
-                    break;
-                }
-            case Packet_ServerIdEnum.PlayerStats:
-                {
-                    Packet_ServerPlayerStats p = packet.PlayerStats;
-                    this.PlayerStats = p;
-                }
-                break;
-            case Packet_ServerIdEnum.FiniteInventory:
-                {
-                    //check for null so it's possible to connect
-                    //to old versions of game (before 2011-05-05)
-                    if (packet.Inventory.Inventory != null)
-                    {
-                        //d_Inventory.CopyFrom(ConvertInventory(packet.Inventory.Inventory));
-                        UseInventory(packet.Inventory.Inventory);
-                    }
-                    //FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
-                    //ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
-                    //FiniteInventoryMax = packet.FiniteInventory.Max;
-                }
-                break;
-            case Packet_ServerIdEnum.Season:
-                {
-                    packet.Season.Hour -= 1;
-                    if (packet.Season.Hour < 0)
-                    {
-                        //shouldn't happen
-                        packet.Season.Hour = 12 * HourDetail;
-                    }
-                    int sunlight = NightLevels[packet.Season.Hour];
-                    SkySphereNight = sunlight < 8;
-                    d_SunMoonRenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
-                    int hour = packet.Season.Hour / HourDetail;
-                    if (d_SunMoonRenderer.GetHour() != hour)
-                    {
-                        d_SunMoonRenderer.SetHour(hour);
-                    }
-
-                    if (sunlight_ != sunlight)
-                    {
-                        sunlight_ = sunlight;
-                        //d_Shadows.ResetShadows();
-                        RedrawAllBlocks();
-                    }
-                }
-                break;
-            case Packet_ServerIdEnum.BlobInitialize:
-                {
-                    blobdownload = new CitoMemoryStream();
-                    //blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
-                    blobdownloadname = packet.BlobInitialize.Name;
-                    blobdownloadmd5 = packet.BlobInitialize.Md5;
-                }
-                break;
-            case Packet_ServerIdEnum.BlobPart:
-                {
-                    int length = platform.ByteArrayLength(packet.BlobPart.Data);
-                    blobdownload.Write(packet.BlobPart.Data, 0, length);
-                    ReceivedMapLength += length;
-                }
-                break;
-            case Packet_ServerIdEnum.BlobFinalize:
-                {
-                    byte[] downloaded = blobdownload.ToArray();
-
-                    if (blobdownloadname != null) // old servers
-                    {
-                        SetFile(blobdownloadname, blobdownloadmd5, downloaded, blobdownload.Length());
-                    }
-                    blobdownload = null;
-                }
-                break;
-            case Packet_ServerIdEnum.Sound:
-                {
-                    PlaySoundAt(packet.Sound.Name, packet.Sound.X, packet.Sound.Y, packet.Sound.Z);
-                }
-                break;
-            case Packet_ServerIdEnum.RemoveMonsters:
-                {
-                    for (int i = entityMonsterIdStart; i < entityMonsterIdStart + entityMonsterIdCount; i++)
-                    {
-                        entities[i] = null;
-                    }
-                }
-                break;
-            case Packet_ServerIdEnum.Translation:
-                language.Override(packet.Translation.Lang, packet.Translation.Id, packet.Translation.Translation);
-                break;
-            case Packet_ServerIdEnum.BlockType:
-                NewBlockTypes[packet.BlockType.Id] = packet.BlockType.Blocktype;
-                break;
-            case Packet_ServerIdEnum.SunLevels:
-                NightLevels = packet.SunLevels.Sunlevels;
-                break;
-            case Packet_ServerIdEnum.LightLevels:
-                for (int i = 0; i < packet.LightLevels.LightlevelsCount; i++)
-                {
-                    mLightLevels[i] = DeserializeFloat(packet.LightLevels.Lightlevels[i]);
-                }
-                break;
-            case Packet_ServerIdEnum.Follow:
-                IntRef oldFollowId = FollowId();
-                Follow = packet.Follow.Client;
-                if (packet.Follow.Tpp != 0)
-                {
-                    SetCamera(CameraType.Overhead);
-                    player.position.rotx = Game.GetPi();
-                    GuiStateBackToGame();
-                }
-                else
-                {
-                    SetCamera(CameraType.Fpp);
-                }
-                break;
-            case Packet_ServerIdEnum.Bullet:
-                EntityAddLocal(CreateBulletEntity(
-                    DeserializeFloat(packet.Bullet.FromXFloat),
-                    DeserializeFloat(packet.Bullet.FromYFloat),
-                    DeserializeFloat(packet.Bullet.FromZFloat),
-                    DeserializeFloat(packet.Bullet.ToXFloat),
-                    DeserializeFloat(packet.Bullet.ToYFloat),
-                    DeserializeFloat(packet.Bullet.ToZFloat),
-                    DeserializeFloat(packet.Bullet.SpeedFloat)));
-                break;
-            case Packet_ServerIdEnum.Ammo:
-                if (!ammostarted)
-                {
-                    ammostarted = true;
-                    for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
-                    {
-                        Packet_IntInt k = packet.Ammo.TotalAmmo[i];
-                        LoadedAmmo[k.Key_] = MathCi.MinInt(k.Value_, blocktypes[k.Key_].AmmoMagazine);
-                    }
-                }
-                TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
-                for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
-                {
-                    TotalAmmo[packet.Ammo.TotalAmmo[i].Key_] = packet.Ammo.TotalAmmo[i].Value_;
-                }
-                break;
-            case Packet_ServerIdEnum.Explosion:
-                {
-                    Entity entity = new Entity();
-                    entity.expires = new Expires();
-                    entity.expires.timeLeft = DeserializeFloat(packet.Explosion.TimeFloat);
-                    entity.push = packet.Explosion;
-                    EntityAddLocal(entity);
-                }
-                break;
-            case Packet_ServerIdEnum.Projectile:
-                {
-                    Entity entity = new Entity();
-
-                    Sprite sprite = new Sprite();
-                    sprite.image = "ChemicalGreen.png";
-                    sprite.size = 14;
-                    sprite.animationcount = 0;
-                    sprite.positionX = DeserializeFloat(packet.Projectile.FromXFloat);
-                    sprite.positionY = DeserializeFloat(packet.Projectile.FromYFloat);
-                    sprite.positionZ = DeserializeFloat(packet.Projectile.FromZFloat);
-                    entity.sprite = sprite;
-
-                    Grenade_ grenade = new Grenade_();
-                    grenade.velocityX = DeserializeFloat(packet.Projectile.VelocityXFloat);
-                    grenade.velocityY = DeserializeFloat(packet.Projectile.VelocityYFloat);
-                    grenade.velocityZ = DeserializeFloat(packet.Projectile.VelocityZFloat);
-                    grenade.block = packet.Projectile.BlockId;
-                    grenade.sourcePlayer = packet.Projectile.SourcePlayerID;
-                    entity.grenade = grenade;
-
-                    entity.expires = Expires.Create(DeserializeFloat(packet.Projectile.ExplodesAfterFloat));
-
-                    EntityAddLocal(entity);
-                }
-                break;
-            case Packet_ServerIdEnum.BlockTypes:
-                blocktypes = NewBlockTypes;
-                NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
-
-                int textureInAtlasIdsCount = 1024;
-                string[] textureInAtlasIds = new string[textureInAtlasIdsCount];
-                int lastTextureId = 0;
-                for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
-                {
-                    if (blocktypes[i] != null)
-                    {
-                        string[] to_load = new string[7];
-                        int to_loadLength = 7;
-                        {
-                            to_load[0] = blocktypes[i].TextureIdLeft;
-                            to_load[1] = blocktypes[i].TextureIdRight;
-                            to_load[2] = blocktypes[i].TextureIdFront;
-                            to_load[3] = blocktypes[i].TextureIdBack;
-                            to_load[4] = blocktypes[i].TextureIdTop;
-                            to_load[5] = blocktypes[i].TextureIdBottom;
-                            to_load[6] = blocktypes[i].TextureIdForInventory;
-                        }
-                        for (int k = 0; k < to_loadLength; k++)
-                        {
-                            if (!Contains(textureInAtlasIds, textureInAtlasIdsCount, to_load[k]))
-                            {
-                                textureInAtlasIds[lastTextureId++] = to_load[k];
-                            }
-                        }
-                    }
-                }
-                d_Data.UseBlockTypes(platform, blocktypes, GlobalVar.MAX_BLOCKTYPES);
-                for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
-                {
-                    Packet_BlockType b = blocktypes[i];
-                    if (b == null)
-                    {
-                        continue;
-                    }
-                    //Indexed by block id and TileSide.
-                    if (textureInAtlasIds != null)
-                    {
-                        TextureId[i][0] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdTop);
-                        TextureId[i][1] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdBottom);
-                        TextureId[i][2] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdFront);
-                        TextureId[i][3] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdBack);
-                        TextureId[i][4] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdLeft);
-                        TextureId[i][5] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdRight);
-                        TextureIdForInventory[i] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdForInventory);
-                    }
-                }
-                UseTerrainTextures(textureInAtlasIds, textureInAtlasIdsCount);
-                handRedraw = true;
-                RedrawAllBlocks();
-                break;
-            case Packet_ServerIdEnum.ServerRedirect:
-                ChatLog("[GAME] Received server redirect");
-                //Leave current server
-                SendLeave(Packet_LeaveReasonEnum.Leave);
-                //Exit game screen and create new game instance
-                ExitAndSwitchServer(packet.Redirect);
-                break;
-        }
-    }
     internal ClientPacketHandler[] packetHandlers;
 
     void CacheAsset(Asset asset)
@@ -3743,7 +3084,7 @@
         }
     }
 
-    void SetFile(string name, string md5, byte[] downloaded, int downloadedLength)
+    public void SetFile(string name, string md5, byte[] downloaded, int downloadedLength)
     {
         string nameLowercase = platform.StringToLower(name);
         
@@ -3781,7 +3122,7 @@
 
     internal int handTexture;
 
-    bool ammostarted;
+    internal bool ammostarted;
     internal Packet_BlockType[] NewBlockTypes;
     internal string blobdownloadname;
     internal string blobdownloadmd5;
@@ -3915,18 +3256,6 @@
         UseTerrainTextureAtlas2d(bitmap, atlas2d.width);
     }
 
-    int IndexOf(string[] arr, int arrLength, string value)
-    {
-        for (int i = 0; i < arrLength; i++)
-        {
-            if (StringEquals(arr[i], value))
-            {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     public static bool StringEquals(string strA, string strB)
     {
         if (strA == null && strB == null)
@@ -3938,11 +3267,6 @@
             return false;
         }
         return strA == strB;
-    }
-
-    bool Contains(string[] arr, int arrLength, string value)
-    {
-        return IndexOf(arr, arrLength, value) != -1;
     }
 
     internal AnimationState localplayeranim;
