@@ -309,7 +309,7 @@
         tmpBlockingBlockType.value = 0;
 
         // X
-        if (IsEmptySpaceForPlayer(high, newposition[0], oldposition[1], oldposition[2], tmpBlockingBlockType))
+        if (IsEmptySpaceForPlayer(high, newposition[0], tmpPlayerPosition[1], tmpPlayerPosition[2], tmpBlockingBlockType))
         {
             tmpPlayerPosition[0] = newposition[0];
         }
@@ -317,20 +317,20 @@
         {
             // For autojump
             game.reachedwall = true;
-            if (IsEmptyPoint(newposition[0], oldposition[1] + 1, oldposition[2], null))
+            if (IsEmptyPoint(newposition[0], tmpPlayerPosition[1] + 1, tmpPlayerPosition[2], null))
             {
                 game.reachedwall_1blockhigh = true;
                 if (game.blocktypes[tmpBlockingBlockType.value].DrawType == Packet_DrawTypeEnum.HalfHeight) { game.reachedHalfBlock = true; }
-                if (StandingOnHalfBlock(newposition[0], oldposition[1], oldposition[2])) { game.reachedHalfBlock = true; }
+                if (StandingOnHalfBlock(newposition[0], tmpPlayerPosition[1], tmpPlayerPosition[2])) { game.reachedHalfBlock = true; }
             }
         }
         // Y
-        if (IsEmptySpaceForPlayer(high, oldposition[0], newposition[1], oldposition[2], tmpBlockingBlockType))
+        if (IsEmptySpaceForPlayer(high, tmpPlayerPosition[0], newposition[1], tmpPlayerPosition[2], tmpBlockingBlockType))
         {
             tmpPlayerPosition[1] = newposition[1];
         }
         // Z
-        if (IsEmptySpaceForPlayer(high, oldposition[0], oldposition[1], newposition[2], tmpBlockingBlockType))
+        if (IsEmptySpaceForPlayer(high, tmpPlayerPosition[0], tmpPlayerPosition[1], newposition[2], tmpBlockingBlockType))
         {
             tmpPlayerPosition[2] = newposition[2];
         }
@@ -338,11 +338,11 @@
         {
             // For autojump
             game.reachedwall = true;
-            if (IsEmptyPoint(oldposition[0], oldposition[1] + 1, newposition[2], null))
+            if (IsEmptyPoint(tmpPlayerPosition[0], tmpPlayerPosition[1] + 1, newposition[2], null))
             {
                 game.reachedwall_1blockhigh = true;
                 if (game.blocktypes[tmpBlockingBlockType.value].DrawType == Packet_DrawTypeEnum.HalfHeight) { game.reachedHalfBlock = true; }
-                if (StandingOnHalfBlock(oldposition[0], oldposition[1], newposition[2])) { game.reachedHalfBlock = true; }
+                if (StandingOnHalfBlock(tmpPlayerPosition[0], tmpPlayerPosition[1], newposition[2])) { game.reachedHalfBlock = true; }
             }
         }
 
