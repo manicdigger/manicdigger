@@ -56,7 +56,14 @@ public class WebSocketConnection : NetConnection
 
     public override IPEndPointCi RemoteEndPoint()
     {
-        return IPEndPointCiDefault.Create(server.Context.UserEndPoint.Address.ToString());
+        try
+        {
+            return IPEndPointCiDefault.Create(server.Context.UserEndPoint.Address.ToString());
+        }
+        catch
+        {
+            return IPEndPointCiDefault.Create("unknown");
+        }
     }
 
     public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
