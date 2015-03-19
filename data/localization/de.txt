@@ -263,6 +263,13 @@ Block_SpruceTreeTrunk=Fichtenstamm
 Block_SpruceWood=Fichtenholz
 Block_SpruceLeaves=Fichtenblätter
 Block_SpruceSapling=Fichtensetzling
+Block_HalfCobblestone=Kopfsteinpflasterstufe
+Block_HalfMossyCobblestone=Moosige Kopfsteinpflasterstufe
+Block_HalfOakWood=Eichenholzstufe
+Block_HalfBirchWood=Birkenholzstufe
+Block_HalfSpruceWood=Fichtenholzstufe
+Block_HalfBrick=Ziegelstufe
+Block_HalfSandBrick=Sandsteinziegelstufe
 
 
 Server_CannotWriteLogFile=Kann die Server-Logdatei {0} nicht beschreiben.
@@ -275,7 +282,7 @@ Server_ConfigCorruptNoBackup=ServerConfig beschädigt! Neu erstellt. KONNTE KEIN
 Server_ConfigLoaded=Serverkonfiguration geladen.
 Server_ClientConfigNotFound=ServerClient-Konfigurationsdatei nicht gefunden. Erstelle neu.
 Server_ClientConfigGuestGroupNotFound=Standardgruppe für Gäste nicht gefunden!
-Server_ClientConfigRegisteredGroupNotFound=Standardgruppe für registrierte benutzer nicht gefunden!
+Server_ClientConfigRegisteredGroupNotFound=Standardgruppe für registrierte Benutzer nicht gefunden!
 Server_ClientConfigLoaded=ServerClient-Konfiguration geladen.
 Server_InvalidSpawnCoordinates=Ungültige Koordinaten für den Standard-Spawnpunkt!
 Server_ProgressDownloadingData=Lade Daten...

@@ -263,6 +263,13 @@ Block_SpruceTreeTrunk=Spruce Tree Trunk
 Block_SpruceWood=Spruce Wood
 Block_SpruceLeaves=Spruce Leaves
 Block_SpruceSapling=Spruce Sapling
+Block_HalfCobblestone=Cobblestone Stair
+Block_HalfMossyCobblestone=Mossy Cobblestone Stair
+Block_HalfOakWood=Oak Wood Stair
+Block_HalfBirchWood=Birch Wood Stair
+Block_HalfSpruceWood=Spruce Wood Stair
+Block_HalfBrick=Brick Stair
+Block_HalfSandBrick=Sand Brick Stair
 
 
 Server_CannotWriteLogFile=Cannot write to server log file {0}.
