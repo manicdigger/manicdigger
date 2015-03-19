@@ -414,11 +414,6 @@
     internal Entity player;
     internal float constWallDistance;
 
-    public bool IsFluid(Packet_BlockType block)
-    {
-        return block.DrawType == Packet_DrawTypeEnum.Fluid;
-    }
-
     public bool IsRail(Packet_BlockType block)
     {
         return block.Rail > 0;	//Does not include Rail0, but this can't be placed.
