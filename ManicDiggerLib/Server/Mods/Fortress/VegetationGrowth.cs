@@ -117,6 +117,13 @@ namespace ManicDigger.Mods
                 m.SetBlock(x, y, z, blocktype);
             }
         }
+        void PlaceIfEmpty(int x, int y, int z, int blocktype)
+        {
+            if (m.IsValidPos(x, y, z) && m.GetBlock(x, y, z) == 0)
+            {
+                m.SetBlock(x, y, z, blocktype);
+            }
+        }
         void BlockTickGrowGrassOrMushroomsOnDirt(int x, int y, int z)
         {
             if (m.GetBlock(x, y, z) == Dirt)
@@ -128,11 +135,11 @@ namespace ManicDigger.Mods
                     {
                         if (IsShadow(x, y, z) && !reflectedSunnyLight(x, y, z))
                         {
-                            // if 1% chance happens then 1 mushroom will grow up );
+                            // if 1% chance happens then 1 mushroom will grow up
                             if (rnd.NextDouble() < 0.01)
                             {
                                 int tile = rnd.NextDouble() < 0.6 ? RedMushroom : BrownMushroom;
-                                m.SetBlock(x, y, z + 1, tile);
+                                PlaceIfEmpty(x, y, z + 1, tile);
                             }
                         }
                         else
@@ -192,13 +199,6 @@ namespace ManicDigger.Mods
                         }
                     }
                 }
-            }
-        }
-        void PlaceIfEmpty(int x, int y, int z, int blocktype)
-        {
-            if (m.IsValidPos(x, y, z) && m.GetBlock(x, y, z) == 0)
-            {
-                m.SetBlock(x, y, z, blocktype);
             }
         }
         Random rnd = new Random();
