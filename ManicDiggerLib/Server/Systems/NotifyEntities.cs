@@ -68,6 +68,11 @@ public class ServerSystemNotifyEntities : ServerSystem
             {
                 continue;
             }
+            if (!c.IsSpectator && k.Value.IsSpectator)
+            {
+                // Do not send position updates for spectating players if player is not spectator himself
+                continue;
+            }
             if (k.Key == clientid)
             {
                 if (k.Value.positionOverride == null)
