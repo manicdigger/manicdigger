@@ -1,14 +1,13 @@
-language: c
+language: csharp
 
 install:
- - sudo apt-get install mono-gmcs cli-common-dev > /dev/null
 # innosetup
  - sudo add-apt-repository -y ppa:ubuntu-wine/ppa
  - sudo apt-get update
  - sudo apt-get install wine1.7
- 
+
 script:
- - xbuild /p:Configuration=Release
+ - xbuild /p:Configuration=Release ManicDigger.sln
  - ./build.sh
  - echo `date +%Y-%m-%d` > output/version.txt
  - mv output ManicDiggerBinary
@@ -40,7 +39,7 @@ env:
   global:
   - GH_REF: github.com/manicdigger/manicdigger-builds
   - secure: 0+XB4Y76gJ4kzJkbGNjsPHAT1zYLhJb4T5w8MWeOa8SQcla+6E5a2gtE/tMQSXMJHtmA+jDUJho5VJ8yRpIVwnnGVYOxzmAdEulrSk9dQaYs9YNSoE7qfxMkomffXyKTOsWdu75c5/iMxI0iqBg5IKm/lBB5BBDqMGWSrfW+3hk=
- 
+
 deploy:
   provider: releases
   api_key:
