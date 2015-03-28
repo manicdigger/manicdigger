@@ -1242,7 +1242,7 @@
 
     internal bool DeleteTexture(string name)
     {
-        if (textures.Contains(name))
+        if (name != null && textures.Contains(name))
         {
             int id = textures.Get(name);
             textures.Remove(name);
