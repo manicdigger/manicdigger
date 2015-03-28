@@ -166,14 +166,17 @@ public class ClientPacketHandlerEntityDespawn : ClientPacketHandler
     public override void Handle(Game game, Packet_Server packet)
     {
         //Check if Entity has DownloadSkin set and texture is not empty or default player texture
-        if (game.entities[packet.EntityDespawn.Id].drawModel.DownloadSkin)
+        if (game.entities[packet.EntityDespawn.Id] != null)
         {
-            int currentTex = game.entities[packet.EntityDespawn.Id].drawModel.CurrentTexture;
-            if (currentTex > 0 && currentTex != game.GetTexture("mineplayer.png"))
+            if (game.entities[packet.EntityDespawn.Id].drawModel != null && game.entities[packet.EntityDespawn.Id].drawModel.DownloadSkin)
             {
-                //Entity probably is a player. Set CurrentTexture to -1 and then delete stored texture.
-                game.entities[packet.EntityDespawn.Id].drawModel.CurrentTexture = -1;
-                game.DeleteTexture(game.entities[packet.EntityDespawn.Id].drawName.Name);
+                int currentTex = game.entities[packet.EntityDespawn.Id].drawModel.CurrentTexture;
+                if (currentTex > 0 && currentTex != game.GetTexture("mineplayer.png"))
+                {
+                    //Entity probably is a player. Set CurrentTexture to -1 and then delete stored texture.
+                    game.entities[packet.EntityDespawn.Id].drawModel.CurrentTexture = -1;
+                    game.DeleteTexture(game.entities[packet.EntityDespawn.Id].drawName.Name);
+                }
             }
         }
         game.entities[packet.EntityDespawn.Id] = null;
