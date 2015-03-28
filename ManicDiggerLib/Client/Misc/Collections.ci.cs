@@ -361,6 +361,11 @@ public class DictionaryStringInt1024
     internal int count;
     const int max = 1024;
 
+    /// <summary>
+    /// Set the specified key to the specified value.
+    /// </summary>
+    /// <param name="key">Key</param>
+    /// <param name="value">Value to set</param>
     public void Set(string key, int value)
     {
         for (int i = 0; i < count; i++)
@@ -391,6 +396,12 @@ public class DictionaryStringInt1024
         items[count++] = k;
     }
 
+    /// <summary>
+    /// Check if the dictionary contains the specified key.
+    /// This method is case-sensitive.
+    /// </summary>
+    /// <param name="key">Key</param>
+    /// <returns><b>true</b> if key is found</returns>
     internal bool Contains(string key)
     {
         for (int i = 0; i < count; i++)
@@ -407,6 +418,12 @@ public class DictionaryStringInt1024
         return false;
     }
 
+    /// <summary>
+    /// Get the specified key.
+    /// This method is case-sensitive.
+    /// </summary>
+    /// <param name="key">Key</param>
+    /// <returns><b>Stored value</b> when key is found in collection, <b>-1</b> otherwise.</returns>
     internal int Get(string key)
     {
         for (int i = 0; i < count; i++)
@@ -417,6 +434,29 @@ public class DictionaryStringInt1024
             }
         }
         return -1;
+    }
+
+    /// <summary>
+    /// Remove the specified key.
+    /// This method is case-sensitive.
+    /// </summary>
+    /// <param name="key">Key</param>
+    /// <returns><b>true</b> if key is found in collection, <b>false</b> otherwise.</returns>
+    public bool Remove(string key)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (items[i] == null)
+            {
+                continue;
+            }
+            if (Game.StringEquals(items[i].key, key))
+            {
+                items [i] = null;
+                return true;
+            }
+        }
+        return false;
     }
 }
 
