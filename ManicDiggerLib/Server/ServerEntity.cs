@@ -45,6 +45,8 @@ public class ServerEntityDrawName
     internal bool onlyWhenSelected;
     [ProtoMember(3)]
     internal bool clientAutoComplete;
+    [ProtoMember(4)]
+    internal string color;
 }
 
 [ProtoContract()]

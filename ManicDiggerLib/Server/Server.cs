@@ -3619,7 +3619,7 @@ public class ClientOnServer
     }
     internal List<string> privileges;
     internal string color;
-    internal string displayColor;
+    internal string displayColor { get { return entity.drawName.color; } set { entity.drawName.color = value; } }
     public string ColoredPlayername(string subsequentColor)
     {
         return this.color + this.playername + subsequentColor;

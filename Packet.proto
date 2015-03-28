@@ -750,6 +750,7 @@ package Packet;
 		optional string name = 1;
 		optional bool onlyWhenSelected = 2;
 		optional bool clientAutoComplete = 3;
+		optional string color = 4;
     }
     
     message ServerEntityDrawText

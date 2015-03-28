@@ -308,6 +308,7 @@ public class ServerSystemNotifyEntities : ServerSystem
         {
             p.DrawName_ = new Packet_ServerEntityDrawName();
             p.DrawName_.Name = entity.drawName.name;
+            p.DrawName_.Color = entity.drawName.color;
             p.DrawName_.OnlyWhenSelected = entity.drawName.onlyWhenSelected;
             p.DrawName_.ClientAutoComplete = entity.drawName.clientAutoComplete;
         }

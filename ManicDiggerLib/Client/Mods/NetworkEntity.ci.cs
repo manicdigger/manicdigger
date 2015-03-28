@@ -81,7 +81,14 @@ public class ClientPacketHandlerEntitySpawn : ClientPacketHandler
         if (entity.DrawName_ != null)
         {
             old.drawName = new DrawName();
-            old.drawName.Name = entity.DrawName_.Name;
+            if (entity.DrawName_.Color != null)
+            {
+               old.drawName.Name = game.platform.StringFormat2("{0}{1}", entity.DrawName_.Color, entity.DrawName_.Name);
+            }
+            else
+            {
+                old.drawName.Name = entity.DrawName_.Name;
+            }
             if (!game.platform.StringStartsWithIgnoreCase(old.drawName.Name, "&"))
             {
                 old.drawName.Name = game.platform.StringFormat("&f{0}", old.drawName.Name);
