@@ -428,6 +428,10 @@ public class DictionaryStringInt1024
     {
         for (int i = 0; i < count; i++)
         {
+            if (items[i] == null)
+            {
+                continue;
+            }
             if (Game.StringEquals(items[i].key, key))
             {
                 return items[i].value;
@@ -452,7 +456,7 @@ public class DictionaryStringInt1024
             }
             if (Game.StringEquals(items[i].key, key))
             {
-                items [i] = null;
+                items[i] = null;
                 return true;
             }
         }
