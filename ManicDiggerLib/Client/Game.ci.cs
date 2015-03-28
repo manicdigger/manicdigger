@@ -1240,6 +1240,18 @@
         return textures.Get(name);
     }
 
+    internal bool DeleteTexture(string name)
+    {
+        if (textures.Contains(name))
+        {
+            int id = textures.Get(name);
+            textures.Remove(name);
+            platform.GLDeleteTexture(id);
+            return true;
+        }
+        return false;
+    }
+
     internal int xcenter(float width)
     {
         return platform.FloatToInt((platform.GetCanvasWidth() / 2 - width / 2));
