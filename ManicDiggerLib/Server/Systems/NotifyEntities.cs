@@ -8,10 +8,19 @@ public class ServerSystemNotifyEntities : ServerSystem
     {
         foreach (var k in server.clients)
         {
-            ClientOnServer c = k.Value;
-            if (c.IsBot)
+            if (k.Value.IsBot)
             {
-                //Bots don't need to be sent packets with other player's positions
+                //Apply position overrides (to update bot positions)
+                if (k.Value.positionOverride == null)
+                {
+                    continue;
+                }
+                else
+                {
+                    k.Value.entity.position = k.Value.positionOverride;
+                    k.Value.positionOverride = null;
+                }
+                //Bots don't need to be sent other packets with other player's positions
                 continue;
             }
             NotifyPlayers(server, k.Key);
