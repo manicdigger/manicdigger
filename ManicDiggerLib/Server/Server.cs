@@ -59,6 +59,10 @@ public partial class Server : ICurrentTime, IDropItem
 
         server = new ServerCi();
         systems = new ServerSystem[256];
+        // This ServerSystem should always be loaded first
+        systems[systemsCount++] = new ServerSystemLoadFirst();
+
+        // Regular ServerSystems
         systems[systemsCount++] = new ServerSystemLoadConfig();
         systems[systemsCount++] = new ServerSystemHeartbeat();
         systems[systemsCount++] = new ServerSystemHttpServer();
@@ -71,6 +75,9 @@ public partial class Server : ICurrentTime, IDropItem
         systems[systemsCount++] = new ServerSystemLoadServerClient();
         systems[systemsCount++] = new ServerSystemNotifyEntities();
         systems[systemsCount++] = new ServerSystemMonsterWalk();
+
+        // This ServerSystem should always be loaded last
+        systems[systemsCount++] = new ServerSystemLoadLast();
 
         // Not finished
         // systems[systemsCount++] = new ServerSystemSign();
