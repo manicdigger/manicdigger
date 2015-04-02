@@ -368,20 +368,6 @@ public partial class Server : ICurrentTime, IDropItem
         }
         Start(config.Port);
 
-        for (int i = 0; i < modEventHandlers.onloadworld.Count; i++)
-        {
-            try
-            {
-                modEventHandlers.onloadworld[i]();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Mod exception: OnLoadWorld");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
-            }
-        }
-
         // server monitor
         if (config.ServerMonitor)
         {
@@ -526,11 +512,6 @@ public partial class Server : ICurrentTime, IDropItem
         this.simulationcurrentframe = (int)save.SimulationCurrentFrame;
         this.LastMonsterId = save.LastMonsterId;
         this.moddata = save.moddata;
-        if (moddata == null) { moddata = new Dictionary<string, byte[]>(); }
-        for (int i = 0; i < onload.Count; i++)
-        {
-            onload[i]();
-        }
     }
     public List<ManicDigger.Action> onload = new List<ManicDigger.Action>();
     public List<ManicDigger.Action> onsave = new List<ManicDigger.Action>();

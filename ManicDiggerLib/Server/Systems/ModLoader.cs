@@ -23,6 +23,7 @@ namespace ManicDigger
             {
                 started = true;
                 LoadMods(server, false);
+                CallOnLoad(server);
             }
         }
 
@@ -337,6 +338,31 @@ namespace ManicDigger
             }
             mod.Start(m);
             loaded[name] = true;
+        }
+
+        void CallOnLoad(Server server)
+        {
+            // Create dictionary to hold Mod data if none has been loaded in savegame
+            if (server.moddata == null) { server.moddata = new Dictionary<string, byte[]>(); }
+            // Execute all methods registered using RegisterOnLoad(). This will fail if they contain errors.
+            for (int i = 0; i < server.onload.Count; i++)
+            {
+                server.onload[i]();
+            }
+            // Try to execute all methods registered using RegisterOnLoadWorld().
+            for (int i = 0; i < server.modEventHandlers.onloadworld.Count; i++)
+            {
+                try
+                {
+                    server.modEventHandlers.onloadworld[i]();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: OnLoadWorld");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
+            }
         }
     }
 }
