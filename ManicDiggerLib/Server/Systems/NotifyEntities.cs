@@ -20,17 +20,6 @@ public class ServerSystemNotifyEntities : ServerSystem
         }
     }
 
-    //PlayerName = c.displayColor + c.playername,
-
-    //    //spectators invisible to players
-    //if (clients[playerid].IsSpectator && (!clients[clientid].IsSpectator))
-    //{
-    //    //Set spectator position to some fake value
-    //    sentpos[0] = -1000 * 32;
-    //    sentpos[1] = -1000 * 32;
-    //    sentpos[2] = 0;
-    //}
-
     void NotifyPlayers(Server server, int clientid)
     {
         ClientOnServer c = server.clients[clientid];
