@@ -150,7 +150,7 @@ namespace ManicDigger
                 try
                 {
                     //Clear temp files
-                    foreach (FileInfo f in dirTemp.EnumerateFiles())
+                    foreach (FileInfo f in dirTemp.GetFiles())
                     {
                         f.Delete();
                     }

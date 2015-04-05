@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{08056549-3BE8-454C-A09A-67EDCDC81261}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -293,14 +293,14 @@
   </Choose>
   <PropertyGroup>
     <PreBuildEvent Condition=" ('$(OS)' == 'Windows_NT') and ( $(Configuration) != 'FastBuild')">cd $(SolutionDir)
-cmd /c "$(SolutionDir)\BuildCito.bat"</PreBuildEvent>
+call BuildCito.bat</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent Condition=" ('$(OS)' == 'Windows_NT') and ( $(Configuration) == 'FastBuild')">cd $(SolutionDir)
-cmd /c "$(SolutionDir)BuildCito.bat" fast</PreBuildEvent>
+call BuildCito.bat fast</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">cd $(SolutionDir)
-sh ./BuildCito.sh</PreBuildEvent>
+call BuildCito.bat</PreBuildEvent>
   </PropertyGroup>
 </Project>
