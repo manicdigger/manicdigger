@@ -114,7 +114,7 @@
         //
         GamePlatform p = menu.p;
 
-        //
+        // Screen measurements
         int width = p.GetCanvasWidth();
         int height = p.GetCanvasHeight();
         float scale = menu.GetScale();
@@ -131,7 +131,11 @@
 
             // Amount of pages
             if (savesPerPage > 0)
+            {
                 pageCount = (savegamesCount - 1) / savesPerPage;
+                if (pageCount < 0) // Stop page count from being negative
+                    pageCount = 0;
+            }
             else
                 pageCount = 0;
 
@@ -191,7 +195,7 @@
         menu.DrawBackground(); // Draw background
         menu.DrawText(title, 20f * scale, p.GetCanvasWidth() / 2, 10f, TextAlign.Center, TextBaseline.Top); // Draw title text
         menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14 * scale,
-                      p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle); // Draw page number
+                      width - 68 * scale, 100 + (height - (2f * 100f * scale)) / 2, TextAlign.Center, TextBaseline.Middle); // Draw page number
 
         // Hide all saved game buttons
         for (int i = 0; i < saveButtonsCount; i++)
@@ -205,13 +209,11 @@
             if (index > saveButtonsCount) break; // If the last entry is reached
 
             // Don't draw more buttons than there are saves
-            if (index >= savegamesCount)
-                break;
+            if (index >= savegamesCount) break;
 
             // Get saved games file path
             string s = savegames[index];
-            if (s == null)
-                continue;
+            if (s == null) continue; // Skip if saved game does not exist
 
             // Set button text
             worldButtons[i].text = menu.p.FileName(savegames[index]);
