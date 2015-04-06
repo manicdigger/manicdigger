@@ -684,8 +684,10 @@ public class GamePlatformNative : GamePlatform
     OnCrashHandler onCrashHandler;
     public override void AddOnCrash(OnCrashHandler handler)
     {
+#if !DEBUG
         crashreporter.OnCrash = OnCrash;
         onCrashHandler = handler;
+#endif
     }
 
     void OnCrash()
