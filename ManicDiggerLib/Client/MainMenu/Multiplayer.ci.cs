@@ -253,7 +253,7 @@
         menu.DrawBackground(); // Draw background
         menu.DrawText(title, 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top); // Draw title text
         menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14 * scale,
-                      p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle); // Draw page number
+                      width - 68 * scale, 100 + (height - (2f * 100f * scale)) / 2, TextAlign.Center, TextBaseline.Middle); // Draw page number
 
         // Draw loading text (if loading servers)
         if (loading)
