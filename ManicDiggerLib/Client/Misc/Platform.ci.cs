@@ -38,6 +38,7 @@
     public abstract void Exit();
     public abstract bool ExitAvailable();
     public abstract string PathSavegames();
+    public abstract void CreateSavegamesDirectory();
     public abstract string PathCombine(string part1, string part2);
     public abstract string[] DirectoryGetFiles(string path, IntRef length);
     public abstract string[] FileReadAllLines(string path, IntRef length);

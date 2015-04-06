@@ -94,6 +94,7 @@
     <Compile Include="..\Packet.Serializer.ci.cs">
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
+    <Compile Include="Client\MainMenu\MenuWidget.ci.cs" />
     <Compile Include="Client\Misc\AnimatedModel.ci.cs" />
     <Compile Include="Client\MainMenu\ConnectToIp.ci.cs" />
     <Compile Include="Client\MainMenu\GameScreen.ci.cs" />

@@ -161,10 +161,23 @@
         Draw2dQuad(GetTexture(image), x, y, height, height);
 
         //       value          size    x position              y position              text alignment      text baseline
-        DrawText(name,          14,     x + 70,                 y + 5,                  TextAlign.Left,     TextBaseline.Top);
-        DrawText(gamemode,      12,     x + width - 10,         y + height - 5,         TextAlign.Right,    TextBaseline.Bottom);
-        DrawText(playercount,   12,     x + width - 10,         y + 5,                  TextAlign.Right,    TextBaseline.Top);
-        DrawText(motd,          12,     x + 70,                 y + height - 5,         TextAlign.Left,     TextBaseline.Bottom);
+        DrawText(name, 14, x + 70, y + 5, TextAlign.Left, TextBaseline.Top);
+        DrawText(gamemode, 12, x + width - 10, y + height - 5, TextAlign.Right, TextBaseline.Bottom);
+        DrawText(playercount, 12, x + width - 10, y + 5, TextAlign.Right, TextBaseline.Top);
+        DrawText(motd, 12, x + 70, y + height - 5, TextAlign.Left, TextBaseline.Bottom);
+    }
+
+    internal void DrawWorldButton(string name, string path, string date, string size, float x, float y, float width, float height, string image)
+    {
+        // World buttons default to: (screen width - 200) x 64
+        Draw2dQuad(GetTexture("serverlist_entry_background.png"), x, y, width, height);
+        Draw2dQuad(GetTexture(image), x, y, height, height);
+
+        //       value          size    x position              y position              text alignment      text baseline
+        DrawText(name, 14, x + 70, y + 5, TextAlign.Left, TextBaseline.Top);
+        DrawText(date, 12, x + width - 10, y + height - 5, TextAlign.Right, TextBaseline.Bottom);
+        DrawText(size, 12, x + width - 10, y + 5, TextAlign.Right, TextBaseline.Top);
+        DrawText(path, 12, x + 70, y + height - 5, TextAlign.Left, TextBaseline.Bottom);
     }
 
     TextTexture GetTextTexture(string text, float fontSize)
@@ -528,17 +541,13 @@
 
     internal string[] GetSavegames(IntRef length)
     {
-        string[] files = p.DirectoryGetFiles(p.PathSavegames(), length);
+        string[] files = p.DirectoryGetFiles(p.PathSavegames(), length); // Load all files in savegames directory
         string[] savegames = new string[length.value];
         int count = 0;
         for (int i = 0; i < length.value; i++)
-        {
-            if(StringEndsWith(files[i], ".mddbs"))
-            {
+            if(StringEndsWith(files[i], ".mddbs")) // Only add files with correct file format to the savegames array
                 savegames[count++] = files[i];
-            }
-        }
-        length.value = count;
+        length.value = count; // Remember amount of savegames in array (since the array can be larger than the amout of saves)
         return savegames;
     }
 
@@ -807,87 +816,113 @@ public class Screen
     internal MenuWidget[] widgets;
     public void DrawWidgets()
     {
+        // Draw all widgets
         for (int i = 0; i < WidgetCount; i++)
         {
-            MenuWidget w = widgets[i];
-            if (w != null)
+            MenuWidget w = widgets[i]; // Current widget in the loop
+            if (w != null) // Draw if widget exists
             {
+                // Check if visable
                 if (!w.visible)
-                {
-                    continue;
-                }
-                string text = w.text;
+                    continue; // Skip if not
+
+                string text = w.text; // Get widget text
+
+                // Check if selected
                 if (w.selected)
+                    text = StringTools.StringAppend(menu.p, "&2", text); // Change text color
+
+                // Draw widget
+                switch (w.type) // Dependent on widget type
                 {
-                    text = StringTools.StringAppend(menu.p, "&2", text);
-                }
-                if (w.type == WidgetType.Button)
-                {
-                    if (w.buttonStyle == ButtonStyle.Text)
+                    case WidgetType.Button: // Button
                     {
-                        if (w.image != null)
+                        // Draw button
+                        switch (w.buttonStyle) // Dependent on style
                         {
-                            menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                            case ButtonStyle.Text: // Text
+                            {
+                                if (w.image != null)
+                                    menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                                menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
+                                break;
+                            }
+
+                            case ButtonStyle.Button: // Button
+                            {
+                                menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
+                                if (w.description != null)
+                                    menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                                break;
+                            }
+
+                            case ButtonStyle.ServerEntry: // Server Entry
+                            {
+                                string[] strings = menu.p.StringSplit(w.text, "\n", new IntRef());
+                                if (w.selected) //Highlight text if selected
+                                {
+                                    strings[0] = StringTools.StringAppend(menu.p, "&2", strings[0]);
+                                    strings[1] = StringTools.StringAppend(menu.p, "&2", strings[1]);
+                                    strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
+                                    strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
+                                }
+                                menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image); // Draw
+
+                                if (w.description != null) //Display a warning sign, when server does not respond to queries
+                                    menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38 * menu.GetScale(), w.y, w.sizey / 2, w.sizey / 2);
+
+                                if (strings[4] != menu.p.GetGameVersion()) //Display an icon if server version differs from client version
+                                    menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38 * menu.GetScale(), w.y + w.sizey / 2, w.sizey / 2, w.sizey / 2);
+                                break;
+                            }
+
+                            case ButtonStyle.WorldEntry: // World Entry
+                            {
+                                string[] strings = menu.p.StringSplit(w.text, "\n", new IntRef());
+                                if (w.selected) //Highlight text if selected
+                                {
+                                    strings[0] = StringTools.StringAppend(menu.p, "&2", strings[0]);
+                                    //strings[1] = StringTools.StringAppend(menu.p, "&2", strings[1]);
+                                    //strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
+                                    //strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
+                                }
+                                menu.DrawWorldButton(strings[0], "", "", "", w.x, w.y, w.sizex, w.sizey, w.image); // Draw
+                                break;
+                            }
                         }
-                        menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
+                        break;
                     }
-                    else if (w.buttonStyle == ButtonStyle.Button)
+
+                    case WidgetType.Textbox: // Textbox
                     {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
-                        if (w.description != null)
+                        if (w.password) // If it is a password (hidden)
+                            text = menu.CharRepeat(42, menu.StringLength(w.text)); // '*'
+
+                        if (w.editing) // If the user is editing it (selected)
+                            text = StringTools.StringAppend(menu.p, text, "_");
+
+                        // Draw
+                        switch (w.buttonStyle) // Depends on style
                         {
+                            case ButtonStyle.Text: // Text
+                                {
+                                    if (w.image != null)
+                                        menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                                    menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
+                                    break;
+                                }
+
+                            default: // Other
+                                {
+                                    menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing || w.hasKeyboardFocus));
+                                    break;
+                                }
+                        }
+
+                        // Draw description
+                        if (w.description != null)
                             menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
-                        }
-                    }
-                    else
-                    {
-                        string[] strings = menu.p.StringSplit(w.text, "\n", new IntRef());
-                        if (w.selected)
-                        {
-                            //Highlight text if selected
-                            strings[0] = StringTools.StringAppend(menu.p, "&2", strings[0]);
-                            strings[1] = StringTools.StringAppend(menu.p, "&2", strings[1]);
-                            strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
-                            strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
-                        }
-                        menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image);
-                        if (w.description != null)
-                        {
-                            //Display a warning sign, when server does not respond to queries
-                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38 * menu.GetScale(), w.y, w.sizey / 2, w.sizey / 2);
-                        }
-                        if (strings[4] != menu.p.GetGameVersion())
-                        {
-                            //Display an icon if server version differs from client version
-                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38 * menu.GetScale(), w.y + w.sizey / 2, w.sizey / 2, w.sizey / 2);
-                        }
-                    }
-                }
-                if (w.type == WidgetType.Textbox)
-                {
-                    if (w.password)
-                    {
-                        text = menu.CharRepeat(42, menu.StringLength(w.text)); // '*'
-                    }
-                    if (w.editing)
-                    {
-                        text = StringTools.StringAppend(menu.p, text, "_");
-                    }
-                    if (w.buttonStyle == ButtonStyle.Text)
-                    {
-                        if (w.image != null)
-                        {
-                            menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
-                        }
-                        menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
-                    }
-                    else
-                    {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing || w.hasKeyboardFocus));
-                    }
-                    if (w.description != null)
-                    {
-                        menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                        break;
                     }
                 }
             }
@@ -951,69 +986,6 @@ public class ServerOnList
     internal bool thumbnailDownloading;
     internal bool thumbnailError;
     internal bool thumbnailFetched;
-}
-
-public enum WidgetType
-{
-    Button,
-    Textbox,
-    Label
-}
-
-public class MenuWidget
-{
-    public MenuWidget()
-    {
-        visible = true;
-        fontSize = 14;
-        nextWidget = -1;
-        hasKeyboardFocus = false;
-    }
-    public void GetFocus()
-    {
-        hasKeyboardFocus = true;
-        if (type == WidgetType.Textbox)
-        {
-            editing = true;
-        }
-    }
-    public void LoseFocus()
-    {
-        hasKeyboardFocus = false;
-        if (type == WidgetType.Textbox)
-        {
-            editing = false;
-        }
-    }
-    internal string text;
-    internal float x;
-    internal float y;
-    internal float sizex;
-    internal float sizey;
-    internal bool pressed;
-    internal bool hover;
-    internal WidgetType type;
-    internal bool editing;
-    internal bool visible;
-    internal float fontSize;
-    internal string description;
-    internal bool password;
-    internal bool selected;
-    internal ButtonStyle buttonStyle;
-    internal string image;
-    internal int nextWidget;
-    internal bool hasKeyboardFocus;
-    internal int color;
-    internal string id;
-    internal bool isbutton;
-    internal FontCi font;
-}
-
-public enum ButtonStyle
-{
-    Button,
-    Text,
-    ServerEntry
 }
 
 public class Model

@@ -120,6 +120,8 @@ namespace ManicDigger.ClientNative
         public CrashReporter(string strFileName)
         {
             m_strFileName = strFileName;
+
+            OnCrash += delegate { if (Debugger.IsAttached) Debugger.Break(); }; // For easier debugging
         }
 
         /// <summary>

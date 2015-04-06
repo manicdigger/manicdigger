@@ -258,7 +258,24 @@ public class GamePlatformNative : GamePlatform
 
     public override string PathSavegames()
     {
-        return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\ManicDigger\\Saves\\";
+    }
+
+    public override void CreateSavegamesDirectory()
+    {
+        string path = PathSavegames();
+
+        // Cancel if the directory already exists
+        if (Directory.Exists(path))
+            return;
+
+        // Try creating directory
+        try { Directory.CreateDirectory(PathSavegames()); }
+        catch (Exception e)
+        {
+            // add some actual exception handeling l8r
+            throw e;
+        }
     }
 
     public override string PathCombine(string part1, string part2)
@@ -268,11 +285,15 @@ public class GamePlatformNative : GamePlatform
 
     public override string[] DirectoryGetFiles(string path, IntRef length)
     {
+        // If the folder path was invalid
         if (!Directory.Exists(path))
         {
+            // Return no file paths and file count 0
             length.value = 0;
             return new string[0];
         }
+
+        // Return files (and file count)
         string[] files = Directory.GetFiles(path);
         length.value = files.Length;
         return files;
@@ -778,9 +799,8 @@ public class GamePlatformNative : GamePlatform
         d.Filter = string.Format("{1}|*.{0}|All files|*.*", extension, extensionName);
         d.CheckFileExists = false;
         d.CheckPathExists = true;
-        string dir = System.Environment.CurrentDirectory;
+        d.Title = "Open or create a gamesave";
         DialogResult result = d.ShowDialog();
-        System.Environment.CurrentDirectory = dir;
         if (result == DialogResult.OK)
         {
             return d.FileName;
