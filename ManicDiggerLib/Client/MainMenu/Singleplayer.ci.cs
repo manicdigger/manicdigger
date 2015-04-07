@@ -10,29 +10,34 @@
         play = new MenuWidget(); // Play
         play.text = "Play";
         play.type = WidgetType.Button;
+        play.buttonStyle = ButtonStyle.Button;
         play.visible = true;
         play.pressable = false; // Can not be pressed until save is selected
 
         newWorld = new MenuWidget(); // New World
         newWorld.text = "New World";
         newWorld.type = WidgetType.Button;
+        newWorld.buttonStyle = ButtonStyle.Button;
         newWorld.visible = true;
 
         back = new MenuWidget(); // Back
         back.text = "Back";
         back.type = WidgetType.Button;
+        back.buttonStyle = ButtonStyle.Button;
         back.visible = true;
 
         open = new MenuWidget(); // Open
         open.text = "Create or open...";
         open.type = WidgetType.Button;
+        open.buttonStyle = ButtonStyle.Button;
         open.visible = true;
 
         refresh = new MenuWidget(); // Refresh
-        refresh.text = "Refresh";
+        refresh.text = "";
         refresh.type = WidgetType.Button;
+        refresh.buttonStyle = ButtonStyle.Text;
         refresh.visible = true;
-        refresh.image = "serverlist_entry_noimage.png";
+        refresh.image = "serverlist_refresh.png";
 
         pageUp = new MenuWidget(); // Page Up
         pageUp.text = "";
@@ -92,7 +97,8 @@
     MenuWidget pageUp;
     MenuWidget pageDown;
 
-    MenuWidget[] worldButtons;
+    MenuWidget[] worldButtons; // Saved games buttons
+    const int worldButtonsCount = 1024; // Max amount of saved games buttons
 
     bool loadSavegames; // If saves should be loaded
     string[] savegames; // Paths to saved games files
@@ -102,8 +108,6 @@
     int pageCount; // Amount of pages of saved games
     int savesPerPage; // Saved games per page
     string title; // Screen title
-
-    const int worldButtonsCount = 1024;
 
     int oldWidth; // CanvasWidth from last rendering (frame)
     int oldHeight; // CanvasHeight from last rendering (frame)
@@ -197,8 +201,8 @@
             back.fontSize = 14f * scale;
 
             // Refrash button
-            refresh.x = 40f * scale;
-            refresh.y = 40f * scale;
+            refresh.x = 30f * scale;
+            refresh.y = 100f * scale;
             refresh.sizex = 64f * scale;
             refresh.sizey = 64f * scale;
 

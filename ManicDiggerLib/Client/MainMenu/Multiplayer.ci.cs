@@ -24,9 +24,11 @@
         connectToIp.nextWidget = 2;
 
         refresh = new MenuWidget(); // Refresh
-        refresh.text = "Refresh";
+        refresh.text = "";
         refresh.type = WidgetType.Button;
-        refresh.nextWidget = 0;
+        refresh.buttonStyle = ButtonStyle.Text;
+        refresh.visible = true;
+        refresh.image = "serverlist_refresh.png";
 
         pageUp = new MenuWidget(); // Page Up
         pageUp.text = "";
@@ -109,7 +111,6 @@
         back.text = menu.lang.Get("MainMenu_ButtonBack");
         connect.text = menu.lang.Get("MainMenu_MultiplayerConnect");
         connectToIp.text = menu.lang.Get("MainMenu_MultiplayerConnectIP");
-        refresh.text = menu.lang.Get("MainMenu_MultiplayerRefresh");
         title = menu.lang.Get("MainMenu_Multiplayer");
     }
 
@@ -159,6 +160,7 @@
             }
 
             serverCount = serversCount.value - 1; // Keep the number of servers
+            UpdateServerSelection(); // Select the same server (if it is still reachable)
         }
 
         GamePlatform p = menu.p;
@@ -191,53 +193,52 @@
 
             // Back button
             back.x = 40f * scale;
-            back.y = height - 104 * scale;
+            back.y = height - 104f * scale;
             back.sizex = 256f * scale;
             back.sizey = 64f * scale;
             back.fontSize = 14f * scale;
 
             // Connect button
-            connect.x = width - 888 * scale;
+            connect.x = width - 592f * scale;
             connect.y = height - 104f * scale;
             connect.sizex = 256f * scale;
             connect.sizey = 64f * scale;
             connect.fontSize = 14f * scale;
 
             // Connect to ip button
-            connectToIp.x = width - 592 * scale;
+            connectToIp.x = width - 296f * scale;
             connectToIp.y = height - 104f * scale;
             connectToIp.sizex = 256f * scale;
             connectToIp.sizey = 64f * scale;
             connectToIp.fontSize = 14f * scale;
 
             // Refresh button
-            refresh.x = width - 296 * scale;
-            refresh.y = height - 104f * scale;
-            refresh.sizex = 256f * scale;
+            refresh.x = 100f * scale;
+            refresh.y = 32f * scale;
+            refresh.sizex = 64f * scale;
             refresh.sizey = 64f * scale;
-            refresh.fontSize = 14f * scale;
 
             // Page up button
-            pageUp.x = width - 94 * scale;
+            pageUp.x = width - 94f * scale;
             pageUp.y = 100f * scale + (serversPerPage - 1) * 70f * scale;
             pageUp.sizex = 64f * scale;
             pageUp.sizey = 64f * scale;
 
             // Page down button
-            pageDown.x = width - 94 * scale;
+            pageDown.x = width - 94f * scale;
             pageDown.y = 100f * scale;
             pageDown.sizex = 64f * scale;
             pageDown.sizey = 64f * scale;
 
             // Logged in name (label)
-            loggedInName.x = width - 228 * scale;
+            loggedInName.x = width - 228f * scale;
             loggedInName.y = 32f * scale;
             loggedInName.sizex = 128f * scale;
             loggedInName.sizey = 32f * scale;
             loggedInName.fontSize = 12f * scale;
             
             // Logout button
-            logout.x = width - 228 * scale;
+            logout.x = width - 228f * scale;
             logout.y = 62f * scale;
             logout.sizex = 128f * scale;
             logout.sizey = 32f * scale;
@@ -254,14 +255,11 @@
 
         // Draw
         menu.DrawBackground(); // Draw background
-        menu.DrawText(title, 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top); // Draw title text
-        menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14 * scale,
-                      width - 68 * scale, 100 + (height - (2f * 100f * scale)) / 2, TextAlign.Center, TextBaseline.Middle); // Draw page number
+        menu.DrawText(title, 20f * scale, p.GetCanvasWidth() / 2f, 10f, TextAlign.Center, TextBaseline.Top); // Draw title text
+        menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14f * scale,
+                      width - 68f * scale, 100f + (height - (2f * 100f * scale)) / 2f, TextAlign.Center, TextBaseline.Middle); // Draw page number
 
-        // Draw loading text (if loading servers)
-        if (loading)
-            menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), 14 * scale, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
-
+        // Update thumbnails
         UpdateThumbnails();
 
         // Hide all server entries
@@ -290,10 +288,10 @@
             // Update size/position
             //if (resized)
             //{
-                serverButtons[i].x = 100 * scale;
-                serverButtons[i].y = 100 * scale + i * 70 * scale;
-                serverButtons[i].sizex = width - 200 * scale;
-                serverButtons[i].sizey = 64 * scale;
+                serverButtons[i].x = 100f * scale;
+                serverButtons[i].y = 100f * scale + i * 70f * scale;
+                serverButtons[i].sizex = width - 200f * scale;
+                serverButtons[i].sizey = 64f * scale;
             //}
 
             if (s.thumbnailError) // If server did not respond to ServerQuery. Maybe not reachable?
@@ -312,6 +310,10 @@
 
         // Draw widgets
         DrawWidgets();
+
+        // Draw loading text (if loading servers)
+        if (loading)
+            menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), 14f * scale, 174f * scale, 50f * scale, TextAlign.Left, TextBaseline.Top);
 
         // Update old(Width/Height)
         oldWidth = width;
@@ -418,6 +420,9 @@
 
         // Select selected server
         serverButtons[serverIndex - (serversPerPage * page)].selected = true;
+
+        // Make connect button pressable
+        connect.pressable = true;
     }
     public void UpdateScrollButtons()
     {
