@@ -3,38 +3,45 @@
     public ScreenSingleplayer()
     {
         // Set widget length (because it is extended)
-        WidgetCount = 64 + saveButtonsCount;
+        WidgetCount = 64 + worldButtonsCount;
         widgets = new MenuWidget[WidgetCount];
 
         // Create buttons
-        play = new MenuWidget();
+        play = new MenuWidget(); // Play
         play.text = "Play";
         play.type = WidgetType.Button;
         play.visible = true;
+        play.pressable = false; // Can not be pressed until save is selected
 
-        newWorld = new MenuWidget();
+        newWorld = new MenuWidget(); // New World
         newWorld.text = "New World";
         newWorld.type = WidgetType.Button;
         newWorld.visible = true;
 
-        back = new MenuWidget();
+        back = new MenuWidget(); // Back
         back.text = "Back";
         back.type = WidgetType.Button;
         back.visible = true;
 
-        open = new MenuWidget();
+        open = new MenuWidget(); // Open
         open.text = "Create or open...";
         open.type = WidgetType.Button;
         open.visible = true;
 
-        pageUp = new MenuWidget();
+        refresh = new MenuWidget(); // Refresh
+        refresh.text = "Refresh";
+        refresh.type = WidgetType.Button;
+        refresh.visible = true;
+        refresh.image = "serverlist_entry_noimage.png";
+
+        pageUp = new MenuWidget(); // Page Up
         pageUp.text = "";
         pageUp.type = WidgetType.Button;
         pageUp.buttonStyle = ButtonStyle.Text;
         pageUp.visible = false;
         pageUp.image = "serverlist_nav_down.png";
 
-        pageDown = new MenuWidget();
+        pageDown = new MenuWidget(); // Page Down
         pageDown.text = "";
         pageDown.type = WidgetType.Button;
         pageDown.buttonStyle = ButtonStyle.Text;
@@ -46,12 +53,13 @@
         widgets[1] = newWorld;
         widgets[2] = back;
         widgets[3] = open;
-        widgets[4] = pageUp;
-        widgets[5] = pageDown;
+        widgets[4] = refresh;
+        widgets[5] = pageUp;
+        widgets[6] = pageDown;
 
         // Add world buttons to widget collection (after the more static buttons)
-        worldButtons = new MenuWidget[saveButtonsCount];
-        for (int i = 0; i < saveButtonsCount; i++)
+        worldButtons = new MenuWidget[worldButtonsCount];
+        for (int i = 0; i < worldButtonsCount; i++)
         {
             // Create widget (world button)
             MenuWidget b = new MenuWidget();
@@ -64,23 +72,29 @@
 
             // Add widget to collections
             worldButtons[i] = b;
-            widgets[6 + i] = b;
+            widgets[7 + i] = b;
         }
 
         // Set screen title
         title = "Singleplayer";
 
+        // Load savegames
+        loadSavegames = true;
+
+        selectedSave = -1; // No save is selected
     }
 
     MenuWidget newWorld;
     MenuWidget play;
     MenuWidget back;
     MenuWidget open;
+    MenuWidget refresh;
     MenuWidget pageUp;
     MenuWidget pageDown;
 
     MenuWidget[] worldButtons;
 
+    bool loadSavegames; // If saves should be loaded
     string[] savegames; // Paths to saved games files
     int savegamesCount; // Amount of saved games in collection
     int selectedSave; // Path to the file of the selected save
@@ -89,7 +103,7 @@
     int savesPerPage; // Saved games per page
     string title; // Screen title
 
-    const int saveButtonsCount = 1024;
+    const int worldButtonsCount = 1024;
 
     int oldWidth; // CanvasWidth from last rendering (frame)
     int oldHeight; // CanvasHeight from last rendering (frame)
@@ -104,14 +118,22 @@
     public override void Render(float dt)
     {
         // Load saved games (should only happen once)
-        if (savegames == null)
+        if (loadSavegames)
         {
+            // Deselect save
+            if (selectedSave >= 0)
+                worldButtons[selectedSave].selected = false;
+            selectedSave = -1;
+
+            // Load saves
             IntRef savegamesCount_ = new IntRef();
             savegames = menu.GetSavegames(savegamesCount_);
             savegamesCount = savegamesCount_.value;
+
+            play.pressable = false; // User has to select a save again
+            loadSavegames = false; // Loading saves done
         }
 
-        //
         GamePlatform p = menu.p;
 
         // Screen measurements
@@ -141,7 +163,10 @@
 
             // Stop the current page from being beyond the last page
             if (page > pageCount)
+            {
                 page = pageCount;
+                UpdateSaveSelection();
+            }
 
             // Play button
             play.x = width - 888 * scale;
@@ -171,6 +196,12 @@
             back.sizey = 64f * scale;
             back.fontSize = 14f * scale;
 
+            // Refrash button
+            refresh.x = 40f * scale;
+            refresh.y = 40f * scale;
+            refresh.sizex = 64f * scale;
+            refresh.sizey = 64f * scale;
+
             // Page up button
             pageUp.x = width - 94 * scale;
             pageUp.y = 100f * scale + (savesPerPage - 1) * 70f * scale;
@@ -198,7 +229,7 @@
                       width - 68 * scale, 100 + (height - (2f * 100f * scale)) / 2, TextAlign.Center, TextBaseline.Middle); // Draw page number
 
         // Hide all saved game buttons
-        for (int i = 0; i < saveButtonsCount; i++)
+        for (int i = 0; i < worldButtonsCount; i++)
             worldButtons[i].visible = false;
 
         // Draw saved games
@@ -206,7 +237,7 @@
         {
             // Get current saved games index
             int index = i + (savesPerPage * page); // Get index
-            if (index > saveButtonsCount) break; // If the last entry is reached
+            if (index > worldButtonsCount) break; // If the last entry is reached
 
             // Don't draw more buttons than there are saves
             if (index >= savegamesCount) break;
@@ -248,13 +279,36 @@
 
     public void PageUp_()
     {
-        if (pageUp.visible && page < saveButtonsCount / savesPerPage - 1)
+        if (pageUp.visible && page < worldButtonsCount / savesPerPage - 1)
+        {
             page++;
+            UpdateSaveSelection();
+        }
     }
     public void PageDown_()
     {
         if (page > 0)
+        {
             page--;
+            UpdateSaveSelection();
+        }
+    }
+    public void UpdateSaveSelection()
+    {
+        // Deselect all save buttons
+        for (int i = 0; i < worldButtonsCount; i++)
+        {
+            worldButtons[i].selected = false;
+        }
+
+        // Abort if no save is selected
+        if (selectedSave == -1) return;
+
+        // Abort if no save can not be selected (selected save is in a previous page)
+        if (selectedSave - (savesPerPage * page) < 0) return;
+
+        // Select selected save
+        worldButtons[selectedSave - (savesPerPage * page)].selected = true;
     }
     public void UpdateScrollButtons()
     {
@@ -262,7 +316,7 @@
         bool maxpage = false;
         if (savesPerPage <= 0) // Disable page up if there are no saves per page
             maxpage = true;
-        else if ((page + 1) * savesPerPage >= saveButtonsCount)
+        else if ((page + 1) * savesPerPage >= worldButtonsCount)
             maxpage = true;
         else if ((page + 1) * savesPerPage >= savegamesCount)
             maxpage = true;
@@ -284,19 +338,37 @@
         menu.StartMainMenu();
     }
 
+    public override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        //menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
+        if (e.GetDelta() < 0) //Mouse wheel turned down
+        {
+            PageUp_();
+        }
+        else if (e.GetDelta() > 0) //Mouse wheel turned up
+        {
+            PageDown_();
+        }
+    }
     public override void OnButton(MenuWidget w)
     {
         // Check what button was clicked
         if (w == newWorld) // New world
             menu.StartNewWorld();
         else if (w == play) // Play
-            menu.ConnectToSingleplayer(savegames[selectedSave]); // Load save
+        {
+            // Load (and start) saved game
+            if (play.pressable) // Check if the button can be pressed
+                menu.ConnectToSingleplayer(savegames[selectedSave]);
+        }
         else if (w == back) // Back (to main menu)
             OnBackPressed();
         else if (w == pageUp) // Page up button
             PageUp_();
         else if (w == pageDown) // Page down button
             PageDown_();
+        else if (w == refresh) // Refresh
+            loadSavegames = true; // Reload saved games
         else if (w == open) // Open (with dialog)
         {
             // Decide on savegame extension
@@ -318,7 +390,7 @@
         {
             // Deselect all saves
             int index = -1;
-            for (int i = 0; i < saveButtonsCount; i++)
+            for (int i = 0; i < worldButtonsCount; i++)
             {
                 if (worldButtons[i] == null)
                     break;
@@ -330,6 +402,8 @@
 
             selectedSave = index; // Get the clicked saves index
             w.selected = true; // Select clicked save
+
+            play.pressable = true; // Make play button pressable
         }
     }
 }

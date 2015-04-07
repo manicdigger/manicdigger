@@ -17,26 +17,24 @@ public class MenuWidget
 {
     public MenuWidget()
     {
+        // Standard settings for widgets
         visible = true;
         fontSize = 14;
         nextWidget = -1;
         hasKeyboardFocus = false;
+        pressable = true; // Can be pressed by default
     }
     public void GetFocus()
     {
-        hasKeyboardFocus = true;
+        hasKeyboardFocus = true; // Set keyboard focus
         if (type == WidgetType.Textbox)
-        {
             editing = true;
-        }
     }
     public void LoseFocus()
     {
-        hasKeyboardFocus = false;
+        hasKeyboardFocus = false; // Remove keyboard focus
         if (type == WidgetType.Textbox)
-        {
             editing = false;
-        }
     }
     internal string text;
     internal float x; // X-Position
@@ -58,14 +56,17 @@ public class MenuWidget
     internal bool hasKeyboardFocus;
     internal int color;
     internal string id;
-    internal bool isbutton;
+    internal bool isButton;
     internal FontCi font;
+    internal bool pressable; // If the widget can be pressed (grayed out)
 
     public virtual void UpdatePosition(int canWidth, int canHeight, float scale)
     {
+        // Not in use - might be later
     }
 }
 
+// None of the below are actually used (thinking of switching to them, or changing the widget system) //Bubba
 public class ButtonWidget : MenuWidget
 {
     public ButtonWidget()

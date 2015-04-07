@@ -828,9 +828,13 @@ public class Screen
 
                 string text = w.text; // Get widget text
 
-                // Check if selected
+                // Check if widget is selected
                 if (w.selected)
-                    text = StringTools.StringAppend(menu.p, "&2", text); // Change text color
+                    text = StringTools.StringAppend(menu.p, "&2", text); // Change text color (show it is selected)
+
+                // Check if widget can not be pressed
+                if (!w.pressable)
+                    text = StringTools.StringAppend(menu.p, "&8", text); // Change text color (gray out)
 
                 // Draw widget
                 switch (w.type) // Dependent on widget type
@@ -842,9 +846,9 @@ public class Screen
                         {
                             case ButtonStyle.Text: // Text
                             {
-                                if (w.image != null)
+                                if (w.image != null) // Draw image if it has one
                                     menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
-                                menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
+                                menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle); // Draw text
                                 break;
                             }
 

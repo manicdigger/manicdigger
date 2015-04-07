@@ -7,45 +7,47 @@
         widgets = new MenuWidget[WidgetCount];
 
         // Create buttons
-        back = new MenuWidget();
+        back = new MenuWidget(); // Back
         back.text = "Back";
         back.type = WidgetType.Button;
         back.nextWidget = 1;
 
-        connect = new MenuWidget();
+        connect = new MenuWidget(); // Connect
         connect.text = "Connect";
         connect.type = WidgetType.Button;
         connect.nextWidget = 3;
-        connectToIp = new MenuWidget();
+        connect.pressable = false; // Can not be pressed until server is selected
+
+        connectToIp = new MenuWidget(); // Connect to IP
         connectToIp.text = "Connect to IP";
         connectToIp.type = WidgetType.Button;
         connectToIp.nextWidget = 2;
 
-        refresh = new MenuWidget();
+        refresh = new MenuWidget(); // Refresh
         refresh.text = "Refresh";
         refresh.type = WidgetType.Button;
         refresh.nextWidget = 0;
 
-        pageUp = new MenuWidget();
+        pageUp = new MenuWidget(); // Page Up
         pageUp.text = "";
         pageUp.type = WidgetType.Button;
         pageUp.buttonStyle = ButtonStyle.Text;
         pageUp.visible = false;
         pageUp.image = "serverlist_nav_down.png";
 
-        pageDown = new MenuWidget();
+        pageDown = new MenuWidget(); // Page Down
         pageDown.text = "";
         pageDown.type = WidgetType.Button;
         pageDown.buttonStyle = ButtonStyle.Text;
         pageDown.visible = false;
         pageDown.image = "serverlist_nav_up.png";
 
-        loggedInName = new MenuWidget();
+        loggedInName = new MenuWidget(); // Loagged in Name
         loggedInName.text = "";
         loggedInName.type = WidgetType.Button;
         loggedInName.buttonStyle = ButtonStyle.Text;
 
-        logout = new MenuWidget();
+        logout = new MenuWidget(); // Logout
         logout.text = "Logout";
         logout.type = WidgetType.Button;
         //logout.image = "serverlist_entry_background.png";
@@ -79,15 +81,12 @@
         // Set screen title
         title = "Multiplayer";
 
-        // 
-        page = 0;
-
         serverListAddress = new HttpResponseCi();
         serverListCsv = new HttpResponseCi();
         serversOnList = new ServerOnList[serversOnListCount];
         thumbResponses = new ThumbnailResponseCi[serversOnListCount];
 
-        loading = true;
+        loading = true; // Load servers
     }
 
     bool loaded;
@@ -121,6 +120,7 @@
         {
             menu.p.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.php", serverListAddress);
             loaded = true;
+            connect.pressable = false; // User has to select a server again
         }
         if (serverListAddress.done) // Not sure
         {
@@ -184,7 +184,10 @@
 
             // Stop the current page from being beyond the last page
             if (page > pageCount)
+            {
                 page = pageCount;
+                UpdateServerSelection();
+            }
 
             // Back button
             back.x = 40f * scale;
@@ -375,12 +378,46 @@
     public void PageUp_()
     {
         if (pageUp.visible && page < serverButtonsCount / serversPerPage - 1)
+        {
             page++;
+            UpdateServerSelection();
+        }
     }
     public void PageDown_()
     {
         if (page > 0)
+        {
             page--;
+            UpdateServerSelection();
+        }
+    }
+    public void UpdateServerSelection()
+    {
+        // Deselect all server buttons
+        for (int i = 0; i < serverButtonsCount; i++)
+        {
+            serverButtons[i].selected = false;
+        }
+
+        // Find selected servers index
+        int serverIndex = -1;
+        for (int i = 0; i < serverCount; i++)
+        {
+            if (serversOnList[i].hash == selectedServerHash) // If server is selected server
+            {
+                serverIndex = i; // Keep selected servers index
+                break;
+            }
+        }
+
+        // Abort if no server is selected
+        if (serverIndex == -1) return;
+
+        // Abort if no server can not be selected (selected server is in a previous page)
+        if (serverIndex - (serversPerPage * page) < 0) return;
+
+        // Select selected server
+        serverButtons[serverIndex - (serversPerPage * page)].selected = true;
     }
     public void UpdateScrollButtons()
     {
@@ -417,54 +454,64 @@
 
     public override void OnBackPressed()
     {
-        menu.StartMainMenu();
+        menu.StartMainMenu(); // Go to the main menu
     }
     public override void OnMouseWheel(MouseWheelEventArgs e)
     {
         //menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
-        if (e.GetDelta() < 0)
+        if (e.GetDelta() < 0) //Mouse wheel turned down
         {
-            //Mouse wheel turned down
             PageUp_();
         }
-        else if (e.GetDelta() > 0)
+        else if (e.GetDelta() > 0) //Mouse wheel turned up
         {
-            //Mouse wheel turned up
             PageDown_();
         }
     }
     string selectedServerHash;
     public override void OnButton(MenuWidget w)
     {
+        // Check all server buttons
         for (int i = 0; i < serverButtonsCount; i++)
         {
-            serverButtons[i].selected = false;
-            if (serverButtons[i] == w)
+            serverButtons[i].selected = false; // Deselect server button
+            if (serverButtons[i] == w) // If server button is clicked
             {
+                // Select server
                 serverButtons[i].selected = true;
                 if (serversOnList[i + serversPerPage * page] != null)
                     selectedServerHash = serversOnList[i + serversPerPage * page].hash;
+
+                connect.pressable = true; // Make connect button  pressable
             }
         }
 
         // Check what button was clicked
         if (w == pageUp) // Page up
+        {
             PageUp_();
+        }
         else if (w == pageDown) // Page down
+        {
             PageDown_();
+        }
         else if (w == back) // Back
+        {
             OnBackPressed();
+        }
         else if (w == connect) // Connect
         {
-            if (selectedServerHash != null)
-                menu.StartLogin(selectedServerHash, null, 0);
+            if (connect.pressable && selectedServerHash != null) // If a server is selected
+                menu.StartLogin(selectedServerHash, null, 0); // Connect (or log in)
         }
         else if (w == connectToIp) // Connect to ip
+        {
             menu.StartConnectToIp();
+        }
         else if (w == refresh) // Refresh
         {
-            loaded = false;
-            loading = true;
+            loaded = false; // (Reset this because it is only used while loading)
+            loading = true; // Reload servers next frame
         }
         else if (w == logout) // Log out
         {
