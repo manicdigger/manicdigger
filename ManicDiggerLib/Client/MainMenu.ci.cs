@@ -579,9 +579,12 @@
         }
         return p.CharArrayToString(charArray, length);
     }
-    
+
     internal void StartNewWorld()
     {
+        screen = new ScreenNewWorld();
+        screen.menu = this;
+        screen.LoadTranslations();
     }
 
     internal void StartModifyWorld()

@@ -2,50 +2,57 @@
 {
     public ScreenLogin()
     {
-        login = new MenuWidget();
+        // Create buttons
+        login = new MenuWidget(); // Login
         login.text = "Login";
         login.type = WidgetType.Button;
         login.nextWidget = 9;
-        loginUsername = new MenuWidget();
+
+        loginUsername = new MenuWidget(); // Login Username
         loginUsername.type = WidgetType.Textbox;
         loginUsername.text = "";
         loginUsername.description = "Username";
         loginUsername.nextWidget = 2;
-        loginPassword = new MenuWidget();
+
+        loginPassword = new MenuWidget(); // Login Password
         loginPassword.type = WidgetType.Textbox;
         loginPassword.text = "";
         loginPassword.description = "Password";
         loginPassword.password = true;
         loginPassword.nextWidget = 3;
-        loginRememberMe = new MenuWidget();
+
+        loginRememberMe = new MenuWidget(); // Login Remember Me
         loginRememberMe.text = "Yes";
         loginRememberMe.type = WidgetType.Button;
         loginRememberMe.description = "Remember me";
         loginRememberMe.nextWidget = 0;
 
-        createAccount = new MenuWidget();
+        createAccount = new MenuWidget(); // Create Account
         createAccount.text = "Create account";
         createAccount.type = WidgetType.Button;
-        createAccountUsername = new MenuWidget();
+
+        createAccountUsername = new MenuWidget(); // Create Account Username
         createAccountUsername.text = "";
         createAccountUsername.type = WidgetType.Textbox;
         createAccountUsername.description = "Username";
-        createAccountPassword = new MenuWidget();
+
+        createAccountPassword = new MenuWidget(); // Create Account Password
         createAccountPassword.text = "";
         createAccountPassword.type = WidgetType.Textbox;
         createAccountPassword.description = "Password";
         createAccountPassword.password = true;
-        createAccountRememberMe = new MenuWidget();
+
+        createAccountRememberMe = new MenuWidget(); // Create Account Remember Me
         createAccountRememberMe.text = "Yes";
         createAccountRememberMe.type = WidgetType.Button;
         createAccountRememberMe.description = "Remember me";
-        back = new MenuWidget();
+
+        back = new MenuWidget(); // Back
         back.text = "Back";
         back.type = WidgetType.Button;
         back.nextWidget = 1;
 
-        title = "Login";
-
+        // Add buttons to widget collection
         widgets[0] = login;
         widgets[1] = loginUsername;
         widgets[2] = loginPassword;
@@ -56,6 +63,10 @@
         widgets[7] = createAccountRememberMe;
         widgets[9] = back;
 
+        // Set screen title
+        title = "Login";
+
+        // Focus login username
         loginUsername.GetFocus();
 
         loginResult = new LoginResultRef();
@@ -74,7 +85,10 @@
     MenuWidget back;
 
     bool triedSavedLogin;
-    string title;
+    string title; // Screen title
+
+    int oldWidth; // CanvasWidth from last rendering (frame)
+    int oldHeight; // CanvasHeight from last rendering (frame)
 
     public override void LoadTranslations()
     {
@@ -121,94 +135,112 @@
             menu.ConnectToGame(loginResultData, loginUsername.text);
         }
 
-        GamePlatform p = menu.p;
-        float scale = menu.GetScale();
-
-        menu.DrawBackground();
-
-        float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
-        float y = p.GetCanvasHeight() / 2 - 250 * scale;
-
+        // Login result
         string loginResultText = null;
         if (loginResult.value == LoginResult.Failed)
         {
             loginResultText = menu.lang.Get("MainMenu_LoginInvalid");
         }
-        if (loginResult.value == LoginResult.Connecting)
+        else if (loginResult.value == LoginResult.Connecting)
         {
             loginResultText = menu.lang.Get("MainMenu_LoginConnecting");
         }
-        if (loginResultText != null)
+
+        GamePlatform p = menu.p;
+
+        // Screen measurements
+        int width = p.GetCanvasWidth();
+        int height = p.GetCanvasHeight();
+        float scale = menu.GetScale();
+        float rightx = p.GetCanvasWidth() / 2 + 150 * scale;
+        float leftx = p.GetCanvasWidth() / 2f - 400f * scale;
+        float y = p.GetCanvasHeight() / 2f - 250f * scale;
+
+        bool resized = (width != oldWidth || height != oldHeight); // If the screen has changed size
+
+        // Update positioning and scale when needed
+        if (resized)
         {
-            menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
+            loginUsername.x = leftx; // Login Username
+            loginUsername.y = y + 100f * scale;
+            loginUsername.sizex = 256f * scale;
+            loginUsername.sizey = 64f * scale;
+            loginUsername.fontSize = 14f * scale;
+
+            loginPassword.x = leftx; // Login Password
+            loginPassword.y = y + 200f * scale;
+            loginPassword.sizex = 256f * scale;
+            loginPassword.sizey = 64f * scale;
+            loginPassword.fontSize = 14f * scale;
+
+            loginRememberMe.x = leftx; // Login Remember me
+            loginRememberMe.y = y + 300f * scale;
+            loginRememberMe.sizex = 256f * scale;
+            loginRememberMe.sizey = 64f * scale;
+            loginRememberMe.fontSize = 14f * scale;
+
+            login.x = leftx; // Login
+            login.y = y + 400f * scale;
+            login.sizex = 256f * scale;
+            login.sizey = 64f * scale;
+            login.fontSize = 14f * scale;
+
+            // menu.DrawText("Create account", 14 * scale, rightx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+
+            createAccountUsername.x = rightx; // Create Account Username
+            createAccountUsername.y = y + 100f * scale;
+            createAccountUsername.sizex = 256f * scale;
+            createAccountUsername.sizey = 64f * scale;
+            createAccountUsername.fontSize = 14f * scale;
+
+            createAccountPassword.x = rightx; // Create Account Password
+            createAccountPassword.y = y + 200f * scale;
+            createAccountPassword.sizex = 256f * scale;
+            createAccountPassword.sizey = 64f * scale;
+            createAccountPassword.fontSize = 14f * scale;
+
+            createAccountRememberMe.x = rightx; // Create Account Remember Me
+            createAccountRememberMe.y = y + 300f * scale;
+            createAccountRememberMe.sizex = 256f * scale;
+            createAccountRememberMe.sizey = 64f * scale;
+            createAccountRememberMe.fontSize = 14f * scale;
+
+            createAccount.x = rightx; // Create Account
+            createAccount.y = y + 400f * scale;
+            createAccount.sizex = 256f * scale;
+            createAccount.sizey = 64f * scale;
+            createAccount.fontSize = 14f * scale;
+
+            createAccountUsername.visible = false; // Hide create account widgets
+            createAccountPassword.visible = false;
+            createAccountRememberMe.visible = false;
+            createAccount.visible = false;
+
+            back.x = 40f * scale; // Back
+            back.y = p.GetCanvasHeight() - 104f * scale;
+            back.sizex = 256f * scale;
+            back.sizey = 64f * scale;
+            back.fontSize = 14f * scale;
         }
 
-        menu.DrawText(title, 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+        // Draw background
+        menu.DrawBackground();
 
-        loginUsername.x = leftx;
-        loginUsername.y = y + 100 * scale;
-        loginUsername.sizex = 256 * scale;
-        loginUsername.sizey = 64 * scale;
-        loginUsername.fontSize = 14 * scale;
+        // Draw login result
+        if (loginResultText != null)
+        {
+            menu.DrawText(loginResultText, 14f * scale, leftx, y - 50f * scale, TextAlign.Left, TextBaseline.Top);
+        }
 
-        loginPassword.x = leftx;
-        loginPassword.y = y + 200 * scale;
-        loginPassword.sizex = 256 * scale;
-        loginPassword.sizey = 64 * scale;
-        loginPassword.fontSize = 14 * scale;
+        // Draw screen title
+        menu.DrawText(title, 14f * scale, leftx, y + 50f * scale, TextAlign.Left, TextBaseline.Top);
 
-        loginRememberMe.x = leftx;
-        loginRememberMe.y = y + 300 * scale;
-        loginRememberMe.sizex = 256 * scale;
-        loginRememberMe.sizey = 64 * scale;
-        loginRememberMe.fontSize = 14 * scale;
-
-        login.x = leftx;
-        login.y = y + 400 * scale;
-        login.sizex = 256 * scale;
-        login.sizey = 64 * scale;
-        login.fontSize = 14 * scale;
-
-        float rightx = p.GetCanvasWidth() / 2 + 150 * scale;
-
-        // menu.DrawText("Create account", 14 * scale, rightx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
-
-        createAccountUsername.x = rightx;
-        createAccountUsername.y = y + 100 * scale;
-        createAccountUsername.sizex = 256 * scale;
-        createAccountUsername.sizey = 64 * scale;
-        createAccountUsername.fontSize = 14 * scale;
-
-        createAccountPassword.x = rightx;
-        createAccountPassword.y = y + 200 * scale;
-        createAccountPassword.sizex = 256 * scale;
-        createAccountPassword.sizey = 64 * scale;
-        createAccountPassword.fontSize = 14 * scale;
-
-        createAccountRememberMe.x = rightx;
-        createAccountRememberMe.y = y + 300 * scale;
-        createAccountRememberMe.sizex = 256 * scale;
-        createAccountRememberMe.sizey = 64 * scale;
-        createAccountRememberMe.fontSize = 14 * scale;
-
-        createAccount.x = rightx;
-        createAccount.y = y + 400 * scale;
-        createAccount.sizex = 256 * scale;
-        createAccount.sizey = 64 * scale;
-        createAccount.fontSize = 14 * scale;
-
-        createAccountUsername.visible = false;
-        createAccountPassword.visible = false;
-        createAccountRememberMe.visible = false;
-        createAccount.visible = false;
-
-        back.x = 40 * scale;
-        back.y = p.GetCanvasHeight() - 104 * scale;
-        back.sizex = 256 * scale;
-        back.sizey = 64 * scale;
-        back.fontSize = 14 * scale;
-
+        // Draw widgets
         DrawWidgets();
+
+        // Update old(Width/Height)
+        oldWidth = width;
+        oldHeight = height;
     }
 
     public override void OnBackPressed()
@@ -221,7 +253,7 @@
 
     public override void OnButton(MenuWidget w)
     {
-        if (w == login)
+        if (w == login) // Login
         {
             loginResultData = new LoginData();
             if (serverHash != null)
@@ -248,11 +280,11 @@
                 menu.StartGame(false, null, connectdata);
             }
         }
-        if (w == createAccount)
+        else if (w == createAccount) // Create account
         {
-            menu.CreateAccount(createAccountUsername.text, createAccountPassword.text, loginResult);
+            menu.CreateAccount(createAccountUsername.text, createAccountPassword.text, loginResult); // Create new account (does not work yet)
         }
-        if (w == loginRememberMe || w == createAccountRememberMe)
+        else if (w == loginRememberMe || w == createAccountRememberMe) // Remember me
         {
             if (w.text == menu.lang.Get("MainMenu_ChoiceYes"))
             {
@@ -263,7 +295,7 @@
                 w.text = menu.lang.Get("MainMenu_ChoiceYes");
             }
         }
-        if (w == back)
+        else if (w == back) // Back
         {
             OnBackPressed();
         }

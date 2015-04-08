@@ -13,24 +13,28 @@
         play.buttonStyle = ButtonStyle.Button;
         play.visible = true;
         play.pressable = false; // Can not be pressed until save is selected
+        play.nextWidget = 1;
 
         newWorld = new MenuWidget(); // New World
         newWorld.text = "New World";
         newWorld.type = WidgetType.Button;
         newWorld.buttonStyle = ButtonStyle.Button;
         newWorld.visible = true;
+        newWorld.nextWidget = 3;
 
         back = new MenuWidget(); // Back
         back.text = "Back";
         back.type = WidgetType.Button;
         back.buttonStyle = ButtonStyle.Button;
         back.visible = true;
+        back.nextWidget = 0;
 
         open = new MenuWidget(); // Open
         open.text = "Create or open...";
         open.type = WidgetType.Button;
         open.buttonStyle = ButtonStyle.Button;
         open.visible = true;
+        open.nextWidget = 2;
 
         refresh = new MenuWidget(); // Refresh
         refresh.text = "";
@@ -66,7 +70,7 @@
         worldButtons = new MenuWidget[worldButtonsCount];
         for (int i = 0; i < worldButtonsCount; i++)
         {
-            // Create widget (world button)
+            // Create saved game button
             MenuWidget b = new MenuWidget();
             worldButtons[i] = new MenuWidget();
             b.text = "Invalid";
@@ -74,6 +78,7 @@
             b.buttonStyle = ButtonStyle.WorldEntry;
             b.visible = false;
             b.image = "serverlist_entry_noimage.png";
+            b.nextWidget = 0; // Select play when tab is pressed
 
             // Add widget to collections
             worldButtons[i] = b;
@@ -126,7 +131,9 @@
         {
             // Deselect save
             if (selectedSave >= 0)
+            {
                 worldButtons[selectedSave].selected = false;
+            }
             selectedSave = -1;
 
             // Load saves
@@ -144,8 +151,8 @@
         int width = p.GetCanvasWidth();
         int height = p.GetCanvasHeight();
         float scale = menu.GetScale();
-        float leftx = p.GetCanvasWidth() / 2 - 128f * scale;
-        float y = p.GetCanvasHeight() / 2 + 0f * scale;
+        float leftx = p.GetCanvasWidth() / 2f - 128f * scale;
+        float y = p.GetCanvasHeight() / 2f + 0f * scale;
 
         bool resized = (width != oldWidth || height != oldHeight); // If the screen has changed size
 
@@ -159,11 +166,12 @@
             if (savesPerPage > 0)
             {
                 pageCount = (savegamesCount - 1) / savesPerPage;
-                if (pageCount < 0) // Stop page count from being negative
-                    pageCount = 0;
+                if (pageCount < 0) { pageCount = 0; } // Stop page count from being negative
             }
             else
-                pageCount = 0;
+            {
+                pageCount = 0; // Set page count to 0 if it can not be defined
+            }
 
             // Stop the current page from being beyond the last page
             if (page > pageCount)
@@ -173,21 +181,21 @@
             }
 
             // Play button
-            play.x = width - 888 * scale;
+            play.x = width - 888f * scale;
             play.y = height - 104f * scale;
             play.sizex = 256f * scale;
             play.sizey = 64f * scale;
             play.fontSize = 14f * scale;
 
             // New world button
-            newWorld.x = width - 592 * scale;
+            newWorld.x = width - 592f * scale;
             newWorld.y = height - 104f * scale;
             newWorld.sizex = 256f * scale;
             newWorld.sizey = 64f * scale;
             newWorld.fontSize = 14f * scale;
 
             // Open button
-            open.x = width - 296 * scale;
+            open.x = width - 296f * scale;
             open.y = height - 104f * scale;
             open.sizex = 256f * scale;
             open.sizey = 64f * scale;
@@ -195,33 +203,29 @@
 
             // Back (to menu) button
             back.x = 40f * scale;
-            back.y = height - 104 * scale;
+            back.y = height - 104f * scale;
             back.sizex = 256f * scale;
             back.sizey = 64f * scale;
             back.fontSize = 14f * scale;
 
-            // Refrash button
-            refresh.x = 30f * scale;
-            refresh.y = 100f * scale;
+            // Refresh button
+            refresh.x = 100f * scale;
+            refresh.y = 30f * scale;
             refresh.sizex = 64f * scale;
             refresh.sizey = 64f * scale;
 
             // Page up button
-            pageUp.x = width - 94 * scale;
+            pageUp.x = width - 94f * scale;
             pageUp.y = 100f * scale + (savesPerPage - 1) * 70f * scale;
             pageUp.sizex = 64f * scale;
             pageUp.sizey = 64f * scale;
 
             // Page down button
-            pageDown.x = width - 94 * scale;
+            pageDown.x = width - 94f * scale;
             pageDown.y = 100f * scale;
             pageDown.sizex = 64f * scale;
             pageDown.sizey = 64f * scale;
         }
-
-        // Hide all buttons
-        for (int i = 0; i < 10; i++)
-            worldButtons[i].visible = false;
 
         // Show open button (or dont, depending on platform)
         open.visible = menu.p.SinglePlayerServerAvailable();
@@ -229,26 +233,28 @@
         // Draw
         menu.DrawBackground(); // Draw background
         menu.DrawText(title, 20f * scale, p.GetCanvasWidth() / 2, 10f, TextAlign.Center, TextBaseline.Top); // Draw title text
-        menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14 * scale,
-                      width - 68 * scale, 100 + (height - (2f * 100f * scale)) / 2, TextAlign.Center, TextBaseline.Middle); // Draw page number
+        menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14f * scale,
+                      width - 68f * scale, (100f + (savesPerPage * 70f) / 2f) * scale, TextAlign.Center, TextBaseline.Middle); // Draw page number
 
         // Hide all saved game buttons
         for (int i = 0; i < worldButtonsCount; i++)
+        {
             worldButtons[i].visible = false;
+        }
 
         // Draw saved games
         for (int i = 0; i < savesPerPage; i++)
         {
             // Get current saved games index
             int index = i + (savesPerPage * page); // Get index
-            if (index > worldButtonsCount) break; // If the last entry is reached
+            if (index > worldButtonsCount) { break; } // If the last entry is reached
 
             // Don't draw more buttons than there are saves
-            if (index >= savegamesCount) break;
+            if (index >= savegamesCount) { break; }
 
             // Get saved games file path
             string s = savegames[index];
-            if (s == null) continue; // Skip if saved game does not exist
+            if (s == null) { continue; } // Skip if saved game does not exist
 
             // Set button text
             worldButtons[i].text = menu.p.FileName(savegames[index]);
@@ -259,10 +265,10 @@
             // Update size/position
             //if (resized)
             //{
-                worldButtons[i].x = 100 * scale;
-                worldButtons[i].y = 100 * scale + i * 70 * scale;
-                worldButtons[i].sizex = p.GetCanvasWidth() - 200 * scale;
-                worldButtons[i].sizey = 64 * scale;
+                worldButtons[i].x = 100f * scale;
+                worldButtons[i].y = 100f * scale + i * 70f * scale;
+                worldButtons[i].sizex = width - 200f * scale;
+                worldButtons[i].sizey = 64f * scale;
             //}
         }
 
@@ -274,7 +280,9 @@
 
         // Tells certain platforms that they cannot play singleplayer
         if (!menu.p.SinglePlayerServerAvailable())
-            menu.DrawText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.", 16 * scale, menu.p.GetCanvasWidth() / 2, menu.p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
+        {
+            menu.DrawText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.", 16f * scale, menu.p.GetCanvasWidth() / 2f, menu.p.GetCanvasHeight() / 2f, TextAlign.Center, TextBaseline.Middle);
+        }
 
         // Update old(Width/Height)
         oldWidth = width;
@@ -306,10 +314,10 @@
         }
 
         // Abort if no save is selected
-        if (selectedSave == -1) return;
+        if (selectedSave == -1) { return; }
 
         // Abort if no save can not be selected (selected save is in a previous page)
-        if (selectedSave - (savesPerPage * page) < 0) return;
+        if (selectedSave - (savesPerPage * page) < 0) { return; }
 
         // Select selected save
         worldButtons[selectedSave - (savesPerPage * page)].selected = true;
@@ -318,23 +326,19 @@
     {
         // Determine if this page is the highest page containing saves
         bool maxpage = false;
-        if (savesPerPage <= 0) // Disable page up if there are no saves per page
+        if (savesPerPage <= 0 // Disable page up if there are no saves per page
+            || (page + 1) * savesPerPage >= worldButtonsCount
+            || (page + 1) * savesPerPage >= savegamesCount)
+        {
             maxpage = true;
-        else if ((page + 1) * savesPerPage >= worldButtonsCount)
-            maxpage = true;
-        else if ((page + 1) * savesPerPage >= savegamesCount)
-            maxpage = true;
+        }
 
         // Hide scroll buttons
-        if (page == 0)
-            pageDown.visible = false;
-        else
-            pageDown.visible = true;
+        if (page == 0) { pageDown.visible = false; }
+        else { pageDown.visible = true; }
 
-        if (maxpage)
-            pageUp.visible = false;
-        else
-            pageUp.visible = true;
+        if (maxpage) { pageUp.visible = false; }
+        else { pageUp.visible = true; }
     }
 
     public override void OnBackPressed()
@@ -345,20 +349,16 @@
     public override void OnMouseWheel(MouseWheelEventArgs e)
     {
         //menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
-        if (e.GetDelta() < 0) //Mouse wheel turned down
-        {
-            PageUp_();
-        }
-        else if (e.GetDelta() > 0) //Mouse wheel turned up
-        {
-            PageDown_();
-        }
+        if (e.GetDelta() < 0) { PageUp_(); } //Mouse wheel turned down
+        else if (e.GetDelta() > 0) { PageDown_(); } //Mouse wheel turned up
     }
     public override void OnButton(MenuWidget w)
     {
         // Check what button was clicked
         if (w == newWorld) // New world
+        {
             menu.StartNewWorld();
+        }
         else if (w == play) // Play
         {
             // Load (and start) saved game
@@ -366,29 +366,36 @@
                 menu.ConnectToSingleplayer(savegames[selectedSave]);
         }
         else if (w == back) // Back (to main menu)
+        {
             OnBackPressed();
+        }
         else if (w == pageUp) // Page up button
+        {
             PageUp_();
+        }
         else if (w == pageDown) // Page down button
+        {
             PageDown_();
+        }
         else if (w == refresh) // Refresh
+        {
             loadSavegames = true; // Reload saved games
+        }
         else if (w == open) // Open (with dialog)
         {
             // Decide on savegame extension
             string extension;
-            if (menu.p.SinglePlayerServerAvailable())
-                extension = "mddbs";
-            else
-                extension = "mdss";
+            if (menu.p.SinglePlayerServerAvailable()) { extension = "mddbs"; }
+            else { extension = "mdss"; }
 
             // Open a dialog with all saved games
             string path = menu.p.PathSavegames(); // Get path to directory for saved games
             menu.p.CreateSavegamesDirectory(); // Create directory if it doesn't exist
             string result = menu.p.FileOpenDialog(extension, "Manic Digger Savegame", path); // Open dialog for selecting saved game
             if (result != null)
+            {
                 menu.ConnectToSingleplayer(result); // Load game if file was valid
-
+            }
         }
         else // Saved games
         {
@@ -396,12 +403,15 @@
             int index = -1;
             for (int i = 0; i < worldButtonsCount; i++)
             {
-                if (worldButtons[i] == null)
-                    break;
-                if (worldButtons[i] == w)
-                    index = i;
-
-                worldButtons[i].selected = false;
+                if (worldButtons[i] == null) { break; } // Stop if end is reached
+                if (worldButtons[i] == w) // If button is the clicked button
+                {
+                    index = i; // Keep index is button is selected button
+                }
+                else // If button is some other world button
+                {
+                    worldButtons[i].selected = false; // Deselect button
+                }
             }
 
             selectedSave = index; // Get the clicked saves index

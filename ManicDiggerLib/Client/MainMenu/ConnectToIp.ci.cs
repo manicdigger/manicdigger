@@ -2,33 +2,39 @@
 {
     public ScreenConnectToIp()
     {
-        buttonConnect = new MenuWidget();
+        // Create buttons
+        buttonConnect = new MenuWidget(); // Connect
         buttonConnect.text = "Connect";
         buttonConnect.type = WidgetType.Button;
         buttonConnect.nextWidget = 3;
-        textboxIp = new MenuWidget();
+
+        textboxIp = new MenuWidget(); // IP
         textboxIp.type = WidgetType.Textbox;
         textboxIp.text = "";
         textboxIp.description = "Ip";
         textboxIp.nextWidget = 2;
-        textboxPort = new MenuWidget();
+
+        textboxPort = new MenuWidget(); // Port
         textboxPort.type = WidgetType.Textbox;
         textboxPort.text = "";
         textboxPort.description = "Port";
         textboxPort.nextWidget = 0;
 
-        back = new MenuWidget();
+        back = new MenuWidget(); // Back
         back.text = "Back";
         back.type = WidgetType.Button;
         back.nextWidget = 1;
 
-        title = "Connect to IP";
-
+        // Add buttons to widget collection
         widgets[0] = buttonConnect;
         widgets[1] = textboxIp;
         widgets[2] = textboxPort;
         widgets[3] = back;
 
+        // Set screen title
+        title = "Connect to IP";
+
+        // Focus IP textbox
         textboxIp.GetFocus();
     }
 
@@ -39,7 +45,10 @@
     MenuWidget back;
 
     bool loaded;
-    string title;
+    string title; // Screen title
+
+    int oldWidth; // CanvasWidth from last rendering (frame)
+    int oldHeight; // CanvasHeight from last rendering (frame)
 
     public override void LoadTranslations()
     {
@@ -74,46 +83,67 @@
         }
 
         GamePlatform p = menu.p;
+
+        // Screen measurements
+        int width = p.GetCanvasWidth();
+        int height = p.GetCanvasHeight();
         float scale = menu.GetScale();
+        float leftx = width / 2f - 400f * scale;
+        float y = height / 2f - 250f * scale;
+
+        bool resized = (width != oldWidth || height != oldHeight); // If the screen has changed size
+
+        // Update positioning and scale when needed
+        if (resized)
+        {
+            // IP
+            textboxIp.x = leftx;
+            textboxIp.y = y + 100f * scale;
+            textboxIp.sizex = 256f * scale;
+            textboxIp.sizey = 64f * scale;
+            textboxIp.fontSize = 14f * scale;
+
+            // Port
+            textboxPort.x = leftx;
+            textboxPort.y = y + 200f * scale;
+            textboxPort.sizex = 256f * scale;
+            textboxPort.sizey = 64f * scale;
+            textboxPort.fontSize = 14f * scale;
+            
+            // Connect
+            buttonConnect.x = leftx;
+            buttonConnect.y = y + 400f * scale;
+            buttonConnect.sizex = 256f * scale;
+            buttonConnect.sizey = 64f * scale;
+            buttonConnect.fontSize = 14f * scale;
+
+            // Back
+            back.x = 40f * scale;
+            back.y = p.GetCanvasHeight() - 104f * scale;
+            back.sizex = 256f * scale;
+            back.sizey = 64f * scale;
+            back.fontSize = 14f * scale;
+        }
+
+        // Draw background
         menu.DrawBackground();
 
-
-        float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
-        float y = p.GetCanvasHeight() / 2 - 250 * scale;
-
+        // Draw login result
         string loginResultText = null;
         if (errorText != null)
         {
-            menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
+            menu.DrawText(loginResultText, 14f * scale, leftx, y - 50f * scale, TextAlign.Left, TextBaseline.Top);
         }
 
-        menu.DrawText(title, 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+        // Draw screen title
+        menu.DrawText(title, 14f * scale, leftx, y + 50f * scale, TextAlign.Left, TextBaseline.Top);
 
-        textboxIp.x = leftx;
-        textboxIp.y = y + 100 * scale;
-        textboxIp.sizex = 256 * scale;
-        textboxIp.sizey = 64 * scale;
-        textboxIp.fontSize = 14 * scale;
-
-        textboxPort.x = leftx;
-        textboxPort.y = y + 200 * scale;
-        textboxPort.sizex = 256 * scale;
-        textboxPort.sizey = 64 * scale;
-        textboxPort.fontSize = 14 * scale;
-
-        buttonConnect.x = leftx;
-        buttonConnect.y = y + 400 * scale;
-        buttonConnect.sizex = 256 * scale;
-        buttonConnect.sizey = 64 * scale;
-        buttonConnect.fontSize = 14 * scale;
-
-        back.x = 40 * scale;
-        back.y = p.GetCanvasHeight() - 104 * scale;
-        back.sizex = 256 * scale;
-        back.sizey = 64 * scale;
-        back.fontSize = 14 * scale;
-
+        // Draw widgets
         DrawWidgets();
+
+        // Update old(Width/Height)
+        oldWidth = width;
+        oldHeight = height;
     }
 
     string errorText;
@@ -125,16 +155,16 @@
 
     public override void OnButton(MenuWidget w)
     {
-        if (w == buttonConnect)
+        if (w == buttonConnect) // Connect
         {
             FloatRef ret = new FloatRef();
             if (!Game.StringEquals(textboxIp.text, "")
                 && menu.p.FloatTryParse(textboxPort.text, ret))
             {
-                menu.StartLogin(null, textboxIp.text, menu.p.IntParse(textboxPort.text));
+                menu.StartLogin(null, textboxIp.text, menu.p.IntParse(textboxPort.text)); // Connect to server
             }
         }
-        if (w == back)
+        else if (w == back) // Back
         {
             OnBackPressed();
         }
