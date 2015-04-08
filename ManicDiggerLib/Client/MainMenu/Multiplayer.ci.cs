@@ -55,6 +55,12 @@
         //logout.image = "serverlist_entry_background.png";
         logout.buttonStyle = ButtonStyle.Button;
 
+        login = new MenuWidget(); // Log in
+        login.text = "Log in";
+        login.type = WidgetType.Button;
+        //login.image = "serverlist_entry_background.png";
+        login.buttonStyle = ButtonStyle.Button;
+
         // Add buttons to widget collection
         widgets[0] = back;
         widgets[1] = connect;
@@ -64,6 +70,7 @@
         widgets[5] = pageDown;
         widgets[6] = loggedInName;
         widgets[7] = logout;
+        widgets[8] = login;
 
         // Add server buttons to widget collection (after the more static buttons)
         serverButtons = new MenuWidget[serverButtonsCount];
@@ -80,7 +87,7 @@
             b.nextWidget = 0; // Select play when tab is pressed
 
             serverButtons[i] = b;
-            widgets[8 + i] = b;
+            widgets[9 + i] = b;
         }
 
         // Set screen title
@@ -147,7 +154,9 @@
                 IntRef ssCount = new IntRef();
                 string[] ss = menu.p.StringSplit(servers[i], "\t", ssCount);
                 if (ssCount.value < 10)
+                {
                     continue;
+                }
                 ServerOnList s = new ServerOnList();
                 s.hash = ss[0];
                 s.name = menu.p.DecodeHTMLEntities(ss[1]);
@@ -168,6 +177,22 @@
 
         GamePlatform p = menu.p;
 
+        // Update thumbnails
+        UpdateThumbnails();
+
+        // Logged in name
+        if (loggedInName.text == "")
+        {
+            if (p.GetPreferences().GetString("Password", "") != "")
+            {
+                loggedInName.text = p.GetPreferences().GetString("Username", "Invalid");
+            }
+        }
+
+        // Show login our logout
+        logout.visible = (loggedInName.text != ""); // If a user is logged in (show logout)
+        login.visible = !logout.visible; // If logout hidden (show login)
+
         // Screen measurements
         int width = p.GetCanvasWidth();
         int height = p.GetCanvasHeight();
@@ -179,7 +204,7 @@
         if (resized)
         {
             // Amount of entries that fits on the screen
-            serversPerPage = menu.p.FloatToInt((height - (2f * 100f * scale)) / 70f * scale);
+            serversPerPage = menu.p.FloatToInt((height - 2f * 100f * scale) / (70f * scale));
 
             // Amount of pages
             if (serversPerPage > 0)
@@ -251,28 +276,20 @@
             logout.sizex = 128f * scale;
             logout.sizey = 32f * scale;
             logout.fontSize = 12f * scale;
+            
+            // Log in button
+            login.x = width - 228f * scale;
+            login.y = 62f * scale;
+            login.sizex = 128f * scale;
+            login.sizey = 32f * scale;
+            login.fontSize = 12f * scale;
         }
-
-        // Logged in name
-        if (loggedInName.text == "")
-        {
-            if (p.GetPreferences().GetString("Password", "") != "")
-            {
-                loggedInName.text = p.GetPreferences().GetString("Username", "Invalid");
-            }
-        }
-
-        // Show log out button if a user is logged in
-        logout.visible = loggedInName.text != "";
 
         // Draw
         menu.DrawBackground(); // Draw background
         menu.DrawText(title, 20f * scale, p.GetCanvasWidth() / 2f, 10f, TextAlign.Center, TextBaseline.Top); // Draw title text
         menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14f * scale,
-                      width - 68f * scale, (100f + (serversPerPage * 70f) / 2f) * scale, TextAlign.Center, TextBaseline.Middle); // Draw page number
-
-        // Update thumbnails
-        UpdateThumbnails();
+                      width - 68f * scale, (100f * scale) + (serversPerPage * 70f * scale) / 2f, TextAlign.Center, TextBaseline.Middle); // Draw page number
 
         // Hide all server entries
         for (int i = 0; i < serverButtonsCount; i++)
@@ -466,6 +483,7 @@
         if (maxpage) { pageUp.visible = false; }
         else { pageUp.visible = true; }
     }
+
     MenuWidget back;
     MenuWidget connect;
     MenuWidget connectToIp;
@@ -474,6 +492,7 @@
     MenuWidget pageDown;
     MenuWidget loggedInName;
     MenuWidget logout;
+    MenuWidget login;
     MenuWidget[] serverButtons;
     const int serverButtonsCount = 1024;
 
@@ -522,7 +541,7 @@
         {
             if (connect.pressable && selectedServerHash != null) // If a server is selected
             {
-                menu.StartLogin(selectedServerHash, null, 0); // Connect (or log in)
+                menu.StartLogin(selectedServerHash, null, 0, true); // Connect (or log in)
             }
         }
         else if (w == connectToIp) // Connect to ip
@@ -541,6 +560,10 @@
             pref.Remove("Password");
             menu.p.SetPreferences(pref);
             loggedInName.text = "";
+        }
+        else if (w == login) // Log in
+        {
+            menu.StartLogin(null, null, 0, false); // Log in
         }
     }
 }

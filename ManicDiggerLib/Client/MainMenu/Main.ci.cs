@@ -20,8 +20,6 @@
     MenuWidget singleplayer;
     MenuWidget multiplayer;
     MenuWidget exit;
-    internal float width;
-    internal float height;
     bool queryStringChecked;
 
     int oldWidth; // CanvasWidth from last rendering (frame)
@@ -35,13 +33,13 @@
         UseQueryStringIpAndPort(menu);
 
         // Screen measurements
-        int screenWidth = p.GetCanvasWidth();
-        int screenHeight = p.GetCanvasHeight();
+        int width = p.GetCanvasWidth();
+        int height = p.GetCanvasHeight();
         float scale = menu.GetScale();
-        float leftx = screenWidth / 2f - 128f * scale;
-        float y = screenHeight / 2f + 0f * scale;
+        float leftx = width / 2f - 128f * scale;
+        float y = height / 2f + 0f * scale;
 
-        bool resized = (screenWidth != oldWidth || screenHeight != oldHeight); // If the screen has changed size
+        bool resized = (width != oldWidth || height != oldHeight); // If the screen has changed size
 
         // Update positioning and scale when needed
         if (resized)
@@ -52,31 +50,36 @@
             float spacebetween = 5f;
             float offsetfromborder = 50f;
 
-            // Draw buttons
-            singleplayer.text = menu.lang.Get("MainMenu_Singleplayer"); // Singleplayer
-            singleplayer.x = screenWidth / 2f - (buttonwidth / 2f) * scale;
-            singleplayer.y = screenHeight - (3f * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
+            // Singleplayer
+            singleplayer.text = menu.lang.Get("MainMenu_Singleplayer");
+            singleplayer.x = width / 2f - (buttonwidth / 2f) * scale;
+            singleplayer.y = height - (3f * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
             singleplayer.sizex = buttonwidth * scale;
             singleplayer.sizey = buttonheight * scale;
+            singleplayer.fontSize = 14f * scale;
 
-            multiplayer.text = menu.lang.Get("MainMenu_Multiplayer"); // Multiplayer
-            multiplayer.x = screenWidth / 2f - (buttonwidth / 2f) * scale;
-            multiplayer.y = screenHeight - (2f * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
+            // Multiplayer
+            multiplayer.text = menu.lang.Get("MainMenu_Multiplayer");
+            multiplayer.x = width / 2f - (buttonwidth / 2f) * scale;
+            multiplayer.y = height - (2f * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
             multiplayer.sizex = buttonwidth * scale;
             multiplayer.sizey = buttonheight * scale;
+            multiplayer.fontSize = 14f * scale;
 
-            exit.text = menu.lang.Get("MainMenu_Quit"); // Exit
-            exit.x = screenWidth / 2f - (buttonwidth / 2f) * scale;
-            exit.y = screenHeight - (1f * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
+            // Exit
+            exit.text = menu.lang.Get("MainMenu_Quit");
+            exit.x = width / 2f - (buttonwidth / 2f) * scale;
+            exit.y = height - (1f * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
             exit.sizex = buttonwidth * scale;
             exit.sizey = buttonheight * scale;
+            exit.fontSize = 14f * scale;
         }
 
         // Draw loading bar (some platforms only)
         if (menu.assetsLoadProgress.value != 1f)
         {
             string s = menu.p.StringFormat(menu.lang.Get("MainMenu_AssetsLoadProgress"), menu.p.FloatToString(menu.p.FloatToInt(menu.assetsLoadProgress.value * 100f)));
-            menu.DrawText(s, 20f * scale, screenWidth / 2f, screenHeight / 2f, TextAlign.Center, TextBaseline.Middle);
+            menu.DrawText(s, 20f * scale, width / 2f, height / 2f, TextAlign.Center, TextBaseline.Middle);
             return;
         }
 
@@ -85,14 +88,14 @@
 
         // Draw logo
         float logoHeight = 512f * scale;
-        menu.Draw2dQuad(menu.GetTexture("logo.png"), screenWidth / 2f - 1024f * scale / 2f, (screenHeight / 8f) * 3f - logoHeight / 2f, 1024f * scale, logoHeight);
+        menu.Draw2dQuad(menu.GetTexture("logo.png"), width / 2f - 1024f * scale / 2f, (height / 8f) * 3f - logoHeight / 2f, 1024f * scale, logoHeight);
 
-        // Draw widget
+        // Draw widgets
         DrawWidgets();
 
         // Update old(Width/Height)
-        oldWidth = screenWidth;
-        oldHeight = screenHeight;
+        oldWidth = width;
+        oldHeight = height;
     }
 
     void UseQueryStringIpAndPort(MainMenu menu)
@@ -111,7 +114,7 @@
         }
         if (ip != null)
         {
-            menu.StartLogin(null, ip, portInt);
+            menu.StartLogin(null, ip, portInt, true);
         }
     }
 

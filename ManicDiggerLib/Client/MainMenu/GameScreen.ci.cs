@@ -136,7 +136,7 @@
                 else if (!lidata.PasswordCorrect)
                 {
                     //Authentication failed
-                    menu.StartLogin(token, null, 0);
+                    menu.StartLogin(token, null, 0, true);
                 }
                 else if (lidata.ServerAddress != null && lidata.ServerAddress != "")
                 {

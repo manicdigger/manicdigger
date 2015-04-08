@@ -160,11 +160,18 @@
         Draw2dQuad(GetTexture("serverlist_entry_background.png"), x, y, width, height);
         Draw2dQuad(GetTexture(image), x, y, height, height);
 
+        // Positioning
+        float scale = GetScale();
+        float leftx = x + 70f * scale;
+        float rightx = x + width - 10f * scale;
+        float topy = y + 5f * scale;
+        float boty = y + height - 5f * scale;
+
         //       value          size    x position              y position              text alignment      text baseline
-        DrawText(name, 14, x + 70, y + 5, TextAlign.Left, TextBaseline.Top);
-        DrawText(gamemode, 12, x + width - 10, y + height - 5, TextAlign.Right, TextBaseline.Bottom);
-        DrawText(playercount, 12, x + width - 10, y + 5, TextAlign.Right, TextBaseline.Top);
-        DrawText(motd, 12, x + 70, y + height - 5, TextAlign.Left, TextBaseline.Bottom);
+        DrawText(name, 14f * scale, leftx, topy, TextAlign.Left, TextBaseline.Top);
+        DrawText(gamemode, 12f * scale, rightx, boty, TextAlign.Right, TextBaseline.Bottom);
+        DrawText(playercount, 12f * scale, rightx, topy, TextAlign.Right, TextBaseline.Top);
+        DrawText(motd, 12f * scale, leftx, boty, TextAlign.Left, TextBaseline.Bottom);
     }
 
     internal void DrawWorldButton(string name, string path, string date, string size, float x, float y, float width, float height, string image)
@@ -448,17 +455,24 @@
 
     internal void StartSingleplayer()
     {
+        // Singleplayer browser
         screen = new ScreenSingleplayer();
+
+        // Switch screen
         screen.menu = this;
         screen.LoadTranslations();
     }
 
-    internal void StartLogin(string serverHash, string ip, int port)
+    internal void StartLogin(string serverHash, string ip, int port, bool connect)
     {
+        // Log in (and connect to a server by ip and port)
         ScreenLogin screenLogin = new ScreenLogin();
         screenLogin.serverHash = serverHash;
         screenLogin.serverIp = ip;
         screenLogin.serverPort = port;
+        screenLogin.connect = connect;
+
+        // Switch screen
         screen = screenLogin;
         screen.menu = this;
         screen.LoadTranslations();
@@ -466,7 +480,10 @@
 
     internal void StartConnectToIp()
     {
+        // Connect to IP
         ScreenConnectToIp screenConnectToIp = new ScreenConnectToIp();
+
+        // Switch screen
         screen = screenConnectToIp;
         screen.menu = this;
         screen.LoadTranslations();
@@ -474,12 +491,16 @@
 
     internal void Exit()
     {
+        // Exit game
         p.Exit();
     }
 
     internal void StartMainMenu()
     {
+        // Main menu
         screen = new ScreenMain();
+
+        // Switch screen
         screen.menu = this;
         p.ExitMousePointerLock();
         p.MouseCursorSetVisible(true);
@@ -509,7 +530,10 @@
 
     internal void StartMultiplayer()
     {
+        // Multiplayer server browser
         screen = new ScreenMultiplayer();
+
+        // Switch screen
         screen.menu = this;
         screen.LoadTranslations();
     }
@@ -826,18 +850,21 @@ public class Screen
             if (w != null) // Draw if widget exists
             {
                 // Check if visable
-                if (!w.visible)
-                    continue; // Skip if not
+                if (!w.visible) { continue; } // Skip if not
 
                 string text = w.text; // Get widget text
 
                 // Check if widget is selected
                 if (w.selected)
-                    text = StringTools.StringAppend(menu.p, "&2", text); // Change text color (show it is selected)
+                {
+                    text = StringTools.StringAppend(menu.p, "&2", text); // Change text color (make text green)
+                }
 
                 // Check if widget can not be pressed
                 if (!w.pressable)
-                    text = StringTools.StringAppend(menu.p, "&8", text); // Change text color (gray out)
+                {
+                    text = StringTools.StringAppend(menu.p, "&8", text); // Change text color (make text gray)
+                }
 
                 // Draw widget
                 switch (w.type) // Dependent on widget type
@@ -850,7 +877,9 @@ public class Screen
                             case ButtonStyle.Text: // Text
                             {
                                 if (w.image != null) // Draw image if it has one
+                                {
                                     menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                                }
                                 menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle); // Draw text
                                 break;
                             }
@@ -859,7 +888,9 @@ public class Screen
                             {
                                 menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
                                 if (w.description != null)
+                                {
                                     menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                                }
                                 break;
                             }
 
@@ -876,10 +907,14 @@ public class Screen
                                 menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image); // Draw
 
                                 if (w.description != null) //Display a warning sign, when server does not respond to queries
-                                    menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38 * menu.GetScale(), w.y, w.sizey / 2, w.sizey / 2);
+                                {
+                                    menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38f * menu.GetScale(), w.y, w.sizey / 2f, w.sizey / 2f);
+                                }
 
                                 if (strings[4] != menu.p.GetGameVersion()) //Display an icon if server version differs from client version
-                                    menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38 * menu.GetScale(), w.y + w.sizey / 2, w.sizey / 2, w.sizey / 2);
+                                {
+                                    menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38f * menu.GetScale(), w.y + w.sizey / 2f, w.sizey / 2f, w.sizey / 2f);
+                                }
                                 break;
                             }
 
@@ -903,10 +938,14 @@ public class Screen
                     case WidgetType.Textbox: // Textbox
                     {
                         if (w.password) // If it is a password (hidden)
+                        {
                             text = menu.CharRepeat(42, menu.StringLength(w.text)); // '*'
+                        }
 
                         if (w.editing) // If the user is editing it (selected)
+                        {
                             text = StringTools.StringAppend(menu.p, text, "_");
+                        }
 
                         // Draw
                         switch (w.buttonStyle) // Depends on style
@@ -914,7 +953,9 @@ public class Screen
                             case ButtonStyle.Text: // Text
                                 {
                                     if (w.image != null)
+                                    {
                                         menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                                    }
                                     menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
                                     break;
                                 }
@@ -928,7 +969,9 @@ public class Screen
 
                         // Draw description
                         if (w.description != null)
+                        {
                             menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                        }
                         break;
                     }
                 }

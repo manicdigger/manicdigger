@@ -43,6 +43,13 @@
         refresh.visible = true;
         refresh.image = "serverlist_refresh.png";
 
+        remove = new MenuWidget(); // Remove
+        remove.text = "";
+        remove.type = WidgetType.Button;
+        remove.buttonStyle = ButtonStyle.Text;
+        remove.visible = true;
+        remove.image = "serverlist_remove.png";
+
         pageUp = new MenuWidget(); // Page Up
         pageUp.text = "";
         pageUp.type = WidgetType.Button;
@@ -63,8 +70,9 @@
         widgets[2] = back;
         widgets[3] = open;
         widgets[4] = refresh;
-        widgets[5] = pageUp;
-        widgets[6] = pageDown;
+        widgets[5] = remove;
+        widgets[6] = pageUp;
+        widgets[7] = pageDown;
 
         // Add world buttons to widget collection (after the more static buttons)
         worldButtons = new MenuWidget[worldButtonsCount];
@@ -82,7 +90,7 @@
 
             // Add widget to collections
             worldButtons[i] = b;
-            widgets[7 + i] = b;
+            widgets[8 + i] = b;
         }
 
         // Set screen title
@@ -99,6 +107,7 @@
     MenuWidget back;
     MenuWidget open;
     MenuWidget refresh;
+    MenuWidget remove;
     MenuWidget pageUp;
     MenuWidget pageDown;
 
@@ -160,7 +169,7 @@
         if (resized)
         {
             // Amount of entries that fits on the screen
-            savesPerPage = menu.p.FloatToInt((height - (2f * 100f * scale)) / 70f * scale);
+            savesPerPage = menu.p.FloatToInt((height - 2f * 100f * scale) / (70f * scale));
 
             // Amount of pages
             if (savesPerPage > 0)
@@ -214,6 +223,12 @@
             refresh.sizex = 64f * scale;
             refresh.sizey = 64f * scale;
 
+            // Remove button
+            remove.x = width - 164f * scale;
+            remove.y = 30f * scale;
+            remove.sizex = 64f * scale;
+            remove.sizey = 64f * scale;
+
             // Page up button
             pageUp.x = width - 94f * scale;
             pageUp.y = 100f * scale + (savesPerPage - 1) * 70f * scale;
@@ -226,15 +241,6 @@
             pageDown.sizex = 64f * scale;
             pageDown.sizey = 64f * scale;
         }
-
-        // Show open button (or dont, depending on platform)
-        open.visible = menu.p.SinglePlayerServerAvailable();
-
-        // Draw
-        menu.DrawBackground(); // Draw background
-        menu.DrawText(title, 20f * scale, p.GetCanvasWidth() / 2, 10f, TextAlign.Center, TextBaseline.Top); // Draw title text
-        menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14f * scale,
-                      width - 68f * scale, (100f + (savesPerPage * 70f) / 2f) * scale, TextAlign.Center, TextBaseline.Middle); // Draw page number
 
         // Hide all saved game buttons
         for (int i = 0; i < worldButtonsCount; i++)
@@ -275,14 +281,34 @@
         // Update scrollbars
         UpdateScrollButtons();
 
-        // Draw widgets
-        DrawWidgets();
+        // Draw
+        menu.DrawBackground(); // Draw background
+        menu.DrawText(title, 20f * scale, p.GetCanvasWidth() / 2, 10f, TextAlign.Center, TextBaseline.Top); // Draw title text
 
-        // Tells certain platforms that they cannot play singleplayer
+        // Check if singleplayer is disabled
         if (!menu.p.SinglePlayerServerAvailable())
         {
+            // Draw text telling the user that singleplayer is disabled
             menu.DrawText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.", 16f * scale, menu.p.GetCanvasWidth() / 2f, menu.p.GetCanvasHeight() / 2f, TextAlign.Center, TextBaseline.Middle);
+
+            // Hide everything but the back button and the title
+            play.visible = false;
+            newWorld.visible = false;
+            open.visible = false;
+            refresh.visible = false;
+            remove.visible = false;
+            pageUp.visible = false;
+            pageDown.visible = false;
         }
+        else // If singleplayer is enabled
+        {
+            // Draw page number
+            menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14f * scale,
+                          width - 68f * scale, (100f * scale) + (savesPerPage * 70f * scale) / 2f, TextAlign.Center, TextBaseline.Middle);
+        }
+
+        // Draw widgets
+        DrawWidgets();
 
         // Update old(Width/Height)
         oldWidth = width;
@@ -363,7 +389,9 @@
         {
             // Load (and start) saved game
             if (play.pressable) // Check if the button can be pressed
+            {
                 menu.ConnectToSingleplayer(savegames[selectedSave]);
+            }
         }
         else if (w == back) // Back (to main menu)
         {
@@ -380,6 +408,14 @@
         else if (w == refresh) // Refresh
         {
             loadSavegames = true; // Reload saved games
+        }
+        else if (w == remove) // Remove
+        {
+            // Remove selected save
+            if (play.pressable) // Check if the button can be pressed (then a save is selected)
+            {
+                // Remove saved game file (some kind of "Are you sure?" dialog maybe?)
+            }
         }
         else if (w == open) // Open (with dialog)
         {

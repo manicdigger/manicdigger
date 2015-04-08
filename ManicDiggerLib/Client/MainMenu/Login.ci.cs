@@ -103,6 +103,7 @@
 
     public override void Render(float dt)
     {
+        // Try logging in with current details (if already logged in)
         if (!triedSavedLogin)
         {
             Preferences preferences = menu.p.GetPreferences();
@@ -111,18 +112,27 @@
             string token = preferences.GetString("Password", "");
 
             loginResultData = new LoginData();
-            if (serverHash != null && token != "")
+            if (connect) // Connect to server
             {
-                menu.Login(loginUsername.text, loginPassword.text, serverHash, token, loginResult, loginResultData);
+                if (serverHash != null && token != "")
+                {
+                    menu.Login(loginUsername.text, loginPassword.text, serverHash, token, loginResult, loginResultData);
+                }
+            }
+            else // Login only
+            {
+                menu.Login(loginUsername.text, loginPassword.text, "", token, loginResult, loginResultData);
             }
 
             triedSavedLogin = true;
         }
+
+        // If login succeeded
         if (loginResultData != null
-            && loginResultData.ServerCorrect
             && loginResultData.PasswordCorrect)
         {
-            if (loginRememberMe.text == menu.lang.Get("MainMenu_ChoiceYes"))
+            // Remember account details (if "remember me" is checked or user only logged in)
+            if (!connect || loginRememberMe.text == menu.lang.Get("MainMenu_ChoiceYes"))
             {
                 Preferences preferences = menu.p.GetPreferences();
                 preferences.SetString("Username", loginUsername.text);
@@ -132,7 +142,24 @@
                 }
                 menu.p.SetPreferences(preferences);
             }
-            menu.ConnectToGame(loginResultData, loginUsername.text);
+
+            if (connect) // Try connecting to server
+            {
+                // Connect to server
+                if (loginResultData.ServerCorrect)
+                {
+                    menu.ConnectToGame(loginResultData, loginUsername.text);
+                }
+                else
+                {
+                    // SERVER INVALID (error message?)
+                }
+            }
+            else // Login successful
+            {
+                // Go back (to multiplayer)
+                OnBackPressed();
+            }
         }
 
         // Login result
@@ -256,28 +283,34 @@
         if (w == login) // Login
         {
             loginResultData = new LoginData();
-            if (serverHash != null)
-            {
-                // Connect to server hash, through main game menu. Do login.
-                menu.Login(loginUsername.text, loginPassword.text, serverHash, "", loginResult, loginResultData);
-            }
-            else
-            {
-                // Connect to IP. Don't login
 
-                // Save username
-                if (loginRememberMe.text == menu.lang.Get("MainMenu_ChoiceYes"))
+            if (connect) // Connect to server
+            {
+                if (serverHash != null) // Connect with hash. Login
                 {
-                    Preferences preferences = menu.p.GetPreferences();
-                    preferences.SetString("Username", loginUsername.text);
-                    menu.p.SetPreferences(preferences);
+                    // Connect to server hash, through main game menu. Do login.
+                    menu.Login(loginUsername.text, loginPassword.text, serverHash, "", loginResult, loginResultData);
                 }
+                else // Connect to IP. Don't login
+                {
+                    // Save username
+                    if (loginRememberMe.text == menu.lang.Get("MainMenu_ChoiceYes"))
+                    {
+                        Preferences preferences = menu.p.GetPreferences();
+                        preferences.SetString("Username", loginUsername.text);
+                        menu.p.SetPreferences(preferences);
+                    }
 
-                ConnectData connectdata = new ConnectData();
-                connectdata.Ip = serverIp;
-                connectdata.Port = serverPort;
-                connectdata.Username = loginUsername.text;
-                menu.StartGame(false, null, connectdata);
+                    ConnectData connectdata = new ConnectData();
+                    connectdata.Ip = serverIp;
+                    connectdata.Port = serverPort;
+                    connectdata.Username = loginUsername.text;
+                    menu.StartGame(false, null, connectdata);
+                }
+            }
+            else // Login only
+            {
+                menu.Login(loginUsername.text, loginPassword.text, "", "", loginResult, loginResultData);
             }
         }
         else if (w == createAccount) // Create account
@@ -300,7 +333,9 @@
             OnBackPressed();
         }
     }
+
     internal string serverHash;
     internal string serverIp;
     internal int serverPort;
+    internal bool connect; // Whether or not user wants to connect to a server (false = just log in)
 }

@@ -161,7 +161,7 @@
             if (!Game.StringEquals(textboxIp.text, "")
                 && menu.p.FloatTryParse(textboxPort.text, ret))
             {
-                menu.StartLogin(null, textboxIp.text, menu.p.IntParse(textboxPort.text)); // Connect to server
+                menu.StartLogin(null, textboxIp.text, menu.p.IntParse(textboxPort.text), true); // Connect to server
             }
         }
         else if (w == back) // Back

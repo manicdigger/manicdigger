@@ -67,60 +67,60 @@ public class MenuWidget
 }
 
 // None of the below are actually used (thinking of switching to them, or changing the widget system) //Bubba
-public class ButtonWidget : MenuWidget
-{
-    public ButtonWidget()
-    {
-        visible = true;
-        fontSize = 14;
-        nextWidget = -1;
-        hasKeyboardFocus = false;
-    }
-}
+//public class ButtonWidget : MenuWidget
+//{
+//    public ButtonWidget()
+//    {
+//        visible = true;
+//        fontSize = 14;
+//        nextWidget = -1;
+//        hasKeyboardFocus = false;
+//    }
+//}
 
-public class TextboxWidget : MenuWidget
-{
-    public TextboxWidget()
-    {
-        visible = true;
-        fontSize = 14;
-        nextWidget = -1;
-        hasKeyboardFocus = false;
-    }
-}
+//public class TextboxWidget : MenuWidget
+//{
+//    public TextboxWidget()
+//    {
+//        visible = true;
+//        fontSize = 14;
+//        nextWidget = -1;
+//        hasKeyboardFocus = false;
+//    }
+//}
 
-public class LabelWidget : MenuWidget
-{
-    public LabelWidget()
-    {
-        visible = true;
-        fontSize = 14;
-        nextWidget = -1;
-        hasKeyboardFocus = false;
-    }
-}
+//public class LabelWidget : MenuWidget
+//{
+//    public LabelWidget()
+//    {
+//        visible = true;
+//        fontSize = 14;
+//        nextWidget = -1;
+//        hasKeyboardFocus = false;
+//    }
+//}
 
-public class ServerEntryWidget : ButtonWidget
-{
-    internal string name;
-    internal string motd;
-    internal string gamemode;
-    internal string playercount;
-    internal int index;
+//public class ServerEntryWidget : ButtonWidget
+//{
+//    internal string name;
+//    internal string motd;
+//    internal string gamemode;
+//    internal string playercount;
+//    internal int index;
 
-    public ServerEntryWidget()
-    {
-        visible = true;
-        fontSize = 14;
-        nextWidget = -1;
-        hasKeyboardFocus = false;
-    }
+//    public ServerEntryWidget()
+//    {
+//        visible = true;
+//        fontSize = 14;
+//        nextWidget = -1;
+//        hasKeyboardFocus = false;
+//    }
 
-    public override void UpdatePosition(int canWidth, int canHeight, float scale)
-    {
-        x = 100 * scale;
-        y = 100 * scale + index * 70 * scale;
-        sizex = canWidth - 200 * scale;
-        sizey = 64 * scale;
-    }
-}
+//    public override void UpdatePosition(int canWidth, int canHeight, float scale)
+//    {
+//        x = 100 * scale;
+//        y = 100 * scale + index * 70 * scale;
+//        sizex = canWidth - 200 * scale;
+//        sizey = 64 * scale;
+//    }
+//}
