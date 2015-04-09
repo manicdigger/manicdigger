@@ -217,6 +217,11 @@
         }
 
         serversPerPage = menu.p.FloatToInt((menu.p.GetCanvasHeight() - (2 * 100 * scale)) / 70 * scale);
+        if (serversPerPage <= 0)
+        {
+            // Do not let this get negative
+            serversPerPage = 1;
+        }
         for (int i = 0; i < serversPerPage; i++)
         {
             int index = i + (serversPerPage * page);
