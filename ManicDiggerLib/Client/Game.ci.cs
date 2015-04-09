@@ -3285,14 +3285,18 @@
     internal void KeyDown(int eKey)
     {
         keyboardStateRaw[eKey] = true;
-        for (int i = 0; i < clientmodsCount; i++)
+        if (guistate != GuiState.MapLoading)
         {
-            KeyEventArgs args_ = new KeyEventArgs();
-            args_.SetKeyCode(eKey);
-            clientmods[i].OnKeyDown(this, args_);
-            if (args_.GetHandled())
+            // only handle keys once game has been loaded
+            for (int i = 0; i < clientmodsCount; i++)
             {
-                return;
+                KeyEventArgs args_ = new KeyEventArgs();
+                args_.SetKeyCode(eKey);
+                clientmods[i].OnKeyDown(this, args_);
+                if (args_.GetHandled())
+                {
+                    return;
+                }
             }
         }
         keyboardState[eKey] = true;
