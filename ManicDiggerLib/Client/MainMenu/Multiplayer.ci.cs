@@ -2,77 +2,103 @@
 {
     public ScreenMultiplayer()
     {
+        // Set widget length (because it is extended)
         WidgetCount = 64 + serverButtonsCount;
         widgets = new MenuWidget[WidgetCount];
-        back = new MenuWidget();
+
+        // Create buttons
+        back = new MenuWidget(); // Back
         back.text = "Back";
         back.type = WidgetType.Button;
         back.nextWidget = 1;
-        connect = new MenuWidget();
+
+        connect = new MenuWidget(); // Connect
         connect.text = "Connect";
         connect.type = WidgetType.Button;
-        connect.nextWidget = 3;
-        connectToIp = new MenuWidget();
+        connect.nextWidget = 2;
+        connect.pressable = false; // Can not be pressed until server is selected
+
+        connectToIp = new MenuWidget(); // Connect to IP
         connectToIp.text = "Connect to IP";
         connectToIp.type = WidgetType.Button;
-        connectToIp.nextWidget = 2;
-        refresh = new MenuWidget();
-        refresh.text = "Refresh";
-        refresh.type = WidgetType.Button;
-        refresh.nextWidget = 0;
+        connectToIp.nextWidget = 0;
 
-        page = 0;
-        pageUp = new MenuWidget();
+        refresh = new MenuWidget(); // Refresh
+        refresh.text = "";
+        refresh.type = WidgetType.Button;
+        refresh.buttonStyle = ButtonStyle.Text;
+        refresh.visible = true;
+        refresh.image = "serverlist_refresh.png";
+
+        pageUp = new MenuWidget(); // Page Up
         pageUp.text = "";
         pageUp.type = WidgetType.Button;
         pageUp.buttonStyle = ButtonStyle.Text;
         pageUp.visible = false;
-        pageDown = new MenuWidget();
+        pageUp.image = "serverlist_nav_down.png";
+
+        pageDown = new MenuWidget(); // Page Down
         pageDown.text = "";
         pageDown.type = WidgetType.Button;
         pageDown.buttonStyle = ButtonStyle.Text;
         pageDown.visible = false;
+        pageDown.image = "serverlist_nav_up.png";
 
-        loggedInName = new MenuWidget();
+        loggedInName = new MenuWidget(); // Loagged in Name
         loggedInName.text = "";
         loggedInName.type = WidgetType.Button;
         loggedInName.buttonStyle = ButtonStyle.Text;
 
-        logout = new MenuWidget();
-        logout.text = "";
+        logout = new MenuWidget(); // Logout
+        logout.text = "Logout";
         logout.type = WidgetType.Button;
         //logout.image = "serverlist_entry_background.png";
         logout.buttonStyle = ButtonStyle.Button;
 
-        title = "Multiplayer";
+        login = new MenuWidget(); // Log in
+        login.text = "Log in";
+        login.type = WidgetType.Button;
+        //login.image = "serverlist_entry_background.png";
+        login.buttonStyle = ButtonStyle.Button;
 
+        // Add buttons to widget collection
         widgets[0] = back;
         widgets[1] = connect;
-        widgets[2] = refresh;
-        widgets[3] = connectToIp;
+        widgets[2] = connectToIp;
+        widgets[3] = refresh;
         widgets[4] = pageUp;
         widgets[5] = pageDown;
         widgets[6] = loggedInName;
         widgets[7] = logout;
+        widgets[8] = login;
+
+        // Add server buttons to widget collection (after the more static buttons)
+        serverButtons = new MenuWidget[serverButtonsCount];
+        for (int i = 0; i < serverButtonsCount; i++)
+        {
+            // Create server button
+            MenuWidget b = new MenuWidget();
+            b = new MenuWidget();
+            b.text = "Invalid";
+            b.type = WidgetType.Button;
+            b.buttonStyle = ButtonStyle.ServerEntry;
+            b.visible = false;
+            b.image = "serverlist_entry_noimage.png";
+            b.nextWidget = 0; // Select play when tab is pressed
+
+            serverButtons[i] = b;
+            widgets[9 + i] = b;
+        }
+
+        // Set screen title
+        title = "Multiplayer";
 
         serverListAddress = new HttpResponseCi();
         serverListCsv = new HttpResponseCi();
         serversOnList = new ServerOnList[serversOnListCount];
         thumbResponses = new ThumbnailResponseCi[serversOnListCount];
 
-        serverButtons = new MenuWidget[serverButtonsCount];
-        for (int i = 0; i < serverButtonsCount; i++)
-        {
-            MenuWidget b = new MenuWidget();
-            b = new MenuWidget();
-            b.text = "Invalid";
-            b.type = WidgetType.Button;
-            b.visible = false;
-            b.image = "serverlist_entry_noimage.png";
-            serverButtons[i] = b;
-            widgets[8 + i] = b;
-        }
-        loading = true;
+        loading = true; // Load servers
     }
 
     bool loaded;
@@ -80,33 +106,39 @@
     HttpResponseCi serverListCsv;
     ServerOnList[] serversOnList;
     const int serversOnListCount = 1024;
+    int serverCount;
     int page;
+    int pageCount;
     int serversPerPage;
     string title;
     bool loading;
+
+    int oldWidth; // CanvasWidth from last rendering (frame)
+    int oldHeight; // CanvasHeight from last rendering (frame)
 
     public override void LoadTranslations()
     {
         back.text = menu.lang.Get("MainMenu_ButtonBack");
         connect.text = menu.lang.Get("MainMenu_MultiplayerConnect");
         connectToIp.text = menu.lang.Get("MainMenu_MultiplayerConnectIP");
-        refresh.text = menu.lang.Get("MainMenu_MultiplayerRefresh");
         title = menu.lang.Get("MainMenu_Multiplayer");
     }
 
     public override void Render(float dt)
     {
-        if (!loaded)
+        // Fetch server list
+        if (!loaded) // Get server list
         {
             menu.p.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.php", serverListAddress);
             loaded = true;
+            connect.pressable = false; // User has to select a server again
         }
         if (serverListAddress.done)
         {
             serverListAddress.done = false;
             menu.p.WebClientDownloadDataAsync(serverListAddress.GetString(menu.p), serverListCsv);
         }
-        if (serverListCsv.done)
+        if (serverListCsv.done) // Create server entries
         {
             loading = false;
             serverListCsv.done = false;
@@ -138,53 +170,17 @@
                 s.players = ss[9];
                 serversOnList[i] = s;
             }
+
+            serverCount = serversCount.value - 1; // Keep the number of servers
+            UpdateServerSelection(); // Select the same server (if it is still reachable)
         }
 
         GamePlatform p = menu.p;
 
-        float scale = menu.GetScale();
+        // Update thumbnails
+        UpdateThumbnails();
 
-        back.x = 40 * scale;
-        back.y = p.GetCanvasHeight() - 104 * scale;
-        back.sizex = 256 * scale;
-        back.sizey = 64 * scale;
-        back.fontSize = 14 * scale;
-
-        connect.x = p.GetCanvasWidth() / 2 - 300 * scale;
-        connect.y = p.GetCanvasHeight() - 104 * scale;
-        connect.sizex = 256 * scale;
-        connect.sizey = 64 * scale;
-        connect.fontSize = 14 * scale;
-
-        connectToIp.x = p.GetCanvasWidth() / 2 - 0 * scale;
-        connectToIp.y = p.GetCanvasHeight() - 104 * scale;
-        connectToIp.sizex = 256 * scale;
-        connectToIp.sizey = 64 * scale;
-        connectToIp.fontSize = 14 * scale;
-
-        refresh.x = p.GetCanvasWidth() / 2 + 350 * scale;
-        refresh.y = p.GetCanvasHeight() - 104 * scale;
-        refresh.sizex = 256 * scale;
-        refresh.sizey = 64 * scale;
-        refresh.fontSize = 14 * scale;
-
-        pageUp.x = p.GetCanvasWidth() - 94 * scale;
-        pageUp.y = 100 * scale + (serversPerPage - 1) * 70 * scale;
-        pageUp.sizex = 64 * scale;
-        pageUp.sizey = 64 * scale;
-        pageUp.image = "serverlist_nav_down.png";
-
-        pageDown.x = p.GetCanvasWidth() - 94 * scale;
-        pageDown.y = 100 * scale;
-        pageDown.sizex = 64 * scale;
-        pageDown.sizey = 64 * scale;
-        pageDown.image = "serverlist_nav_up.png";
-
-        loggedInName.x = p.GetCanvasWidth() - 228 * scale;
-        loggedInName.y = 32 * scale;
-        loggedInName.sizex = 128 * scale;
-        loggedInName.sizey = 32 * scale;
-        loggedInName.fontSize = 12 * scale;
+        // Logged in name
         if (loggedInName.text == "")
         {
             if (p.GetPreferences().GetString("Password", "") != "")
@@ -192,69 +188,153 @@
                 loggedInName.text = p.GetPreferences().GetString("Username", "Invalid");
             }
         }
-        logout.visible = loggedInName.text != "";
 
-        logout.x = p.GetCanvasWidth() - 228 * scale;
-        logout.y = 62 * scale;
-        logout.sizex = 128 * scale;
-        logout.sizey = 32 * scale;
-        logout.fontSize = 12 * scale;
-        logout.text = "Logout";
+        // Show login our logout
+        logout.visible = (loggedInName.text != ""); // If a user is logged in (show logout)
+        login.visible = !logout.visible; // If logout hidden (show login)
 
-        menu.DrawBackground();
-        menu.DrawText(title, 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
-        menu.DrawText(p.IntToString(page + 1), 14 * scale, p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
+        // Screen measurements
+        int width = p.GetCanvasWidth();
+        int height = p.GetCanvasHeight();
+        float scale = menu.GetScale();
 
-        if (loading)
+        bool resized = (width != oldWidth || height != oldHeight); // If the screen has changed size
+
+        // Update positioning and scale when needed
+        if (resized)
         {
-            menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), 14 * scale, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
+            // Amount of entries that fits on the screen
+            serversPerPage = menu.p.FloatToInt((height - 2f * 100f * scale) / (70f * scale));
+
+            // Amount of pages
+            if (serversPerPage > 0)
+            {
+                pageCount = (serverCount - 1) / serversPerPage;
+                if (pageCount < 0) { pageCount = 0; } // Stop page count from being negative
+            }
+            else
+            {
+                pageCount = 0;
+            }
+
+            // Stop the current page from being beyond the last page
+            if (page > pageCount)
+            {
+                page = pageCount;
+                UpdateServerSelection();
+            }
+
+            // Back button
+            back.x = 40f * scale;
+            back.y = height - 104f * scale;
+            back.sizex = 256f * scale;
+            back.sizey = 64f * scale;
+            back.fontSize = 14f * scale;
+
+            // Connect button
+            connect.x = width - 592f * scale;
+            connect.y = height - 104f * scale;
+            connect.sizex = 256f * scale;
+            connect.sizey = 64f * scale;
+            connect.fontSize = 14f * scale;
+
+            // Connect to ip button
+            connectToIp.x = width - 296f * scale;
+            connectToIp.y = height - 104f * scale;
+            connectToIp.sizex = 256f * scale;
+            connectToIp.sizey = 64f * scale;
+            connectToIp.fontSize = 14f * scale;
+
+            // Refresh button
+            refresh.x = 100f * scale;
+            refresh.y = 30f * scale;
+            refresh.sizex = 64f * scale;
+            refresh.sizey = 64f * scale;
+
+            // Page up button
+            pageUp.x = width - 94f * scale;
+            pageUp.y = 100f * scale + (serversPerPage - 1) * 70f * scale;
+            pageUp.sizex = 64f * scale;
+            pageUp.sizey = 64f * scale;
+
+            // Page down button
+            pageDown.x = width - 94f * scale;
+            pageDown.y = 100f * scale;
+            pageDown.sizex = 64f * scale;
+            pageDown.sizey = 64f * scale;
+
+            // Logged in name (label)
+            loggedInName.x = width - 228f * scale;
+            loggedInName.y = 32f * scale;
+            loggedInName.sizex = 128f * scale;
+            loggedInName.sizey = 32f * scale;
+            loggedInName.fontSize = 12f * scale;
+            
+            // Logout button
+            logout.x = width - 228f * scale;
+            logout.y = 62f * scale;
+            logout.sizex = 128f * scale;
+            logout.sizey = 32f * scale;
+            logout.fontSize = 12f * scale;
+            
+            // Log in button
+            login.x = width - 228f * scale;
+            login.y = 62f * scale;
+            login.sizex = 128f * scale;
+            login.sizey = 32f * scale;
+            login.fontSize = 12f * scale;
         }
 
-        UpdateThumbnails();
+        // Draw
+        menu.DrawBackground(); // Draw background
+        menu.DrawText(title, 20f * scale, p.GetCanvasWidth() / 2f, 10f, TextAlign.Center, TextBaseline.Top); // Draw title text
+        menu.DrawText(p.StringFormat2("{0}/{1}", p.IntToString(page + 1), p.IntToString(pageCount + 1)), 14f * scale,
+                      width - 68f * scale, (100f * scale) + (serversPerPage * 70f * scale) / 2f, TextAlign.Center, TextBaseline.Middle); // Draw page number
+
+        // Hide all server entries
         for (int i = 0; i < serverButtonsCount; i++)
         {
             serverButtons[i].visible = false;
         }
 
-        serversPerPage = menu.p.FloatToInt((menu.p.GetCanvasHeight() - (2 * 100 * scale)) / 70 * scale);
+        // Draw server entries
         for (int i = 0; i < serversPerPage; i++)
         {
-            int index = i + (serversPerPage * page);
-            if (index > serversOnListCount)
-            {
-                //Reset to first page
-                page = 0;
-                index = i + (serversPerPage * page);
-            }
-            ServerOnList s = serversOnList[index];
-            if (s == null)
-            {
-                continue;
-            }
-            string t = menu.p.StringFormat2("{1}", menu.p.IntToString(index), s.name);
-            t = menu.p.StringFormat2("{0}\n{1}", t, s.motd);
-            t = menu.p.StringFormat2("{0}\n{1}", t, s.gamemode);
-            t = menu.p.StringFormat2("{0}\n{1}", t, menu.p.IntToString(s.users));
-            t = menu.p.StringFormat2("{0}/{1}", t, menu.p.IntToString(s.max));
-            t = menu.p.StringFormat2("{0}\n{1}", t, s.version);
+            // Get current server entrys index
+            int index = i + (serversPerPage * page); // Get index
+            if (index > serversOnListCount) { break; } // If the last entry is reached
+            ServerOnList s = serversOnList[index]; // Get entries server data
+            if (s == null) { continue; } // Skip if server entry is missing server data
 
-            serverButtons[i].text = t;
-            serverButtons[i].x = 100 * scale;
-            serverButtons[i].y = 100 * scale + i * 70 * scale;
-            serverButtons[i].sizex = p.GetCanvasWidth() - 200 * scale;
-            serverButtons[i].sizey = 64 * scale;
-            serverButtons[i].visible = true;
-            serverButtons[i].buttonStyle = ButtonStyle.ServerEntry;
-            if (s.thumbnailError)
+            // Format server data
+            string t = menu.p.StringFormat2("{1}", menu.p.IntToString(index), s.name); // Name
+            t = menu.p.StringFormat2("{0}\n{1}", t, s.motd); // MOTD
+            t = menu.p.StringFormat2("{0}\n{1}", t, s.gamemode); // Game mode
+            t = menu.p.StringFormat2("{0}\n{1}", t, menu.p.IntToString(s.users)); // Users online
+            t = menu.p.StringFormat2("{0}/{1}", t, menu.p.IntToString(s.max)); // User cap
+            t = menu.p.StringFormat2("{0}\n{1}", t, s.version); // Version (for comparing)
+            serverButtons[i].text = t; // Replace widget text with formatted text
+            serverButtons[i].visible = true; // Make visable
+
+            // Update size/position
+            //if (resized)
+            //{
+                serverButtons[i].x = 100f * scale;
+                serverButtons[i].y = 100f * scale + i * 70f * scale;
+                serverButtons[i].sizex = width - 200f * scale;
+                serverButtons[i].sizey = 64f * scale;
+            //}
+
+            if (s.thumbnailError) // If server did not respond to ServerQuery. Maybe not reachable?
             {
-                //Server did not respond to ServerQuery. Maybe not reachable?
                 serverButtons[i].description = "Server did not respond to query!";
             }
             else
             {
                 serverButtons[i].description = null;
             }
-            if (s.thumbnailFetched && !s.thumbnailError)
+
+            if (s.thumbnailFetched && !s.thumbnailError) // Thumbnail fetched with error
             {
                 serverButtons[i].image = menu.p.StringFormat("serverlist_entry_{0}.png", s.hash);
             }
@@ -263,8 +343,22 @@
                 serverButtons[i].image = "serverlist_entry_noimage.png";
             }
         }
+
+        // Update scrollbars
         UpdateScrollButtons();
+
+        // Draw widgets
         DrawWidgets();
+
+        // Draw loading text (if loading servers)
+        if (loading)
+        {
+            menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), 14f * scale, 174f * scale, 50f * scale, TextAlign.Left, TextBaseline.Top);
+        }
+
+        // Update old(Width/Height)
+        oldWidth = width;
+        oldHeight = height;
     }
 
     ThumbnailResponseCi[] thumbResponses;
@@ -272,33 +366,32 @@
     {
         for (int i = 0; i < serversOnListCount; i++)
         {
-            ServerOnList server = serversOnList[i];
-            if (server == null)
+            ServerOnList server = serversOnList[i]; // Get current server entry (int the loop)
+
+            // Server entry is null
+            if (server == null) { continue; }
+
+            // Thumbnail already loaded
+            if (server.thumbnailFetched) { continue; }
+
+            // Check download state
+            if (!server.thumbnailDownloading) // Not started downloading yet
             {
-                continue;
-            }
-            if (server.thumbnailFetched)
-            {
-                //Thumbnail already loaded
-                continue;
-            }
-            if (!server.thumbnailDownloading)
-            {
-                //Not started downloading yet
+                // Start downloading
                 thumbResponses[i] = new ThumbnailResponseCi();
                 menu.p.ThumbnailDownloadAsync(server.ip, server.port, thumbResponses[i]);
                 server.thumbnailDownloading = true;
             }
             else
             {
-                //Download in progress
+                // Download in progress
                 if (thumbResponses[i] != null)
                 {
-                    if (thumbResponses[i].done)
+                    if (thumbResponses[i].done) // If download is done
                     {
                         //Request completed. load received bitmap
-                        BitmapCi bmp = menu.p.BitmapCreateFromPng(thumbResponses[i].data, thumbResponses[i].dataLength);
-                        if (bmp != null)
+                        BitmapCi bmp = menu.p.BitmapCreateFromPng(thumbResponses[i].data, thumbResponses[i].dataLength); // Get thumbnail
+                        if (bmp != null) // Set server entries thumbnail (if there is one)
                         {
                             int texture = menu.p.LoadTextureFromBitmap(bmp);
                             menu.textures.Set(menu.p.StringFormat("serverlist_entry_{0}.png", server.hash), texture);
@@ -307,17 +400,16 @@
                         server.thumbnailDownloading = false;
                         server.thumbnailFetched = true;
                     }
-                    if (thumbResponses[i].error)
+
+                    if (thumbResponses[i].error) // If an error occured (failed download)
                     {
-                        //Error while trying to download thumbnail
                         server.thumbnailDownloading = false;
                         server.thumbnailError = true;
                         server.thumbnailFetched = true;
                     }
                 }
-                else
+                else // An error occured. Stop trying
                 {
-                    //An error occured. stop trying
                     server.thumbnailDownloading = false;
                     server.thumbnailError = true;
                     server.thumbnailFetched = true;
@@ -331,6 +423,7 @@
         if (pageUp.visible && page < serverButtonsCount / serversPerPage - 1)
         {
             page++;
+            UpdateServerSelection();
         }
     }
     public void PageDown_()
@@ -338,41 +431,59 @@
         if (page > 0)
         {
             page--;
+            UpdateServerSelection();
         }
+    }
+    public void UpdateServerSelection()
+    {
+        // Deselect all server buttons
+        for (int i = 0; i < serverButtonsCount; i++)
+        {
+            serverButtons[i].selected = false;
+        }
+
+        // Find selected servers index
+        int serverIndex = -1;
+        for (int i = 0; i < serverCount; i++)
+        {
+            if (serversOnList[i].hash == selectedServerHash) // If server is selected server
+            {
+                serverIndex = i; // Keep selected servers index
+                break;
+            }
+        }
+
+        // Abort if no server is selected
+        if (serverIndex == -1) { return; }
+
+        // Abort if no server can not be selected (selected server is in a previous page)
+        if (serverIndex - (serversPerPage * page) < 0) { return; }
+
+        // Select selected server
+        serverButtons[serverIndex - (serversPerPage * page)].selected = true;
+
+        // Make connect button pressable
+        connect.pressable = true;
     }
     public void UpdateScrollButtons()
     {
-        //Determine if this page is the highest page containing servers
+        // Determine if this page is the highest page containing servers
         bool maxpage = false;
-        if ((page + 1) * serversPerPage >= serversOnListCount)
+        if (serversPerPage <= 0 // Disable page up if there are no servers per page
+            || (page + 1) * serversPerPage >= serversOnListCount
+            || (page + 1) * serversPerPage >= serverCount)
         {
             maxpage = true;
         }
-        else
-        {
-            if (serversOnList[(page + 1) * serversPerPage] == null)
-            {
-                maxpage = true;
-            }
-        }
-        //Hide scroll buttons
-        if (page == 0)
-        {
-            pageDown.visible = false;
-        }
-        else
-        {
-            pageDown.visible = true;
-        }
-        if (maxpage)
-        {
-            pageUp.visible = false;
-        }
-        else
-        {
-            pageUp.visible = true;
-        }
+
+        // Hide scroll buttons
+        if (page == 0) { pageDown.visible = false; }
+        else { pageDown.visible = true; }
+
+        if (maxpage) { pageUp.visible = false; }
+        else { pageUp.visible = true; }
     }
+
     MenuWidget back;
     MenuWidget connect;
     MenuWidget connectToIp;
@@ -381,77 +492,78 @@
     MenuWidget pageDown;
     MenuWidget loggedInName;
     MenuWidget logout;
+    MenuWidget login;
     MenuWidget[] serverButtons;
     const int serverButtonsCount = 1024;
 
     public override void OnBackPressed()
     {
-        menu.StartMainMenu();
+        menu.StartMainMenu(); // Go to the main menu
     }
     public override void OnMouseWheel(MouseWheelEventArgs e)
     {
         //menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
-        if (e.GetDelta() < 0)
-        {
-            //Mouse wheel turned down
-            PageUp_();
-        }
-        else if (e.GetDelta() > 0)
-        {
-            //Mouse wheel turned up
-            PageDown_();
-        }
+        if (e.GetDelta() < 0) { PageUp_(); } //Mouse wheel turned down
+        else if (e.GetDelta() > 0) { PageDown_(); } //Mouse wheel turned up
     }
     string selectedServerHash;
     public override void OnButton(MenuWidget w)
     {
+        // Check all server buttons
         for (int i = 0; i < serverButtonsCount; i++)
         {
-            serverButtons[i].selected = false;
-            if (serverButtons[i] == w)
+            serverButtons[i].selected = false; // Deselect server button
+            if (serverButtons[i] == w) // If server button is clicked
             {
+                // Select server
                 serverButtons[i].selected = true;
                 if (serversOnList[i + serversPerPage * page] != null)
-                {
                     selectedServerHash = serversOnList[i + serversPerPage * page].hash;
-                }
+
+                connect.pressable = true; // Make connect button  pressable
             }
         }
-        if (w == pageUp)
+
+        // Check what button was clicked
+        if (w == pageUp) // Page up
         {
             PageUp_();
         }
-        if (w == pageDown)
+        else if (w == pageDown) // Page down
         {
             PageDown_();
         }
-        if (w == back)
+        else if (w == back) // Back
         {
             OnBackPressed();
         }
-        if (w == connect)
+        else if (w == connect) // Connect
         {
-            if (selectedServerHash != null)
+            if (connect.pressable && selectedServerHash != null) // If a server is selected
             {
-                menu.StartLogin(selectedServerHash, null, 0);
+                menu.StartLogin(selectedServerHash, null, 0, true); // Connect (or log in)
             }
         }
-        if (w == connectToIp)
+        else if (w == connectToIp) // Connect to ip
         {
             menu.StartConnectToIp();
         }
-        if (w == refresh)
+        else if (w == refresh) // Refresh
         {
-            loaded = false;
-            loading = true;
+            loaded = false; // (Reset this because it is only used while loading)
+            loading = true; // Reload servers next frame
         }
-        if (w == logout)
+        else if (w == logout) // Log out
         {
             Preferences pref = menu.p.GetPreferences();
             pref.Remove("Username");
             pref.Remove("Password");
             menu.p.SetPreferences(pref);
             loggedInName.text = "";
+        }
+        else if (w == login) // Log in
+        {
+            menu.StartLogin(null, null, 0, false); // Log in
         }
     }
 }

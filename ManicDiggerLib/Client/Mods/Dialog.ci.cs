@@ -238,7 +238,7 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
                 b.font.style = a.Font.FontStyle;
             }
             b.id = a.Id;
-            b.isbutton = a.ClickKey != 0;
+            b.isButton = a.ClickKey != 0;
             if (a.Image == "Solid")
             {
                 b.image = null;
@@ -266,7 +266,7 @@ public class DialogScreen : GameScreen
 {
     public override void OnButton(MenuWidget w)
     {
-        if (w.isbutton)
+        if (w.isButton)
         {
             string[] textValues = new string[WidgetCount];
             for (int i = 0; i < WidgetCount; i++)
