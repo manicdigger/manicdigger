@@ -106,22 +106,30 @@
         // Try logging in with current details (if already logged in)
         if (!triedSavedLogin)
         {
+            // Load saved account details
             Preferences preferences = menu.p.GetPreferences();
             loginUsername.text = preferences.GetString("Username", "");
             loginPassword.text = "";
             string token = preferences.GetString("Password", "");
 
             loginResultData = new LoginData();
-            if (connect) // Connect to server
+            if (token != "") // If there is a "saved password"
             {
-                if (serverHash != null && token != "")
+                if (connect) // Connect to server
                 {
-                    menu.Login(loginUsername.text, loginPassword.text, serverHash, token, loginResult, loginResultData);
+                    if (serverHash != null) // Connect through master server
+                    {
+                        menu.Login(loginUsername.text, loginPassword.text, serverHash, token, loginResult, loginResultData);
+                    }
+                    else // Connect to IP
+                    {
+                        // Connect to IP
+                    }
                 }
-            }
-            else // Login only
-            {
-                menu.Login(loginUsername.text, loginPassword.text, "", token, loginResult, loginResultData);
+                else // Login only
+                {
+                    menu.Login(loginUsername.text, loginPassword.text, null, token, loginResult, loginResultData);
+                }
             }
 
             triedSavedLogin = true;
@@ -310,7 +318,7 @@
             }
             else // Login only
             {
-                menu.Login(loginUsername.text, loginPassword.text, "", "", loginResult, loginResultData);
+                menu.Login(loginUsername.text, loginPassword.text, null, "", loginResult, loginResultData);
             }
         }
         else if (w == createAccount) // Create account
