@@ -16,7 +16,6 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>c.snk</AssemblyOriginatorKeyFile>
     <PlatformTarget>x86</PlatformTarget>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
