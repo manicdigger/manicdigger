@@ -1,5 +1,7 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C# Express 2008
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+# SharpDevelop 5.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger", "ManicDigger\ManicDigger.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDiggerServer", "ManicDiggerServer\ManicDiggerServer.csproj", "{46D2CD51-9603-48B4-87D1-7377B5F1E51E}"
