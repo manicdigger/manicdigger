@@ -1,4 +1,6 @@
 language: csharp
+mono:
+  - 3.12.1
 
 install:
 # innosetup
