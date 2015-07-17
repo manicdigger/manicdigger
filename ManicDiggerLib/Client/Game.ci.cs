@@ -2874,11 +2874,14 @@
                         }
                         if (arg < minfov || arg > maxfov)
                         {
-                            platform.ThrowException(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
+                            Log(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
                         }
-                        float fov_ = (2 * Game.GetPi() * (one * arg / 360));
-                        this.fov = fov_;
-                        OnResize();
+                        else
+                        {
+                            float fov_ = (2 * Game.GetPi() * (one * arg / 360));
+                            this.fov = fov_;
+                            OnResize();
+                        }
                     }
                     else if (cmd == "movespeed")
                     {
