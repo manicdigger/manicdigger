@@ -3,6 +3,7 @@
     public ModFallDamageToPlayer()
     {
         one = 1;
+        fallSoundPlaying = false;
     }
     public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
     {
@@ -12,6 +13,10 @@
         }
         if (game.controls.freemove)
         {
+            if (fallSoundPlaying)
+            {
+                SetFallSoundActive(game, false);
+            }
             return;
         }
         if (game.FollowId() == null)
@@ -20,6 +25,7 @@
         }
     }
     float one;
+    bool fallSoundPlaying;
     int lastfalldamagetimeMilliseconds;
     internal void UpdateFallDamageToPlayer(Game game, float dt)
     {
@@ -35,11 +41,11 @@
         if ((game.blockheight(posX, posY, posZ) < posZ - 8)
             || fallspeed > 3)
         {
-            game.AudioPlayLoop("fallloop.wav", fallspeed > 2, true);
+            SetFallSoundActive(game, fallspeed > 2);
         }
         else
         {
-            game.AudioPlayLoop("fallloop.wav", false, true);
+            SetFallSoundActive(game, false);
         }
 
         //fall damage
@@ -64,5 +70,10 @@
                 game.ApplyDamageToPlayer(game.platform.FloatToInt(severity * game.PlayerStats.MaxHealth), Packet_DeathReasonEnum.FallDamage, 0);	//Maybe give ID of last player touched?
             }
         }
+    }
+    internal void SetFallSoundActive(Game game, bool active)
+    {
+        game.AudioPlayLoop("fallloop.wav", active, true);
+        fallSoundPlaying = active;
     }
 }
