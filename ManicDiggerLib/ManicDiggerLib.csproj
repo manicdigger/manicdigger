@@ -176,6 +176,7 @@
     <Compile Include="Client\Misc\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\Misc\GlMatrix.ci.cs" />
     <Compile Include="Client\Misc\NetworkWebSocket.ci.cs" />
+    <Compile Include="Server\Mods\Fortress\Default.cs" />
     <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\ServerEntity.cs" />
