@@ -459,7 +459,7 @@
         }
         game.Draw2dBitmapFile("activematerial.png",
             MaterialSelectorStartX() + ActiveMaterialCellSize() * game.ActiveMaterial,
-            MaterialSelectorStartY(), ActiveMaterialCellSize() * 64 / 41, ActiveMaterialCellSize() * 64 / 41);
+            MaterialSelectorStartY(), ActiveMaterialCellSize() * 64 / 48, ActiveMaterialCellSize() * 64 / 48);
     }
 
     IntRef SelectedWearPlace(PointRef scaledMouse)
