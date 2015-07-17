@@ -153,6 +153,15 @@ public class AudioControl
             sounds[soundsCount++] = s;
         }
     }
+
+    public void StopAll()
+    {
+        for (int i = 0; i < soundsCount; i++)
+        {
+            if (sounds[i] == null) { continue; }
+            sounds[i].stop = true;
+        }
+    }
 }
 
 public class Sound_
