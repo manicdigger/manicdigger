@@ -16,11 +16,13 @@ script:
  - zip -r -9 ManicDiggerBinary.zip ManicDiggerBinary
 # innosetup
  - mv ManicDiggerBinary output
-# - wget http://constexpr.org/innoextract/files/innoextract-1.4-windows-r2.zip
- - wget http://www.jrsoftware.org/download.php/is-unicode.exe
-# - unzip innoextract-1.4-windows-r2.zip
-# - wine innoextract-1.4-windows-r2/innoextract.exe is-unicode.exe
- - wine is-unicode.exe "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART"
+ - wget http://constexpr.org/innoextract/files/innoextract-1.4-windows-r2.zip
+# release pinned to 5.5.5 due to innoextract compatibility issues
+# - wget http://www.jrsoftware.org/download.php/is-unicode.exe
+ - wget http://files.jrsoftware.org/is/5/isetup-5.5.5-unicode.exe
+ - mv isetup-5.5.5-unicode.exe is-unicode.exe
+ - unzip innoextract-1.4-windows-r2.zip
+ - wine innoextract-1.4-windows-r2/innoextract.exe is-unicode.exe
  - wine app/ISCC.exe setup.iss
  - mv output2/setup.exe ManicDiggerSetup.exe
 # deploy builds
