@@ -2781,7 +2781,6 @@
         if (StringTools.StringStartsWith(platform, s_, "."))
         {
             string strFreemoveNotAllowed = language.FreemoveNotAllowed();
-            //try
             {
                 string cmd = StringTools.StringSubstringToEnd(platform, ss[0], 1);
                 string arguments;
@@ -2794,33 +2793,34 @@
                     arguments = StringTools.StringSubstringToEnd(platform, s_, platform.StringIndexOf(s_, " "));
                 }
                 arguments = platform.StringTrim(arguments);
-                if (cmd == "pos")
+
+                // Command requiring no arguments
+                if (cmd == "clients")
+                {
+                    Log("Clients:");
+                    for (int i = 0; i < entitiesCount; i++)
+                    {
+                        Entity entity = entities[i];
+                        if (entity == null) { continue; }
+                        if (entity.drawName == null) { continue; }
+                        if (!entity.drawName.ClientAutoComplete) { continue; }
+                        Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].drawName.Name));
+                    }
+                }
+                else if (cmd == "reconnect")
+                {
+                    Reconnect();
+                }
+                else if (cmd == "m")
+                {
+                    mouseSmoothing = !mouseSmoothing;
+                    if (mouseSmoothing) { Log("Mouse smoothing enabled."); }
+                    else { Log("Mouse smoothing disabled."); }
+                }
+                // Commands requiring boolean arguments
+                else if (cmd == "pos")
                 {
                     ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
-                }
-                else if (cmd == "fog")
-                {
-                    int foglevel;
-                    foglevel = platform.IntParse(arguments);
-                    //if (foglevel <= 16)
-                    //{
-                    //    terrain.DrawDistance = (int)Math.Pow(2, foglevel);
-                    //}
-                    //else
-                    {
-                        int foglevel2 = foglevel;
-                        if (foglevel2 > 1024)
-                        {
-                            foglevel2 = 1024;
-                        }
-                        if (foglevel2 % 2 == 0)
-                        {
-                            foglevel2--;
-                        }
-                        d_Config3d.viewdistance = foglevel2;
-                        //terrain.UpdateAllTiles();
-                    }
-                    OnResize();
                 }
                 else if (cmd == "noclip")
                 {
@@ -2838,105 +2838,97 @@
                         return;
                     }
                 }
-                else if (cmd == "fov")
-                {
-                    int arg = platform.IntParse(arguments);
-                    int minfov = 1;
-                    int maxfov = 179;
-                    if (!issingleplayer)
-                    {
-                        minfov = 60;
-                    }
-                    if (arg < minfov || arg > maxfov)
-                    {
-                        platform.ThrowException(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
-                    }
-                    float fov_ = (2 * Game.GetPi() * (one * arg / 360));
-                    this.fov = fov_;
-                    OnResize();
-                }
-                else if (cmd == "clients")
-                {
-                    Log("Clients:");
-                    for (int i = 0; i < entitiesCount; i++)
-                    {
-                        Entity entity = entities[i];
-                        if (entity == null) { continue; }
-                        if (entity.drawName == null) { continue; }
-                        if (!entity.drawName.ClientAutoComplete) { continue; }
-                        Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].drawName.Name));
-                    }
-                }
-                else if (cmd == "movespeed")
-                {
-                    //try
-                    //{
-                    if (this.AllowFreemove)
-                    {
-                        if (platform.FloatParse(arguments) <= 500)
-                        {
-                            movespeed = basemovespeed * platform.FloatParse(arguments);
-                            AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
-                        }
-                        else
-                        {
-                            AddChatline("Entered movespeed to high! max. 500x");
-                        }
-                    }
-                    else
-                    {
-                        Log(strFreemoveNotAllowed);
-                        return;
-                    }
-                    //}
-                    //catch
-                    //{
-                    //    AddChatline("Invalid value!");
-                    //    AddChatline("USE: .movespeed [movespeed]");
-                    //}
-                }
                 else if (cmd == "gui")
                 {
                     ENABLE_DRAW2D = BoolCommandArgument(arguments);
                 }
-                else if (cmd == "reconnect")
+                // Commands requiring numeric arguments
+                else if (arguments != "")
                 {
-                    Reconnect();
-                }
-                else if (cmd == "m")
-                {
-                    mouseSmoothing = !mouseSmoothing;
-                    if (mouseSmoothing) { Log("Mouse smoothing enabled."); }
-                    else { Log("Mouse smoothing disabled."); }
-                }
-                else if (cmd == "serverinfo")
-                {
-                    //Fetches server info from given adress
-                    IntRef splitCount = new IntRef();
-                    string[] split = platform.StringSplit(arguments, ":", splitCount);
-                    if (splitCount.value == 2)
+                    if (cmd == "fog")
                     {
-                        QueryClient qClient = new QueryClient();
-                        qClient.SetPlatform(platform);
-                        qClient.PerformQuery(split[0], platform.IntParse(split[1]));
-                        if (qClient.querySuccess)
+                        int foglevel;
+                        foglevel = platform.IntParse(arguments);
                         {
-                            //Received result
-                            QueryResult r = qClient.GetResult();
-                            AddChatline(r.GameMode);
-                            AddChatline(platform.IntToString(r.MapSizeX));
-                            AddChatline(platform.IntToString(r.MapSizeY));
-                            AddChatline(platform.IntToString(r.MapSizeZ));
-                            AddChatline(platform.IntToString(r.MaxPlayers));
-                            AddChatline(r.MOTD);
-                            AddChatline(r.Name);
-                            AddChatline(platform.IntToString(r.PlayerCount));
-                            AddChatline(r.PlayerList);
-                            AddChatline(platform.IntToString(r.Port));
-                            AddChatline(r.PublicHash);
-                            AddChatline(r.ServerVersion);
+                            int foglevel2 = foglevel;
+                            if (foglevel2 > 1024)
+                            {
+                                foglevel2 = 1024;
+                            }
+                            if (foglevel2 % 2 == 0)
+                            {
+                                foglevel2--;
+                            }
+                            d_Config3d.viewdistance = foglevel2;
                         }
-                        AddChatline(qClient.GetServerMessage());
+                        OnResize();
+                    }
+                    else if (cmd == "fov")
+                    {
+                        int arg = platform.IntParse(arguments);
+                        int minfov = 1;
+                        int maxfov = 179;
+                        if (!issingleplayer)
+                        {
+                            minfov = 60;
+                        }
+                        if (arg < minfov || arg > maxfov)
+                        {
+                            platform.ThrowException(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
+                        }
+                        float fov_ = (2 * Game.GetPi() * (one * arg / 360));
+                        this.fov = fov_;
+                        OnResize();
+                    }
+                    else if (cmd == "movespeed")
+                    {
+                        if (this.AllowFreemove)
+                        {
+                            if (platform.FloatParse(arguments) <= 500)
+                            {
+                                movespeed = basemovespeed * platform.FloatParse(arguments);
+                                AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
+                            }
+                            else
+                            {
+                                AddChatline("Entered movespeed to high! max. 500x");
+                            }
+                        }
+                        else
+                        {
+                            Log(strFreemoveNotAllowed);
+                            return;
+                        }
+                    }
+                    else if (cmd == "serverinfo")
+                    {
+                        //Fetches server info from given adress
+                        IntRef splitCount = new IntRef();
+                        string[] split = platform.StringSplit(arguments, ":", splitCount);
+                        if (splitCount.value == 2)
+                        {
+                            QueryClient qClient = new QueryClient();
+                            qClient.SetPlatform(platform);
+                            qClient.PerformQuery(split[0], platform.IntParse(split[1]));
+                            if (qClient.querySuccess)
+                            {
+                                //Received result
+                                QueryResult r = qClient.GetResult();
+                                AddChatline(r.GameMode);
+                                AddChatline(platform.IntToString(r.MapSizeX));
+                                AddChatline(platform.IntToString(r.MapSizeY));
+                                AddChatline(platform.IntToString(r.MapSizeZ));
+                                AddChatline(platform.IntToString(r.MaxPlayers));
+                                AddChatline(r.MOTD);
+                                AddChatline(r.Name);
+                                AddChatline(platform.IntToString(r.PlayerCount));
+                                AddChatline(r.PlayerList);
+                                AddChatline(platform.IntToString(r.Port));
+                                AddChatline(r.PublicHash);
+                                AddChatline(r.ServerVersion);
+                            }
+                            AddChatline(qClient.GetServerMessage());
+                        }
                     }
                 }
                 else
@@ -2952,7 +2944,6 @@
                     SendChat(chatline);
                 }
             }
-            //catch (Exception e) { AddChatline(new StringReader(e.Message).ReadLine()); }
         }
         else
         {
