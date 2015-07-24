@@ -2143,6 +2143,10 @@ PlatformJs.prototype.stringSplit = function(value, separator, returnLength) {
 	return ret;
 }
 
+PlatformJs.prototype.stringJoin = function(value, separator) {
+	return value.join(separator);
+}
+
 PlatformJs.prototype.stringStartsWithIgnoreCase = function(a, b) {
 	return a.toLowerCase().indexOf(b.toLowerCase()) == 0;
 }

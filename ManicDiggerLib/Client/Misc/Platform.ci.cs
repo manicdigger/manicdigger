@@ -30,6 +30,7 @@
     public abstract string StringFromUtf8ByteArray(byte[] value, int valueLength);
     public abstract byte[] StringToUtf8ByteArray(string s, IntRef retLength);
     public abstract string[] StringSplit(string value, string separator, IntRef returnLength);
+    public abstract string StringJoin(string[] value, string separator);
 
     // Misc
     public abstract string Timestamp();

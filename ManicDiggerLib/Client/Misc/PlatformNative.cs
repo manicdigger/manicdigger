@@ -135,6 +135,11 @@ public class GamePlatformNative : GamePlatform
         return ret;
     }
 
+    public override string StringJoin(string[] value, string separator)
+    {
+        return string.Join(separator, value);
+    }
+
     public override bool StringEmpty(string data)
     {
         return string.IsNullOrEmpty(data);
