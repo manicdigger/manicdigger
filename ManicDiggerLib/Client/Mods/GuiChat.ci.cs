@@ -283,22 +283,48 @@
             //Handles player name autocomplete in chat
             if (c == charTab && game.platform.StringTrim(game.GuiTypingBuffer) != "")
             {
-                for (int i = 0; i < game.entitiesCount; i++)
+                IntRef partsLength = new IntRef();
+                string[] parts = game.platform.StringSplit(game.GuiTypingBuffer, " ", partsLength);
+                string completed = DoAutocomplete(parts[partsLength.value - 1]);
+                if (completed == "")
                 {
-                    Entity entity = game.entities[i];
-                    if (entity == null) { continue; }
-                    if (entity.drawName == null) { continue; }
-                    if (!entity.drawName.ClientAutoComplete) { continue; }
-                    DrawName p = entity.drawName;
-                    //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
-                    if (game.platform.StringStartsWithIgnoreCase(StringTools.StringSubstringToEnd(game.platform, p.Name, 2), game.GuiTypingBuffer))
-                    {
-                        game.GuiTypingBuffer = StringTools.StringAppend(game.platform, StringTools.StringSubstringToEnd(game.platform, p.Name, 2), ": ");
-                        break;
-                    }
+                    //No completion available. Abort.
+                    return;
+                }
+                else if (partsLength.value == 1)
+                {
+                    //Part is first word. Format as "<name>: "
+                    game.GuiTypingBuffer = StringTools.StringAppend(game.platform, completed, ": ");
+                }
+                else
+                {
+                    //Part is not first. Just complete "<name> "
+                    parts[partsLength.value - 1] = completed;
+                    game.GuiTypingBuffer = StringTools.StringAppend(game.platform, game.platform.StringJoin(parts, " "), " ");
                 }
             }
         }
+    }
+
+    public string DoAutocomplete(string text)
+    {
+        if (!game.platform.StringEmpty(text))
+        {
+            for (int i = 0; i < game.entitiesCount; i++)
+            {
+                Entity entity = game.entities[i];
+                if (entity == null) { continue; }
+                if (entity.drawName == null) { continue; }
+                if (!entity.drawName.ClientAutoComplete) { continue; }
+                DrawName p = entity.drawName;
+                //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
+                if (game.platform.StringStartsWithIgnoreCase(StringTools.StringSubstringToEnd(game.platform, p.Name, 2), text))
+                {
+                    return StringTools.StringSubstringToEnd(game.platform, p.Name, 2);
+                }
+            }
+        }
+        return "";
     }
 }
 
