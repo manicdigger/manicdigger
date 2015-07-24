@@ -113,7 +113,8 @@
                     continue;
             }
         }
-        serverMessage = "&4No message received from server!";
+        //Set timeout message if query did not finish in time
+        serverMessage = "Timeout while querying server!";
     }
     
     public void SetPlatform(GamePlatform p_)

@@ -109,14 +109,14 @@
                 QueryClient qclient = new QueryClient();
                 qclient.SetPlatform(platform);
                 qclient.PerformQuery(game.GetRedirect().GetIP(), game.GetRedirect().GetPort());
-                QueryResult qresult = qclient.GetResult();
-                if (qresult == null)
+                if (qclient.queryPerformed && !qclient.querySuccess)
                 {
-                    //If query fails show error message and go back to main menu
+                    //Query did not succeed. Back to main menu
                     platform.MessageBoxShowError(qclient.GetServerMessage(), "Redirection error");
                     menu.StartMainMenu();
                     return;
                 }
+                QueryResult qresult = qclient.GetResult();
                 //Get auth hash for new server
                 LoginClientCi lic = new LoginClientCi();
                 LoginData lidata = new LoginData();
