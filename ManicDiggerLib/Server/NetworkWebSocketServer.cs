@@ -92,6 +92,7 @@ public class WebSocketGameServer : WebSocketBehavior
 {
     public WebSocketGameServer()
     {
+        IgnoreExtensions = true;
         connection = new WebSocketConnection();
         connection.server = this;
     }
