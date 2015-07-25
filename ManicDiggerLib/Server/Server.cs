@@ -463,8 +463,10 @@ public partial class Server : ICurrentTime, IDropItem
     private ClientOnServer serverConsoleClient;
     public void ReceiveServerConsole(string message)
     {
-        if (message == null)
+        // empty message
+        if (string.IsNullOrEmpty(message))
         {
+            //Ignore empty messages
             return;
         }
         // server command
@@ -1417,6 +1419,12 @@ public partial class Server : ICurrentTime, IDropItem
             case Packet_ClientIdEnum.Message:
                 {
                     packet.Message.Message = packet.Message.Message.Trim();
+                    // empty message
+                    if (string.IsNullOrEmpty(packet.Message.Message))
+                    {
+                        //Ignore empty messages
+                        break;
+                    }
                     // server command
                     if (packet.Message.Message.StartsWith("/"))
                     {
