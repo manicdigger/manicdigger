@@ -1546,10 +1546,10 @@ public class TerrainChunkTesselatorCi
                 switch (corner)
                 {
                     //right side is mirrored
-                    case CornerEnum.TopLeft:
+                    case CornerEnum.TopRight:
                         nIndex = CornerEnum.TopRight;
                         break;
-                    case CornerEnum.TopRight:
+                    case CornerEnum.TopLeft:
                         nIndex = CornerEnum.BottomRight;
                         break;
                 }
