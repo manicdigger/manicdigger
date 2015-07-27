@@ -738,10 +738,6 @@ public partial class Server : ICurrentTime, IDropItem
                     KillPlayer(clientid);
                     Console.WriteLine(e.ToString());
                 }
-                if (s.Elapsed.TotalMilliseconds > 15)
-                {
-                    break;
-                }
                 break;
             case NetworkMessageType.Disconnect:
                 Console.WriteLine("Client disconnected.");
