@@ -687,7 +687,7 @@ public class TerrainChunkTesselatorCi
         DrawBlockFace(x, y, z, tileType, tileSide, vOffsetX, vOffsetY, vOffsetZ, vScaleX, vScaleY, vScaleZ, vNeighbors, fShadowRation);
     }
 
-    void CalcShadowRation(int nDir1, int nDirBetween, int nDir2, int nCorner, float[] fShadowRation, bool[] occupied, int[] shadowRationInt)
+    void CalcShadowRation(int nDir1, int nDir2, int nDirBetween, int nCorner, float[] fShadowRation, bool[] occupied, int[] shadowRationInt)
     {
         if (occupied[nDir1] && occupied[nDir2]) 
         {
