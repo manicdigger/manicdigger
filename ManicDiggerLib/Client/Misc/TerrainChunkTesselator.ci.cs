@@ -54,6 +54,7 @@ public class TerrainChunkTesselatorCi
     internal ModelData[] toreturnatlas1dtransparent;
 
     internal float BlockShadow;
+    internal bool option_DarkenBlockSides;
     internal bool option_DoNotDrawEdges;
     internal float AtiArtifactFix;
 
@@ -69,6 +70,7 @@ public class TerrainChunkTesselatorCi
         //option_HardWaterTesselation = true;
         _colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
         BlockShadow = 0.6f;
+        option_DarkenBlockSides = false;
         option_DoNotDrawEdges = true;
         occ = 0.7f;
         halfocc = 0.4f;
@@ -712,14 +714,16 @@ public class TerrainChunkTesselatorCi
         int color = _colorWhite;
 
         //Darken shadow sides
-        //TODO: keep that?
-        switch (tileSide)
+        if (option_DarkenBlockSides)
         {
-            case TileSideEnum.Bottom:
-            case TileSideEnum.Left:
-            case TileSideEnum.Right:
-                color = ColorMultiply(color, BlockShadow);
-                break;
+            switch (tileSide)
+            {
+                case TileSideEnum.Bottom:
+                case TileSideEnum.Left:
+                case TileSideEnum.Right:
+                    color = ColorMultiply(color, BlockShadow);
+                    break;
+            }
         }
 
         int sidetexture = TextureId(tileType, tileSide);
