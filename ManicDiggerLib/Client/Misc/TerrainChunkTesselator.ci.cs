@@ -138,14 +138,14 @@ public class TerrainChunkTesselatorCi
         c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Top] = VecCito3i.CitoCtr(1, 0, 1);
         c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Bottom] = VecCito3i.CitoCtr(1, 0, -1);
 
-        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Left] = VecCito3i.CitoCtr(1, -1, 0);
-        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, 1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Left] = VecCito3i.CitoCtr(1, 1, 0);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.Right] = VecCito3i.CitoCtr(1, -1, 0);
 
-        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(1, -1, 1);
-        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopLeft] = VecCito3i.CitoCtr(1, 1, 1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.TopRight] = VecCito3i.CitoCtr(1, -1, 1);
 
-        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(1, -1, -1);
-        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomLeft] = VecCito3i.CitoCtr(1, 1, -1);
+        c_OcclusionNeighbors[TileSideEnum.Right][TileDirectionEnum.BottomRight] = VecCito3i.CitoCtr(1, -1, -1);
 
         //Back
         c_OcclusionNeighbors[TileSideEnum.Back][TileDirectionEnum.Center] = VecCito3i.CitoCtr(0, -1, 0);
@@ -760,17 +760,17 @@ public class TerrainChunkTesselatorCi
         yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomLeft]));
 
-        if (tileSide == TileSideEnum.Right)
-        {
-            //Draw backwards, so the visible side points outward
-            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-        }
-        else
+//        if (tileSide == TileSideEnum.Right)
+//        {
+//            //Draw backwards, so the visible side points outward
+//            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+//            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+//            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+//            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+//            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+//            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+//        }
+//        else
         {
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
