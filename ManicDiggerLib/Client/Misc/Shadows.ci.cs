@@ -277,7 +277,7 @@ public class LightBetweenChunks
                     if (!game.map.IsValidChunkPos(pcx, pcy, pcz))
                     {
                         ArrayFillInt(chunksData[Index3d(x, y, z, 3, 3)], 16 * 16 * 16, 0);
-                        ArrayFillByte(chunksLight[Index3d(x, y, z, 3, 3)], 16 * 16 * 16, 15);
+                        ArrayFillByte(chunksLight[Index3d(x, y, z, 3, 3)], 16 * 16 * 16, 0);
                         continue;
                     }
                     Chunk p = game.map.GetChunk_(pcx, pcy, pcz);
