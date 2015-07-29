@@ -462,7 +462,17 @@ namespace ManicDigger
 
         public void SetPlayerPosition(int player, float x, float y, float z)
         {
-            ServerEntityPositionAndOrientation pos = server.clients[player].entity.position.Clone();
+            ServerEntityPositionAndOrientation pos;
+            if (server.clients[player].positionOverride == null)
+            {
+                //No position override so far. Clone from player position
+                pos = server.clients[player].entity.position.Clone();
+            }
+            else
+            {
+                //Position has already been modified. Clone from override to prevent data loss
+                pos = server.clients[player].positionOverride.Clone();
+            }
             pos.x = x;
             pos.y = z;
             pos.z = y;
@@ -486,7 +496,17 @@ namespace ManicDigger
 
         public void SetPlayerOrientation(int player, int heading, int pitch, int stance)
         {
-            var pos = server.clients[player].entity.position.Clone();
+            ServerEntityPositionAndOrientation pos;
+            if (server.clients[player].positionOverride == null)
+            {
+                //No position override so far. Clone from player position
+                pos = server.clients[player].entity.position.Clone();
+            }
+            else
+            {
+                //Position has already been modified. Clone from override to prevent data loss
+                pos = server.clients[player].positionOverride.Clone();
+            }
             pos.heading = (byte)heading;
             pos.pitch = (byte)pitch;
             pos.stance = (byte)stance;
