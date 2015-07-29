@@ -764,17 +764,6 @@ public class TerrainChunkTesselatorCi
         yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
         ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecBottom, ColorMultiply(color, fShadowRation[CornerEnum.BottomLeft]));
 
-//        if (tileSide == TileSideEnum.Right)
-//        {
-//            //Draw backwards, so the visible side points outward
-//            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
-//            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-//            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-//            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
-//            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
-//            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
-//        }
-//        else
         {
             ModelDataTool.AddIndex(toreturn, (lastelement + 0));
             ModelDataTool.AddIndex(toreturn, (lastelement + 1));
@@ -1545,7 +1534,6 @@ public class TerrainChunkTesselatorCi
             case TileSideEnum.Right:
                 switch (corner)
                 {
-                    //right side is mirrored
                     case CornerEnum.TopRight:
                         nIndex = CornerEnum.TopRight;
                         break;
