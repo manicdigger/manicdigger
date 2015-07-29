@@ -2780,57 +2780,122 @@
         string[] ss = platform.StringSplit(s_, " ", ssCount);
         if (StringTools.StringStartsWith(platform, s_, "."))
         {
+            //Client command starting with a "."
             string strFreemoveNotAllowed = language.FreemoveNotAllowed();
+            string cmd = StringTools.StringSubstringToEnd(platform, ss[0], 1);
+            string arguments;
+            if (platform.StringIndexOf(s_, " ") == -1)
             {
-                string cmd = StringTools.StringSubstringToEnd(platform, ss[0], 1);
-                string arguments;
-                if (platform.StringIndexOf(s_, " ") == -1)
+                arguments = "";
+            }
+            else
+            {
+                arguments = StringTools.StringSubstringToEnd(platform, s_, platform.StringIndexOf(s_, " "));
+            }
+            arguments = platform.StringTrim(arguments);
+
+            // Command requiring no arguments
+            if (cmd == "clients")
+            {
+                Log("Clients:");
+                for (int i = 0; i < entitiesCount; i++)
                 {
-                    arguments = "";
+                    Entity entity = entities[i];
+                    if (entity == null) { continue; }
+                    if (entity.drawName == null) { continue; }
+                    if (!entity.drawName.ClientAutoComplete) { continue; }
+                    Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].drawName.Name));
+                }
+            }
+            else if (cmd == "reconnect")
+            {
+                Reconnect();
+            }
+            else if (cmd == "m")
+            {
+                mouseSmoothing = !mouseSmoothing;
+                if (mouseSmoothing) { Log("Mouse smoothing enabled."); }
+                else { Log("Mouse smoothing disabled."); }
+            }
+            // Commands requiring boolean arguments
+            else if (cmd == "pos")
+            {
+                ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
+            }
+            else if (cmd == "noclip")
+            {
+                controls.noclip = BoolCommandArgument(arguments);
+            }
+            else if (cmd == "freemove")
+            {
+                if (this.AllowFreemove)
+                {
+                    controls.freemove = BoolCommandArgument(arguments);
                 }
                 else
                 {
-                    arguments = StringTools.StringSubstringToEnd(platform, s_, platform.StringIndexOf(s_, " "));
+                    Log(strFreemoveNotAllowed);
+                    return;
                 }
-                arguments = platform.StringTrim(arguments);
-
-                // Command requiring no arguments
-                if (cmd == "clients")
+            }
+            else if (cmd == "gui")
+            {
+                ENABLE_DRAW2D = BoolCommandArgument(arguments);
+            }
+            // Commands requiring numeric arguments
+            else if (arguments != "")
+            {
+                if (cmd == "fog")
                 {
-                    Log("Clients:");
-                    for (int i = 0; i < entitiesCount; i++)
+                    int foglevel;
+                    foglevel = platform.IntParse(arguments);
                     {
-                        Entity entity = entities[i];
-                        if (entity == null) { continue; }
-                        if (entity.drawName == null) { continue; }
-                        if (!entity.drawName.ClientAutoComplete) { continue; }
-                        Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].drawName.Name));
+                        int foglevel2 = foglevel;
+                        if (foglevel2 > 1024)
+                        {
+                            foglevel2 = 1024;
+                        }
+                        if (foglevel2 % 2 == 0)
+                        {
+                            foglevel2--;
+                        }
+                        d_Config3d.viewdistance = foglevel2;
+                    }
+                    OnResize();
+                }
+                else if (cmd == "fov")
+                {
+                    int arg = platform.IntParse(arguments);
+                    int minfov = 1;
+                    int maxfov = 179;
+                    if (!issingleplayer)
+                    {
+                        minfov = 60;
+                    }
+                    if (arg < minfov || arg > maxfov)
+                    {
+                        Log(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
+                    }
+                    else
+                    {
+                        float fov_ = (2 * Game.GetPi() * (one * arg / 360));
+                        this.fov = fov_;
+                        OnResize();
                     }
                 }
-                else if (cmd == "reconnect")
-                {
-                    Reconnect();
-                }
-                else if (cmd == "m")
-                {
-                    mouseSmoothing = !mouseSmoothing;
-                    if (mouseSmoothing) { Log("Mouse smoothing enabled."); }
-                    else { Log("Mouse smoothing disabled."); }
-                }
-                // Commands requiring boolean arguments
-                else if (cmd == "pos")
-                {
-                    ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
-                }
-                else if (cmd == "noclip")
-                {
-                    controls.noclip = BoolCommandArgument(arguments);
-                }
-                else if (cmd == "freemove")
+                else if (cmd == "movespeed")
                 {
                     if (this.AllowFreemove)
                     {
-                        controls.freemove = BoolCommandArgument(arguments);
+                        if (platform.FloatParse(arguments) <= 500)
+                        {
+                            movespeed = basemovespeed * platform.FloatParse(arguments);
+                            AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
+                        }
+                        else
+                        {
+                            AddChatline("Entered movespeed to high! max. 500x");
+                        }
                     }
                     else
                     {
@@ -2838,118 +2903,55 @@
                         return;
                     }
                 }
-                else if (cmd == "gui")
+                else if (cmd == "serverinfo")
                 {
-                    ENABLE_DRAW2D = BoolCommandArgument(arguments);
-                }
-                // Commands requiring numeric arguments
-                else if (arguments != "")
-                {
-                    if (cmd == "fog")
+                    //Fetches server info from given adress
+                    IntRef splitCount = new IntRef();
+                    string[] split = platform.StringSplit(arguments, ":", splitCount);
+                    if (splitCount.value == 2)
                     {
-                        int foglevel;
-                        foglevel = platform.IntParse(arguments);
+                        QueryClient qClient = new QueryClient();
+                        qClient.SetPlatform(platform);
+                        qClient.PerformQuery(split[0], platform.IntParse(split[1]));
+                        if (qClient.querySuccess)
                         {
-                            int foglevel2 = foglevel;
-                            if (foglevel2 > 1024)
-                            {
-                                foglevel2 = 1024;
-                            }
-                            if (foglevel2 % 2 == 0)
-                            {
-                                foglevel2--;
-                            }
-                            d_Config3d.viewdistance = foglevel2;
+                            //Received result
+                            QueryResult r = qClient.GetResult();
+                            AddChatline(r.GameMode);
+                            AddChatline(platform.IntToString(r.MapSizeX));
+                            AddChatline(platform.IntToString(r.MapSizeY));
+                            AddChatline(platform.IntToString(r.MapSizeZ));
+                            AddChatline(platform.IntToString(r.MaxPlayers));
+                            AddChatline(r.MOTD);
+                            AddChatline(r.Name);
+                            AddChatline(platform.IntToString(r.PlayerCount));
+                            AddChatline(r.PlayerList);
+                            AddChatline(platform.IntToString(r.Port));
+                            AddChatline(r.PublicHash);
+                            AddChatline(r.ServerVersion);
                         }
-                        OnResize();
-                    }
-                    else if (cmd == "fov")
-                    {
-                        int arg = platform.IntParse(arguments);
-                        int minfov = 1;
-                        int maxfov = 179;
-                        if (!issingleplayer)
-                        {
-                            minfov = 60;
-                        }
-                        if (arg < minfov || arg > maxfov)
-                        {
-                            Log(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
-                        }
-                        else
-                        {
-                            float fov_ = (2 * Game.GetPi() * (one * arg / 360));
-                            this.fov = fov_;
-                            OnResize();
-                        }
-                    }
-                    else if (cmd == "movespeed")
-                    {
-                        if (this.AllowFreemove)
-                        {
-                            if (platform.FloatParse(arguments) <= 500)
-                            {
-                                movespeed = basemovespeed * platform.FloatParse(arguments);
-                                AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
-                            }
-                            else
-                            {
-                                AddChatline("Entered movespeed to high! max. 500x");
-                            }
-                        }
-                        else
-                        {
-                            Log(strFreemoveNotAllowed);
-                            return;
-                        }
-                    }
-                    else if (cmd == "serverinfo")
-                    {
-                        //Fetches server info from given adress
-                        IntRef splitCount = new IntRef();
-                        string[] split = platform.StringSplit(arguments, ":", splitCount);
-                        if (splitCount.value == 2)
-                        {
-                            QueryClient qClient = new QueryClient();
-                            qClient.SetPlatform(platform);
-                            qClient.PerformQuery(split[0], platform.IntParse(split[1]));
-                            if (qClient.querySuccess)
-                            {
-                                //Received result
-                                QueryResult r = qClient.GetResult();
-                                AddChatline(r.GameMode);
-                                AddChatline(platform.IntToString(r.MapSizeX));
-                                AddChatline(platform.IntToString(r.MapSizeY));
-                                AddChatline(platform.IntToString(r.MapSizeZ));
-                                AddChatline(platform.IntToString(r.MaxPlayers));
-                                AddChatline(r.MOTD);
-                                AddChatline(r.Name);
-                                AddChatline(platform.IntToString(r.PlayerCount));
-                                AddChatline(r.PlayerList);
-                                AddChatline(platform.IntToString(r.Port));
-                                AddChatline(r.PublicHash);
-                                AddChatline(r.ServerVersion);
-                            }
-                            AddChatline(qClient.GetServerMessage());
-                        }
+                        AddChatline(qClient.GetServerMessage());
                     }
                 }
-                else
-                {
-                    for (int i = 0; i < clientmodsCount; i++)
-                    {
-                        ClientCommandArgs args = new ClientCommandArgs();
-                        args.arguments = arguments;
-                        args.command = cmd;
-                        clientmods[i].OnClientCommand(this, args);
-                    }
-                    string chatline = StringTools.StringSubstring(platform, GuiTypingBuffer, 0, MathCi.MinInt(GuiTypingBuffer.Length, 256));
-                    SendChat(chatline);
-                }
+            }
+            else
+            {
+                //Send client command to server if none matches
+                string chatline = StringTools.StringSubstring(platform, GuiTypingBuffer, 0, MathCi.MinInt(GuiTypingBuffer.Length, 256));
+                SendChat(chatline);
+            }
+            //Process clientside mod commands anyway
+            for (int i = 0; i < clientmodsCount; i++)
+            {
+                ClientCommandArgs args = new ClientCommandArgs();
+                args.arguments = arguments;
+                args.command = cmd;
+                clientmods[i].OnClientCommand(this, args);
             }
         }
         else
         {
+            //Regular chat message or server command. Send to server
             string chatline = StringTools.StringSubstring(platform, GuiTypingBuffer, 0, MathCi.MinInt(StringTools.StringLength(platform, GuiTypingBuffer), 4096));
             SendChat(chatline);
         }
