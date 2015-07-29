@@ -13,11 +13,16 @@ namespace ManicDigger.Mods
             m = manager;
             if (enabled)
             {
-                m.RegisterTimer(f, 0.1);
-                ghost = m.AddBot("Ghost");
+                m.RegisterOnLoadWorld(OnLoad);
             }
         }
         
+        void OnLoad()
+        {
+            m.RegisterTimer(f, 0.1);
+            ghost = m.AddBot("Ghost");
+        }
+
         bool enabled = false;
         
         ModManager m;
