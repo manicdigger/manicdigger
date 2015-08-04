@@ -92,7 +92,7 @@ public class ServerConfig
         this.AutoRestartCycle = 6;
         this.Seed = 0;
         this.RandomSeed = true;
-        this.EnableHTTPServer = true;
+        this.EnableHTTPServer = false;
         this.AllowSpectatorUse = false;
         this.AllowSpectatorBuild = false;
         this.ServerLanguage = "en";
