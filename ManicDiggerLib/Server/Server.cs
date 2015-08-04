@@ -247,7 +247,7 @@ public partial class Server : ICurrentTime, IDropItem
         SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Season, Season = p }));
     }
 
-    private GameTime _time = null;
+    private GameTime _time = new GameTime();
     private int _nLastHourChangeNotify = 0;
 
     public void ProcessMain()
@@ -256,7 +256,6 @@ public partial class Server : ICurrentTime, IDropItem
         {
             return;
         }
-
 
         if (_time.Tick())
         {
@@ -273,9 +272,6 @@ public partial class Server : ICurrentTime, IDropItem
                     NotifySeason(c.Key);
                 }
             }
-        }
-        else
-        {//not ticked yet
         }
 
         double currenttime = gettime() - starttime;
@@ -536,8 +532,7 @@ public partial class Server : ICurrentTime, IDropItem
         byte[] globaldata = d_ChunkDb.GetGlobalData();
         if (globaldata == null)
         {
-            //no savegame
-            //d_Generator.treeCount = config.Generator.TreeCount;
+            //no savegame yet
             if (config.RandomSeed)
             {
                 Seed = new Random().Next();
@@ -546,21 +541,20 @@ public partial class Server : ICurrentTime, IDropItem
             {
                 Seed = config.Seed;
             }
-            //d_Generator.SetSeed(Seed);
             MemoryStream ms = new MemoryStream();
             SaveGame(ms);
             d_ChunkDb.SetGlobalData(ms.ToArray());
+            this._time.Init(0);
             return;
         }
         ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(new MemoryStream(globaldata));
-        //d_Generator.SetSeed(save.Seed);
         Seed = save.Seed;
         d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeY, d_Map.MapSizeZ);
         if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
         else this.Inventory = save.Inventory;
         this.PlayerStats = save.PlayerStats;
         this.simulationcurrentframe = (int)save.SimulationCurrentFrame;
-        this._time = new GameTime(save.TimeOfDay);
+        this._time.Init(save.TimeOfDay);
         this.LastMonsterId = save.LastMonsterId;
         this.moddata = save.moddata;
     }
@@ -3749,11 +3743,19 @@ public class GameTime
     /// <summary>
     /// ctor
     /// </summary>
+    internal GameTime()
+    {
+        _watchIngameTime = new Stopwatch();
+    }
+
+    /// <summary>
+    /// Initializes the GameTime component
+    /// </summary>
     /// <param name="ticks"></param>
-    internal GameTime(long ticks)
+    internal void Init(long ticks)
     {
         _time = TimeSpan.FromTicks(ticks);
-        _watchIngameTime = Stopwatch.StartNew();
+        _watchIngameTime.Start();
     }
 
     /// <summary>
@@ -3783,7 +3785,7 @@ public class GameTime
     /// <summary>
     /// Hour of the day
     /// </summary>
-    public double Hour
+    public int Hour
     {
         get { return _time.Hours; }
     }
@@ -3815,18 +3817,18 @@ public class GameTime
     /// <summary>
     /// The current year
     /// </summary>
-    public double Year
+    public int Year
     {
-        get { return _time.TotalDays / _nDaysPerYear; }
+        get { return (int)(_time.TotalDays / _nDaysPerYear); }
     }
 
     /// <summary>
     /// Gets the current season
-    /// fromt 0 to 3
+    /// from 0 to 3
     /// </summary>
     public int Season
     {
-        get { return Day / 4; } 
+        get { return Year % 4; }
     }
 
     /// <summary>

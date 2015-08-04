@@ -1074,7 +1074,7 @@ namespace ManicDigger.Mods
 		int lastseason;
 		void UpdateSeasons()
 		{
-			int currentSeason = (int)((m.GetCurrentYearTotal() % 1) * 4);
+			int currentSeason = m.GetSeason();
 			if (currentSeason != lastseason)
 			{
 				// spring

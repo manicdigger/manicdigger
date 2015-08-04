@@ -290,20 +290,6 @@ namespace ManicDigger
         void AddToStartInventory(string blocktype, int amount);
         
         long GetCurrentTick();
-        double GetCurrentYearTotal();
-        double GetCurrentHourTotal();
-        
-        /// <summary>
-        /// Gets the number of real hours that one ingame year takes
-        /// </summary>
-        /// <returns>Duration of an ingame year</returns>
-        double GetGameYearRealHours();
-        
-        /// <summary>
-        /// Sets the number of real hours that one ingame year takes
-        /// </summary>
-        /// <param name="hours">Duration of an ingame year</param>
-        void SetGameYearRealHours(double hours);
         
         /// <summary>
         /// Gets the number of real hours that one ingame day takes
@@ -316,7 +302,17 @@ namespace ManicDigger
         /// </summary>
         /// <param name="hours">Duration of an ingame day</param>
         void SetGameDayRealHours(double hours);
-        
+
+        void SetDaysPerYear(int days);
+        int GetDaysPerYear();
+
+        int GetHour();
+        double GetTotalHours();
+        int GetDay();
+        double GetTotalDays();
+        int GetYear();
+        int GetSeason();
+
         /// <summary>
         /// Send current BlockType definitions to all players. Used on season change
         /// </summary>
@@ -597,6 +593,17 @@ namespace ManicDigger
         /// </summary>
         /// <returns><i>true</i> if server is about to shutdown</returns>
         bool IsShuttingDown();
+
+        #region Deprecated functions
+        [Obsolete("GetCurrentYearTotal is deprecated, please use GetYear instead.", false)]
+        double GetCurrentYearTotal();
+        [Obsolete("GetCurrentHourTotal is deprecated, please use GetTotalHours instead.", false)]
+        double GetCurrentHourTotal();
+        [Obsolete("GetGameYearRealHours is deprecated.", true)]
+        double GetGameYearRealHours();
+        [Obsolete("SetGameYearRealHours is deprecated.", true)]
+        void SetGameYearRealHours(double hours);
+        #endregion
     }
 
     public enum SpecialKey

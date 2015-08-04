@@ -25,7 +25,7 @@ namespace ManicDigger.Mods
             
             //Set up server time
             m.SetGameDayRealHours(1);
-            m.SetGameYearRealHours(24);
+            m.SetDaysPerYear(24);
             
             //Set up day/night cycle
             m.SetSunLevels(sunLevels);

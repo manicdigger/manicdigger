@@ -597,87 +597,6 @@ public partial class Server
         }
     }
 
-    /// <summary>
-    /// Handle a time command
-    /// </summary>
-    private void TimeCommand(int sourceClientId, string argument)
-    {
-        string[] strSplit = argument.Split(' ');
-
-        if (strSplit.Length == 2)
-        {
-            //We expect a operation and a value
-            string strValue = strSplit[1];
-
-            switch (strSplit[0])
-            {
-                case "set":
-                    {
-                        TimeSpan time;
-
-                        if (!strValue.Contains(":"))
-                        {
-                            //If only a number is present, the days will be set to the given number
-                            //since we don't want that, a ":" is enforced
-                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
-                        }
-                        else if (TimeSpan.TryParse(strValue, out time))
-                        {
-                            _time.Set(time);
-                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
-                        }
-                        else
-                        {
-                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
-                        }
-                    }
-                    break;
-                case "add":
-                    {
-                        TimeSpan time;
-
-                        int nMinuts = 0;
-                        if (int.TryParse(strValue, out nMinuts))
-                        {
-                            //only a number
-                            //take it as minutes
-                            _time.Add(TimeSpan.FromMinutes(nMinuts));
-                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
-                        }
-                        else if (TimeSpan.TryParse(strValue, out time))
-                        {
-                            _time.Add(time);
-                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
-                        }
-                        else
-                        {
-                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
-                        }
-                    }
-                    break;
-                case "speed":
-                    {
-                        int nSpeed = 0;
-
-                        if (!int.TryParse(strValue, out nSpeed))
-                        {
-                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a number");
-                        }
-                        else
-                        {
-                            _time.SpeedOfTime = nSpeed;
-                            SendMessage(sourceClientId, "speed of time changed");
-                        }
-                    }
-                    break;
-            }
-        }
-        else
-        {
-            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " 2 arguments expected");
-        }
-    }
-
     public void Help(int sourceClientId)
     {
         SendMessage(sourceClientId, colorHelp + "Available privileges:");
@@ -762,6 +681,8 @@ public partial class Server
                 return "/restart";
             case "teleport_player":
                 return "/teleport_player [target] [x] [y] {z}";
+            case "time":
+                return "/time {[set|add|speed] [value]}";
             case "tp":
                 return "/tp [username]";
             case "tp_pos":
@@ -1507,7 +1428,7 @@ public partial class Server
         ClientOnServer targetClient = GetClient(target);
         if (targetClient != null)
         {
-            ResetPlayerInventory(targetClient.playername);
+            ResetPlayerInventory(targetClient);
             SendMessageToAll(string.Format(language.Get("Server_CommandResetInventorySuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant), targetClient.ColoredPlayername(colorImportant)));
             ServerEventLog(string.Format("{0} resets inventory of {1}.", GetClient(sourceClientId).playername, targetClient.playername));
             return true;
@@ -2154,6 +2075,92 @@ public partial class Server
                 SendMessage(sourceClientId, language.Get("Server_CommandInvalidType"));
                 return false;
         }
+    }
+
+    public bool TimeCommand(int sourceClientId, string argument)
+    {
+        string[] strSplit = argument.Split(' ');
+
+        if (strSplit.Length == 2)
+        {
+            //We assume that all parameterized commands require a privilege
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.time))
+            {
+                SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
+                return false;
+            }
+
+            //We expect a operation and a value
+            string strValue = strSplit[1];
+
+            switch (strSplit[0])
+            {
+                case "set":
+                    {
+                        TimeSpan time;
+
+                        if (!strValue.Contains(":"))
+                        {
+                            //If only a number is present, the days will be set to the given number
+                            //since we don't want that, a ":" is enforced
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
+                        }
+                        else if (TimeSpan.TryParse(strValue, out time))
+                        {
+                            _time.Set(time);
+                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
+                        }
+                        else
+                        {
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
+                        }
+                    }
+                    break;
+                case "add":
+                    {
+                        TimeSpan time;
+
+                        int nMinuts = 0;
+                        if (int.TryParse(strValue, out nMinuts))
+                        {
+                            //only a number
+                            //take it as minutes
+                            _time.Add(TimeSpan.FromMinutes(nMinuts));
+                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
+                        }
+                        else if (TimeSpan.TryParse(strValue, out time))
+                        {
+                            _time.Add(time);
+                            SendMessage(sourceClientId, "The time is: " + _time.Time.ToString());
+                        }
+                        else
+                        {
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a time");
+                        }
+                    }
+                    break;
+                case "speed":
+                    {
+                        int nSpeed = 0;
+
+                        if (!int.TryParse(strValue, out nSpeed))
+                        {
+                            SendMessage(sourceClientId, colorError + language.Get("Server_CommandException") + " unable to convert \"" + strValue + "\" to a number");
+                        }
+                        else
+                        {
+                            _time.SpeedOfTime = nSpeed;
+                            SendMessage(sourceClientId, "speed of time changed");
+                        }
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            SendMessage(sourceClientId, string.Format("Current time: Year {0}, Day {1}, {2}:{3}:{4}", _time.Year, _time.Day, _time.Time.Hours, _time.Time.Minutes, _time.Time.Seconds));
+        }
+        return true;
     }
 }
 

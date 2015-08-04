@@ -269,6 +269,7 @@ namespace ManicDigger
                     fill_limit,
                     mode,
                     load,
+                    time,
                 };
             }
             public static string build = "build";
@@ -317,6 +318,7 @@ namespace ManicDigger
             public static string fill_limit = "fill_limit";
             public static string mode = "mode";
             public static string load = "load";
+            public static string time = "time";
         };
 
         public static List<Group> getDefaultGroups()
@@ -423,6 +425,7 @@ namespace ManicDigger
             admin.GroupPrivileges.Add(Privilege.set_home);
             admin.GroupPrivileges.Add(Privilege.mode);
             admin.GroupPrivileges.Add(Privilege.load);
+            admin.GroupPrivileges.Add(Privilege.time);
             admin.GroupPrivileges.Add("revert");
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);

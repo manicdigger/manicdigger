@@ -398,14 +398,51 @@ namespace ManicDigger
             return server.GetSimulationCurrentFrame();
         }
 
-        public double GetCurrentYearTotal()
+        public void SetDaysPerYear(int days)
+        {
+            if (days > 0)
+            {
+                server.GetTime().DaysPerYear = days;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("The number of days per year must be greater than 0!");
+            }
+        }
+
+        public int GetDaysPerYear()
+        {
+            return server.GetTime().DaysPerYear;
+        }
+
+        public int GetHour()
+        {
+            return server.GetTime().Hour;
+        }
+
+        public double GetTotalHours()
+        {
+            return server.GetTime().HourTotal;
+        }
+
+        public int GetDay()
+        {
+            return server.GetTime().Day;
+        }
+
+        public double GetTotalDays()
+        {
+            return server.GetTime().DaysTotal;
+        }
+
+        public int GetYear()
         {
             return server.GetTime().Year;
         }
 
-        public double GetCurrentHourTotal()
+        public int GetSeason()
         {
-            return server.GetTime().Hour;
+            return server.GetTime().Season;
         }
 
         public void UpdateBlockTypes()
@@ -435,8 +472,6 @@ namespace ManicDigger
             double nSecondsGiven = TimeSpan.FromHours(hours).TotalSeconds;
 
             server.GetTime().SpeedOfTime = (int)(nSecondsPerDay / nSecondsGiven);
-
-            GetGameDayRealHours();
         }
 
         public void EnableShadows(bool value)
@@ -977,5 +1012,24 @@ namespace ManicDigger
         {
             return server.exit.GetExit();
         }
+
+        #region Deprecated methods
+        public double GetCurrentYearTotal()
+        {
+            return server.GetTime().Year;
+        }
+        public double GetCurrentHourTotal()
+        {
+            return server.GetTime().Hour;
+        }
+        public double GetGameYearRealHours()
+        {
+            return GetGameDayRealHours() * GetDaysPerYear();
+        }
+        public void SetGameYearRealHours(double hours)
+        {
+            throw new NotImplementedException("SetGameYearRealHours is no longer supported!");
+        }
+        #endregion
     }
 }
