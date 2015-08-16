@@ -1300,6 +1300,12 @@ public partial class Server : ICurrentTime, IDropItem
                     this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
                     c.queryClient = false;
                     clients[clientid].entity.drawName.name = username;
+                    if (config.EnablePlayerPushing)
+                    {
+                        // Player pushing
+                        clients[clientid].entity.push = new ServerEntityPush();
+                        clients[clientid].entity.push.range = 1;
+                    }
                     PlayerEntitySetDirty(clientid);
                 }
                 break;

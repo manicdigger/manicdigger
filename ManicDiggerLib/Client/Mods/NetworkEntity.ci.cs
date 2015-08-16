@@ -158,6 +158,12 @@ public class ClientPacketHandlerEntityPosition : ClientPacketHandler
             game.player.position.z = pos.z;
             entity.networkPosition = null;
         }
+        if (entity.push != null)
+        {
+            entity.push.XFloat = packet.EntityPosition.PositionAndOrientation.X;
+            entity.push.YFloat = packet.EntityPosition.PositionAndOrientation.Z;
+            entity.push.ZFloat = packet.EntityPosition.PositionAndOrientation.Y;
+        }
     }
 }
 

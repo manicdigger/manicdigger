@@ -41,6 +41,7 @@ public class ServerConfig
     public bool AllowSpectatorBuild { get; set; }
     public string ServerLanguage { get; set; }
     public int PlayerDrawDistance { get; set; }
+    public bool EnablePlayerPushing { get; set; }
 
     public bool IsPasswordProtected()
     {
@@ -97,6 +98,7 @@ public class ServerConfig
         this.AllowSpectatorBuild = false;
         this.ServerLanguage = "en";
         this.PlayerDrawDistance = 128;
+        this.EnablePlayerPushing = true;
     }
 }
 
