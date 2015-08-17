@@ -410,7 +410,29 @@ namespace ManicDigger
         /// <param name="a">Method to execute. Must have certain format: void Name(int player, SpecialKey key);</param>
         void RegisterOnSpecialKey(ModDelegates.SpecialKey1 a);
         
+        /// <summary>
+        /// Returns the default spawn position of a certain player.
+        /// This method will return the custom spawnpoint if one has been permanently set.
+        /// If no custom spawnpoint is present this method will return the global default spawnpoint.
+        /// </summary>
+        /// <param name="player">Player ID</param>
+        /// <returns>Spawnpoint valid for the given player</returns>
         float[] GetDefaultSpawnPosition(int player);
+        
+        /// <summary>
+        /// Retrieves the default spawnpoint
+        /// </summary>
+        /// <returns>Default spawnpoint</returns>
+        int[] GetDefaultSpawnPosition();
+        
+        /// <summary>
+        /// Permanently sets the default spawnpoint
+        /// </summary>
+        /// <param name="x">X coordinate of new spawnpoint</param>
+        /// <param name="y">Y coordinate of new spawnpoint</param>
+        /// <param name="z">Z coordinate of new spawnpoint</param>
+        void SetDefaultSpawnPosition(int x, int y, int z);
+        
         string GetServerName();
         string GetServerMotd();
         float[] MeasureTextSize(string text, DialogFont font);
@@ -599,7 +621,7 @@ namespace ManicDigger
         double GetCurrentYearTotal();
         [Obsolete("GetCurrentHourTotal is deprecated, please use GetTotalHours instead.", false)]
         double GetCurrentHourTotal();
-        [Obsolete("GetGameYearRealHours is deprecated.", true)]
+        [Obsolete("GetGameYearRealHours is deprecated.", false)]
         double GetGameYearRealHours();
         [Obsolete("SetGameYearRealHours is deprecated.", true)]
         void SetGameYearRealHours(double hours);

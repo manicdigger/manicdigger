@@ -719,6 +719,29 @@ namespace ManicDigger
             return new float[3] { (float)pos.x / 32, (float)pos.z / 32, (float)pos.y / 32 };
         }
 
+        public int[] GetDefaultSpawnPosition()
+        {
+            return new int[3] { server.defaultPlayerSpawn.x, server.defaultPlayerSpawn.y, server.defaultPlayerSpawn.z };
+        }
+
+        public void SetDefaultSpawnPosition(int x, int y, int z)
+        {
+            if (IsValidPos(x, y, z))
+            {
+                // Will fail for numbers it cannot parse. Should not happen due to previous check.
+                server.serverClient.DefaultSpawn.Coords = string.Format("{0},{1},{2}", x, y, z);
+                server.defaultPlayerSpawn.x = x;
+                server.defaultPlayerSpawn.y = y;
+                server.defaultPlayerSpawn.z = z;
+                // Mark ServerClient as dirty for saving
+                server.serverClientNeedsSaving = true;
+            }
+            else
+            {
+                Console.WriteLine("[Mod API] Invalid default spawn position given!");
+            }
+        }
+
         public string GetServerName()
         {
             return server.config.Name;
