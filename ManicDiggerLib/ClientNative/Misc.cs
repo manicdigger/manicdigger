@@ -291,7 +291,7 @@ namespace ManicDigger.ClientNative
                     Console.WriteLine(strTxt);
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 //If this fails, something is really screwed... let's hope the crash report was created
                 //Just swallow this exception, to prevent a exception endless loop (UnhandledException -> CrashReport -> UnhandledException)

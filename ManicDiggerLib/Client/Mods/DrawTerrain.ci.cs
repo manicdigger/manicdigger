@@ -422,8 +422,6 @@
 
     int[] CalculateShadowslightRadius;
     bool[] CalculateShadowsisTransparentForLight;
-    int[][] chunks3x3x3;
-    int[][] heightchunks3x3;
     LightBase lightBase;
     LightBetweenChunks lightBetweenChunks;
     void CalculateShadows(int cx, int cy, int cz)

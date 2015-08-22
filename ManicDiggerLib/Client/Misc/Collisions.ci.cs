@@ -311,10 +311,7 @@ public abstract class DelegateGetBlockHeight
 
 public class Intersection
 {
-    public Intersection()
-    {
-        float one = 1;
-    }
+    public Intersection() { }
     // http://tog.acm.org/resources/GraphicsGems/gems/RayBox.c
     // Fast Ray-Box Intersection
     // by Andrew Woo

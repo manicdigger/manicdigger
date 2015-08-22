@@ -147,7 +147,7 @@ public class ServerManager
         {
             Disconnected(sender, e);
         }
-        catch (Exception ex)
+        catch //(Exception ex)
         {
             // Console.WriteLine(ex.ToString());
         }
@@ -168,7 +168,7 @@ public class ServerManager
             }
             ReceivedMessage(sender, e);
         }
-        catch (Exception ex)
+        catch //(Exception ex)
         {
             // Console.WriteLine(ex.ToString());
         }
@@ -322,12 +322,11 @@ public class TcpConnection
             }
             sock.BeginSend(data2, 0, data2.Length, SocketFlags.None, new AsyncCallback(OnSend), null);
         }
-        catch (Exception e)
+        catch
         {
             InvokeDisconnected();
         }
     }
-    int total;
     void OnSend(IAsyncResult result)
     {
         try
