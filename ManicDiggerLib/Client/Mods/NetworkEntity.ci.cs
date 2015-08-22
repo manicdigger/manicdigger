@@ -156,6 +156,9 @@ public class ClientPacketHandlerEntityPosition : ClientPacketHandler
             game.player.position.x = pos.x;
             game.player.position.y = pos.y;
             game.player.position.z = pos.z;
+            game.player.position.rotx = pos.rotx;
+            game.player.position.roty = pos.roty;
+            game.player.position.rotz = pos.rotz;
             entity.networkPosition = null;
         }
         if (entity.push != null)
