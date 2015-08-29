@@ -153,6 +153,7 @@ public class ClientPacketHandlerEntityPosition : ClientPacketHandler
         entity.networkPosition.LastUpdateMilliseconds = game.platform.TimeMillisecondsFromStart();
         if (packet.EntityPosition.Id == game.LocalPlayerId)
         {
+            // Override local player position if necessary (teleport)
             game.player.position.x = pos.x;
             game.player.position.y = pos.y;
             game.player.position.z = pos.z;
@@ -161,8 +162,9 @@ public class ClientPacketHandlerEntityPosition : ClientPacketHandler
             game.player.position.rotz = pos.rotz;
             entity.networkPosition = null;
         }
-        if (entity.push != null)
+        else if (entity.push != null)
         {
+            // Create push force for any player except local player
             entity.push.XFloat = packet.EntityPosition.PositionAndOrientation.X;
             entity.push.YFloat = packet.EntityPosition.PositionAndOrientation.Z;
             entity.push.ZFloat = packet.EntityPosition.PositionAndOrientation.Y;
