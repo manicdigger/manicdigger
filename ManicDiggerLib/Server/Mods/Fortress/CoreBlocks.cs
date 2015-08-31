@@ -890,7 +890,7 @@ namespace ManicDigger.Mods
 					Sounds = solidSounds,
 				});
 			m.SetBlockType(148, "Cake", new BlockType()
-				{
+			{
 					TextureIdTop = "CakeTop",
 					TextureIdBottom = "Gray",
 					SideTextures = "CakeSide",
@@ -898,7 +898,8 @@ namespace ManicDigger.Mods
 					DrawType = DrawType.Solid,
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
-				});
+					IsUsable = true,
+			});
 			m.SetBlockType(149, "Fire", new BlockType()
 				{
 					AllTextures = "Fire",
@@ -951,6 +952,118 @@ namespace ManicDigger.Mods
 						Rail = i,
 					});
 			}
+			m.SetBlockType(241, "RedCarpet", new BlockType()
+			    {
+			        AllTextures = "RedCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(242, "OrangeCarpet", new BlockType()
+			    {
+			        AllTextures = "OrangeCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(243, "YellowCarpet", new BlockType()
+			    {
+			        AllTextures = "YellowCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(244, "LightGreenCarpet", new BlockType()
+			    {
+			        AllTextures = "LightGreenCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(245, "GreenCarpet", new BlockType()
+			    {
+			        AllTextures = "GreenCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(246, "AquaGreenCarpet", new BlockType()
+			    {
+			        AllTextures = "AquaGreenCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(247, "CyanCarpet", new BlockType()
+			    {
+			        AllTextures = "CyanCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(248, "BlueCarpet", new BlockType()
+			    {
+			        AllTextures = "BlueCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(249, "PurpleCarpet", new BlockType()
+			    {
+			        AllTextures = "PurpleCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(250, "IndigoCarpet", new BlockType()
+			    {
+			        AllTextures = "IndigoCloth",
+			        DrawType = DrawType.Flat,
+			       	WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(251, "VioletCarpet", new BlockType()
+			    {
+			        AllTextures = "VioletCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(252, "MagentaCarpet", new BlockType()
+			    {
+			        AllTextures = "MagentaCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(253, "PinkCarpet", new BlockType()
+			    {
+			        AllTextures = "PinkCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(254, "BlackCarpet", new BlockType()
+			    {
+			       	AllTextures = "BlackCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(255, "GrayCarpet", new BlockType()
+			    {
+			        AllTextures = "GrayCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
+			m.SetBlockType(256, "WhiteCarpet", new BlockType()
+			    {
+			        AllTextures = "WhiteCloth",
+			        DrawType = DrawType.Flat,
+			        WalkableType = WalkableType.Empty,
+			        Sounds = solidSounds
+			    });
 			#endregion
             
 			#region Creative inventory
@@ -987,6 +1100,22 @@ namespace ManicDigger.Mods
 			m.AddToCreativeInventory("BlackCloth");
 			m.AddToCreativeInventory("GrayCloth");
 			m.AddToCreativeInventory("WhiteCloth");
+			m.AddToCreativeInventory("RedCarpet");
+			m.AddToCreativeInventory("OrangeCarpet");
+			m.AddToCreativeInventory("YellowCarpet");
+			m.AddToCreativeInventory("LightGreenCarpet");
+			m.AddToCreativeInventory("GreenCarpet");
+			m.AddToCreativeInventory("AquaGreenCarpet");
+			m.AddToCreativeInventory("CyanCarpet");
+			m.AddToCreativeInventory("BlueCarpet");
+			m.AddToCreativeInventory("PurpleCarpet");
+			m.AddToCreativeInventory("IndigoCarpet");
+			m.AddToCreativeInventory("VioletCarpet");
+			m.AddToCreativeInventory("MagentaCarpet");
+			m.AddToCreativeInventory("PinkCarpet");
+			m.AddToCreativeInventory("BlackCarpet");
+			m.AddToCreativeInventory("GrayCarpet");
+			m.AddToCreativeInventory("WhiteCarpet");
 			m.AddToCreativeInventory("YellowFlowerDecorations");
 			m.AddToCreativeInventory("RedRoseDecorations");
 			m.AddToCreativeInventory("RedMushroom");
