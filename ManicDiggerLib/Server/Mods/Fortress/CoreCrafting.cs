@@ -173,6 +173,7 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe2("GlassDesk", 1, "Glass", 2, "BirchTreeTrunk", 1);
             m.AddCraftingRecipe2("GlassDesk", 1, "Glass", 2, "SpruceTreeTrunk", 1);
             m.AddCraftingRecipe2("Asphalt", 1, "CoalOre", 1, "Gravel", 2);
+			m.AddCraftingRecipe2("Cake", 1, "Salt", 2, "Crops4", 4);
             m.AddCraftingRecipe2("Fire", 1, "OakTreeTrunk", 1, "Torch", 1);
             m.AddCraftingRecipe2("Fire", 1, "BirchTreeTrunk", 1, "Torch", 1);
             m.AddCraftingRecipe2("Fire", 1, "SpruceTreeTrunk", 1, "Torch", 1);

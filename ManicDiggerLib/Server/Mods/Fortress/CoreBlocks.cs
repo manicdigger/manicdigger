@@ -889,7 +889,17 @@ namespace ManicDigger.Mods
 					WalkableType = WalkableType.Solid,
 					Sounds = solidSounds,
 				});
-			//Cake; ID: 148; -> Food.cs
+			m.SetBlockType(148, "Cake", new BlockType()
+			{
+					TextureIdTop = "CakeTop",
+					TextureIdBottom = "Gray",
+					SideTextures = "CakeSide",
+					TextureIdForInventory = "CakeTop",
+					DrawType = DrawType.Solid,
+					WalkableType = WalkableType.Solid,
+					Sounds = solidSounds,
+					IsUsable = true,
+			});
 			m.SetBlockType(149, "Fire", new BlockType()
 				{
 					AllTextures = "Fire",
@@ -1146,6 +1156,7 @@ namespace ManicDigger.Mods
 			m.AddToCreativeInventory("GlassDesk");
 			m.AddToCreativeInventory("Mosaik");
 			m.AddToCreativeInventory("Asphalt");
+			m.AddToCreativeInventory("Cake");
 			m.AddToCreativeInventory("Fire");
 			m.AddToCreativeInventory("Fence");
 			m.AddToCreativeInventory("Compass");
