@@ -2,7 +2,7 @@
 
 namespace ManicDigger.Mods.War
 {
-    public class HealingCake : IMod
+    public class Food : IMod
     {
         public void PreStart(ModManager m)
         {
