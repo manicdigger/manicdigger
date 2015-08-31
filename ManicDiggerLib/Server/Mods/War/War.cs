@@ -110,7 +110,7 @@ namespace ManicDigger.Mods.War
                     ShowTeamSelectionDialog(playerid);
                     m.SetGlobalDataNotSaved("enablewater", true);
                     break;
-        }
+        	}
         }
         
         void GiveAllBlocks(int playerid)
