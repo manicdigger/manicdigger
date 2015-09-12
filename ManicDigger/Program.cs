@@ -104,7 +104,12 @@ using OpenTK.Graphics;
                     Thread.Sleep(1);
                     platform.singlePlayerServerLoaded = true;
                     if (exit != null && exit.GetExit()) { server.Stop(); break; }
-                    if (platform.singlepLayerServerExit) { server.Exit(); }
+                    if (platform.singlepLayerServerExit)
+                    {
+                        // Exit thread and reset shutdown variable
+                        server.Exit();
+                        platform.singlepLayerServerExit = false;
+                    }
                 }
                 exit.SetExit(false);
             }
