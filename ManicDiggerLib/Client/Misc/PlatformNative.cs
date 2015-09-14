@@ -1616,6 +1616,9 @@ public class GamePlatformNative : GamePlatform
         {
             KeyEventArgs args = new KeyEventArgs();
             args.SetKeyCode(ToGlKey(e.Key));
+            args.SetCtrlPressed(e.Modifiers == KeyModifiers.Control);
+            args.SetShiftPressed(e.Modifiers == KeyModifiers.Shift);
+            args.SetAltPressed(e.Modifiers == KeyModifiers.Alt);
             h.OnKeyDown(args);
         }
     }

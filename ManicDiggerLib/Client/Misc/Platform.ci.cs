@@ -426,6 +426,15 @@ public class KeyEventArgs
     bool handled;
     public bool GetHandled() { return handled; }
     public void SetHandled(bool value) { handled = value; }
+    bool modifierCtrl;
+    public bool GetCtrlPressed() { return modifierCtrl; }
+    public void SetCtrlPressed(bool value) { modifierCtrl = value; }
+    bool modifierShift;
+    public bool GetShiftPressed() { return modifierShift; }
+    public void SetShiftPressed(bool value) { modifierShift = value; }
+    bool modifierAlt;
+    public bool GetAltPressed() { return modifierAlt; }
+    public void SetAltPressed(bool value) { modifierAlt = value; }
 }
 
 public class KeyPressEventArgs
