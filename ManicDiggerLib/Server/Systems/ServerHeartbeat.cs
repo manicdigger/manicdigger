@@ -73,8 +73,12 @@ public class ServerSystemHeartbeat : ServerSystem
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
-            Console.WriteLine(server.language.ServerHeartbeatError());
+            #if DEBUG
+                // Only display full error message when running in Debug mode
+                Console.WriteLine(e.ToString());
+            #endif
+            // Short error output when running normally
+            Console.WriteLine("{0} ({1})", server.language.ServerHeartbeatError(), e.Message);
         }
     }
     bool writtenServerKey = false;

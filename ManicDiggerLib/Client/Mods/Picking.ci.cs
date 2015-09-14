@@ -146,7 +146,7 @@
                 game.playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
             }
         }
-        bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
+        bool pickdistanceok = (pick2count.value > 0); //&& (!ispistol);
         if (pickdistanceok)
         {
             if (game.Dist(pick2[0].blockPos[0] + one / 2, pick2[0].blockPos[1] + one / 2, pick2[0].blockPos[2] + one / 2,
