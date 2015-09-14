@@ -1384,13 +1384,13 @@ public class GamePlatformNative : GamePlatform
     public void Start()
     {
         window.Keyboard.KeyRepeat = true;
-        window.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(game_KeyDown);
-        window.Keyboard.KeyUp += new EventHandler<KeyboardKeyEventArgs>(game_KeyUp);
+        window.KeyDown += new EventHandler<KeyboardKeyEventArgs>(game_KeyDown);
+        window.KeyUp += new EventHandler<KeyboardKeyEventArgs>(game_KeyUp);
         window.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(game_KeyPress);
-        window.Mouse.ButtonDown += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonDown);
-        window.Mouse.ButtonUp += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonUp);
-        window.Mouse.Move += new EventHandler<MouseMoveEventArgs>(Mouse_Move);
-        window.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
+        window.MouseDown += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonDown);
+        window.MouseUp += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonUp);
+        window.MouseMove += new EventHandler<MouseMoveEventArgs>(Mouse_Move);
+        window.MouseWheel += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
         window.RenderFrame += new EventHandler<OpenTK.FrameEventArgs>(window_RenderFrame);
         window.Closed += new EventHandler<EventArgs>(window_Closed);
         window.TargetRenderFrequency = 0;
