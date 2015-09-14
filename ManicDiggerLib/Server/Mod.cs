@@ -261,7 +261,16 @@ namespace ManicDigger
 
         public void RegisterPrivilege(string p)
         {
-            server.all_privileges.Add(p);
+            // Add to list of all available privileges on server
+            if (!server.all_privileges.Contains(p))
+            {
+                server.all_privileges.Add(p);
+            }
+            // Direct modification of console client as mods are loaded after privileges are assigned
+            if (!server.serverConsoleClient.privileges.Contains(p))
+            {
+				server.serverConsoleClient.privileges.Add(p);
+            }
         }
 
         public void RegisterOnBlockUpdate(ModDelegates.BlockUpdate f)

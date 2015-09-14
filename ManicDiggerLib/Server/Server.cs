@@ -497,7 +497,7 @@ public partial class Server : ICurrentTime, IDropItem
     private ServerConsole serverConsole;
     private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
     public int ServerConsoleId { get { return serverConsoleId; } }
-    private ClientOnServer serverConsoleClient;
+    internal ClientOnServer serverConsoleClient;
     public void ReceiveServerConsole(string message)
     {
         // empty message
