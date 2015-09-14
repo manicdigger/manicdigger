@@ -83,6 +83,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 OpenAL Soft (LGPL)
 ------------------
+OpenAL Soft is an LGPL-licensed, cross-platform, software implementation of the OpenAL 3D audio API.
+
 http://kcat.strangesoft.net/openal.html
 
 
