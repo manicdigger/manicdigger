@@ -55,7 +55,8 @@
                 {
                     continue;
                 }
-                string valid = (StringTools.StringAppend(game.platform, "abcdefghijklmnopqrstuvwxyz1234567890\t ", game.CharToString(27)));
+                // Only typeable characters are handled by KeyPress (for special characters use KeyDown)
+                string valid = "abcdefghijklmnopqrstuvwxyz1234567890\t ";
                 if (game.platform.StringContains(valid, game.CharToString(w.ClickKey)))
                 {
                     if (args.GetKeyChar() == w.ClickKey)
@@ -99,8 +100,8 @@
         }
         if (game.guistate == GuiState.ModalDialog)
         {
-            if (//args.GetKeyCode() == game.GetKey(GlKeys.B) ||
-                args.GetKeyCode() == game.GetKey(GlKeys.Escape))
+            // Close modal dialogs when pressing ESC key
+            if (args.GetKeyCode() == game.GetKey(GlKeys.Escape))
             {
                 for (int i = 0; i < game.dialogsCount; i++)
                 {
@@ -112,6 +113,12 @@
                 }
                 game.SendPacketClient(ClientPackets.DialogClick("Esc", new string[0], 0));
                 game.GuiStateBackToGame();
+                args.SetHandled(true);
+            }
+            // Handle TAB key
+            if (args.GetKeyCode() == game.GetKey(GlKeys.Tab))
+            {
+                game.SendPacketClient(ClientPackets.DialogClick("Tab", new string[0], 0));
                 args.SetHandled(true);
             }
             return;
