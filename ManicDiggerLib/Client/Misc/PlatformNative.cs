@@ -1015,6 +1015,45 @@ public class GamePlatformNative : GamePlatform
         return null;
     }
 
+    public override void SetWindowCursor(int hotx, int hoty, int sizex, int sizey, byte[] imgdata, int imgdataLength)
+    {
+        try
+        {
+            Bitmap bmp = new Bitmap(new MemoryStream(imgdata, 0, imgdataLength)); //new Bitmap("data/local/gui/mousecursor.png");
+            if (bmp.Width > 32 || bmp.Height > 32)
+            {
+                // Limit cursor size to 32x32
+                return;
+            }
+            // Convert to required 0xBBGGRRAA format - see https://github.com/opentk/opentk/pull/107#issuecomment-41771702
+            int i = 0;
+            byte[] data = new byte[4 * bmp.Width * bmp.Height];
+            for (int y = 0; y < bmp.Width; y++)
+            {
+                for (int x = 0; x < bmp.Height; x++)
+                {
+                    Color color = bmp.GetPixel(x, y);
+                    data[i] = color.B;
+                    data[i + 1] = color.G;
+                    data[i + 2] = color.R;
+                    data[i + 3] = color.A;
+                    i += 4;
+                }
+            }
+            bmp.Dispose();
+            window.Cursor = new MouseCursor(hotx, hoty, sizex, sizey, data);
+        }
+        catch
+        {
+            RestoreWindowCursor();
+        }
+    }
+
+    public override void RestoreWindowCursor()
+    {
+        window.Cursor = MouseCursor.Default;
+    }
+
     #endregion
 
     #region Audio

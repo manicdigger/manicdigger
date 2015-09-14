@@ -9,6 +9,7 @@
         widgets[1] = multiplayer;
         widgets[2] = exit;
         queryStringChecked = false;
+        cursorLoaded = false;
     }
 
     MenuWidget singleplayer;
@@ -17,6 +18,7 @@
     internal float windowX;
     internal float windowY;
     bool queryStringChecked;
+    bool cursorLoaded;
 
     public override void Render(float dt)
     {
@@ -30,6 +32,12 @@
             string s = menu.p.StringFormat(menu.lang.Get("MainMenu_AssetsLoadProgress"), menu.p.FloatToString(menu.p.FloatToInt(menu.assetsLoadProgress.value * 100)));
             menu.DrawText(s, 20 * scale, windowX / 2, windowY / 2, TextAlign.Center, TextBaseline.Middle);
             return;
+        }
+
+        if (!cursorLoaded)
+        {
+            menu.p.SetWindowCursor(0, 0, 32, 32, menu.GetFile("mousecursor.png"), menu.GetFileLength("mousecursor.png"));
+            cursorLoaded = true;
         }
 
         UseQueryStringIpAndPort(menu);

@@ -119,6 +119,8 @@
     public abstract bool IsChecksum(string checksum);
     public abstract string DecodeHTMLEntities(string htmlencodedstring);
     public abstract string QueryStringValue(string key);
+    public abstract void SetWindowCursor(int hotx, int hoty, int sizex, int sizey, byte[] imgdata, int imgdataLength);
+    public abstract void RestoreWindowCursor();
 
     // Audio
     public abstract AudioData AudioDataCreate(byte[] data, int dataLength);
