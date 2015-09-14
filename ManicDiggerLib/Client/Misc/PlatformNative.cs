@@ -1690,14 +1690,7 @@ public class GamePlatformNative : GamePlatform
                 //Cursor already hidden. Do nothing.
                 return;
             }
-            if (!IsMac)
-            {
-                System.Windows.Forms.Cursor.Hide();
-            }
-            else
-            {
-                window.CursorVisible = false;
-            }
+            window.CursorVisible = false;
             mouseCursorVisible = false;
         }
         else
@@ -1707,14 +1700,7 @@ public class GamePlatformNative : GamePlatform
                 //Cursor already visible. Do nothing.
                 return;
             }
-            if (!IsMac)
-            {
-                System.Windows.Forms.Cursor.Show();
-            }
-            else
-            {
-                window.CursorVisible = true;
-            }
+            window.CursorVisible = true;
             mouseCursorVisible = true;
         }
     }
