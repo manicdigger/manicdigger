@@ -1726,24 +1726,13 @@ public class GamePlatformNative : GamePlatform
 
     public override void RequestMousePointerLock()
     {
-        if (TouchTest)
-        {
-            return;
-        }
-        if (IsMac)
-        {
-            window.CursorVisible = false;
-            System.Windows.Forms.Cursor.Hide();
-        }
+        MouseCursorSetVisible(false);
         mousePointerLocked = true;
     }
 
     public override void ExitMousePointerLock()
     {
-        if (IsMac)
-        {
-            window.CursorVisible = true;
-        }
+        MouseCursorSetVisible(true);
         mousePointerLocked = false;
     }
 

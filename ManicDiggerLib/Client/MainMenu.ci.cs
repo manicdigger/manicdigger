@@ -469,7 +469,6 @@
         screen = new ScreenMain();
         screen.menu = this;
         p.ExitMousePointerLock();
-        p.MouseCursorSetVisible(true);
     }
 
     internal int backgroundW;
@@ -584,7 +583,6 @@
         ScreenGame screenGame = new ScreenGame();
         screenGame.menu = this;
         screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
-        p.MouseCursorSetVisible(false);
         screen = screenGame;
     }
 
