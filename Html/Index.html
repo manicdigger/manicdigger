@@ -71,7 +71,7 @@ G.prototype.q=function(){var e=0,c=this.b,d=this.i,b,a=new (u?Uint8Array:Array)(
 G.prototype.B=function(){var e,c=this.a;u?this.z?(e=new Uint8Array(c),e.set(this.b.subarray(0,c))):e=this.b.subarray(0,c):(this.b.length>c&&(this.b.length=c),e=this.b);return this.buffer=e};function $(e){this.input=e;this.c=0;this.m=[];this.s=!1}$.prototype.G=function(){this.s||this.g();return this.m.slice()};
 $.prototype.g=function(){for(var e=this.input.length;this.c<e;){var c=new B,d=q,b=q,a=q,f=q,g=q,k=q,m=q,p=q,t=q,h=this.input,l=this.c;c.u=h[l++];c.v=h[l++];(31!==c.u||139!==c.v)&&n(Error("invalid file signature:"+c.u+","+c.v));c.p=h[l++];switch(c.p){case 8:break;default:n(Error("unknown compression method: "+c.p))}c.h=h[l++];p=h[l++]|h[l++]<<8|h[l++]<<16|h[l++]<<24;c.I=new Date(1E3*p);c.O=h[l++];c.N=h[l++];0<(c.h&4)&&(c.J=h[l++]|h[l++]<<8,l+=c.J);if(0<(c.h&8)){m=[];for(k=0;0<(g=h[l++]);)m[k++]=String.fromCharCode(g);
 c.name=m.join("")}if(0<(c.h&16)){m=[];for(k=0;0<(g=h[l++]);)m[k++]=String.fromCharCode(g);c.K=m.join("")}0<(c.h&2)&&(c.C=x(h,0,l)&65535,c.C!==(h[l++]|h[l++]<<8)&&n(Error("invalid header crc16")));d=h[h.length-4]|h[h.length-3]<<8|h[h.length-2]<<16|h[h.length-1]<<24;h.length-l-4-4<512*d&&(f=d);b=new G(h,{index:l,bufferSize:f});c.data=a=b.g();l=b.c;c.L=t=(h[l++]|h[l++]<<8|h[l++]<<16|h[l++]<<24)>>>0;x(a,q,q)!==t&&n(Error("invalid CRC-32 checksum: 0x"+x(a,q,q).toString(16)+" / 0x"+t.toString(16)));c.M=
-d=(h[l++]|h[l++]<<8|h[l++]<<16|h[l++]<<24)>>>0;(a.length&4294967295)!==d&&n(Error("invalid input size: "+(a.length&4294967295)+" / "+d));this.m.push(c);this.c=l}this.s=!0;var y=this.m,s,M,S=0,T=0,C;s=0;for(M=y.length;s<M;++s)T+=y[s].data.length;if(u){C=new Uint8Array(T);for(s=0;s<M;++s)C.set(y[s].data,S),S+=y[s].data.length}else{C=[];for(s=0;s<M;++s)C[s]=y[s].data;C=Array.prototype.concat.apply([],C)}return C};r("Zlib.Gunzip",$);r("Zlib.Gunzip.prototype.decompress",$.prototype.g);r("Zlib.Gunzip.prototype.getMembers",$.prototype.G);}).call(this); //@ sourceMappingURL=gunzip.min.js.map
+d=(h[l++]|h[l++]<<8|h[l++]<<16|h[l++]<<24)>>>0;(a.length&4294967295)!==d&&n(Error("invalid input size: "+(a.length&4294967295)+" / "+d));this.m.push(c);this.c=l}this.s=!0;var y=this.m,s,M,S=0,T=0,C;s=0;for(M=y.length;s<M;++s)T+=y[s].data.length;if(u){C=new Uint8Array(T);for(s=0;s<M;++s)C.set(y[s].data,S),S+=y[s].data.length}else{C=[];for(s=0;s<M;++s)C[s]=y[s].data;C=Array.prototype.concat.apply([],C)}return C};r("Zlib.Gunzip",$);r("Zlib.Gunzip.prototype.decompress",$.prototype.g);r("Zlib.Gunzip.prototype.getMembers",$.prototype.G);}).call(this); //# sourceMappingURL=gunzip.min.js.map
 </script>
 
 <script type = "text/javascript">
@@ -290,7 +290,7 @@ var FlateStream = (function() {
     0x50001, 0x50011, 0x50009, 0x50019, 0x50005, 0x50015, 0x5000d, 0x5001d,
     0x50003, 0x50013, 0x5000b, 0x5001b, 0x50007, 0x50017, 0x5000f, 0x00000
   ]), 5];
-  
+
   function error(e) {
       throw new Error(e)
   }
@@ -547,20 +547,20 @@ var FlateStream = (function() {
 /*
 # MIT LICENSE
 # Copyright (c) 2011 Devon Govett
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-# software and associated documentation files (the "Software"), to deal in the Software 
-# without restriction, including without limitation the rights to use, copy, modify, merge, 
-# publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify, merge,
+# publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 # to whom the Software is furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all copies or 
+#
+# The above copyright notice and this permission notice shall be included in all copies or
 # substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
-# BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+# BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
@@ -1285,7 +1285,7 @@ PlatformJs.prototype.bitmapGetPixelsArgb = function(bitmap, bmpPixels) {
 	var imageData = bitmap.getContext("2d").getImageData(0, 0, bitmap.width, bitmap.height);
 	var width = bitmap.width;
 	var height = bitmap.height;
-	
+
 	for(var x=0;x<width;x++)
 	{
 		for(var y=0;y<height;y++)
@@ -1386,14 +1386,14 @@ PlatformJs.prototype.consoleWriteLine = function(p) {
 
 PlatformJs.prototype.createModel = function(modelData) {
 	model = {};
-    
+
         model.cubeVertexPositionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, model.cubeVertexPositionBuffer);
         var vertices = modelData.xyz;
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
         model.cubeVertexPositionBuffer.itemSize = 3;
         model.cubeVertexPositionBuffer.numItems = modelData.verticesCount;
-        
+
         model.cubeVertexTextureCoordBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, model.cubeVertexTextureCoordBuffer);
         var textureCoords = modelData.uv;
@@ -1429,7 +1429,7 @@ PlatformJs.prototype.createModel = function(modelData) {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW);
         model.cubeVertexIndexBuffer.itemSize = 1;
         model.cubeVertexIndexBuffer.numItems = modelData.indicesCount;
-        
+
         	if (modelData.getMode() == DrawModeEnum.LINES)
 	{
 		model.mode = gl.LINES;
@@ -1438,7 +1438,7 @@ PlatformJs.prototype.createModel = function(modelData) {
 	{
 		model.mode = gl.TRIANGLES;
 	}
-        
+
         return model;
 }
 
@@ -1481,10 +1481,10 @@ function cloneCanvas(oldCanvas) {
 PlatformJs.prototype.createTextTexture = function(t) {
 	textureCanvas.width = getPowerOfTwo(textureCanvasContext.measureText(t.text).width);
 	textureCanvas.height = getPowerOfTwo(2 * t.fontsize);
-	
+
 	setFont(textureCanvasContext, t.text, t.fontsize, t.color);
 	textureCanvasContext.fillText(t.text, 0, 0);
-	
+
 	return cloneCanvas(textureCanvas);
 }
 
@@ -1754,10 +1754,10 @@ PlatformJs.prototype.gzipDecompress = function(compressed, compressedLength, ret
 	{
 		compressed2[i] = compressed[i];
 	}
-	
+
 	var gunzip = new Zlib.Gunzip(compressed2);
 	var decompressed = gunzip.decompress();
-	
+
 	for(var i=0;i<decompressed.length;i++)
 	{
 		ret[i] = decompressed[i];
@@ -1867,7 +1867,7 @@ loadedTextures[0] = null;
 
 PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
 	var texture = gl.createTexture();
-	
+
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
   gl.generateMipmap(gl.TEXTURE_2D);
@@ -1875,7 +1875,7 @@ PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);
 
 	gl.bindTexture(gl.TEXTURE_2D, null);
-	
+
 	loadedTextures.push(texture);
 	return loadedTextures.length - 1;
 }
@@ -1984,6 +1984,14 @@ canvas.requestPointerLock = canvas.requestPointerLock ||
                             canvas.mozRequestPointerLock ||
                             canvas.webkitRequestPointerLock;
 	canvas.requestPointerLock();
+}
+
+PlatformJs.prototype.restoreWindowCursor = function() {
+	document.getElementById("main").style.cursor = "auto";
+}
+
+PlatformJs.prototype.setWindowCursor = function(hotx, hoty, sizex, sizey, imgdata, imgdatalength) {
+	document.getElementById("main").style.cursor = "url(data:image/png;base64," + toBase64(imgdata) + "), auto";
 }
 
 PlatformJs.prototype.saveAssetToCache = function(tosave) {
@@ -2177,12 +2185,12 @@ PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
         var charcode = str.charCodeAt(i);
         if (charcode < 0x80) utf8.push(charcode);
         else if (charcode < 0x800) {
-            utf8.push(0xc0 | (charcode >> 6), 
+            utf8.push(0xc0 | (charcode >> 6),
                       0x80 | (charcode & 0x3f));
         }
         else if (charcode < 0xd800 || charcode >= 0xe000) {
-            utf8.push(0xe0 | (charcode >> 12), 
-                      0x80 | ((charcode>>6) & 0x3f), 
+            utf8.push(0xe0 | (charcode >> 12),
+                      0x80 | ((charcode>>6) & 0x3f),
                       0x80 | (charcode & 0x3f));
         }
         // surrogate pair
@@ -2193,9 +2201,9 @@ PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
             // 20 bits of 0x0-0xFFFFF into two halves
             charcode = 0x10000 + (((charcode & 0x3ff)<<10)
                       | (str.charCodeAt(i) & 0x3ff))
-            utf8.push(0xf0 | (charcode >>18), 
-                      0x80 | ((charcode>>12) & 0x3f), 
-                      0x80 | ((charcode>>6) & 0x3f), 
+            utf8.push(0xf0 | (charcode >>18),
+                      0x80 | ((charcode>>12) & 0x3f),
+                      0x80 | ((charcode>>6) & 0x3f),
                       0x80 | (charcode & 0x3f));
         }
     }
@@ -2287,7 +2295,7 @@ PlatformJs.prototype.webClientDownloadDataAsync = function(url, response) {
 PlatformJs.prototype.webClientUploadDataAsync = function(url, data, dataLength, response) {
 	var xhr = new XMLHttpRequest();
 	xhr.open("POST", url);
-	
+
 	xhr.overrideMimeType('text/plain; charset=x-user-defined');
 	xhr.onload  = function() {
 		if (this.status == 200) {
@@ -2480,7 +2488,7 @@ window.requestAnimFrame = (function() {
 
         shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
         gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
-        
+
         shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
         gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
 
@@ -2505,6 +2513,9 @@ window.requestAnimFrame = (function() {
 		}
 		var args = new KeyEventArgs();
 		args.keyCode = GetKeyCode(event.keyCode);
+		args.setCtrlPressed(event.ctrlKey);
+		args.setShiftPressed(event.shiftKey);
+		args.setAltPressed(event.altKey);
 		keyEventHandler.onKeyDown(args);
 		if(args.keyCode == GlKeys.F1
 		|| args.keyCode == GlKeys.F2
@@ -2526,7 +2537,7 @@ window.requestAnimFrame = (function() {
 			return;
 		}
 	}
-	
+
 	function GetKeyCode(jsKey)
 	{
 		if(jsKey == 8) { return GlKeys.BACK_SPACE; }
@@ -2597,7 +2608,7 @@ window.requestAnimFrame = (function() {
 		args.keyCode = GetKeyCode(event.keyCode);
 		keyEventHandler.onKeyUp(args);
 	}
-	
+
 	function handleKeyPress(event) {
 		if(event.charCode == 13)
 		{
@@ -2632,7 +2643,7 @@ var lastMovementY = 0;
 			event.mozMovementX ||
 			event.webkitMovementX ||
 			0;
-			 
+
 		var movementY = event.movementY ||
 			event.mozMovementY ||
 			event.webkitMovementY ||
@@ -2667,8 +2678,8 @@ var lastMovementY = 0;
 		args.deltaPrecise = event.wheelDelta / 120;
 		mouseEventHandler.onMouseWheel(args);
 	}
-	
-	
+
+
 	function handleTouchStart(event) {
 		var args = new TouchEventArgs();
 		for (var i = 0; i < event.changedTouches.length; i++)
@@ -2685,7 +2696,7 @@ var lastMovementY = 0;
 
 	function handleTouchEnd(event) {
 		var args = new TouchEventArgs();
-		
+
 		for (var i = 0; i < event.changedTouches.length; i++)
 		{
 			var touch = event.changedTouches[i];
@@ -2694,7 +2705,7 @@ var lastMovementY = 0;
 			args.id = touch.identifier;
 			touchEventHandler.onTouchEnd(args);
 		}
-		
+
 		event.stopPropagation();
 		event.preventDefault();
 	}
@@ -2735,9 +2746,9 @@ function resizeCanvas()
 }
 
 function tick() {
-	requestAnimFrame(tick);	
-	
-	resizeCanvas();	
+	requestAnimFrame(tick);
+
+	resizeCanvas();
 	var timeNow = getTimestamp();
 	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
@@ -2749,7 +2760,7 @@ function tick() {
 
 function webGLStart() {
 	canvas = document.getElementById("lesson06-canvas");
-	
+
 	textureCanvas = document.getElementById("textureCanvas");
 	textureCanvasContext = textureCanvas.getContext("2d");
   audioContext = new AudioContext();
@@ -2774,7 +2785,7 @@ function webGLStart() {
 	document.addEventListener("touchmove", handleTouchMove, false);
 	document.addEventListener("touchend", handleTouchEnd, false);
 	document.addEventListener("contextmenu", function(e) { e.preventDefault(); });
-        
+
 	var mainmenu = new MainMenu();
 	var platform = new PlatformJs();
 	mainmenu.start(platform);
