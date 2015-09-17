@@ -544,7 +544,7 @@ public partial class Server : ICurrentTime, IDropItem
             MemoryStream ms = new MemoryStream();
             SaveGame(ms);
             d_ChunkDb.SetGlobalData(ms.ToArray());
-            this._time.Init(0);
+            this._time.Init(TimeSpan.Parse("08:00").Ticks);
             return;
         }
         ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(new MemoryStream(globaldata));
