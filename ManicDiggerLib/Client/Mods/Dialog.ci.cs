@@ -36,6 +36,11 @@
         {
             return;
         }
+        if (game.IsTyping)
+        {
+            // Do not handle key presses when chat is opened
+            return;
+        }
         for (int i = 0; i < game.dialogsCount; i++)
         {
             if (game.dialogs[i] == null) { continue; }
