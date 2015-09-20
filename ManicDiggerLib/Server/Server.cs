@@ -3950,6 +3950,7 @@ public class BlockTypeConverter
         p.WalkSpeedFloat = Server.SerializeFloat(block.WalkSpeed);
         p.WalkSpeedWhenUsedFloat = Server.SerializeFloat(block.WalkSpeedWhenUsed);
         p.WhenPlacedGetsConvertedTo = block.WhenPlayerPlacesGetsConvertedTo;
+        p.PickDistanceWhenUsedFloat = Server.SerializeFloat(block.PickDistanceWhenUsed);
         return p;
     }
 

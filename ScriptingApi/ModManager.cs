@@ -1126,6 +1126,8 @@ namespace ManicDigger
 		public int DamageToPlayer = 0;
 		[ProtoMember(44)]
 		public int WhenPlayerPlacesGetsConvertedTo;
+		[ProtoMember(45)]
+		public float PickDistanceWhenUsed;
 		
 		public string AllTextures
 		{

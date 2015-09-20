@@ -336,6 +336,7 @@ package Packet;
         optional PistolType pistolType = 42 [ default = Normal ];
         optional int32 damageToPlayer = 43;
         optional int32 whenPlacedGetsConvertedTo = 44;
+        optional int32 pickDistanceWhenUsedFloat = 45;
     }
     
     enum DrawType
