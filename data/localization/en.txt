@@ -270,7 +270,6 @@ Block_HalfBirchWood=Birch Wood Stair
 Block_HalfSpruceWood=Spruce Wood Stair
 Block_HalfBrick=Brick Stair
 Block_HalfSandBrick=Sand Brick Stair
-Block_Bog=Bog
 
 
 Server_CannotWriteLogFile=Cannot write to server log file {0}.
