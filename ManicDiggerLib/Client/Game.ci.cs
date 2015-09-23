@@ -3090,14 +3090,20 @@
     public void SetFile(string name, string md5, byte[] downloaded, int downloadedLength)
     {
         string nameLowercase = platform.StringToLower(name);
-        
+
+        // Update mouse cursor if changed
+        if (nameLowercase == "mousecursor.png")
+        {
+            platform.SetWindowCursor(0, 0, 32, 32, downloaded, downloadedLength);
+        }
+
         //Create new asset from given data
         Asset newAsset = new Asset();
         newAsset.data = downloaded;
         newAsset.dataLength = downloadedLength;
         newAsset.name = nameLowercase;
         newAsset.md5 = md5;
-        
+
         for (int i = 0; i < assets.count; i++)
         {
             if (assets.items[i] == null)
@@ -3118,7 +3124,7 @@
         }
         //Add new asset to asset list
         assets.items[assets.count++] = newAsset;
-        
+
         //Store new asset in cache
         CacheAsset(newAsset);
     }

@@ -1015,6 +1015,45 @@ public class GamePlatformNative : GamePlatform
         return null;
     }
 
+    public override void SetWindowCursor(int hotx, int hoty, int sizex, int sizey, byte[] imgdata, int imgdataLength)
+    {
+        try
+        {
+            Bitmap bmp = new Bitmap(new MemoryStream(imgdata, 0, imgdataLength)); //new Bitmap("data/local/gui/mousecursor.png");
+            if (bmp.Width > 32 || bmp.Height > 32)
+            {
+                // Limit cursor size to 32x32
+                return;
+            }
+            // Convert to required 0xBBGGRRAA format - see https://github.com/opentk/opentk/pull/107#issuecomment-41771702
+            int i = 0;
+            byte[] data = new byte[4 * bmp.Width * bmp.Height];
+            for (int y = 0; y < bmp.Width; y++)
+            {
+                for (int x = 0; x < bmp.Height; x++)
+                {
+                    Color color = bmp.GetPixel(x, y);
+                    data[i] = color.B;
+                    data[i + 1] = color.G;
+                    data[i + 2] = color.R;
+                    data[i + 3] = color.A;
+                    i += 4;
+                }
+            }
+            bmp.Dispose();
+            window.Cursor = new MouseCursor(hotx, hoty, sizex, sizey, data);
+        }
+        catch
+        {
+            RestoreWindowCursor();
+        }
+    }
+
+    public override void RestoreWindowCursor()
+    {
+        window.Cursor = MouseCursor.Default;
+    }
+
     #endregion
 
     #region Audio
@@ -1384,13 +1423,13 @@ public class GamePlatformNative : GamePlatform
     public void Start()
     {
         window.Keyboard.KeyRepeat = true;
-        window.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(game_KeyDown);
-        window.Keyboard.KeyUp += new EventHandler<KeyboardKeyEventArgs>(game_KeyUp);
+        window.KeyDown += new EventHandler<KeyboardKeyEventArgs>(game_KeyDown);
+        window.KeyUp += new EventHandler<KeyboardKeyEventArgs>(game_KeyUp);
         window.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(game_KeyPress);
-        window.Mouse.ButtonDown += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonDown);
-        window.Mouse.ButtonUp += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonUp);
-        window.Mouse.Move += new EventHandler<MouseMoveEventArgs>(Mouse_Move);
-        window.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
+        window.MouseDown += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonDown);
+        window.MouseUp += new EventHandler<MouseButtonEventArgs>(Mouse_ButtonUp);
+        window.MouseMove += new EventHandler<MouseMoveEventArgs>(Mouse_Move);
+        window.MouseWheel += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
         window.RenderFrame += new EventHandler<OpenTK.FrameEventArgs>(window_RenderFrame);
         window.Closed += new EventHandler<EventArgs>(window_Closed);
         window.TargetRenderFrequency = 0;
@@ -1616,6 +1655,9 @@ public class GamePlatformNative : GamePlatform
         {
             KeyEventArgs args = new KeyEventArgs();
             args.SetKeyCode(ToGlKey(e.Key));
+            args.SetCtrlPressed(e.Modifiers == KeyModifiers.Control);
+            args.SetShiftPressed(e.Modifiers == KeyModifiers.Shift);
+            args.SetAltPressed(e.Modifiers == KeyModifiers.Alt);
             h.OnKeyDown(args);
         }
     }
@@ -1648,14 +1690,7 @@ public class GamePlatformNative : GamePlatform
                 //Cursor already hidden. Do nothing.
                 return;
             }
-            if (!IsMac)
-            {
-                System.Windows.Forms.Cursor.Hide();
-            }
-            else
-            {
-                window.CursorVisible = false;
-            }
+            window.CursorVisible = false;
             mouseCursorVisible = false;
         }
         else
@@ -1665,14 +1700,7 @@ public class GamePlatformNative : GamePlatform
                 //Cursor already visible. Do nothing.
                 return;
             }
-            if (!IsMac)
-            {
-                System.Windows.Forms.Cursor.Show();
-            }
-            else
-            {
-                window.CursorVisible = true;
-            }
+            window.CursorVisible = true;
             mouseCursorVisible = true;
         }
     }
@@ -1684,24 +1712,13 @@ public class GamePlatformNative : GamePlatform
 
     public override void RequestMousePointerLock()
     {
-        if (TouchTest)
-        {
-            return;
-        }
-        if (IsMac)
-        {
-            window.CursorVisible = false;
-            System.Windows.Forms.Cursor.Hide();
-        }
+        MouseCursorSetVisible(false);
         mousePointerLocked = true;
     }
 
     public override void ExitMousePointerLock()
     {
-        if (IsMac)
-        {
-            window.CursorVisible = true;
-        }
+        MouseCursorSetVisible(true);
         mousePointerLocked = false;
     }
 

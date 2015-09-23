@@ -90,7 +90,7 @@ public partial class Server : ICurrentTime, IDropItem
         language.platform = gameplatform;
         language.LoadTranslations();
     }
-    
+
 
     internal ServerCi server;
     internal ServerSystem[] systems;
@@ -107,7 +107,7 @@ public partial class Server : ICurrentTime, IDropItem
     public ICompression d_NetworkCompression;
     public NetServer[] mainSockets { get { return server.mainSockets; } set { server.mainSockets = value; } }
     public int mainSocketsCount { get { return server.mainSocketsCount; } set { server.mainSocketsCount = value; } }
-    
+
     public bool LocalConnectionsOnly { get; set; }
     public string[] PublicDataPaths = new string[0];
     public int singleplayerport = 25570;
@@ -344,7 +344,7 @@ public partial class Server : ICurrentTime, IDropItem
         var map = new ServerMap();
         map.server = this;
         map.d_CurrentTime = this;
-        map.chunksize = 32;
+        map.ChunkSize = 32;
         for (int i = 0; i < BlockTypes.Length; i++)
         {
             BlockTypes[i] = new BlockType() { };
@@ -497,7 +497,7 @@ public partial class Server : ICurrentTime, IDropItem
     private ServerConsole serverConsole;
     private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
     public int ServerConsoleId { get { return serverConsoleId; } }
-    private ClientOnServer serverConsoleClient;
+    internal ClientOnServer serverConsoleClient;
     public void ReceiveServerConsole(string message)
     {
         // empty message
@@ -544,7 +544,7 @@ public partial class Server : ICurrentTime, IDropItem
             MemoryStream ms = new MemoryStream();
             SaveGame(ms);
             d_ChunkDb.SetGlobalData(ms.ToArray());
-            this._time.Init(0);
+            this._time.Init(TimeSpan.Parse("08:00").Ticks);
             return;
         }
         ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(new MemoryStream(globaldata));
@@ -2772,7 +2772,7 @@ public partial class Server : ICurrentTime, IDropItem
             PlayerSpawnPosition = p,
         }));
     }
-    
+
     public void SendMessage(int clientid, string message, MessageType color)
     {
         SendMessage(clientid, MessageTypeToString(color) + message);
@@ -2825,6 +2825,11 @@ public partial class Server : ICurrentTime, IDropItem
     }
     public int drawdistance = 128;
     public const int chunksize = 32;
+    public const double invertedChunkSize = 1.0/chunksize;
+    public int invertChunk(int num)
+    {
+        return (int)(num*invertedChunkSize);
+    }
     internal int chunkdrawdistance { get { return drawdistance / chunksize; } }
     public byte[] CompressChunkNetwork(ushort[] chunk)
     {
@@ -3945,6 +3950,7 @@ public class BlockTypeConverter
         p.WalkSpeedFloat = Server.SerializeFloat(block.WalkSpeed);
         p.WalkSpeedWhenUsedFloat = Server.SerializeFloat(block.WalkSpeedWhenUsed);
         p.WhenPlacedGetsConvertedTo = block.WhenPlayerPlacesGetsConvertedTo;
+        p.PickDistanceWhenUsedFloat = Server.SerializeFloat(block.PickDistanceWhenUsed);
         return p;
     }
 

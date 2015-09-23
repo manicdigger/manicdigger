@@ -87,7 +87,7 @@
         {
             ispistolshoot = game.mouseleftdeclick;
         }
-        //grenade cooking
+        //grenade cooking - TODO: fix instant explosion when closing ESC menu
         if (game.mouseleftclick)
         {
             game.grenadecookingstartMilliseconds = game.platform.TimeMillisecondsFromStart();
@@ -146,7 +146,7 @@
                 game.playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
             }
         }
-        bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
+        bool pickdistanceok = (pick2count.value > 0); //&& (!ispistol);
         if (pickdistanceok)
         {
             if (game.Dist(pick2[0].blockPos[0] + one / 2, pick2[0].blockPos[1] + one / 2, pick2[0].blockPos[2] + one / 2,
@@ -584,7 +584,7 @@
                         }
                         if (!game.map.IsValidPos(newtileX, newtileZ, newtileY))
                         {
-                            game.platform.ThrowException("");
+                            game.platform.ThrowException("Error in picking - NextBullet()");
                         }
                         OnPick(game, game.platform.FloatToInt(newtileX), game.platform.FloatToInt(newtileZ), game.platform.FloatToInt(newtileY),
                             game.platform.FloatToInt(tile.Current()[0]), game.platform.FloatToInt(tile.Current()[2]), game.platform.FloatToInt(tile.Current()[1]),
@@ -652,7 +652,7 @@
         int z = game.platform.FloatToInt(blockposZ);
         int mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
         {
-            if (game.IsAnyPlayerInPos(x, y, z) || activematerial == 151)
+            if (game.IsAnyPlayerInPos(x, y, z) || activematerial == 151) // Compass
             {
                 return;
             }
@@ -1017,6 +1017,15 @@
     float CurrentPickDistance(Game game)
     {
         float pick_distance = game.PICK_DISTANCE;
+        IntRef inHand = game.BlockInHand();
+        if (inHand != null)
+        {
+            if (game.blocktypes[inHand.value].PickDistanceWhenUsedFloat > 0)
+            {
+                // This check ensures that players can select blocks when no value is given
+                pick_distance = game.DeserializeFloat(game.blocktypes[inHand.value].PickDistanceWhenUsedFloat);
+            }
+        }
         if (game.cameratype == CameraType.Tpp)
         {
             pick_distance = game.tppcameradistance + game.PICK_DISTANCE;

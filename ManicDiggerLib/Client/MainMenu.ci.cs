@@ -469,7 +469,6 @@
         screen = new ScreenMain();
         screen.menu = this;
         p.ExitMousePointerLock();
-        p.MouseCursorSetVisible(true);
     }
 
     internal int backgroundW;
@@ -584,7 +583,6 @@
         ScreenGame screenGame = new ScreenGame();
         screenGame.menu = this;
         screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
-        p.MouseCursorSetVisible(false);
         screen = screenGame;
     }
 
@@ -639,9 +637,9 @@ public class Screen
     }
     internal MainMenu menu;
     public virtual void Render(float dt) { }
-    public virtual void OnKeyDown(KeyEventArgs e) {  }
+    public virtual void OnKeyDown(KeyEventArgs e) { KeyDown(e); }
     public virtual void OnKeyPress(KeyPressEventArgs e) { KeyPress(e); }
-    public virtual void OnKeyUp(KeyEventArgs e) { }
+    public virtual void OnKeyUp(KeyEventArgs e) {  }
     public virtual void OnTouchStart(TouchEventArgs e) { MouseDown(e.GetX(), e.GetY()); }
     public virtual void OnTouchMove(TouchEventArgs e) { }
     public virtual void OnTouchEnd(TouchEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
@@ -651,6 +649,62 @@ public class Screen
     public virtual void OnBackPressed() { }
     public virtual void LoadTranslations() { }
 
+    void KeyDown(KeyEventArgs e)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w == null)
+            {
+			    continue;
+			}
+            if (w.hasKeyboardFocus)
+            {
+                if (e.GetKeyCode() == GlKeys.Tab || e.GetKeyCode() == GlKeys.Enter)
+                {
+                    if (w.type == WidgetType.Button && e.GetKeyCode() == GlKeys.Enter)
+                    {
+                        //Call OnButton when enter is pressed and widget is a button
+                        OnButton(w);
+                        return;
+                    }
+                    if (w.nextWidget != -1)
+                    {
+                        //Just switch focus otherwise
+                        w.LoseFocus();
+                        widgets[w.nextWidget].GetFocus();
+                        return;
+                    }
+                }
+            }
+            if (w.type == WidgetType.Textbox)
+            {
+                if (w.editing)
+                {
+                    int key = e.GetKeyCode();
+                    // pasting text from clipboard
+                    if (e.GetCtrlPressed() && key == GlKeys.V)
+                    {
+                        if (menu.p.ClipboardContainsText())
+                        {
+                            w.text = StringTools.StringAppend(menu.p, w.text, menu.p.ClipboardGetText());
+                        }
+                        return;
+                    }
+                    // deleting characters using backspace
+                    if (key == GlKeys.BackSpace)
+                    {
+                        if (menu.StringLength(w.text) > 0)
+                        {
+                            w.text = StringTools.StringSubstring(menu.p, w.text, 0, menu.StringLength(w.text) - 1);
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     void KeyPress(KeyPressEventArgs e)
     {
         for (int i = 0; i < WidgetCount; i++)
@@ -658,49 +712,13 @@ public class Screen
             MenuWidget w = widgets[i];
             if (w != null)
             {
-                if (w.hasKeyboardFocus)
-                {
-                    if (e.GetKeyChar() == 9 || e.GetKeyChar() == 13) // tab, enter
-                    {
-                        if (w.type == WidgetType.Button && e.GetKeyChar() == 13)
-                        {
-                            //Call OnButton when enter is pressed and widget is a button
-                            OnButton(w);
-                            return;
-                        }
-                        else if (w.nextWidget != -1)
-                        {
-                            //Just switch focus otherwise
-                            w.LoseFocus();
-                            widgets[w.nextWidget].GetFocus();
-                            return;
-                        }
-                    }
-                }
                 if (w.type == WidgetType.Textbox)
                 {
                     if (w.editing)
                     {
-                        string s = menu.CharToString(e.GetKeyChar());
-                        if (e.GetKeyChar() == 8) // backspace
-                        {
-                            if (menu.StringLength(w.text) > 0)
-                            {
-                                w.text = StringTools.StringSubstring(menu.p, w.text, 0, menu.StringLength(w.text) - 1);
-                            }
-                            return;
-                        }
-                        if (e.GetKeyChar() == 22) //paste
-                        {
-                            if (menu.p.ClipboardContainsText())
-                            {
-                                w.text = StringTools.StringAppend(menu.p, w.text, menu.p.ClipboardGetText());
-                            }
-                            return;
-                        }
                         if (menu.p.IsValidTypingChar(e.GetKeyChar()))
                         {
-                            w.text = StringTools.StringAppend(menu.p, w.text, s);
+                            w.text = StringTools.StringAppend(menu.p, w.text, menu.CharToString(e.GetKeyChar()));
                         }
                     }
                 }

@@ -175,9 +175,17 @@
 
     internal VehicleDirection12 BestNewDirection(int dirVehicleDirection12Flags, bool turnleft, bool turnright, BoolRef retFound)
     {
+        // 0-- x
+        // |
+        // y
+
+        // y is down, x is right
+        // Naming: first the 2 connected directions followed by the preferred exit direction
+
         retFound.value = true;
         if (turnright)
         {
+            // steering right
             if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0)
             {
                 return VehicleDirection12.DownRightRight;
@@ -197,6 +205,7 @@
         }
         if (turnleft)
         {
+            // steering left
             if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0)
             {
                 return VehicleDirection12.DownRightDown;
@@ -214,20 +223,22 @@
                 return VehicleDirection12.DownLeftLeft;
             }
         }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0) { return VehicleDirection12.DownLeftDown; }
+
+        // Handle driving straight first
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalDown) != 0) { return VehicleDirection12.VerticalDown; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalUp) != 0) { return VehicleDirection12.VerticalUp; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalLeft) != 0) { return VehicleDirection12.HorizontalLeft; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalRight) != 0) { return VehicleDirection12.HorizontalRight; }
+
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0){ return VehicleDirection12.DownLeftDown; }
         if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0) { return VehicleDirection12.DownLeftLeft; }
         if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0) { return VehicleDirection12.DownRightDown; }
         if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0) { return VehicleDirection12.DownRightRight; }
 
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalLeft) != 0) { return VehicleDirection12.HorizontalLeft; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalRight) != 0) { return VehicleDirection12.HorizontalRight; }
         if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0) { return VehicleDirection12.UpLeftLeft; }
         if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0) { return VehicleDirection12.UpLeftUp; }
-
         if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0) { return VehicleDirection12.UpRightRight; }
         if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0) { return VehicleDirection12.UpRightUp; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalDown) != 0) { return VehicleDirection12.VerticalDown; }
-        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalUp) != 0) { return VehicleDirection12.VerticalUp; }
 
         retFound.value = false;
         return VehicleDirection12.DownLeftDown; // return null
