@@ -1453,21 +1453,37 @@ public class GamePlatformNative : GamePlatform
         window.SwapBuffers();
     }
 
-    bool ignoreNextMoveEvent;
+    MouseState current, previous;
+    int lastX, lastY;
     void UpdateMousePosition()
     {
+        current = Mouse.GetState();
         if (!window.Focused)
         {
             return;
         }
+        if (current != previous)
+        {
+            // Mouse state has changed
+            int xdelta = current.X - previous.X;
+            int ydelta = current.Y - previous.Y;
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(lastX);
+                args.SetY(lastY);
+                args.SetMovementX(xdelta);
+                args.SetMovementY(ydelta);
+                h.OnMouseMove(args);
+            }
+        }
+        previous = current;
         if (mousePointerLocked)
         {
             int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
             int centery = window.Bounds.Top + (window.Bounds.Height / 2);
 
-            // Setting the cursor position will cause a MouseMove event. Ignore that event.
-            ignoreNextMoveEvent = true;
-            System.Windows.Forms.Cursor.Position = new Point(centerx, centery);
+            Mouse.SetPosition(centerx, centery);
         }
     }
 
@@ -1536,12 +1552,8 @@ public class GamePlatformNative : GamePlatform
 
     void Mouse_Move(object sender, MouseMoveEventArgs e)
     {
-        if (ignoreNextMoveEvent)
-        {
-            // If the event is caused by cursor centering, ignore it.
-            ignoreNextMoveEvent = false;
-            return;
-        }
+        lastX = e.X;
+        lastY = e.Y;
         if (TouchTest)
         {
             foreach (TouchEventHandler h in touchEventHandlers)
@@ -1560,8 +1572,6 @@ public class GamePlatformNative : GamePlatform
                 MouseEventArgs args = new MouseEventArgs();
                 args.SetX(e.X);
                 args.SetY(e.Y);
-                args.SetMovementX(e.XDelta);
-                args.SetMovementY(e.YDelta);
                 h.OnMouseMove(args);
             }
         }
