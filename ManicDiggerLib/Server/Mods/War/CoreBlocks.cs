@@ -599,6 +599,14 @@ namespace ManicDigger.Mods.War
 			               	WalkableType = WalkableType.Solid,
 			               	Sounds = solidSounds,
 			               });
+			m.SetBlockType(75, "Bog", new BlockType()
+						   {
+							AllTextures = "Bog",
+							DrawType = DrawType.Solid,
+							WalkableType = WalkableType.Solid,
+							Sounds = solidSounds,
+							WalkSpeed = 0.5f,
+						   });
 			m.SetBlockType(100, "BrushedMetal", new BlockType()
 			               {
 			               	AllTextures = "BrushedMetal",
@@ -1186,6 +1194,7 @@ namespace ManicDigger.Mods.War
 			m.AddToCreativeInventory("HalfSpruceWood");
 			m.AddToCreativeInventory("HalfBrick");
 			m.AddToCreativeInventory("HalfSandBrick");
+			m.AddToCreativeInventory("Bog");
 			#endregion
 			
 			#region Start inventory
