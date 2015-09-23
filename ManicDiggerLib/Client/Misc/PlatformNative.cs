@@ -1443,21 +1443,7 @@ public class GamePlatformNative : GamePlatform
 
     void window_RenderFrame(object sender, OpenTK.FrameEventArgs e)
     {
-        UpdateMousePositionArgs a = new UpdateMousePositionArgs();
-        UpdateMousePosition(a);
-        if (!TouchTest)
-        {
-            foreach (MouseEventHandler h in mouseEventHandlers)
-            {
-                MouseEventArgs args2 = new MouseEventArgs();
-                args2.SetX(a.mouseCurrentX);
-                args2.SetY(a.mouseCurrentY);
-                args2.SetMovementX((int)a.mouseDeltaX);
-                args2.SetMovementY((int)a.mouseDeltaY);
-                h.OnMouseMove(args2);
-            }
-        }
-
+        UpdateMousePosition();
         foreach (NewFrameHandler h in newFrameHandlers)
         {
             NewFrameEventArgs args = new NewFrameEventArgs();
@@ -1467,89 +1453,23 @@ public class GamePlatformNative : GamePlatform
         window.SwapBuffers();
     }
 
-    bool wasMousePointerLocked;
-    void UpdateMousePosition(UpdateMousePositionArgs args)
+    bool ignoreNextMoveEvent;
+    void UpdateMousePosition()
     {
-        args.mouseCurrentX = System.Windows.Forms.Cursor.Position.X;
-        args.mouseCurrentY = System.Windows.Forms.Cursor.Position.Y;
-        if (!mousePointerLocked)
-        {
-            args.mouseCurrentX = args.mouseCurrentX - window.X;
-            args.mouseCurrentY = args.mouseCurrentY - window.Y;
-
-            args.mouseCurrentY = args.mouseCurrentY - System.Windows.Forms.SystemInformation.CaptionHeight;
-
-            args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
-            args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
-            mouse_previous.X = args.mouseCurrentX;
-            mouse_previous.Y = args.mouseCurrentY;
-        }
         if (!window.Focused)
         {
             return;
         }
-        if (mousePointerLocked && (!wasMousePointerLocked))
-        {
-            mouse_previous.X = args.mouseCurrentX;
-            mouse_previous.Y = args.mouseCurrentY;
-            args.freemousejustdisabled = false;
-        }
-        wasMousePointerLocked = mousePointerLocked;
         if (mousePointerLocked)
         {
-            //There are two versions:
+            int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
+            int centery = window.Bounds.Top + (window.Bounds.Height / 2);
 
-            //a) System.Windows.Forms.Cursor and GameWindow.CursorVisible = true.
-            //It works by centering global mouse cursor every frame.
-            //*Windows:
-            //   *OK.
-            //   *On a few YouTube videos mouse cursor is not hiding properly.
-            //    That could be just a problem with video recording software.
-            //*Ubuntu: Broken, mouse cursor doesn't hide.
-            //*Mac: Broken, mouse doesn't move at all.
-
-            //b) OpenTk.Input.Mouse and GameWindow.CursorVisible = false.
-            //Uses raw mouse coordinates, movement is not accelerated.
-            //*Windows:
-            //  *OK.
-            //  *Worse than a), because this doesn't use system-wide mouse acceleration.
-            //*Ubuntu: Broken, crashes with "libxi" library missing.
-            //*Mac: OK.
-
-            if (!IsMac)
-            {
-                //a)
-                int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
-                int centery = window.Bounds.Top + (window.Bounds.Height / 2);
-
-                args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
-                args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
-
-                System.Windows.Forms.Cursor.Position =
-                    new Point(centerx, centery);
-                mouse_previous = new Point(centerx, centery);
-            }
-            else
-            {
-                //b)
-                var state = OpenTK.Input.Mouse.GetState();
-                float dx = state.X - mouse_previous_state.X;
-                float dy = state.Y - mouse_previous_state.Y;
-                mouse_previous_state = state;
-                //These are raw coordinates, so need to apply acceleration manually.
-                float dx2 = (dx * Math.Abs(dx) * MouseAcceleration1);
-                float dy2 = (dy * Math.Abs(dy) * MouseAcceleration1);
-                dx2 += dx * MouseAcceleration2;
-                dy2 += dy * MouseAcceleration2;
-                args.mouseDeltaX = dx2;
-                args.mouseDeltaY = dy2;
-            }
+            // Setting the cursor position will cause a MouseMove event. Ignore that event.
+            ignoreNextMoveEvent = true;
+            System.Windows.Forms.Cursor.Position = new Point(centerx, centery);
         }
     }
-    public float MouseAcceleration1 = 0.12f;
-    public float MouseAcceleration2 = 0.7f;
-    OpenTK.Input.MouseState mouse_previous_state;
-    Point mouse_previous;
 
     void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
     {
@@ -1616,6 +1536,12 @@ public class GamePlatformNative : GamePlatform
 
     void Mouse_Move(object sender, MouseMoveEventArgs e)
     {
+        if (ignoreNextMoveEvent)
+        {
+            // If the event is caused by cursor centering, ignore it.
+            ignoreNextMoveEvent = false;
+            return;
+        }
         if (TouchTest)
         {
             foreach (TouchEventHandler h in touchEventHandlers)
@@ -1634,6 +1560,8 @@ public class GamePlatformNative : GamePlatform
                 MouseEventArgs args = new MouseEventArgs();
                 args.SetX(e.X);
                 args.SetY(e.Y);
+                args.SetMovementX(e.XDelta);
+                args.SetMovementY(e.YDelta);
                 h.OnMouseMove(args);
             }
         }
