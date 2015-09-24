@@ -2455,16 +2455,6 @@
             if (clientmods[i] == null) { continue; }
             clientmods[i].OnMouseWheelChanged(this, e);
         }
-        if ((guistate != GuiState.Inventory)
-            && (!keyboardState[GetKey(GlKeys.LShift)]))
-        {
-            ActiveMaterial -= platform.FloatToInt(eDeltaPrecise);
-            ActiveMaterial = ActiveMaterial % 10;
-            while (ActiveMaterial < 0)
-            {
-                ActiveMaterial += 10;
-            }
-        }
     }
 
     internal void Connect(string serverAddress, int port, string username, string auth)

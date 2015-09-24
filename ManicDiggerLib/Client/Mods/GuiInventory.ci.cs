@@ -551,9 +551,19 @@
 
     public override void OnMouseWheelChanged(Game game_, MouseWheelEventArgs args)
     {
+        float delta = args.GetDeltaPrecise();
+        if ((game_.guistate == GuiState.Normal || (game_.guistate == GuiState.Inventory && !IsMouseOverCells()))
+            && (!game_.keyboardState[game_.GetKey(GlKeys.LShift)]))
+        {
+            game_.ActiveMaterial -= game_.platform.FloatToInt(delta);
+            game_.ActiveMaterial = game_.ActiveMaterial % 10;
+            while (game_.ActiveMaterial < 0)
+            {
+                game_.ActiveMaterial += 10;
+            }
+        }
         if (IsMouseOverCells() && game.guistate == GuiState.Inventory)
         {
-            float delta = args.GetDeltaPrecise();
             if (delta > 0)
             {
                 ScrollUp();
