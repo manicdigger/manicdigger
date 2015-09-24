@@ -379,8 +379,8 @@
 
     public void HandleMouseMove(MouseEventArgs e)
     {
-        float dx = e.GetX() - previousMouseX;
-        float dy = e.GetY() - previousMouseY;
+        float dx = e.GetMovementX();
+        float dy = e.GetMovementY();
         previousMouseX = e.GetX();
         previousMouseY = e.GetY();
         if (mousePressed)
@@ -805,6 +805,10 @@ public class Screen
 
     void MouseMove(MouseEventArgs e)
     {
+        if (e.GetEmulated())
+        {
+            return;
+        }
         for (int i = 0; i < WidgetCount; i++)
         {
             MenuWidget w = widgets[i];

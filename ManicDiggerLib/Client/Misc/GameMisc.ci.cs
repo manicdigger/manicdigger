@@ -129,6 +129,10 @@
 
     void MouseMove(MouseEventArgs e)
     {
+        if (e.GetEmulated())
+        {
+            return;
+        }
         for (int i = 0; i < WidgetCount; i++)
         {
             MenuWidget w = widgets[i];

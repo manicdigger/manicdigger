@@ -227,15 +227,6 @@ public class AssetList
     public int GetCount() { return count; } public void SetCount(int value) { count = value; }
 }
 
-public class UpdateMousePositionArgs
-{
-    internal bool freemousejustdisabled;
-    internal int mouseCurrentX;
-    internal int mouseCurrentY;
-    internal float mouseDeltaX;
-    internal float mouseDeltaY;
-}
-
 public enum WindowState
 {
     Normal,
@@ -629,6 +620,9 @@ public class MouseEventArgs
     bool handled;
     public bool GetHandled() { return handled; }
     public void SetHandled(bool value) { handled = value; }
+    bool emulated;
+    public bool GetEmulated() { return emulated; }
+    public void SetEmulated(bool value) { emulated = value; }
 }
 
 public class MouseWheelEventArgs
