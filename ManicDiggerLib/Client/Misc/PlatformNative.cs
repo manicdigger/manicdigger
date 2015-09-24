@@ -216,9 +216,7 @@ public class GamePlatformNative : GamePlatform
     }
 
     public bool TouchTest = false;
-
     string[] datapaths;
-
 
     public override string Timestamp()
     {
@@ -364,30 +362,6 @@ public class GamePlatformNative : GamePlatform
     {
         FileInfo info = new FileInfo(fullpath);
         return info.Name.Replace(info.Extension, "");
-    }
-
-    public List<NewFrameHandler> newFrameHandlers = new List<NewFrameHandler>();
-    public override void AddOnNewFrame(NewFrameHandler handler)
-    {
-        newFrameHandlers.Add(handler);
-    }
-
-    public List<KeyEventHandler> keyEventHandlers = new List<KeyEventHandler>();
-    public override void AddOnKeyEvent(KeyEventHandler handler)
-    {
-        keyEventHandlers.Add(handler);
-    }
-
-    public List<MouseEventHandler> mouseEventHandlers = new List<MouseEventHandler>();
-    public override void AddOnMouseEvent(MouseEventHandler handler)
-    {
-        mouseEventHandlers.Add(handler);
-    }
-
-    public List<TouchEventHandler> touchEventHandlers = new List<TouchEventHandler>();
-    public override void AddOnTouchEvent(TouchEventHandler handler)
-    {
-        touchEventHandlers.Add(handler);
     }
 
     public override string GetLanguageIso6391()
@@ -684,25 +658,6 @@ public class GamePlatformNative : GamePlatform
         return Clipboard.GetText();
     }
 
-    public CrashReporter crashreporter;
-
-    OnCrashHandler onCrashHandler;
-    public override void AddOnCrash(OnCrashHandler handler)
-    {
-#if !DEBUG
-        crashreporter.OnCrash = OnCrash;
-        onCrashHandler = handler;
-#endif
-    }
-
-    void OnCrash()
-    {
-        if (onCrashHandler != null)
-        {
-            onCrashHandler.OnCrash();
-        }
-    }
-
     public void SetExit(GameExit exit)
     {
         gameexit = exit;
@@ -795,8 +750,6 @@ public class GamePlatformNative : GamePlatform
         return null;
     }
 
-    bool mouseCursorVisible = true;
-
     public override void ApplicationDoEvents()
     {
         if (IsMono)
@@ -885,13 +838,6 @@ public class GamePlatformNative : GamePlatform
         }
     }
 
-    bool mousePointerLocked;
-
-    public override bool IsMousePointerLocked()
-    {
-        return mousePointerLocked;
-    }
-
     public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
 
     public override bool MultithreadingAvailable()
@@ -912,11 +858,6 @@ public class GamePlatformNative : GamePlatform
             assetloader = new AssetLoader(datapaths);
         }
         assetloader.LoadAssetsAsync(list, progress);
-    }
-
-    public override bool MouseCursorIsVisible()
-    {
-        return mouseCursorVisible;
     }
 
     public override bool IsSmallScreen()
@@ -1013,45 +954,6 @@ public class GamePlatformNative : GamePlatform
     public override string QueryStringValue(string key)
     {
         return null;
-    }
-
-    public override void SetWindowCursor(int hotx, int hoty, int sizex, int sizey, byte[] imgdata, int imgdataLength)
-    {
-        try
-        {
-            Bitmap bmp = new Bitmap(new MemoryStream(imgdata, 0, imgdataLength)); //new Bitmap("data/local/gui/mousecursor.png");
-            if (bmp.Width > 32 || bmp.Height > 32)
-            {
-                // Limit cursor size to 32x32
-                return;
-            }
-            // Convert to required 0xBBGGRRAA format - see https://github.com/opentk/opentk/pull/107#issuecomment-41771702
-            int i = 0;
-            byte[] data = new byte[4 * bmp.Width * bmp.Height];
-            for (int y = 0; y < bmp.Width; y++)
-            {
-                for (int x = 0; x < bmp.Height; x++)
-                {
-                    Color color = bmp.GetPixel(x, y);
-                    data[i] = color.B;
-                    data[i + 1] = color.G;
-                    data[i + 2] = color.R;
-                    data[i + 3] = color.A;
-                    i += 4;
-                }
-            }
-            bmp.Dispose();
-            window.Cursor = new MouseCursor(hotx, hoty, sizex, sizey, data);
-        }
-        catch
-        {
-            RestoreWindowCursor();
-        }
-    }
-
-    public override void RestoreWindowCursor()
-    {
-        window.Cursor = MouseCursor.Default;
     }
 
     #endregion
@@ -1441,223 +1343,9 @@ public class GamePlatformNative : GamePlatform
         gameexit.exit = true;
     }
 
-    void window_RenderFrame(object sender, OpenTK.FrameEventArgs e)
-    {
-        UpdateMousePosition();
-        foreach (NewFrameHandler h in newFrameHandlers)
-        {
-            NewFrameEventArgs args = new NewFrameEventArgs();
-            args.SetDt((float)e.Time);
-            h.OnNewFrame(args);
-        }
-        window.SwapBuffers();
-    }
-
-    MouseState current, previous;
-    int lastX, lastY;
-    void UpdateMousePosition()
-    {
-        current = Mouse.GetState();
-        if (!window.Focused)
-        {
-            return;
-        }
-        if (current != previous)
-        {
-            // Mouse state has changed
-            int xdelta = current.X - previous.X;
-            int ydelta = current.Y - previous.Y;
-            foreach (MouseEventHandler h in mouseEventHandlers)
-            {
-                MouseEventArgs args = new MouseEventArgs();
-                args.SetX(lastX);
-                args.SetY(lastY);
-                args.SetMovementX(xdelta);
-                args.SetMovementY(ydelta);
-                h.OnMouseMove(args);
-            }
-        }
-        previous = current;
-        if (mousePointerLocked)
-        {
-            int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
-            int centery = window.Bounds.Top + (window.Bounds.Height / 2);
-
-            Mouse.SetPosition(centerx, centery);
-        }
-    }
-
-    void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
-    {
-        foreach (MouseEventHandler h in mouseEventHandlers)
-        {
-            MouseWheelEventArgs args = new MouseWheelEventArgs();
-            args.SetDelta(e.Delta);
-            args.SetDeltaPrecise(e.DeltaPrecise);
-            h.OnMouseWheel(args);
-        }
-    }
-
-    void Mouse_ButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (TouchTest)
-        {
-            foreach (TouchEventHandler h in touchEventHandlers)
-            {
-                TouchEventArgs args = new TouchEventArgs();
-                args.SetX(e.X);
-                args.SetY(e.Y);
-                args.SetId(0);
-                h.OnTouchStart(args);
-            }
-        }
-        else
-        {
-            foreach (MouseEventHandler h in mouseEventHandlers)
-            {
-                MouseEventArgs args = new MouseEventArgs();
-                args.SetX(e.X);
-                args.SetY(e.Y);
-                args.SetButton((int)e.Button);
-                h.OnMouseDown(args);
-            }
-        }
-    }
-
-    void Mouse_ButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        if (TouchTest)
-        {
-            foreach (TouchEventHandler h in touchEventHandlers)
-            {
-                TouchEventArgs args = new TouchEventArgs();
-                args.SetX(e.X);
-                args.SetY(e.Y);
-                args.SetId(0);
-                h.OnTouchEnd(args);
-            }
-        }
-        else
-        {
-            foreach (MouseEventHandler h in mouseEventHandlers)
-            {
-                MouseEventArgs args = new MouseEventArgs();
-                args.SetX(e.X);
-                args.SetY(e.Y);
-                args.SetButton((int)e.Button);
-                h.OnMouseUp(args);
-            }
-        }
-    }
-
-    void Mouse_Move(object sender, MouseMoveEventArgs e)
-    {
-        lastX = e.X;
-        lastY = e.Y;
-        if (TouchTest)
-        {
-            foreach (TouchEventHandler h in touchEventHandlers)
-            {
-                TouchEventArgs args = new TouchEventArgs();
-                args.SetX(e.X);
-                args.SetY(e.Y);
-                args.SetId(0);
-                h.OnTouchMove(args);
-            }
-        }
-        else
-        {
-            foreach (MouseEventHandler h in mouseEventHandlers)
-            {
-                MouseEventArgs args = new MouseEventArgs();
-                args.SetX(e.X);
-                args.SetY(e.Y);
-                h.OnMouseMove(args);
-            }
-        }
-    }
-
-    void game_KeyPress(object sender, OpenTK.KeyPressEventArgs e)
-    {
-        foreach (KeyEventHandler h in keyEventHandlers)
-        {
-            KeyPressEventArgs args = new KeyPressEventArgs();
-            args.SetKeyChar((int)e.KeyChar);
-            h.OnKeyPress(args);
-        }
-    }
-
-    void game_KeyDown(object sender, KeyboardKeyEventArgs e)
-    {
-        foreach (KeyEventHandler h in keyEventHandlers)
-        {
-            KeyEventArgs args = new KeyEventArgs();
-            args.SetKeyCode(ToGlKey(e.Key));
-            args.SetCtrlPressed(e.Modifiers == KeyModifiers.Control);
-            args.SetShiftPressed(e.Modifiers == KeyModifiers.Shift);
-            args.SetAltPressed(e.Modifiers == KeyModifiers.Alt);
-            h.OnKeyDown(args);
-        }
-    }
-
-    void game_KeyUp(object sender, KeyboardKeyEventArgs e)
-    {
-        foreach (KeyEventHandler h in keyEventHandlers)
-        {
-            KeyEventArgs args = new KeyEventArgs();
-            args.SetKeyCode(ToGlKey(e.Key));
-            h.OnKeyUp(args);
-        }
-    }
-
-    public static int ToGlKey(OpenTK.Input.Key key)
-    {
-        return (int)key;
-    }
-
-    public override void MouseCursorSetVisible(bool value)
-    {
-        if (!value)
-        {
-            if (TouchTest)
-            {
-                return;
-            }
-            if (!mouseCursorVisible)
-            {
-                //Cursor already hidden. Do nothing.
-                return;
-            }
-            window.CursorVisible = false;
-            mouseCursorVisible = false;
-        }
-        else
-        {
-            if (mouseCursorVisible)
-            {
-                //Cursor already visible. Do nothing.
-                return;
-            }
-            window.CursorVisible = true;
-            mouseCursorVisible = true;
-        }
-    }
-
     public override void SetVSync(bool enabled)
     {
         window.VSync = enabled ? VSyncMode.On : VSyncMode.Off;
-    }
-
-    public override void RequestMousePointerLock()
-    {
-        MouseCursorSetVisible(false);
-        mousePointerLocked = true;
-    }
-
-    public override void ExitMousePointerLock()
-    {
-        MouseCursorSetVisible(true);
-        mousePointerLocked = false;
     }
 
     Screenshot screenshot = new Screenshot();
@@ -1689,11 +1377,6 @@ public class GamePlatformNative : GamePlatform
     public override void SetTitle(string applicationname)
     {
         window.Title = applicationname;
-    }
-
-    public override bool Focused()
-    {
-        return window.Focused;
     }
 
     public override string KeyName(int key)
@@ -2173,6 +1856,348 @@ public class GamePlatformNative : GamePlatform
     public override PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a)
     {
         return (PlayerInterpolationState)a;
+    }
+
+    #endregion
+
+    #region Event handlers
+
+    public List<NewFrameHandler> newFrameHandlers = new List<NewFrameHandler>();
+    public override void AddOnNewFrame(NewFrameHandler handler)
+    {
+        newFrameHandlers.Add(handler);
+    }
+
+    public List<KeyEventHandler> keyEventHandlers = new List<KeyEventHandler>();
+    public override void AddOnKeyEvent(KeyEventHandler handler)
+    {
+        keyEventHandlers.Add(handler);
+    }
+
+    public List<MouseEventHandler> mouseEventHandlers = new List<MouseEventHandler>();
+    public override void AddOnMouseEvent(MouseEventHandler handler)
+    {
+        mouseEventHandlers.Add(handler);
+    }
+
+    public List<TouchEventHandler> touchEventHandlers = new List<TouchEventHandler>();
+    public override void AddOnTouchEvent(TouchEventHandler handler)
+    {
+        touchEventHandlers.Add(handler);
+    }
+
+    public CrashReporter crashreporter;
+    OnCrashHandler onCrashHandler;
+    public override void AddOnCrash(OnCrashHandler handler)
+    {
+#if !DEBUG
+        crashreporter.OnCrash = OnCrash;
+        onCrashHandler = handler;
+#endif
+    }
+    void OnCrash()
+    {
+        if (onCrashHandler != null)
+        {
+            onCrashHandler.OnCrash();
+        }
+    }
+
+    #endregion
+
+    #region Input
+
+    bool mousePointerLocked;
+    bool mouseCursorVisible = true;
+    MouseState current, previous;
+    int lastX, lastY;
+
+    public override bool IsMousePointerLocked()
+    {
+        return mousePointerLocked;
+    }
+
+    public override bool MouseCursorIsVisible()
+    {
+        return mouseCursorVisible;
+    }
+
+    public override void SetWindowCursor(int hotx, int hoty, int sizex, int sizey, byte[] imgdata, int imgdataLength)
+    {
+        try
+        {
+            Bitmap bmp = new Bitmap(new MemoryStream(imgdata, 0, imgdataLength)); //new Bitmap("data/local/gui/mousecursor.png");
+            if (bmp.Width > 32 || bmp.Height > 32)
+            {
+                // Limit cursor size to 32x32
+                return;
+            }
+            // Convert to required 0xBBGGRRAA format - see https://github.com/opentk/opentk/pull/107#issuecomment-41771702
+            int i = 0;
+            byte[] data = new byte[4 * bmp.Width * bmp.Height];
+            for (int y = 0; y < bmp.Width; y++)
+            {
+                for (int x = 0; x < bmp.Height; x++)
+                {
+                    Color color = bmp.GetPixel(x, y);
+                    data[i] = color.B;
+                    data[i + 1] = color.G;
+                    data[i + 2] = color.R;
+                    data[i + 3] = color.A;
+                    i += 4;
+                }
+            }
+            bmp.Dispose();
+            window.Cursor = new MouseCursor(hotx, hoty, sizex, sizey, data);
+        }
+        catch
+        {
+            RestoreWindowCursor();
+        }
+    }
+
+    public override void RestoreWindowCursor()
+    {
+        window.Cursor = MouseCursor.Default;
+    }
+
+    public static int ToGlKey(OpenTK.Input.Key key)
+    {
+        return (int)key;
+    }
+
+    public override void MouseCursorSetVisible(bool value)
+    {
+        if (!value)
+        {
+            if (TouchTest)
+            {
+                return;
+            }
+            if (!mouseCursorVisible)
+            {
+                //Cursor already hidden. Do nothing.
+                return;
+            }
+            window.CursorVisible = false;
+            mouseCursorVisible = false;
+        }
+        else
+        {
+            if (mouseCursorVisible)
+            {
+                //Cursor already visible. Do nothing.
+                return;
+            }
+            window.CursorVisible = true;
+            mouseCursorVisible = true;
+        }
+    }
+
+    public override void RequestMousePointerLock()
+    {
+        MouseCursorSetVisible(false);
+        mousePointerLocked = true;
+    }
+
+    public override void ExitMousePointerLock()
+    {
+        MouseCursorSetVisible(true);
+        mousePointerLocked = false;
+    }
+
+    public override bool Focused()
+    {
+        return window.Focused;
+    }
+
+    void window_RenderFrame(object sender, OpenTK.FrameEventArgs e)
+    {
+        UpdateMousePosition();
+        foreach (NewFrameHandler h in newFrameHandlers)
+        {
+            NewFrameEventArgs args = new NewFrameEventArgs();
+            args.SetDt((float)e.Time);
+            h.OnNewFrame(args);
+        }
+        window.SwapBuffers();
+    }
+
+    void UpdateMousePosition()
+    {
+        current = Mouse.GetState();
+        if (!window.Focused)
+        {
+            return;
+        }
+        if (current != previous)
+        {
+            // Mouse state has changed
+            int xdelta = current.X - previous.X;
+            int ydelta = current.Y - previous.Y;
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(lastX);
+                args.SetY(lastY);
+                args.SetMovementX(xdelta);
+                args.SetMovementY(ydelta);
+                args.SetEmulated(true);
+                h.OnMouseMove(args);
+            }
+        }
+        previous = current;
+        if (mousePointerLocked)
+        {
+            /*
+             * Windows: OK
+             * Cursor hides properly
+             * Cursor is trapped inside window
+             * Centering works
+             *
+             * Linux: Needs workaround
+             * Cursor hides properly
+             * Cursor is trapped inside window
+             * Centering broken
+             *
+             * Mac OS X: OK
+             * Cursor hides properly (although visible when doing Skype screencast)
+             * Centering works
+             * Opening "mission control" by gesture does not free cursor
+             */
+
+            int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
+            int centery = window.Bounds.Top + (window.Bounds.Height / 2);
+
+            // Setting cursor position this way works on Windows and Mac
+            Mouse.SetPosition(centerx, centery);
+        }
+    }
+
+    void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
+    {
+        foreach (MouseEventHandler h in mouseEventHandlers)
+        {
+            MouseWheelEventArgs args = new MouseWheelEventArgs();
+            args.SetDelta(e.Delta);
+            args.SetDeltaPrecise(e.DeltaPrecise);
+            h.OnMouseWheel(args);
+        }
+    }
+
+    void Mouse_ButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (TouchTest)
+        {
+            foreach (TouchEventHandler h in touchEventHandlers)
+            {
+                TouchEventArgs args = new TouchEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetId(0);
+                h.OnTouchStart(args);
+            }
+        }
+        else
+        {
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetButton((int)e.Button);
+                h.OnMouseDown(args);
+            }
+        }
+    }
+
+    void Mouse_ButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (TouchTest)
+        {
+            foreach (TouchEventHandler h in touchEventHandlers)
+            {
+                TouchEventArgs args = new TouchEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetId(0);
+                h.OnTouchEnd(args);
+            }
+        }
+        else
+        {
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetButton((int)e.Button);
+                h.OnMouseUp(args);
+            }
+        }
+    }
+
+    void Mouse_Move(object sender, MouseMoveEventArgs e)
+    {
+        lastX = e.X;
+        lastY = e.Y;
+        if (TouchTest)
+        {
+            foreach (TouchEventHandler h in touchEventHandlers)
+            {
+                TouchEventArgs args = new TouchEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetId(0);
+                h.OnTouchMove(args);
+            }
+        }
+        else
+        {
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetMovementX(e.XDelta);
+                args.SetMovementY(e.YDelta);
+                args.SetEmulated(false);
+                h.OnMouseMove(args);
+            }
+        }
+    }
+
+    void game_KeyPress(object sender, OpenTK.KeyPressEventArgs e)
+    {
+        foreach (KeyEventHandler h in keyEventHandlers)
+        {
+            KeyPressEventArgs args = new KeyPressEventArgs();
+            args.SetKeyChar((int)e.KeyChar);
+            h.OnKeyPress(args);
+        }
+    }
+
+    void game_KeyDown(object sender, KeyboardKeyEventArgs e)
+    {
+        foreach (KeyEventHandler h in keyEventHandlers)
+        {
+            KeyEventArgs args = new KeyEventArgs();
+            args.SetKeyCode(ToGlKey(e.Key));
+            args.SetCtrlPressed(e.Modifiers == KeyModifiers.Control);
+            args.SetShiftPressed(e.Modifiers == KeyModifiers.Shift);
+            args.SetAltPressed(e.Modifiers == KeyModifiers.Alt);
+            h.OnKeyDown(args);
+        }
+    }
+
+    void game_KeyUp(object sender, KeyboardKeyEventArgs e)
+    {
+        foreach (KeyEventHandler h in keyEventHandlers)
+        {
+            KeyEventArgs args = new KeyEventArgs();
+            args.SetKeyCode(ToGlKey(e.Key));
+            h.OnKeyUp(args);
+        }
     }
 
     #endregion

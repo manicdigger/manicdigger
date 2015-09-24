@@ -3898,10 +3898,18 @@
 
     public void MouseMove(MouseEventArgs e)
     {
-        mouseCurrentX = e.GetX();
-        mouseCurrentY = e.GetY();
-        mouseDeltaX += e.GetMovementX();
-        mouseDeltaY += e.GetMovementY();
+        if (!e.GetEmulated())
+        {
+            // Set x and y only for real MouseMove events
+            mouseCurrentX = e.GetX();
+            mouseCurrentY = e.GetY();
+        }
+        else
+        {
+            // Get delta only from emulated events (actual events negate previous ones)
+            mouseDeltaX += e.GetMovementX();
+            mouseDeltaY += e.GetMovementY();
+        }
         for (int i = 0; i < clientmodsCount; i++)
         {
             if (clientmods[i] == null) { continue; }
