@@ -2,6 +2,11 @@
 {
     public override void OnNewFrameDraw2d(Game game, float deltaTime)
     {
+        healthPosX = game.Width() / 2 - baseSizeX - centerOffset;
+        healthPosY = game.Height() - 150;
+        oxygenPosX = game.Width() / 2 + centerOffset;
+        oxygenPosY = game.Height() - 150;
+
         if (game.guistate != GuiState.MapLoading)
         {
             DrawPlayerHealth(game);
@@ -9,25 +14,24 @@
         }
     }
 
-    //Size of Health/Oxygen bar
-    const int barSizeX = 120;
-    const int barSizeY = 20;
-    const int barOffset = 130;
-    const int barDistanceToMargin = 40;
+    //Sizes of Health/Oxygen bar
+    const int baseSizeX = 256;
+    const int baseSizeY = 32;
+    const int centerOffset = 20;
+
+    int healthPosX;
+    int healthPosY;
+    int oxygenPosX;
+    int oxygenPosY;
 
     public void DrawPlayerHealth(Game game)
     {
         if (game.PlayerStats != null)
         {
             float progress = game.one * game.PlayerStats.CurrentHealth / game.PlayerStats.MaxHealth;
-            int InventoryStartX = game.Width() / 2 - 540 / 2;
-            int InventoryStartY = game.Height() - 110;
-            int posX = InventoryStartX + 10;
-            int posY = InventoryStartY + 10;
-            game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-            game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, (progress) * barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+            game.Draw2dTexture(game.WhiteTexture(), healthPosX, healthPosY, baseSizeX, baseSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+            game.Draw2dTexturePart(game.GetTexture("background.png"), progress, 1, healthPosX, healthPosY, (progress) * baseSizeX, baseSizeY, Game.ColorFromArgb(255, 255, 0, 0), false);
         }
-        //if (test) { d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 50, 50, 200, 200, null, Color.Red); }
     }
 
     public void DrawPlayerOxygen(Game game)
@@ -37,12 +41,8 @@
             if (game.PlayerStats.CurrentOxygen < game.PlayerStats.MaxOxygen)
             {
                 float progress = game.one * game.PlayerStats.CurrentOxygen / game.PlayerStats.MaxOxygen;
-                int InventoryStartX = game.Width() / 2 - 540 / 2;
-                int InventoryStartY = game.Height() - 140;
-                int posX = InventoryStartX + 10;
-                int posY = InventoryStartY + 10;
-                game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-                game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, (progress) * barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 255), false);
+                game.Draw2dTexture(game.WhiteTexture(), oxygenPosX, oxygenPosY, baseSizeX, baseSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+                game.Draw2dTexturePart(game.GetTexture("background.png"), progress, 1, oxygenPosX, oxygenPosY, (progress) * baseSizeX, baseSizeY, Game.ColorFromArgb(255, 0, 0, 255), false);
             }
         }
     }

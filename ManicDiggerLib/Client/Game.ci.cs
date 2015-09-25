@@ -577,7 +577,7 @@
         platform.GlEnableTexture2d();
     }
 
-    void Draw2dTexturePart(int textureid, float srcwidth, float srcheight, float dstx, float dsty, float dstwidth, float dstheight, int color, bool enabledepthtest)
+    public void Draw2dTexturePart(int textureid, float srcwidth, float srcheight, float dstx, float dsty, float dstwidth, float dstheight, int color, bool enabledepthtest)
     {
         RectFRef rect = RectFRef.Create(0, 0, srcwidth, srcheight);
         platform.GlDisableCullFace();
@@ -1716,6 +1716,7 @@
         PlayerStats.CurrentHealth -= damage;
         if (PlayerStats.CurrentHealth <= 0)
         {
+            PlayerStats.CurrentHealth = 0;
             AudioPlay("death.wav");
             SendPacketClient(ClientPackets.Death(damageSource, sourceId));
 
