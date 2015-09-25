@@ -576,6 +576,28 @@
         platform.GlEnableTexture2d();
     }
 
+    void Draw2dTexturePart(int textureid, float srcwidth, float srcheight, float dstx, float dsty, float dstwidth, float dstheight, int color, bool enabledepthtest)
+    {
+        RectFRef rect = RectFRef.Create(0, 0, srcwidth, srcheight);
+        platform.GlDisableCullFace();
+        platform.GlEnableTexture2d();
+        platform.BindTexture2d(textureid);
+
+        if (!enabledepthtest)
+        {
+            platform.GlDisableDepthTest();
+        }
+        ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
+            dstx, dsty, dstwidth, dstheight, Game.IntToByte(Game.ColorR(color)), Game.IntToByte(Game.ColorG(color)), Game.IntToByte(Game.ColorB(color)), Game.IntToByte(Game.ColorA(color)));
+        DrawModelData(data);
+        if (!enabledepthtest)
+        {
+            platform.GlEnableDepthTest();
+        }
+        platform.GlEnableCullFace();
+        platform.GlEnableTexture2d();
+    }
+
     public ModelData CombineModelData(ModelData[] modelDatas, int count)
     {
         ModelData ret = new ModelData();
