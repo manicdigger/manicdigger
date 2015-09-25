@@ -409,13 +409,15 @@ public class InventoryServer : IInventoryController
     public override void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
     {
         //todo
+        ProtoPoint originPoint = new ProtoPoint(from.AreaX, from.AreaY);
         if (from.Type == Packet_InventoryPositionTypeEnum.MainArea
             && to.Type == Packet_InventoryPositionTypeEnum.MaterialSelector
             && d_Inventory.RightHand[to.MaterialId] == null
-            && d_Items.CanWear(WearPlace_.RightHand, d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)]))
+            && d_Inventory.Items.ContainsKey(originPoint)
+            && d_Items.CanWear(WearPlace_.RightHand, d_Inventory.Items[originPoint]))
         {
-            d_Inventory.RightHand[to.MaterialId] = d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)];
-            d_Inventory.Items.Remove(new ProtoPoint(from.AreaX, from.AreaY));
+            d_Inventory.RightHand[to.MaterialId] = d_Inventory.Items[originPoint];
+            d_Inventory.Items.Remove(originPoint);
         }
     }
 
