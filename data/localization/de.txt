@@ -270,6 +270,7 @@ Block_HalfBirchWood=Birkenholzstufe
 Block_HalfSpruceWood=Fichtenholzstufe
 Block_HalfBrick=Ziegelstufe
 Block_HalfSandBrick=Sandsteinziegelstufe
+Block_Bog=Moor
 
 
 Server_CannotWriteLogFile=Kann die Server-Logdatei {0} nicht beschreiben.
