@@ -311,6 +311,11 @@ public class ProcessPacketTask : Action_
             case Packet_ServerIdEnum.DisconnectPlayer:
                 {
                     game.ChatLog(game.platform.StringFormat("[GAME] Disconnected by the server ({0})", packet.DisconnectPlayer.DisconnectReason));
+                    //Exit mouse pointer lock if necessary
+                    if (game.platform.IsMousePointerLocked())
+                    {
+                        game.platform.ExitMousePointerLock();
+                    }
                     //When server disconnects player, return to main menu
                     game.platform.MessageBoxShowError(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server");
                     game.ExitToMainMenu_();
