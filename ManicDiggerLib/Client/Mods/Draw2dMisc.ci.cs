@@ -142,8 +142,8 @@
             int InventoryStartY = game.Height() - 110;
             int posX = InventoryStartX + 10;
             int posY = InventoryStartY + 10;
-            game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-            game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, (progress) * barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+            game.Draw2dTexture(game.GetTexture("hobars.png"), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(200, 0, 0, 0), false);
+            game.Draw2dTexture(game.GetTexture("hobars.png"), posX, posY - barSizeY, (progress) * barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
         }
         //if (test) { d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 50, 50, 200, 200, null, Color.Red); }
     }
@@ -159,8 +159,8 @@
                 int InventoryStartY = game.Height() - 140;
                 int posX = InventoryStartX + 10;
                 int posY = InventoryStartY + 10;
-                game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-                game.Draw2dTexture(game.GetTexture("background.png"), posX, posY - barSizeY, (progress) * barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 255), false);
+                game.Draw2dTexture(game.GetTexture("hobars.png"), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+                game.Draw2dTexture(game.GetTexture("hobars.png"), posX, posY - barSizeY, (progress) * barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 255), false);
             }
         }
     }
