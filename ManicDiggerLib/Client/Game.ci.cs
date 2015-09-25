@@ -274,6 +274,7 @@
         AddMod(new ModGuiEscapeMenu());
         AddMod(new ModGuiMapLoading());
         AddMod(new ModDraw2dMisc());
+        AddMod(new ModGuiPlayerStats());
         AddMod(new ModGuiChat());
         AddMod(new ModScreenshot());
         AddMod(new ModAudio());

@@ -123,6 +123,7 @@
     <Compile Include="ClientNative\AviWriter.cs" />
     <Compile Include="ClientNative\Misc.cs" />
     <Compile Include="ClientNative\Screenshot.cs" />
+    <Compile Include="Client\Mods\GuiPlayerStats.ci.cs" />
     <Compile Include="Client\Mods\GuiInventory.ci.cs" />
     <Compile Include="Client\Mods\BlockDamageToPlayer.ci.cs" />
     <Compile Include="Client\Mods\Bullet.ci.cs" />
