@@ -32,7 +32,12 @@ public struct DbChunk
     public Xyz Position;
     public byte[] Chunk;
 }
-public class ChunkDb
+
+/// <summary>
+/// Used for operations on different chunk storage variants.
+/// Does some checks when accessing data.
+/// </summary>
+public static class ChunkDb
 {
     public static byte[] GetChunk(IChunkDb db, int x, int y, int z)
     {
@@ -84,6 +89,10 @@ public class ChunkDb
     }
     */
 }
+
+/// <summary>
+/// Interface implemented by all variants of chunk storage.
+/// </summary>
 public interface IChunkDb
 {
     void Open(string filename);
@@ -98,6 +107,9 @@ public interface IChunkDb
     bool GetReadOnly();
     void SetReadOnly(bool value);
 }
+/// <summary>
+/// Wrapper to compress data passed on to the actual chunk storage
+/// </summary>
 public class ChunkDbCompressed : IChunkDb
 {
     public IChunkDb d_ChunkDb;
@@ -215,6 +227,9 @@ public class ChunkDbCompressed : IChunkDb
     public bool GetReadOnly() { return d_ChunkDb.GetReadOnly(); }
     public void SetReadOnly(bool value) { d_ChunkDb.SetReadOnly(value); }
 }
+/// <summary>
+/// Dummy chunk storage
+/// </summary>
 public class ChunkDbDummy : IChunkDb
 {
     string currentFilename = null;
@@ -282,6 +297,9 @@ public class ChunkDbDummy : IChunkDb
     public bool GetReadOnly() { return ReadOnly; }
     public void SetReadOnly(bool value) { ReadOnly = value; }
 }
+/// <summary>
+/// Chunk storage using SQLite to store data
+/// </summary>
 public class ChunkDbSqlite : IChunkDb
 {
     SQLiteConnection sqliteConn;
@@ -602,3 +620,22 @@ public class ChunkDbSqlite : IChunkDb
     public bool GetReadOnly() { return ReadOnly; }
     public void SetReadOnly(bool value) { ReadOnly = value; }
 }
+/// <summary>
+/// Chunk storage using a plain file structure to store data - TODO
+/// </summary>
+/*public class ChunkDbPlainFile : IChunkDb
+{
+    private string currentlyOpened;
+
+    public void Open(string filename);
+    public void Backup(string backupFilename);
+    public IEnumerable<byte[]> GetChunks(IEnumerable<Xyz> chunkpositions);
+    public void SetChunks(IEnumerable<DbChunk> chunks);
+    public void DeleteChunks(IEnumerable<Xyz> chunkpositions);
+    public byte[] GetGlobalData();
+    public void SetGlobalData(byte[] data);
+    public Dictionary<Xyz, byte[]> GetChunksFromFile(IEnumerable<Xyz> chunkpositions, string filename);
+    public void SetChunksToFile(IEnumerable<DbChunk> chunks, string filename);
+    public bool GetReadOnly();
+    public void SetReadOnly(bool value);
+}*/
