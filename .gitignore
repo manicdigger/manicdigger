@@ -1,13 +1,9 @@
+# MD specific #
+###############
 output
 CitoOutput
 bin
 obj
-
-_ReSharper.*
-*.user
-*.suo
-*.sdsettings
-
 /Packet.Serializer.cs
 /ManicDiggerLib/Server/Mods/current.txt
 /Packet.Serializer.ci.cs
@@ -17,4 +13,20 @@ _ReSharper.*
 /Html/Assets.js
 /Html/ManicDigger.js
 
+# General #
+###########
+_ReSharper.*
+*.user
+*.suo
+*.sdsettings
 local.properties
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
