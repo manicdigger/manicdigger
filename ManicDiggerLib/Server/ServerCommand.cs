@@ -1384,7 +1384,7 @@ public partial class Server
                             if (amount == 0)
                             {
                                 // Delete block from player inventory if amount is 0
-                                inventory.Items[new ProtoPoint(xx, yy)] = null;
+                                inventory.Items.Remove(new ProtoPoint(xx, yy));
                             }
                             else
                             {
