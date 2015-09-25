@@ -1277,6 +1277,7 @@ public partial class Server
         {
             string targetName = targetClient.playername;
             string sourcename = GetClient(sourceClientId).playername;
+            int maxStack = 9999; //TODO: Fetch this dynamically for each item - stacking
             for (int i = 0; i < BlockTypes.Length; i++)
             {
                 if (!BlockTypes[i].IsBuildable)
@@ -1299,7 +1300,7 @@ public partial class Server
                             && currentItem.ItemClass == ItemClass.Block
                             && currentItem.BlockId == i)
                         {
-                            currentItem.BlockCount = 999;
+                            currentItem.BlockCount = maxStack;
                             goto nextblock;
                         }
                     }
@@ -1311,7 +1312,7 @@ public partial class Server
                         Item newItem = new Item();
                         newItem.ItemClass = ItemClass.Block;
                         newItem.BlockId = i;
-                        newItem.BlockCount = 999;
+                        newItem.BlockCount = maxStack;
 
                         if (util.ItemAtCell(PointRef.Create(xx, yy)) == null)
                         {
@@ -1344,14 +1345,14 @@ public partial class Server
         {
             string targetName = targetClient.playername;
             string sourcename = GetClient(sourceClientId).playername;
-            //int amount;
+            int maxStack = 9999; //TODO: Fetch this dynamically for each item - stacking
             if (amount < 0)
             {
                 return false;
             }
-            if (amount > 9999)
+            if (amount > maxStack)
             {
-                amount = 9999;
+                amount = maxStack;
             }
             for (int i = 0; i < BlockTypes.Length; i++)
             {
@@ -1366,6 +1367,7 @@ public partial class Server
                 Inventory inventory = GetPlayerInventory(targetName).Inventory;
                 InventoryUtil util = GetInventoryUtil(inventory);
 
+                // Try to find given block in player inventory
                 for (int xx = 0; xx < util.CellCountX; xx++)
                 {
                     for (int yy = 0; yy < util.CellCountY; yy++)
@@ -1381,27 +1383,37 @@ public partial class Server
                         {
                             if (amount == 0)
                             {
+                                // Delete block from player inventory if amount is 0
                                 inventory.Items[new ProtoPoint(xx, yy)] = null;
                             }
                             else
                             {
-                                currentItem.BlockCount = amount;
+                                // Add specified amount to player inventory
+                                if (currentItem.BlockCount + amount > maxStack)
+                                {
+                                    currentItem.BlockCount = maxStack;
+                                }
+                                else
+                                {
+                                    currentItem.BlockCount += amount;
+                                }
                             }
                             goto nextblock;
                         }
                     }
                 }
+                // Block not yet in inventory. Add to first free slot.
                 for (int xx = 0; xx < util.CellCountX; xx++)
                 {
                     for (int yy = 0; yy < util.CellCountY; yy++)
                     {
-                        Item newItem = new Item();
-                        newItem.ItemClass = ItemClass.Block;
-                        newItem.BlockId = i;
-                        newItem.BlockCount = amount;
-
                         if (util.ItemAtCell(PointRef.Create(xx, yy)) == null)
                         {
+                            Item newItem = new Item();
+                            newItem.ItemClass = ItemClass.Block;
+                            newItem.BlockId = i;
+                            newItem.BlockCount = amount;
+
                             inventory.Items[new ProtoPoint(xx, yy)] = newItem;
                             goto nextblock;
                         }
