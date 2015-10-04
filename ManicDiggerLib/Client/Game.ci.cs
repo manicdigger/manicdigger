@@ -274,6 +274,7 @@
         AddMod(new ModGuiEscapeMenu());
         AddMod(new ModGuiMapLoading());
         AddMod(new ModDraw2dMisc());
+        AddMod(new ModGuiPlayerStats());
         AddMod(new ModGuiChat());
         AddMod(new ModScreenshot());
         AddMod(new ModAudio());
@@ -567,6 +568,28 @@
         }
         ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
             x1, y1, width, height, Game.IntToByte(Game.ColorR(color)), Game.IntToByte(Game.ColorG(color)), Game.IntToByte(Game.ColorB(color)), Game.IntToByte(Game.ColorA(color)));
+        DrawModelData(data);
+        if (!enabledepthtest)
+        {
+            platform.GlEnableDepthTest();
+        }
+        platform.GlEnableCullFace();
+        platform.GlEnableTexture2d();
+    }
+
+    public void Draw2dTexturePart(int textureid, float srcwidth, float srcheight, float dstx, float dsty, float dstwidth, float dstheight, int color, bool enabledepthtest)
+    {
+        RectFRef rect = RectFRef.Create(0, 0, srcwidth, srcheight);
+        platform.GlDisableCullFace();
+        platform.GlEnableTexture2d();
+        platform.BindTexture2d(textureid);
+
+        if (!enabledepthtest)
+        {
+            platform.GlDisableDepthTest();
+        }
+        ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
+            dstx, dsty, dstwidth, dstheight, Game.IntToByte(Game.ColorR(color)), Game.IntToByte(Game.ColorG(color)), Game.IntToByte(Game.ColorB(color)), Game.IntToByte(Game.ColorA(color)));
         DrawModelData(data);
         if (!enabledepthtest)
         {
@@ -1693,6 +1716,7 @@
         PlayerStats.CurrentHealth -= damage;
         if (PlayerStats.CurrentHealth <= 0)
         {
+            PlayerStats.CurrentHealth = 0;
             AudioPlay("death.wav");
             SendPacketClient(ClientPackets.Death(damageSource, sourceId));
 
