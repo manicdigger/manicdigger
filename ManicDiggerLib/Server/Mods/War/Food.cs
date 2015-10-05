@@ -15,14 +15,16 @@ namespace ManicDigger.Mods.War
 			m.RegisterOnBlockUse(OnUse);
 			
 			Cake = m.GetBlockId("Cake");
+			Apples = m.GetBlockId("Apples");
 		}
 		ModManager m;
 		
 		int Cake;
+		int Apples;
 		
 		void OnUse(int player, int x, int y, int z)
 		{
-			if (m.GetBlock(x, y, z) == Cake)
+			if (m.GetBlock(x, y, z) == Cake || m.GetBlock(x, y, z) == Apples)
 			{
 				int health = m.GetPlayerHealth(player);
 				int maxhealth = m.GetPlayerMaxHealth(player);
