@@ -647,6 +647,7 @@ namespace ManicDigger.Mods.War
 			               	DrawType = DrawType.Transparent,
 			               	WalkableType = WalkableType.Solid,
 			               	Sounds = solidSounds,
+			               	IsUsable = true,
 			               });
 			m.SetBlockType(107, "Hay", new BlockType()
 			               {
@@ -1235,6 +1236,7 @@ namespace ManicDigger.Mods.War
 					               	DrawType = DrawType.Transparent,
 					               	WalkableType = WalkableType.Solid,
 					               	Sounds = solidSounds,
+					               	IsUsable = true,
 					               });
 				}
 				// summer
@@ -1267,6 +1269,7 @@ namespace ManicDigger.Mods.War
 					               	DrawType = DrawType.Transparent,
 					               	WalkableType = WalkableType.Solid,
 					               	Sounds = solidSounds,
+					               	IsUsable = true,
 					               });
 					m.SetBlockType(8, "Water", new BlockType()
 					               {
@@ -1306,6 +1309,7 @@ namespace ManicDigger.Mods.War
 					               	DrawType = DrawType.Transparent,
 					               	WalkableType = WalkableType.Solid,
 					               	Sounds = solidSounds,
+					               	IsUsable = true,
 					               });
 				}
 				// winter
@@ -1338,6 +1342,7 @@ namespace ManicDigger.Mods.War
 					               	DrawType = DrawType.Transparent,
 					               	WalkableType = WalkableType.Solid,
 					               	Sounds = solidSounds,
+					               	IsUsable = true,
 					               });
 					m.SetBlockType(8, "Water", new BlockType()
 					               {
