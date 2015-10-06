@@ -3922,13 +3922,13 @@
 
     public void MouseMove(MouseEventArgs e)
     {
-        if (!e.GetEmulated())
+        if (!e.GetEmulated() || e.GetForceUsage())
         {
             // Set x and y only for real MouseMove events
             mouseCurrentX = e.GetX();
             mouseCurrentY = e.GetY();
         }
-        else
+        if (e.GetEmulated() || e.GetForceUsage())
         {
             // Get delta only from emulated events (actual events negate previous ones)
             mouseDeltaX += e.GetMovementX();

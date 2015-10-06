@@ -805,7 +805,7 @@ public class Screen
 
     void MouseMove(MouseEventArgs e)
     {
-        if (e.GetEmulated())
+        if (e.GetEmulated() && !e.GetForceUsage())
         {
             return;
         }

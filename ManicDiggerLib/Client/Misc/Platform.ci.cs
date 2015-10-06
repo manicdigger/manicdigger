@@ -620,6 +620,9 @@ public class MouseEventArgs
     bool handled;
     public bool GetHandled() { return handled; }
     public void SetHandled(bool value) { handled = value; }
+    bool forceUsage;
+    public bool GetForceUsage() { return forceUsage; }
+    public void SetForceUsage(bool value) { forceUsage = value; }
     bool emulated;
     public bool GetEmulated() { return emulated; }
     public void SetEmulated(bool value) { emulated = value; }
