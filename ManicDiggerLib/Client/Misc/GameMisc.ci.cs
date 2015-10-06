@@ -2582,6 +2582,7 @@ public class OptionsCi
         Fullscreen = false;
         Smoothshadows = true;
         BlockShadowSave = one * 6 / 10;
+        EnableBlockShadow = true;
         Keys = new int[256];
     }
     internal bool Shadows;
@@ -2596,6 +2597,7 @@ public class OptionsCi
     internal bool Fullscreen;
     internal bool Smoothshadows;
     internal float BlockShadowSave;
+    internal bool EnableBlockShadow;
     internal int[] Keys;
 }
 

@@ -70,7 +70,7 @@ public class TerrainChunkTesselatorCi
         //option_HardWaterTesselation = true;
         _colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
         BlockShadow = 0.6f;
-        option_DarkenBlockSides = false;
+        option_DarkenBlockSides = true;
         option_DoNotDrawEdges = true;
         occ = 0.7f;
         halfocc = 0.4f;

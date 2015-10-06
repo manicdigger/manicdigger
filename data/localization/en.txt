@@ -88,6 +88,7 @@ OptionSmoothShadows=Smooth shadows: {0}
 OptionFramerate=Framerate: {0}
 OptionResolution=Resolution: {0}
 OptionFullscreen=Fullscreen: {0}
+OptionDarkenSides=Darken block sides: {0}
 
 
 Block_Empty=Empty

@@ -88,6 +88,7 @@ OptionSmoothShadows=Weiche Schatten: {0}
 OptionFramerate=Bildwiederholrate: {0}
 OptionResolution=Auflösung: {0}
 OptionFullscreen=Vollbild: {0}
+OptionDarkenSides=Seiten der Blöcke abdunkeln: {0}
 
 
 Block_Empty=Nichts

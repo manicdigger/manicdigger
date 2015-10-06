@@ -100,6 +100,7 @@
     }
 
     Button graphicsOptionSmoothShadows;
+    Button graphicsOptionDarkenSides;
     Button graphicsViewDistanceOption;
     Button graphicsOptionFramerate;
     Button graphicsOptionResolution;
@@ -113,6 +114,8 @@
         Language language = game.language;
         graphicsOptionSmoothShadows = new Button();
         graphicsOptionSmoothShadows.Text = game.platform.StringFormat(language.OptionSmoothShadows(), options.Smoothshadows ? language.On() : language.Off());
+        graphicsOptionDarkenSides = new Button();
+        graphicsOptionDarkenSides.Text = game.platform.StringFormat(language.Get("OptionDarkenSides"), options.EnableBlockShadow ? language.On() : language.Off());
         graphicsViewDistanceOption = new Button();
         graphicsViewDistanceOption.Text = game.platform.StringFormat(language.ViewDistanceOption(), game.platform.IntToString(game.platform.FloatToInt(game.d_Config3d.viewdistance)));
         graphicsOptionFramerate = new Button();
@@ -130,6 +133,7 @@
 
         WidgetsClear();
         AddWidget(graphicsOptionSmoothShadows);
+        AddWidget(graphicsOptionDarkenSides);
         AddWidget(graphicsViewDistanceOption);
         AddWidget(graphicsOptionFramerate);
         AddWidget(graphicsOptionResolution);
@@ -155,6 +159,12 @@
                 options.BlockShadowSave = one * 6 / 10;
                 game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
             }
+            game.RedrawAllBlocks();
+        }
+        if (b == graphicsOptionDarkenSides)
+        {
+            options.EnableBlockShadow = !options.EnableBlockShadow;
+            game.d_TerrainChunkTesselator.option_DarkenBlockSides = options.EnableBlockShadow;
             game.RedrawAllBlocks();
         }
         if (b == graphicsViewDistanceOption)
@@ -664,6 +674,7 @@
         }
         game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
         game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
+        game.d_TerrainChunkTesselator.option_DarkenBlockSides = options.EnableBlockShadow;
         game.ENABLE_LAG = options.Framerate;
         UseFullscreen();
         game.UseVsync();
@@ -687,6 +698,7 @@
         options.Fullscreen = preferences.GetBool("Fullscreen", false);
         options.Smoothshadows = preferences.GetBool("Smoothshadows", true);
         options.BlockShadowSave = one * preferences.GetInt("BlockShadowSave", 70) / 100;
+        options.EnableBlockShadow = preferences.GetBool("EnableBlockShadow", true);
 
         for (int i = 0; i < 256; i++)
         {
@@ -717,6 +729,7 @@
         options.Framerate = game.ENABLE_LAG;
         options.Fullscreen = game.platform.GetWindowState() == WindowState.Fullscreen;
         options.Smoothshadows = game.d_TerrainChunkTesselator.EnableSmoothLight;
+        options.EnableBlockShadow = game.d_TerrainChunkTesselator.option_DarkenBlockSides;
 
         SaveOptions_(options);
     }
@@ -740,6 +753,7 @@
         preferences.SetBool("Fullscreen", options.Fullscreen);
         preferences.SetBool("Smoothshadows", options.Smoothshadows);
         preferences.SetInt("BlockShadowSave", game.platform.FloatToInt(options.BlockShadowSave * 100));
+        preferences.SetBool("EnableBlockShadow", options.EnableBlockShadow);
 
         for (int i = 0; i < 256; i++)
         {

@@ -269,6 +269,7 @@
         Add("en", "OptionFramerate", "Framerate: {0}");
         Add("en", "OptionResolution", "Resolution: {0}");
         Add("en", "OptionFullscreen", "Fullscreen: {0}");
+        Add("en", "OptionDarkenSides", "Darken block sides: {0}");
 
         Add("en", "Server_CannotWriteLogFile", "Cannot write to server log file {0}.");
         Add("en", "Server_LoadingSavegame", "Loading savegame...");
