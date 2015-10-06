@@ -317,7 +317,7 @@
         {
             // For autojump
             game.reachedwall = true;
-            if (IsEmptyPoint(newposition[0], tmpPlayerPosition[1] + 1, tmpPlayerPosition[2], null))
+            if (IsEmptyPoint(newposition[0], tmpPlayerPosition[1] + 0.5f, tmpPlayerPosition[2], null))
             {
                 game.reachedwall_1blockhigh = true;
                 if (game.blocktypes[tmpBlockingBlockType.value].DrawType == Packet_DrawTypeEnum.HalfHeight) { game.reachedHalfBlock = true; }
@@ -338,7 +338,7 @@
         {
             // For autojump
             game.reachedwall = true;
-            if (IsEmptyPoint(tmpPlayerPosition[0], tmpPlayerPosition[1] + 1, newposition[2], null))
+            if (IsEmptyPoint(tmpPlayerPosition[0], tmpPlayerPosition[1] + 0.5f, newposition[2], null))
             {
                 game.reachedwall_1blockhigh = true;
                 if (game.blocktypes[tmpBlockingBlockType.value].DrawType == Packet_DrawTypeEnum.HalfHeight) { game.reachedHalfBlock = true; }
