@@ -1,7 +1,7 @@
 [![Travis Build Status](https://img.shields.io/travis/manicdigger/manicdigger.svg?style=flat-square)](https://travis-ci.org/manicdigger/manicdigger)
 [![GitHub Issues](https://img.shields.io/github/issues/manicdigger/manicdigger.svg?style=flat-square)](https://github.com/manicdigger/manicdigger/issues)
-[![Latest GitHub Release](https://img.shields.io/github/release/manicdigger/manicdigger.svg?style=flat-square)](https://github.com/manicdigger/manicdigger/issues)
-[![GitHub Downloads](https://img.shields.io/github/downloads/manicdigger/manicdigger/latest/total.svg?style=flat-square)](https://github.com/manicdigger/manicdigger/issues)
+[![Latest GitHub Release](https://img.shields.io/github/release/manicdigger/manicdigger.svg?style=flat-square)](https://github.com/manicdigger/manicdigger/releases/latest)
+[![GitHub Downloads](https://img.shields.io/github/downloads/manicdigger/manicdigger/latest/total.svg?style=flat-square)](https://github.com/manicdigger/manicdigger/releases/latest)
 
 Manic Digger
 ============
@@ -10,9 +10,6 @@ Build yourself a home in your own world or connect to an online server to team u
 
 You can download the game directly from the GitHub releases page:  
 https://github.com/manicdigger/manicdigger/releases/latest
-
-Alternatively you can grab the files over at SourceForge  
-http://sourceforge.net/projects/manicdigger/files/
 
 
 Features
@@ -65,7 +62,7 @@ The OpenGL game client is written in a common subset of C# and [Ć programming l
 It can be transcompiled to Java, C#, JavaScript, ActionScript, Perl and D.
 The only external dependency is [GamePlatform interface](ManicDiggerLib/Client/Platform.ci.cs).
 
-Server mods are implemented in C# or interpreted Javascript.
+Server mods can be implemented in C# or interpreted Javascript.
 
 #### Contributing
 
