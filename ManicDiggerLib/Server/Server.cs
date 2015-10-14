@@ -1355,21 +1355,15 @@ public partial class Server : ICurrentTime, IDropItem
                     int z = packet.SetBlock.Z;
                     if (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Use)	//Check if player only uses block
                     {
-                        if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.use))
+                        if (!CheckUsePrivileges(clientid, x, y, z))
                         {
-                            SendMessage(clientid, colorError + language.ServerNoUsePrivilege());
-                            break;
-                        }
-                        if (clients[clientid].IsSpectator && !config.AllowSpectatorUse)
-                        {
-                            SendMessage(clientid, colorError + language.ServerNoSpectatorUse());
                             break;
                         }
                         DoCommandBuild(clientid, true, packet.SetBlock);
                     }
                     else	//Player builds, deletes or uses block with tool
                     {
-                        if (!CheckBuildPrivileges(clientid, x, y, z))
+                        if (!CheckBuildPrivileges(clientid, x, y, z, packet.SetBlock.Mode))
                         {
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             break;
@@ -1840,7 +1834,7 @@ public partial class Server : ICurrentTime, IDropItem
         }
     }
 
-    public bool CheckBuildPrivileges(int player, int x, int y, int z)
+    public bool CheckBuildPrivileges(int player, int x, int y, int z, int mode)
     {
         Server server = this;
         if (!server.PlayerHasPrivilege(player, ServerClientMisc.Privilege.build))
@@ -1872,7 +1866,79 @@ public partial class Server : ICurrentTime, IDropItem
             server.SendMessage(player, server.colorError + server.language.ServerNoBuildPermissionHere());
             return false;
         }
-        return true;
+        bool retval = true;
+        if (mode == Packet_BlockSetModeEnum.Create)
+        {
+            for (int i = 0; i < modEventHandlers.checkonbuild.Count; i++)
+            {
+                // All handlers must return true for operation to be permitted.
+                try
+                {
+                    retval = (retval && modEventHandlers.checkonbuild[i](player, x, y, z));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: CheckOnBuild");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                    // Do not allow interactions when check fails.
+                    retval = false;
+                }
+            }
+        }
+        else if (mode == Packet_BlockSetModeEnum.Destroy)
+        {
+            for (int i = 0; i < modEventHandlers.checkondelete.Count; i++)
+            {
+                // All handlers must return true for operation to be permitted.
+                try
+                {
+                    retval = (retval && modEventHandlers.checkondelete[i](player, x, y, z));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: CheckOnDelete");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                    // Do not allow interactions when check fails.
+                    retval = false;
+                }
+            }
+        }
+        return retval;
+    }
+
+    public bool CheckUsePrivileges(int player, int x, int y, int z)
+    {
+        Server server = this;
+        if (!server.PlayerHasPrivilege(player, ServerClientMisc.Privilege.use))
+        {
+            SendMessage(player, colorError + server.language.ServerNoUsePrivilege());
+            return false;
+        }
+        if (server.clients[player].IsSpectator && !server.config.AllowSpectatorUse)
+        {
+            SendMessage(player, colorError + server.language.ServerNoSpectatorUse());
+            return false;
+        }
+        bool retval = true;
+        for (int i = 0; i < modEventHandlers.checkonuse.Count; i++)
+        {
+            // All handlers must return true for operation to be permitted.
+            try
+            {
+                retval = (retval && modEventHandlers.checkonuse[i](player, x, y, z));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Mod exception: CheckOnUse");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+                // Do not allow interactions when check fails.
+                retval = false;
+            }
+        }
+        return retval;
     }
 
     public void SendServerRedirect(int clientid, string ip_, int port_)
@@ -3719,6 +3785,9 @@ public class ModEventHandlers
     public List<ModDelegates.UseEntity> onuseentity = new List<ModDelegates.UseEntity>();
     public List<ModDelegates.HitEntity> onhitentity = new List<ModDelegates.HitEntity>();
     public List<ModDelegates.Permission> onpermission = new List<ModDelegates.Permission>();
+    public List<ModDelegates.CheckBlockUse> checkonuse = new List<ModDelegates.CheckBlockUse>();
+    public List<ModDelegates.CheckBlockBuild> checkonbuild = new List<ModDelegates.CheckBlockBuild>();
+    public List<ModDelegates.CheckBlockDelete> checkondelete = new List<ModDelegates.CheckBlockDelete>();
 }
 
 #region GameTime

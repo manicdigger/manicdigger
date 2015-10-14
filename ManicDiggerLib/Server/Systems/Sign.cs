@@ -30,7 +30,7 @@ public class ServerSystemSign : ServerSystem
                 return;
             }
 
-            if (!server.CheckBuildPrivileges(player, x, y, z))
+            if (!server.CheckBuildPrivileges(player, x, y, z, Packet_BlockSetModeEnum.Create))
             {
                 return;
             }
@@ -86,7 +86,7 @@ public class ServerSystemSign : ServerSystem
         {
             return;
         }
-        if (!server.CheckBuildPrivileges(player, (int)e.position.x, (int)e.position.z, (int)e.position.y))
+        if (!server.CheckBuildPrivileges(player, (int)e.position.x, (int)e.position.z, (int)e.position.y, Packet_BlockSetModeEnum.Use))
         {
             return;
         }

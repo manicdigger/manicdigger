@@ -31,7 +31,7 @@ public class ServerSystemPermissionSign : ServerSystem
                 return;
             }
 
-            if (!server.CheckBuildPrivileges(player, x, y, z))
+            if (!server.CheckBuildPrivileges(player, x, y, z, Packet_BlockSetModeEnum.Create))
             {
                 return;
             }

@@ -41,11 +41,31 @@ namespace ManicDigger
 		/// </summary>
 		/// <param name="blockType">Name of the BlockType</param>
 		void AddToCreativeInventory(string blockType);
-		
+
+		/// <summary>
+		/// Registers a method to be called every time a player places a block
+		/// </summary>
+		/// <param name="f">Function to register. Required parameters: (int player, int x, int y, int z)</param>
 		void RegisterOnBlockBuild(ModDelegates.BlockBuild f);
+
+		/// <summary>
+		/// Registers a method to be called every time a player deletes a block
+		/// </summary>
+		/// <param name="f">Function to register. Required parameters: (int player, int x, int y, int z, int oldblock)</param>
 		void RegisterOnBlockDelete(ModDelegates.BlockDelete f);
+
+		/// <summary>
+		/// Registers a method to be called every time a player uses a block
+		/// </summary>
+		/// <param name="f">Function to register. Required parameters: (int player, int x, int y, int z)</param>
 		void RegisterOnBlockUse(ModDelegates.BlockUse f);
+
+		/// <summary>
+		/// Registers a method to be called every time a player uses a block while holding a tool in their hands
+		/// </summary>
+		/// <param name="f">Function to register. Required parameters: (int player, int x, int y, int z, int tool)</param>
 		void RegisterOnBlockUseWithTool(ModDelegates.BlockUseWithTool f);
+
 		int GetMapSizeX();
 		int GetMapSizeY();
 		int GetMapSizeZ();
@@ -616,6 +636,24 @@ namespace ManicDigger
 		/// <returns><i>true</i> if server is about to shutdown</returns>
 		bool IsShuttingDown();
 
+		/// <summary>
+		/// Registers a method to be called every time a player places a block
+		/// </summary>
+		/// <param name="f">Function to register. Required parameters: (int player, int x, int y, int z)</param>
+		void RegisterCheckOnBlockBuild(ModDelegates.CheckBlockBuild f);
+
+		/// <summary>
+		/// Registers a method to be called every time a player deletes a block
+		/// </summary>
+		/// <param name="f">Function to register. Required parameters: (int player, int x, int y, int z)</param>
+		void RegisterCheckOnBlockDelete(ModDelegates.CheckBlockDelete f);
+
+		/// <summary>
+		/// Registers a method to be called every time a player uses a block
+		/// </summary>
+		/// <param name="f">Function to register. Required parameters: (int player, int x, int y, int z)</param>
+		void RegisterCheckOnBlockUse(ModDelegates.CheckBlockUse f);
+
 		#region Deprecated functions
 		[Obsolete("GetCurrentYearTotal is deprecated, please use GetYear instead.", false)]
 		double GetCurrentYearTotal();
@@ -668,6 +706,9 @@ namespace ManicDigger
 		public delegate void UpdateEntity(int chunkx, int chunky, int chunkz, int id);
 		public delegate void UseEntity(int player, int chunkx, int chunky, int chunkz, int id);
 		public delegate void HitEntity(int player, int chunkx, int chunky, int chunkz, int id);
+		public delegate bool CheckBlockUse(int player, int x, int y, int z);
+		public delegate bool CheckBlockBuild(int player, int x, int y, int z);
+		public delegate bool CheckBlockDelete(int player, int x, int y, int z);
 
 		public delegate void DialogClick2(DialogClickArgs args);
 		public delegate void Permission(PermissionArgs args);

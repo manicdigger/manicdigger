@@ -1045,6 +1045,21 @@ namespace ManicDigger
 			return server.exit.GetExit();
 		}
 
+		public void RegisterCheckOnBlockBuild(ModDelegates.CheckBlockBuild f)
+		{
+			server.modEventHandlers.checkonbuild.Add(f);
+		}
+
+		public void RegisterCheckOnBlockDelete(ModDelegates.CheckBlockDelete f)
+		{
+			server.modEventHandlers.checkondelete.Add(f);
+		}
+
+		public void RegisterCheckOnBlockUse(ModDelegates.CheckBlockUse f)
+		{
+			server.modEventHandlers.checkonuse.Add(f);
+		}
+
 		#region Deprecated methods
 		public double GetCurrentYearTotal()
 		{
