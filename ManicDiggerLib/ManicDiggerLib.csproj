@@ -294,14 +294,6 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <!-- Fix: SolutionDir is missing when building from under Xamarin Studio -->
-  <Choose>
-    <When Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">
-      <PropertyGroup>
-        <SolutionDir>$(MSBuildProjectDirectory)/../</SolutionDir>
-      </PropertyGroup>
-    </When>
-  </Choose>
   <PropertyGroup>
     <PreBuildEvent Condition=" ('$(OS)' == 'Windows_NT') and ( $(Configuration) != 'FastBuild')">cd $(SolutionDir)
 cmd /c "$(SolutionDir)\BuildCito.bat"</PreBuildEvent>
@@ -311,7 +303,7 @@ cmd /c "$(SolutionDir)\BuildCito.bat"</PreBuildEvent>
 cmd /c "$(SolutionDir)BuildCito.bat" fast</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">cd $(SolutionDir)
+    <PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">cd '$(MSBuildProjectDirectory)/../'
 sh ./BuildCito.sh</PreBuildEvent>
   </PropertyGroup>
 </Project>
