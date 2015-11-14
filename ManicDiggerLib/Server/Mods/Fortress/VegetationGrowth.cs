@@ -67,6 +67,10 @@ namespace ManicDigger.Mods
 
 		void BlockTickGrowCropsCycle(int x, int y, int z)
 		{
+			if (!m.IsValidPos(x, y, z))
+			{
+				return;
+			}
 			if (m.GetBlock(x, y, z) == DirtForFarming)
 			{
 				if (m.IsValidPos(x, y, z + 1))
@@ -83,6 +87,10 @@ namespace ManicDigger.Mods
 
 		void BlockTickGrowSapling(int x, int y, int z)
 		{
+			if (!m.IsValidPos(x, y, z))
+			{
+				return;
+			}
 			switch (GetTreeType(m.GetBlock(x, y, z)))
 			{
 				case TreeType.Oak:
@@ -204,6 +212,10 @@ namespace ManicDigger.Mods
 
 		void BlockTickGrowGrassOrMushroomsOnDirt(int x, int y, int z)
 		{
+			if (!m.IsValidPos(x, y, z))
+			{
+				return;
+			}
 			if (m.GetBlock(x, y, z) == Dirt)
 			{
 				if (m.IsValidPos(x, y, z + 1))
@@ -231,6 +243,10 @@ namespace ManicDigger.Mods
 
 		void BlockTickGrassDeathInDarkness(int x, int y, int z)
 		{
+			if (!m.IsValidPos(x, y, z))
+			{
+				return;
+			}
 			if (m.GetBlock(x, y, z) == Grass)
 			{
 				if (IsShadow(x, y, z) && !(reflectedSunnyLight(x, y, z) && m.IsTransparentForLight(m.GetBlock(x, y, z + 1))))
@@ -284,6 +300,10 @@ namespace ManicDigger.Mods
 		// mushrooms will die when they have not shadow or dirt, or 20% chance happens
 		void BlockTickMushroomDeath(int x, int y, int z)
 		{
+			if (!m.IsValidPos(x, y, z))
+			{
+				return;
+			}
 			int block = m.GetBlock(x, y, z);
 			if (block == BrownMushroom || block == RedMushroom)
 			{
@@ -303,6 +323,10 @@ namespace ManicDigger.Mods
 		// floowers will die when they have no light, dirt or grass or 2% chance happens
 		void BlockTickFlowerDeath(int x, int y, int z)
 		{
+			if (!m.IsValidPos(x, y, z))
+			{
+				return;
+			}
 			int block = m.GetBlock(x, y, z);
 			if (block == YellowFlowerDecorations || block == RedRoseDecorations)
 			{
