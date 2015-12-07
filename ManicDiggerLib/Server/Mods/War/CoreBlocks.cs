@@ -918,7 +918,7 @@ namespace ManicDigger.Mods.War
 			               });
 			m.SetBlockType(151, "Compass", new BlockType()
 			               {
-			               	AllTextures = "Compass",
+			               	AllTextures = "CompassInventory",
 			               	TextureIdForInventory = "CompassInventory",
 			               	DrawType = DrawType.Plant,
 			               	WalkableType = WalkableType.Solid,
