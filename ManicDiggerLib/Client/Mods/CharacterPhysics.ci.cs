@@ -103,8 +103,8 @@
         Vector3Ref diff1ref = new Vector3Ref();
         VectorTool.ToVectorInFixedSystem
             (move.movedx * movespeednow * dt,
-            0,
-            move.movedy * movespeednow * dt, stateplayerposition.rotx, stateplayerposition.roty, diff1ref);
+             0,
+             move.movedy * movespeednow * dt, stateplayerposition.rotx, stateplayerposition.roty, diff1ref);
         Vector3Ref diff1 = new Vector3Ref();
         diff1.X = diff1ref.X;
         diff1.Y = diff1ref.Y;
@@ -127,8 +127,8 @@
         if (game.map.IsValidChunkPos(cx, cy, cz))
         {
             if (game.map.chunks[MapUtilCi.Index3d(cx, cy, cz,
-                game.map.MapSizeX / Game.chunksize,
-                game.map.MapSizeY / Game.chunksize)] != null)
+                                                  game.map.MapSizeX / Game.chunksize,
+                                                  game.map.MapSizeY / Game.chunksize)] != null)
             {
                 loaded = true;
             }
@@ -355,8 +355,8 @@
     bool StandingOnHalfBlock(float x, float y, float z)
     {
         int under = game.map.GetBlock(game.platform.FloatToInt(x),
-            game.platform.FloatToInt(z),
-            game.platform.FloatToInt(y));
+                                      game.platform.FloatToInt(z),
+                                      game.platform.FloatToInt(y));
         return game.blocktypes[under].DrawType == Packet_DrawTypeEnum.HalfHeight;
     }
     
@@ -477,4 +477,55 @@ public class Controls
     internal bool shiftkeydown;
     internal bool freemove;
     internal bool noclip;
+
+    /// <summary>
+    /// Set player freemove mode to the given value
+    /// </summary>
+    /// <param name="level">Freemove mode as defined in FreemoveLevelEnum</param>
+    public void SetFreemove(int level)
+    {
+        if (level == FreemoveLevelEnum.None)
+        {
+            freemove = false;
+            noclip = false;
+        }
+
+        if (level == FreemoveLevelEnum.Freemove)
+        {
+            freemove = true;
+            noclip = false;
+        }
+
+        if (level == FreemoveLevelEnum.Noclip)
+        {
+            freemove = true;
+            noclip = true;
+        }
+    }
+    /// <summary>
+    /// Get the current player freemove mode
+    /// </summary>
+    /// <returns>Freemove mode as defined in FreemoveLevelEnum</returns>
+    public int GetFreemove()
+    {
+        if (!freemove)
+        {
+            return FreemoveLevelEnum.None;
+        }
+        if (noclip)
+        {
+            return FreemoveLevelEnum.Noclip;
+        }
+        else
+        {
+            return FreemoveLevelEnum.Freemove;
+        }
+    }
+}
+
+public class FreemoveLevelEnum
+{
+    public const int None = 0;
+    public const int Freemove = 1;
+    public const int Noclip = 2;
 }

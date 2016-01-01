@@ -1531,39 +1531,12 @@ public class ClientModManager1 : ClientModManager
 
     public override void SetFreemove(int level)
     {
-        if (level == FreemoveLevelEnum.None)
-        {
-            game.controls.freemove = false;
-            game.controls.noclip = false;
-        }
-
-        if (level == FreemoveLevelEnum.Freemove)
-        {
-            game.controls.freemove = true;
-            game.controls.noclip = false;
-        }
-
-        if (level == FreemoveLevelEnum.Noclip)
-        {
-            game.controls.freemove = true;
-            game.controls.noclip = true;
-        }
+        game.controls.SetFreemove(level);
     }
 
     public override int GetFreemove()
     {
-        if (!game.controls.freemove)
-        {
-            return FreemoveLevelEnum.None;
-        }
-        if (game.controls.noclip)
-        {
-            return FreemoveLevelEnum.Noclip;
-        }
-        else
-        {
-            return FreemoveLevelEnum.Freemove;
-        }
+        return game.controls.GetFreemove();
     }
 
     public override BitmapCi GrabScreenshot()
@@ -1652,13 +1625,6 @@ public abstract class AviWriterCi
 public class BitmapCi
 {
     public virtual void Dispose() { }
-}
-
-public class FreemoveLevelEnum
-{
-    public const int None = 0;
-    public const int Freemove = 1;
-    public const int Noclip = 2;
 }
 
 public abstract class ClientMod

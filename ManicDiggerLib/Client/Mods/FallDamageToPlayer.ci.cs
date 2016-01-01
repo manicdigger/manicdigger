@@ -11,7 +11,7 @@
         {
             return;
         }
-        if (game.controls.freemove)
+        if (game.controls.GetFreemove() != FreemoveLevelEnum.None)
         {
             if (fallSoundPlaying)
             {

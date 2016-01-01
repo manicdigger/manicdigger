@@ -52,7 +52,7 @@
         RailSound(game);
         if (railriding)
         {
-            game.controls.freemove = true;
+            game.controls.SetFreemove(FreemoveLevelEnum.Freemove);
             game.enable_move = false;
             Vector3Ref railPos = CurrentRailPos(game);
             game.player.position.x = railPos.X;
@@ -117,7 +117,7 @@
         {
             Reverse();
         }
-        if (!wasepressed && game.keyboardState[game.GetKey(GlKeys.E)] && !railriding && !game.controls.freemove && game.GuiTyping != TypingState.Typing)
+        if (!wasepressed && game.keyboardState[game.GetKey(GlKeys.E)] && !railriding && (game.controls.GetFreemove() == FreemoveLevelEnum.None) && game.GuiTyping != TypingState.Typing)
         {
             currentrailblockX = game.platform.FloatToInt(game.player.position.x);
             currentrailblockY = game.platform.FloatToInt(game.player.position.z);
@@ -338,7 +338,7 @@
     {
         game.SetCharacterEyesHeight(originalmodelheight);
         railriding = false;
-        game.controls.freemove = false;
+        game.controls.SetFreemove(FreemoveLevelEnum.None);
         game.enable_move = true;
     }
 
