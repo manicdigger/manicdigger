@@ -805,17 +805,38 @@ namespace ManicDigger
 				// fixes crash
 				return new float[] { text.Length * 1f * font.Size, 1.7f * font.Size };
 			}
-			else
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < text.Length; i++)
 			{
-				using (Bitmap bmp = new Bitmap(1, 1))
+				if (text[i] == '&')
 				{
-					using (Graphics g = Graphics.FromImage(bmp))
+					if (i + 1 < text.Length && isCharHex(text[i + 1]))
 					{
-						SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-						return new float[] { size.Width, size.Height };
+						i++;
+					}
+					else
+					{
+						builder.Append(text[i]);
 					}
 				}
+				else
+				{
+					builder.Append(text[i]);
+				}
 			}
+			using (Bitmap bmp = new Bitmap(1, 1))
+			{
+				using (Graphics g = Graphics.FromImage(bmp))
+				{
+					SizeF size = g.MeasureString(builder.ToString(), new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+					return new float[] { size.Width, size.Height };
+				}
+			}
+		}
+
+		private bool isCharHex(char c)
+		{
+			return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 		}
 
 		public string GetServerIp()
