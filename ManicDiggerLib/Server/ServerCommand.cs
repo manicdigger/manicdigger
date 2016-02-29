@@ -823,8 +823,8 @@ public partial class Server
                 clientConfig.Group = newGroup.Name;
             }
             serverClientNeedsSaving = true;
-            SendMessageToAll(string.Format(language.Get("Server_CommandSetGroupTo"), colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), targetClient.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
-            ServerEventLog(String.Format("{0} sets group of {1} to {2}.", GetClient(sourceClientId).playername, targetClient.playername, newGroupName));
+            SendMessageToAll(string.Format(language.Get("Server_CommandSetGroupTo"), colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), targetClient.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroup.Name + colorSuccess));
+            ServerEventLog(String.Format("{0} sets group of {1} to {2}.", GetClient(sourceClientId).playername, targetClient.playername, newGroup.Name));
             targetClient.AssignGroup(newGroup);
             SendFreemoveState(targetClient.Id, targetClient.privileges.Contains(ServerClientMisc.Privilege.freemove));
             SetFillAreaLimit(targetClient.Id);
@@ -882,6 +882,7 @@ public partial class Server
         }
 
         // Target is at the moment not online. Create or change a entry in ServerClient.
+        string oldGroupColor = "";
         if (clientConfig == null)
         {
             clientConfig = new ManicDigger.Client();
@@ -908,12 +909,13 @@ public partial class Server
                 SendMessage(sourceClientId, string.Format(language.Get("Server_CommandTargetUserSuperior"), colorError));
                 return false;
             }
+            oldGroupColor = oldGroup.GroupColorString();
             clientConfig.Group = newGroup.Name;
         }
 
         serverClientNeedsSaving = true;
-        SendMessageToAll(string.Format(language.Get("Server_CommandSetOfflineGroupTo"), colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), target, newGroup.GroupColorString() + newGroupName));
-        ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", GetClient(sourceClientId).playername, target, newGroupName));
+        SendMessageToAll(string.Format(language.Get("Server_CommandSetOfflineGroupTo"), colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), oldGroupColor + target + colorSuccess, newGroup.GroupColorString() + newGroup.Name + colorSuccess));
+        ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", GetClient(sourceClientId).playername, target, newGroup.Name));
         return true;
     }
 
