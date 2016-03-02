@@ -805,6 +805,27 @@ namespace ManicDigger
 				// fixes crash
 				return new float[] { text.Length * 1f * font.Size, 1.7f * font.Size };
 			}
+			using (Bitmap bmp = new Bitmap(1, 1))
+			{
+				using (Graphics g = Graphics.FromImage(bmp))
+				{
+					g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+					Font tmpFont = new Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle);
+					StringFormat tmpFormat = new StringFormat(StringFormatFlags.MeasureTrailingSpaces);
+					SizeF size = g.MeasureString(StripColorCodes(text), tmpFont, new PointF(0, 0), tmpFormat);
+					return new float[] { size.Width, size.Height };
+				}
+			}
+		}
+
+		/// <summary>
+		/// Strips color codes in format '&x' from a given string.
+		/// Taken from clientside TextRenderer.cs
+		/// </summary>
+		/// <param name="text">The text to process</param>
+		/// <returns>The given text without any color codes</returns>
+		private string StripColorCodes(string text)
+		{
 			StringBuilder builder = new StringBuilder();
 			for (int i = 0; i < text.Length; i++)
 			{
@@ -824,14 +845,7 @@ namespace ManicDigger
 					builder.Append(text[i]);
 				}
 			}
-			using (Bitmap bmp = new Bitmap(1, 1))
-			{
-				using (Graphics g = Graphics.FromImage(bmp))
-				{
-					SizeF size = g.MeasureString(builder.ToString(), new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-					return new float[] { size.Width, size.Height };
-				}
-			}
+			return builder.ToString();
 		}
 
 		private bool isCharHex(char c)

@@ -165,6 +165,10 @@ namespace ManicDigger.Renderers
 				{
 					g2.SmoothingMode = SmoothingMode.AntiAlias;
 					g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+					#if DEBUG // Display measured text sizes
+						g2.DrawRectangle(new Pen(Color.FromArgb(255, 0, 255, 0)), 0, 0, (int)size.Width, (int)size.Height);
+						g2.DrawRectangle(new Pen(Color.FromArgb(255, 255, 255, 0)), 0, 0, (int)size2.Width, (int)size2.Height);
+					#endif
 					// Draw text shadow
 					Matrix mx = new Matrix(1f, 0, 0, 1f, 1, 1);
 					g2.Transform = mx;
@@ -218,12 +222,19 @@ namespace ManicDigger.Renderers
 			{
 				using (Graphics g = Graphics.FromImage(bmp))
 				{
-					return g.MeasureString(StripColorCodes(text), font, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+					g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+					StringFormat tmpFormat = new StringFormat(StringFormatFlags.MeasureTrailingSpaces);
+					return g.MeasureString(StripColorCodes(text), font, new PointF(0, 0), tmpFormat);
 				}
 			}
 		}
 
 		#region Helpers
+		/// <summary>
+		/// Strips color codes in format '&x' from a given string.
+		/// </summary>
+		/// <param name="text">The text to process</param>
+		/// <returns>The given text without any color codes</returns>
 		string StripColorCodes(string text)
 		{
 			StringBuilder builder = new StringBuilder();
