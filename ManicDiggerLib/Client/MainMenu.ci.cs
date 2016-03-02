@@ -264,7 +264,9 @@
             cubeModel = p.CreateModel(QuadModelData.GetQuadModelData());
         }
         p.BindTexture2d(textureid);
+        p.GLDisableAlphaTest();
         p.DrawModel(cubeModel);
+        p.GLEnableAlphaTest();
     }
 
     void SetMatrixUniforms()
