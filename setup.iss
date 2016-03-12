@@ -8,10 +8,11 @@
 AppId={{119E2FCB-5CDD-4C24-BCB2-56A824E2BF0A}
 AppName=Manic Digger
 AppVerName=Manic Digger
+AppPublisher=Manic Digger development team
 AppPublisherURL=http://www.manicdigger.sourceforge.net/
 AppSupportURL=http://www.manicdigger.sourceforge.net/
 AppUpdatesURL=http://www.manicdigger.sourceforge.net/
-DefaultDirName={sd}\Manic Digger
+DefaultDirName={pf}\Manic Digger
 DefaultGroupName=Manic Digger
 AllowNoIcons=yes
 OutputBaseFilename=setup
@@ -23,6 +24,11 @@ WizardSmallImageFile=extra/setup_WizardSmallImage.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+Name: "german"; MessagesFile: "compiler:Languages\German.isl"
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
 Source: "output\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -32,15 +38,13 @@ Source: "output\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs create
 Name: "{group}\{cm:UninstallProgram,Manic Digger}"; Filename: "{uninstallexe}"
 Name: "{group}\Manic Digger"; Filename: "{app}\ManicDigger.exe"
 Name: "{group}\Configuration"; Filename: "{app}\UserData"
+Name: "{commondesktop}\Manic Digger"; Filename: "{app}\ManicDigger.exe"; IconFilename: "{app}\data\local\md.ico"; Tasks: desktopicon
 
 [Registry]
 Root: HKCR; Subkey: ".mdlink"; ValueType: string; ValueName: ""; ValueData: "ManicDigger"; Flags: uninsdeletevalue
 Root: HKCR; Subkey: "ManicDigger"; ValueType: string; ValueName: ""; ValueData: "Manic Digger multiplayer link"; Flags: uninsdeletekey
 Root: HKCR; Subkey: "ManicDigger\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\ManicDigger.exe,0"
 Root: HKCR; Subkey: "ManicDigger\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\ManicDigger.exe"" ""%1"""
-
-
-
 
 Root: HKCR; Subkey: "md"; ValueType: string; ValueName: ""; ValueData: "URL:Manic Digger"; Flags: uninsdeletekey
 Root: HKCR; Subkey: "md"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
