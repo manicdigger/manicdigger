@@ -1848,8 +1848,10 @@ public partial class Server
             SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
             return false;
         }
-        SendMessageToAll(string.Format(language.Get("Server_CommandRestartSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
+        string message = string.Format(language.Get("Server_CommandRestartSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant));
+        SendMessageToAll(message);
         ServerEventLog(string.Format("{0} restarts server.", GetClient(sourceClientId).playername));
+        KillAllPlayers(modManager.StripColorCodes(message));
         Restart();
         return true;
     }
@@ -1861,8 +1863,10 @@ public partial class Server
             SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
             return false;
         }
-        SendMessageToAll(string.Format(language.Get("Server_CommandShutdownSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
+        string message = string.Format(language.Get("Server_CommandShutdownSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant));
+        SendMessageToAll(message);
         ServerEventLog(string.Format("{0} shuts down server.", GetClient(sourceClientId).playername));
+        KillAllPlayers(modManager.StripColorCodes(message));
         Exit();
         return true;
     }

@@ -466,7 +466,6 @@ public partial class Server : ICurrentTime, IDropItem
     {
         Console.WriteLine("[SERVER] Doing last tick...");
         ProcessMain();
-        //Maybe inform mods about shutdown?
         Console.WriteLine("[SERVER] Saving data...");
         DateTime start = DateTime.UtcNow;
         SaveGlobalData();
@@ -1151,6 +1150,16 @@ public partial class Server : ICurrentTime, IDropItem
         {
             SendMessageToAll(string.Format(language.ServerPlayerDisconnect(), coloredName));
             ServerEventLog(string.Format("{0} disconnects.", name));
+        }
+    }
+    public void KillAllPlayers(string message)
+    {
+        List<int> ids = new List<int>(clients.Keys);
+        // Disconnect all clients with a message
+        foreach (int client in ids)
+        {
+            SendPacket(client, ServerPackets.DisconnectPlayer(message));
+            KillPlayer(client);
         }
     }
     internal string ReceivedKey;

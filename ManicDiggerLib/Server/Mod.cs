@@ -824,7 +824,7 @@ namespace ManicDigger
 		/// </summary>
 		/// <param name="text">The text to process</param>
 		/// <returns>The given text without any color codes</returns>
-		private string StripColorCodes(string text)
+		public string StripColorCodes(string text)
 		{
 			StringBuilder builder = new StringBuilder();
 			for (int i = 0; i < text.Length; i++)
