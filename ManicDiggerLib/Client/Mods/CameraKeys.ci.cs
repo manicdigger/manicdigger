@@ -76,7 +76,7 @@
                     game.controls.movedy += game.touchMoveDy;
                 }
             }
-            if (game.controls.freemove || game.SwimmingEyes())
+            if ((game.controls.GetFreemove() != FreemoveLevelEnum.None) || game.SwimmingEyes())
             {
                 if (game.GuiTyping == TypingState.None && game.keyboardState[game.GetKey(GlKeys.Space)])
                 {

@@ -1680,13 +1680,14 @@
         {
             return true;
         }
-        if (x < 0 || y < 0 || z < 0)// || z >= mapsizez)
+        // Allow movement outside map when freemove is enabled
+        if (x < 0 || y < 0 || z < 0)
         {
-            return controls.freemove;
+            return controls.GetFreemove() != FreemoveLevelEnum.None;
         }
-        if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
+        if (x >= map.MapSizeX || y >= map.MapSizeY)
         {
-            return controls.freemove;
+            return controls.GetFreemove() != FreemoveLevelEnum.None;
         }
         int block = map.GetBlockValid(x, y, z);
         return block == SpecialBlockId.Empty
@@ -2838,13 +2839,37 @@
             }
             else if (cmd == "noclip")
             {
-                controls.noclip = BoolCommandArgument(arguments);
+                if (this.AllowFreemove)
+                {
+                    stopPlayerMove = true;
+                    if (BoolCommandArgument(arguments))
+                    {
+                        controls.SetFreemove(FreemoveLevelEnum.Noclip);
+                    }
+                    else
+                    {
+                        controls.SetFreemove(FreemoveLevelEnum.None);
+                    }
+                }
+                else
+                {
+                    Log(strFreemoveNotAllowed);
+                    return;
+                }
             }
             else if (cmd == "freemove")
             {
                 if (this.AllowFreemove)
                 {
-                    controls.freemove = BoolCommandArgument(arguments);
+                    stopPlayerMove = true;
+                    if (BoolCommandArgument(arguments))
+                    {
+                        controls.SetFreemove(FreemoveLevelEnum.Freemove);
+                    }
+                    else
+                    {
+                        controls.SetFreemove(FreemoveLevelEnum.None);
+                    }
                 }
                 else
                 {
@@ -3361,20 +3386,19 @@
                     return;
                 }
                 stopPlayerMove = true;
-                if (!controls.freemove)
+                if (controls.GetFreemove() == FreemoveLevelEnum.None)
                 {
-                    controls.freemove = true;
+                    controls.SetFreemove(FreemoveLevelEnum.Freemove);
                     Log(language.MoveFree());
                 }
-                else if (controls.freemove && (!controls.noclip))
+                else if (controls.GetFreemove() == FreemoveLevelEnum.Freemove)
                 {
-                    controls.noclip = true;
+                    controls.SetFreemove(FreemoveLevelEnum.Noclip);
                     Log(language.MoveFreeNoclip());
                 }
-                else if (controls.freemove && controls.noclip)
+                else if (controls.GetFreemove() == FreemoveLevelEnum.Noclip)
                 {
-                    controls.freemove = false;
-                    controls.noclip = false;
+                    controls.SetFreemove(FreemoveLevelEnum.None);
                     Log(language.MoveNormal());
                 }
             }
@@ -3451,7 +3475,9 @@
                             player.position.x = posX + (one / 2);
                             player.position.y = posZ + 1;
                             player.position.z = posY + (one / 2);
-                            controls.freemove = false;
+                            // disable freemove when mounting rails
+                            stopPlayerMove = true;
+                            controls.SetFreemove(FreemoveLevelEnum.None);
                         }
                         else
                         {

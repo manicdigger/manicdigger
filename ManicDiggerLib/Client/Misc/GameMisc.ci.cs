@@ -7,6 +7,7 @@
     }
     internal Game game;
     public override void OnKeyPress(Game game_, KeyPressEventArgs args) { KeyPress(args); }
+    public override void OnKeyDown(Game game_, KeyEventArgs args) { KeyDown(args); }
     public override void OnTouchStart(Game game_, TouchEventArgs e) { ScreenOnTouchStart(e); }
     public void ScreenOnTouchStart(TouchEventArgs e)
     {
@@ -33,20 +34,30 @@
                 {
                     if (w.editing)
                     {
-                        string s = CharToString(e.GetKeyChar());
-                        if (e.GetKeyChar() == 8) // backspace
+                        if (game.platform.IsValidTypingChar(e.GetKeyChar()))
                         {
-                            if (StringTools.StringLength(game.platform, w.text) > 0)
-                            {
-                                w.text = StringTools.StringSubstring(game.platform, w.text, 0, StringTools.StringLength(game.platform, w.text) - 1);
-                            }
-                            return;
+                            w.text = StringTools.StringAppend(game.platform, w.text, CharToString(e.GetKeyChar()));
                         }
-                        if (e.GetKeyChar() == 9 || e.GetKeyChar() == 13) // tab, enter
-                        {
-                            return;
-                        }
-                        if (e.GetKeyChar() == 22) //paste
+                    }
+                }
+            }
+        }
+    }
+
+    void KeyDown(KeyEventArgs e)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (w.type == WidgetType.Textbox)
+                {
+                    if (w.editing)
+                    {
+                        int key = e.GetKeyCode();
+                        // pasting text from clipboard
+                        if (e.GetCtrlPressed() && key == GlKeys.V)
                         {
                             if (game.platform.ClipboardContainsText())
                             {
@@ -54,9 +65,14 @@
                             }
                             return;
                         }
-                        if (game.platform.IsValidTypingChar(e.GetKeyChar()))
+                        // deleting characters using backspace
+                        if (key == GlKeys.BackSpace)
                         {
-                            w.text = StringTools.StringAppend(game.platform, w.text, s);
+                            if (StringTools.StringLength(game.platform, w.text) > 0)
+                            {
+                                w.text = StringTools.StringSubstring(game.platform, w.text, 0, StringTools.StringLength(game.platform, w.text) - 1);
+                            }
+                            return;
                         }
                     }
                 }
@@ -1531,39 +1547,12 @@ public class ClientModManager1 : ClientModManager
 
     public override void SetFreemove(int level)
     {
-        if (level == FreemoveLevelEnum.None)
-        {
-            game.controls.freemove = false;
-            game.controls.noclip = false;
-        }
-
-        if (level == FreemoveLevelEnum.Freemove)
-        {
-            game.controls.freemove = true;
-            game.controls.noclip = false;
-        }
-
-        if (level == FreemoveLevelEnum.Noclip)
-        {
-            game.controls.freemove = true;
-            game.controls.noclip = true;
-        }
+        game.controls.SetFreemove(level);
     }
 
     public override int GetFreemove()
     {
-        if (!game.controls.freemove)
-        {
-            return FreemoveLevelEnum.None;
-        }
-        if (game.controls.noclip)
-        {
-            return FreemoveLevelEnum.Noclip;
-        }
-        else
-        {
-            return FreemoveLevelEnum.Freemove;
-        }
+        return game.controls.GetFreemove();
     }
 
     public override BitmapCi GrabScreenshot()
@@ -1652,13 +1641,6 @@ public abstract class AviWriterCi
 public class BitmapCi
 {
     public virtual void Dispose() { }
-}
-
-public class FreemoveLevelEnum
-{
-    public const int None = 0;
-    public const int Freemove = 1;
-    public const int Noclip = 2;
 }
 
 public abstract class ClientMod

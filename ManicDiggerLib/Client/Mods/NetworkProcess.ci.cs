@@ -284,8 +284,7 @@ public class ProcessPacketTask : Action_
                     game.AllowFreemove = packet.Freemove.IsEnabled != 0;
                     if (!game.AllowFreemove)
                     {
-                        game.controls.freemove = false;
-                        game.controls.noclip = false;
+                        game.controls.SetFreemove(FreemoveLevelEnum.None);
                         game.movespeed = game.basemovespeed;
                         game.Log(game.language.MoveNormal());
                     }

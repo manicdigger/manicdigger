@@ -805,17 +805,52 @@ namespace ManicDigger
 				// fixes crash
 				return new float[] { text.Length * 1f * font.Size, 1.7f * font.Size };
 			}
-			else
+			using (Bitmap bmp = new Bitmap(1, 1))
 			{
-				using (Bitmap bmp = new Bitmap(1, 1))
+				using (Graphics g = Graphics.FromImage(bmp))
 				{
-					using (Graphics g = Graphics.FromImage(bmp))
-					{
-						SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-						return new float[] { size.Width, size.Height };
-					}
+					g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+					Font tmpFont = new Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle);
+					StringFormat tmpFormat = new StringFormat(StringFormatFlags.MeasureTrailingSpaces);
+					SizeF size = g.MeasureString(StripColorCodes(text), tmpFont, new PointF(0, 0), tmpFormat);
+					return new float[] { size.Width, size.Height };
 				}
 			}
+		}
+
+		/// <summary>
+		/// Strips color codes in format '&x' from a given string.
+		/// Taken from clientside TextRenderer.cs
+		/// </summary>
+		/// <param name="text">The text to process</param>
+		/// <returns>The given text without any color codes</returns>
+		public string StripColorCodes(string text)
+		{
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < text.Length; i++)
+			{
+				if (text[i] == '&')
+				{
+					if (i + 1 < text.Length && isCharHex(text[i + 1]))
+					{
+						i++;
+					}
+					else
+					{
+						builder.Append(text[i]);
+					}
+				}
+				else
+				{
+					builder.Append(text[i]);
+				}
+			}
+			return builder.ToString();
+		}
+
+		private bool isCharHex(char c)
+		{
+			return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 		}
 
 		public string GetServerIp()

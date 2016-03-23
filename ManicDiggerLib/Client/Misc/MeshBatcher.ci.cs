@@ -65,9 +65,6 @@
 
     public void Draw(float playerPositionX, float playerPositionY, float playerPositionZ)
     {
-#if !CITO
-        unchecked {
-#endif
         UpdateCulling();
         SortListsByTexture();
 
@@ -92,9 +89,6 @@
             game.DrawModels(tocallTransparent[i].Lists, tocallTransparent[i].Count);
         }
         game.platform.GlEnableCullFace();
-#if !CITO
-        }
-#endif
     }
 
     // Finds an index in glTextures array.
