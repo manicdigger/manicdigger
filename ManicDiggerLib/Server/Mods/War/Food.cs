@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ManicDigger.Mods
+namespace ManicDigger.Mods.War
 {
 	public class Food : IMod
 	{
