@@ -147,7 +147,7 @@ namespace ManicDigger.Mods.War
 			background.X = 0;
 			background.Y = 0;
 			background.Width = 800;
-			background.Height = 800;
+			background.Height = 600;
 			background.Image = "SelectTeam";
 			widgets.Add(background);
 			Widget w1 = new Widget();
@@ -185,7 +185,7 @@ namespace ManicDigger.Mods.War
 			background.X = 0;
 			background.Y = 0;
 			background.Width = 800;
-			background.Height = 800;
+			background.Height = 600;
 			background.Image = "SelectClass";
 			widgets.Add(background);
 			string[] classes = { "Soldier", "Medic", "Support" };
@@ -213,7 +213,7 @@ namespace ManicDigger.Mods.War
 			background.X = 0;
 			background.Y = 0;
 			background.Width = 800;
-			background.Height = 800;
+			background.Height = 600;
 			background.Image = "SelectSubclass";
 			widgets.Add(background);
 			string[] subclasses = null;
