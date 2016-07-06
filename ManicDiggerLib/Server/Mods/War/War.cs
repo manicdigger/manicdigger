@@ -17,11 +17,12 @@ namespace ManicDigger.Mods.War
 			//Basic settings
 			m.SetCreative(false);
 			m.SetWorldSize(256, 256, 128);
-			m.SetWorldDatabaseReadOnly(true); // WarMode.TeamDeathmatch
+			m.SetWorldDatabaseReadOnly(true); // TeamDeathmatch, CaptureTheFlag, FreeForAll, LastTeamStanding
 			m.DisablePrivilege("tp");
 			
 			//Register specific functions
 			m.RegisterOnPlayerJoin(PlayerJoin);
+			m.RegisterOnPlayerLeave(PlayerLeave);
 			m.RegisterOnDialogClick(DialogClickSelectTeam);
 			m.RegisterOnDialogClick(DialogClickSelectClass);
 			m.RegisterOnDialogClick(DialogClickSelectSubclass);
@@ -35,21 +36,76 @@ namespace ManicDigger.Mods.War
 			m.RegisterOnPlayerChat(OnChat);
 			m.RegisterOnCommand(OnCommand);
 			m.RegisterOnBlockBuild(OnBuild);
+			m.RegisterOnBlockDelete(OnDelete);
+			m.RegisterCheckOnBlockDelete(CheckOnDelete);
+			m.RegisterCheckOnBlockBuild(CheckOnBuild);
 			m.RegisterOnPlayerDeath(OnPlayerDeath);
 			
 			//Register timers
 			m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
 			m.RegisterTimer(UpdateRespawnTimer, 1);
+			m.RegisterTimer(UpdateRoundTimer, 1);
 			m.RegisterTimer(UpdateTab, 1);
+			
+			
+			startGame(true); //bool = worldStart
+		}
+		
+		ModManager m;
+		
+		public void startGame(bool worldStart)
+		{
+			int posx = m.GetMapSizeX() / 2;
+			int posy = m.GetMapSizeY() - 40;
+			int posz = BlockHeight(posx, posy);
+			if(worldStart == true)
+			{
+				m.SetBlock(posx + 1, posy + 1, posz, 163);
+				m.SetBlock(posx - 1, posy + 1, posz, 163);
+				m.SetBlock(posx, posy + 1, posz, 163);
+				m.SetBlock(posx + 1, posy, posz, 163);
+				m.SetBlock(posx - 1, posy, posz, 163);
+				m.SetBlock(posx, posy, posz, 163);
+				m.SetBlock(posx + 1, posy - 1, posz, 163);
+				m.SetBlock(posx - 1, posy - 1, posz, 163);
+				m.SetBlock(posx, posy - 1, posz, 163);
+			
+				posx = m.GetMapSizeX() / 2;
+				posy = 40;
+				posz = BlockHeight(posx, posy);
+				m.SetBlock(posx + 1, posy + 1, posz, 162);
+				m.SetBlock(posx - 1, posy + 1, posz, 162);
+				m.SetBlock(posx, posy + 1, posz, 162);
+				m.SetBlock(posx + 1, posy, posz, 162);
+				m.SetBlock(posx - 1, posy, posz, 162);
+				m.SetBlock(posx, posy, posz, 162);
+				m.SetBlock(posx + 1, posy - 1, posz, 162);
+				m.SetBlock(posx - 1, posy - 1, posz, 162);
+				m.SetBlock(posx, posy - 1, posz, 162);
+			
+				posx = m.GetMapSizeX() / 2;
+				posy = m.GetMapSizeX() / 2;
+				posz = BlockHeight(posx, posy);
+				m.SetBlock(posx, posy, posz, 161);
+			}
+			else
+			{
+				m.SetBlock(flagPosition[0], flagPosition[1], flagPosition[2], 161);
+			}
+			
+		
 		}
 		
 		public enum WarMode
 		{
 			Edit,
 			TeamDeathmatch,
+			CaptureTheFlag,
+			FreeForAll,			//WIP
+			LastManStanding, 	//WIP
 		}
 		
-		WarMode warmode = WarMode.TeamDeathmatch;
+		WarMode warmode = WarMode.CaptureTheFlag;
 		
 		public enum PlayerClass
 		{
@@ -64,11 +120,26 @@ namespace ManicDigger.Mods.War
 			Rifle,
 		}
 		
-		TimeSpan RespawnTime = TimeSpan.FromSeconds(30);
-		//TimeSpan RoundTime = TimeSpan.FromMinutes(30);
+		TimeSpan RespawnTime = TimeSpan.FromSeconds(10);
 		DateTime CurrentRespawnTime;
 		
-		public bool EnableTeamkill = true;
+		public int currentRoundSeconds = 0;
+		public int secondsToEnd = 900;
+		public int blueTeamPoints = 0;
+		public int greenTeamPoints = 0;
+		public int bestBluePlayer = -1;
+		public int bestBluePlayerPoints = 0;
+		public String bestBluePlayerName = "";
+		public int bestGreenPlayer = -1;
+		public int bestGreenPlayerPoints = 0;
+		public String bestGreenPlayerName = "";
+		
+		public int[] flagPosition = {0, 0, 0};
+		public bool firstFlag = true;
+		
+		
+		public bool EnableTeamkill = false;
+		public bool EnableTeamfouling = false;
 		
 		Dictionary<int, Player> players = new Dictionary<int, Player>();
 		
@@ -76,15 +147,19 @@ namespace ManicDigger.Mods.War
 		{
 			public Team team = Team.Spectator;
 			public int kills;
+			public int flagowns = 0;
+			public int points = 0;
 			public bool isdead;
 			public int following = -1;
 			public bool firstteam = true;
+			public bool haveflag = false;
+			public int flag = 0;
 			public PlayerClass playerclass;
 			public SoldierSubclass soldierSubclass;
 			public Dictionary<int, int> totalAmmo = new Dictionary<int, int>();
 		}
 		
-		ModManager m;
+		
 		
 		void PlayerJoin(int playerid)
 		{
@@ -107,9 +182,38 @@ namespace ManicDigger.Mods.War
 					m.SetCreative(false);
 					m.EnableExtraPrivilegeToAll("build", true);
 					m.EnableFreemove(playerid, false);
-					ShowTeamSelectionDialog(playerid);
+					ShowTeamSelectionDialog(playerid, "TD");
 					m.SetGlobalDataNotSaved("enablewater", true);
 					break;
+				case WarMode.FreeForAll:
+					m.SetCreative(false);
+					m.EnableExtraPrivilegeToAll("build", true);
+					m.EnableFreemove(playerid, false);
+					ShowTeamSelectionDialog(playerid, "FFA");
+					m.SetGlobalDataNotSaved("enablewater", true);
+					break;
+				case WarMode.CaptureTheFlag:
+					m.SetCreative(false);
+					m.EnableExtraPrivilegeToAll("build", true);
+					m.EnableFreemove(playerid, false);
+					ShowTeamSelectionDialog(playerid, "CTF");
+					m.SetGlobalDataNotSaved("enablewater", true);
+					break;
+				case WarMode.LastManStanding:
+					m.SetCreative(false);
+					m.EnableExtraPrivilegeToAll("build", true);
+					m.EnableFreemove(playerid, false);
+					ShowTeamSelectionDialog(playerid, "CTF");
+					m.SetGlobalDataNotSaved("enablewater", true);
+					break;
+			}
+		}
+		
+		void PlayerLeave(int playerid)
+		{
+			if(players[playerid].haveflag == true)
+			{
+				m.SetBlock((int) m.GetPlayerPositionX(playerid), (int) m.GetPlayerPositionY(playerid), (int) m.GetPlayerPositionZ(playerid), players[playerid].flag);
 			}
 		}
 		
@@ -139,42 +243,50 @@ namespace ManicDigger.Mods.War
 			m.NotifyInventory(playerid);
 		}
 		
-		void ShowTeamSelectionDialog(int playerid)
+		
+		void ShowTeamSelectionDialog(int playerid, String mode)
 		{
-			Dialog d = new Dialog();
-			List<Widget> widgets = new List<Widget>();
-			Widget background = new Widget();
-			background.X = 0;
-			background.Y = 0;
-			background.Width = 800;
-			background.Height = 600;
-			background.Image = "SelectTeam";
-			widgets.Add(background);
-			Widget w1 = new Widget();
-			w1.Id = "Team1";
-			w1.Text = "Press 1 to join Blue";
-			w1.X = 50;
-			w1.Y = 400;
-			w1.ClickKey = '1';
-			widgets.Add(w1);
-			Widget w2 = new Widget();
-			w2.Text = "Press 2 to join Green";
-			w2.Id = "Team2";
-			w2.X = 600;
-			w2.Y = 400;
-			w2.ClickKey = '2';
-			widgets.Add(w2);
-			Widget w3 = new Widget();
-			w3.Text = "Press 3 to spectate";
-			w3.Id = "Team3";
-			w3.X = 300;
-			w3.Y = 400;
-			w3.ClickKey = '3';
-			widgets.Add(w3);
-			d.Width = 800;
-			d.Height = 600;
-			d.Widgets = widgets.ToArray();
-			m.SendDialog(playerid, "SelectTeam" + playerid, d);
+			if(mode == "TD" || mode == "CTF")
+			{
+				Dialog d = new Dialog();
+				List<Widget> widgets = new List<Widget>();
+				Widget background = new Widget();
+				background.X = 0;
+				background.Y = 0;
+				background.Width = 800;
+				background.Height = 600;
+				background.Image = "SelectTeam";
+				widgets.Add(background);
+				Widget w1 = new Widget();
+				w1.Id = "Team1";
+				w1.Text = "Press 1 to join Blue";
+				w1.X = 50;
+				w1.Y = 400;
+				w1.ClickKey = '1';
+				widgets.Add(w1);
+				Widget w2 = new Widget();
+				w2.Text = "Press 2 to join Green";
+				w2.Id = "Team2";
+				w2.X = 600;
+				w2.Y = 400;
+				w2.ClickKey = '2';
+				widgets.Add(w2);
+				Widget w3 = new Widget();
+				w3.Text = "Press 3 to spectate";
+				w3.Id = "Team3";
+				w3.X = 300;
+				w3.Y = 400;
+				w3.ClickKey = '3';
+				widgets.Add(w3);
+				d.Width = 800;
+				d.Height = 600;
+				d.Widgets = widgets.ToArray();
+				m.SendDialog(playerid, "SelectTeam" + playerid, d);
+			}
+			else if(mode == "FFA")
+			{
+				//Work in progress
+			}
 		}
 		
 		void ShowClassSelectionDialog(int playerid)
@@ -489,7 +601,10 @@ namespace ManicDigger.Mods.War
 			{
 				return;
 			}
-			ShowTeamSelectionDialog(player);
+			if(warmode == WarMode.TeamDeathmatch)
+				ShowTeamSelectionDialog(player, "td");
+			if(warmode == WarMode.CaptureTheFlag)
+				ShowTeamSelectionDialog(player, "ctf");
 		}
 		
 		void OnPlayerDeath(int player, DeathReason reason, int sourceID)
@@ -577,6 +692,12 @@ namespace ManicDigger.Mods.War
 		
 		void Respawn(int playerid)
 		{
+			if(players[playerid].haveflag == true)
+			{
+				m.SetBlock((int) m.GetPlayerPositionX(playerid), (int) m.GetPlayerPositionY(playerid), (int) m.GetPlayerPositionZ(playerid), players[playerid].flag);
+				players[playerid].flag = 0;
+				players[playerid].haveflag = false;
+			}
 			int posx = -1;
 			int posy = -1;
 			int posz = -1;
@@ -595,7 +716,7 @@ namespace ManicDigger.Mods.War
 					posy = m.GetMapSizeY() / 2;
 					break;
 			}
-			posz = BlockHeight(posx, posy);
+			posz = BlockHeight(posx, posy) + 1;
 			m.SetPlayerPosition(playerid, posx, posy, posz);
 			ResetInventoryOnRespawn(playerid);
 		}
@@ -746,7 +867,7 @@ namespace ManicDigger.Mods.War
 			string row3_1 = "IP: " + m.GetServerIp() + ":" + m.GetServerPort();
 			string row3_2 = (int)(m.GetPlayerPing(player) * 1000) + "ms";
 			
-			string row4_1 = "Players: " + m.AllPlayers().Length;
+			string row4_1 = "Players: " + m.AllPlayers().Length + "  Seconds to end of Round: " + secondsToEnd + " (B: " + blueTeamPoints + " : " + greenTeamPoints + " :G)";
 			string row4_2 = "Page: " + (page + 1) + "/" + (pageCount + 1);
 			
 			string row5_1 = "ID";
@@ -814,10 +935,37 @@ namespace ManicDigger.Mods.War
 			{
 				List<int> players = playersByTeam[allteams[t]];
 				players.Sort((a, b) => (this.players[b].kills.CompareTo(this.players[a].kills)));
-				for (int i = 0; i < players.Count; i++)
+				if(warmode == WarMode.CaptureTheFlag)
 				{
-					string s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), this.players[players[i]].kills);
-					widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * i, Color.White.ToArgb()));
+					int listhigh = 0;
+					for (int i = 0; i < players.Count; i++)
+					{
+						String s;
+						if(this.players[players[i]].team == Team.Blue || this.players[players[i]].team == Team.Green)
+						{
+							s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), this.players[players[i]].kills);
+						}
+						else
+						{
+							s = string.Format("{0} {1}ms", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000));
+						}
+						widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * listhigh, Color.White.ToArgb()));
+						listhigh++;
+						if(this.players[players[i]].team == Team.Blue || this.players[players[i]].team == Team.Green)
+						{
+							s = string.Format("{0} flagowns {1} points;", this.players[players[i]].flagowns, this.players[players[i]].points);
+							widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * listhigh, Color.White.ToArgb()));
+						}
+						listhigh++;
+					}
+				}
+				else
+				{
+					for (int i = 0; i < players.Count; i++)
+					{
+						string s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), this.players[players[i]].kills);
+						widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * i, Color.White.ToArgb()));
+					}
 				}
 			}
 			
@@ -1010,6 +1158,25 @@ namespace ManicDigger.Mods.War
 			}
 		}
 		
+		
+		void UpdateRoundTimer()
+		{
+			if(warmode == WarMode.CaptureTheFlag || warmode == WarMode.LastManStanding)
+			{
+				if(currentRoundSeconds <= 899)
+				{
+					currentRoundSeconds++;
+					secondsToEnd--;
+				}
+				else
+				{
+					currentRoundSeconds = 0;
+					newRound();
+					secondsToEnd = 900;
+				}
+			}
+		}
+		
 		void UpdateMedicalKitAmmoPack()
 		{
 			if (warmode == WarMode.Edit)
@@ -1071,12 +1238,21 @@ namespace ManicDigger.Mods.War
 		
 		string OnChat(int player, string message, bool toteam)
 		{
+			string sender = "";
 			if (warmode == WarMode.Edit)
 			{
 				return message;
 			}
 			int[] allplayers = m.AllPlayers();
-			string sender = m.GetPlayerName(player);
+			if(players[player].haveflag == true && players[player].flag == 161)
+			{
+				sender = m.GetPlayerName(player) + " (Flag holder)";
+			}
+			else
+			{
+				sender = m.GetPlayerName(player);
+			}
+			
 			string senderColorString = GetTeamColorString(players[player].team);
 			string s = message;
 			if (players[player].team == Team.Spectator)
@@ -1141,9 +1317,30 @@ namespace ManicDigger.Mods.War
 					m.SetWorldDatabaseReadOnly(true);
 					Restart();
 				}
+				else if (arguments == "ctf")
+				{
+					warmode = WarMode.CaptureTheFlag;
+					m.LoadWorld(m.CurrentWorld());
+					m.SetWorldDatabaseReadOnly(true);
+					Restart();
+				}
+				else if (arguments == "ffa")
+				{
+					warmode = WarMode.FreeForAll;
+					m.LoadWorld(m.CurrentWorld());
+					m.SetWorldDatabaseReadOnly(true);
+					Restart();
+				}
+				else if (arguments == "lms")
+				{
+					warmode = WarMode.LastManStanding;
+					m.LoadWorld(m.CurrentWorld());
+					m.SetWorldDatabaseReadOnly(true);
+					Restart();
+				}
 				else
 				{
-					m.SendMessage(player, m.colorError() + "Usage: /mode [edit/tdm]");
+					m.SendMessage(player, m.colorError() + "Usage: /mode [edit/tdm/ctf/ffa]");
 				}
 				return true;
 			}
@@ -1159,12 +1356,231 @@ namespace ManicDigger.Mods.War
 			}
 		}
 		
+		void endOfCTF(String winnerTeam)
+		{
+			m.SendMessageToAll("Team " + winnerTeam + " wins!");
+			int posx = m.GetMapSizeX() / 2;
+			int posy = m.GetMapSizeY() / 2;
+			int posz = BlockHeight(posx, posy) + 1;
+			
+			int[] allplayers = m.AllPlayers();
+			foreach (int p in allplayers)
+			{
+				if(players[p].team == Team.Blue)
+				{
+					posy = 50;
+					posz = BlockHeight(posx, posy) + 1;
+					m.SetPlayerPosition(p, posx, posy, posz);
+				}
+				else if(players[p].team == Team.Green)
+				{
+					posy = m.GetMapSizeY() - 50;
+					posz = BlockHeight(posx, posy) + 1;
+					m.SetPlayerPosition(p, posx, posy, posz);
+				}
+				else
+				{
+					m.SetPlayerPosition(p, posx, posy, posz);
+				}
+			}
+			
+		}
+		
+		void newRound() //CaptureTheFlag && LastManStanding
+		{
+			if(warmode == WarMode.CaptureTheFlag)
+			{
+				if(blueTeamPoints > greenTeamPoints)
+				{
+					m.SendMessageToAll("Team Blue wins with " + blueTeamPoints + "Points! Special thanks to: " + bestBluePlayerName);
+				}
+				else if(blueTeamPoints < greenTeamPoints)
+				{
+					m.SendMessageToAll("Team Green wins with " + greenTeamPoints + "Points! Special thanks to: " + bestGreenPlayerName) ;
+				}
+				else if(blueTeamPoints == greenTeamPoints)
+				{
+					m.SendMessageToAll("The Game end without a winner!");
+				}
+				Restart();
+				blueTeamPoints = 0;
+				greenTeamPoints = 0;
+				bestBluePlayer = -1;
+				bestBluePlayerName = "";
+				bestBluePlayerPoints = 0;
+				bestGreenPlayer = -1;
+				bestGreenPlayerName = "";
+				bestGreenPlayerPoints = 0;
+			}
+			else
+			{
+				//WIP
+			}
+		}
+		
 		void OnBuild(int player, int x, int y, int z)
 		{
 			if (m.GetBlockNameAt(x, y, z) == "Water")
 			{
 				m.SetBlock(x, y, z, 0);
 			}
+			if(m.GetBlockNameAt(x, y, z - 1) == "BluePodest" && m.GetBlockNameAt(x, y, z) == "Flag" && warmode == WarMode.CaptureTheFlag)
+			{
+				endOfCTF("Blue");
+				m.SetBlock(x, y, z, 0);
+				startGame(false);
+				if(players[player].team == Team.Blue)
+				{
+					players[player].points++;
+					if(bestBluePlayer == -1)
+					{
+						bestBluePlayer = player;
+						bestBluePlayerPoints = players[player].points;
+						bestBluePlayerName = m.GetPlayerName(player);
+					}
+					else if(bestBluePlayerPoints < players[player].points)
+					{
+						bestBluePlayer = player;
+						bestBluePlayerPoints = players[player].points;
+						bestBluePlayerName = m.GetPlayerName(player);
+					}
+				}
+				else if(players[player].team == Team.Green)
+				{
+					players[player].points--;
+					if(bestGreenPlayer == -1)
+					{
+						bestGreenPlayer = player;
+						bestGreenPlayerPoints = players[player].points;
+						bestGreenPlayerName = m.GetPlayerName(player);
+					}
+					else if(bestGreenPlayerPoints < players[player].points)
+					{
+						bestGreenPlayer = player;
+						bestGreenPlayerPoints = players[player].points;
+						bestGreenPlayerName = m.GetPlayerName(player);
+					}
+				}
+				blueTeamPoints++;
+				players[player].haveflag = false;
+			}
+			else if(m.GetBlockNameAt(x, y, z - 1) == "GreenPodest" && m.GetBlockNameAt(x, y, z) == "Flag"  && warmode == WarMode.CaptureTheFlag)
+			{
+				endOfCTF("Green");
+				m.SetBlock(x, y, z, 0);
+				startGame(false);
+				if(players[player].team == Team.Blue)
+				{
+					players[player].points--;
+					if(bestBluePlayer == -1)
+					{
+						bestBluePlayer = player;
+						bestBluePlayerPoints = players[player].points;
+						bestBluePlayerName = m.GetPlayerName(player);
+					}
+					else if(bestBluePlayerPoints < players[player].points)
+					{
+						bestBluePlayer = player;
+						bestBluePlayerPoints = players[player].points;
+						bestBluePlayerName = m.GetPlayerName(player);
+					}
+				}
+				else if(players[player].team == Team.Green)
+				{
+					players[player].points++;
+					if(bestGreenPlayer == -1)
+					{
+						bestGreenPlayer = player;
+						bestGreenPlayerPoints = players[player].points;
+						bestGreenPlayerName = m.GetPlayerName(player);
+					}
+					else if(bestGreenPlayerPoints < players[player].points)
+					{
+						bestGreenPlayer = player;
+						bestGreenPlayerPoints = players[player].points;
+						bestGreenPlayerName = m.GetPlayerName(player);
+					}
+				}
+				greenTeamPoints++;
+				players[player].haveflag = false;
+			}
+			if(m.GetBlockNameAt(x, y, z) == "Flag")
+			{
+				players[player].haveflag = false;
+			}
+		}
+		
+		void OnDelete(int player, int x, int y, int z, int oldBlock)
+		{
+			if (oldBlock == 161)
+			{
+				if(players[player].haveflag == false)
+				{
+					m.SetBlock(x, y, z, 0);
+					players[player].flag = 161;
+					players[player].haveflag = true;
+					m.SendMessageToAll("&4" + m.GetPlayerName(player) + " is flag holder!");
+					players[player].flagowns++;
+					if(firstFlag == true)
+					{
+						firstFlag = false;
+						flagPosition[0] = x;
+						flagPosition[1] = y;
+						flagPosition[2] = z;
+					}
+				}
+			}
+		}
+		
+		bool CheckOnDelete(int player, int x, int y, int z)
+		{
+			if(m.GetBlockNameAt(x, y, z) == "BluePodest" ||m.GetBlockNameAt(x, y, z) == "GreenPodest")
+			{
+				if(warmode == WarMode.CaptureTheFlag)
+				{
+					m.SendMessage(player, "Cheating is uncool");
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+			else
+			{
+				return true;
+			}
+		}
+		
+		bool CheckOnBuild(int player, int x, int y, int z)
+		{
+			if(players[player].team == Team.Blue)
+			{
+				if(m.GetBlockNameAt(x, y, z - 1) == "GreenPodest" && EnableTeamfouling == false)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+			else if(players[player].team == Team.Green && EnableTeamfouling == false)
+			{
+				if(m.GetBlockNameAt(x, y, z - 1) == "BluePodest")
+				{
+					return false;
+				}
+				else 
+				{
+					return true;
+				}
+			}
+			else
+			{
+				return true;
+			}
+			
 		}
 	}
 }
