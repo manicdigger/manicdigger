@@ -48,7 +48,7 @@ namespace ManicDigger.Mods.War
 			m.RegisterTimer(UpdateTab, 1);
 			
 			
-			startGame(true); //bool = worldStart
+			startGame(true); //bool = worldStart (if you have a complete world with podests and flag, then comment this please)
 		}
 		
 		ModManager m;
@@ -867,7 +867,16 @@ namespace ManicDigger.Mods.War
 			string row3_1 = "IP: " + m.GetServerIp() + ":" + m.GetServerPort();
 			string row3_2 = (int)(m.GetPlayerPing(player) * 1000) + "ms";
 			
-			string row4_1 = "Players: " + m.AllPlayers().Length + "  Seconds to end of Round: " + secondsToEnd + " (B: " + blueTeamPoints + " : " + greenTeamPoints + " :G)";
+			string row4_1 = "";
+			if(warmode == WarMode.CaptureTheFlag || warmode == WarMode.LastManStanding)
+			{
+				row4_1 = "Players: " + m.AllPlayers().Length + "  Seconds to end of Round: " + secondsToEnd + " (B: " + blueTeamPoints + " : " + greenTeamPoints + " :G)";
+			}
+			else
+			{
+				row4_1 = "Players: " + m.AllPlayers().Length;
+			}
+			
 			string row4_2 = "Page: " + (page + 1) + "/" + (pageCount + 1);
 			
 			string row5_1 = "ID";
@@ -940,7 +949,7 @@ namespace ManicDigger.Mods.War
 					int listhigh = 0;
 					for (int i = 0; i < players.Count; i++)
 					{
-						String s;
+						string s;
 						if(this.players[players[i]].team == Team.Blue || this.players[players[i]].team == Team.Green)
 						{
 							s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), this.players[players[i]].kills);
