@@ -1141,6 +1141,7 @@ namespace ManicDigger.Mods.War
 						Respawn(p);
 						players[p].isdead = false;
 						UpdatePlayerModel(p);
+						m.SetPlayerHealth(p, m.GetPlayerMaxHealth(p), m.GetPlayerMaxHealth(p));
 					}
 				}
 				CurrentRespawnTime = DateTime.UtcNow;
@@ -1163,6 +1164,7 @@ namespace ManicDigger.Mods.War
 					d.Widgets = new Widget[1];
 					d.Widgets[0] = w;
 					m.SendDialog(p, "RespawnCountdown" + p, d);
+					m.SetPlayerHealth(p, m.GetPlayerMaxHealth(p), m.GetPlayerMaxHealth(p));
 				}
 			}
 		}
