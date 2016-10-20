@@ -194,14 +194,26 @@ namespace ManicDigger.Mods.War
 			               });
 			m.SetBlockType(162, "BluePodest", new BlockType()
 			               {
-			               	AllTextures = "BlueCloth",
+			               	TextureIdTop = "BlueCloth",
+			               	TextureIdBack = "BluePodest",
+			               	TextureIdFront = "BluePodest",
+			               	TextureIdLeft = "BluePodest",
+			               	TextureIdRight = "BluePodest",
+			               	TextureIdForInventory = "BluePodest",
+			               	TextureIdBottom = "Stair",
 			               	DrawType = DrawType.Solid,
 			               	WalkableType = WalkableType.Solid,
 			               	Sounds = solidSounds,
 			               });
 			m.SetBlockType(163, "GreenPodest", new BlockType()
 			               {
-			               	AllTextures = "GreenCloth",
+			               	TextureIdTop = "GreenCloth",
+			               	TextureIdBack = "GreenPodest",
+			               	TextureIdFront = "GreenPodest",
+			               	TextureIdLeft = "GreenPodest",
+			               	TextureIdRight = "GreenPodest",
+			               	TextureIdForInventory = "GreenPodest",
+			               	TextureIdBottom = "Stair",
 			               	DrawType = DrawType.Solid,
 			               	WalkableType = WalkableType.Solid,
 			               	Sounds = solidSounds,

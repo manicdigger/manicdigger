@@ -1394,7 +1394,6 @@ namespace ManicDigger.Mods.War
 					m.SetPlayerPosition(p, posx, posy, posz);
 				}
 			}
-			
 		}
 		
 		void newRound() //CaptureTheFlag && LastManStanding
