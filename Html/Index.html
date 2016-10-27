@@ -2541,67 +2541,70 @@ window.requestAnimFrame = (function() {
 
 	function GetKeyCode(jsKey)
 	{
-		if(jsKey == 8) { return GlKeys.BACK_SPACE; }
-		if(jsKey == 9) { return GlKeys.TAB; }
-		if(jsKey == 13) { return GlKeys.ENTER; }
-		if(jsKey == 16) { return GlKeys.SHIFT_LEFT; }
-		if(jsKey == 27) { return GlKeys.ESCAPE; }
-		if(jsKey == 32) { return GlKeys.SPACE; }
-		if(jsKey == 33) { return GlKeys.PAGE_UP; }
-		if(jsKey == 34) { return GlKeys.PAGE_DOWN; }
-		if(jsKey == 37) { return GlKeys.LEFT; }
-		if(jsKey == 38) { return GlKeys.UP; }
-		if(jsKey == 39) { return GlKeys.RIGHT; }
-		if(jsKey == 40) { return GlKeys.DOWN; }
-		if(jsKey == 48) { return GlKeys.NUMBER0; }
-		if(jsKey == 49) { return GlKeys.NUMBER1; }
-		if(jsKey == 50) { return GlKeys.NUMBER2; }
-		if(jsKey == 51) { return GlKeys.NUMBER3; }
-		if(jsKey == 52) { return GlKeys.NUMBER4; }
-		if(jsKey == 53) { return GlKeys.NUMBER5; }
-		if(jsKey == 54) { return GlKeys.NUMBER6; }
-		if(jsKey == 55) { return GlKeys.NUMBER7; }
-		if(jsKey == 56) { return GlKeys.NUMBER8; }
-		if(jsKey == 57) { return GlKeys.NUMBER9; }
-		if(jsKey == 65) { return GlKeys.A; }
-		if(jsKey == 66) { return GlKeys.B; }
-		if(jsKey == 67) { return GlKeys.C; }
-		if(jsKey == 68) { return GlKeys.D; }
-		if(jsKey == 69) { return GlKeys.E; }
-		if(jsKey == 70) { return GlKeys.F; }
-		if(jsKey == 71) { return GlKeys.G; }
-		if(jsKey == 72) { return GlKeys.H; }
-		if(jsKey == 73) { return GlKeys.I; }
-		if(jsKey == 74) { return GlKeys.J; }
-		if(jsKey == 75) { return GlKeys.K; }
-		if(jsKey == 76) { return GlKeys.L; }
-		if(jsKey == 77) { return GlKeys.M; }
-		if(jsKey == 78) { return GlKeys.N; }
-		if(jsKey == 79) { return GlKeys.O; }
-		if(jsKey == 80) { return GlKeys.P; }
-		if(jsKey == 81) { return GlKeys.Q; }
-		if(jsKey == 82) { return GlKeys.R; }
-		if(jsKey == 83) { return GlKeys.S; }
-		if(jsKey == 84) { return GlKeys.T; }
-		if(jsKey == 85) { return GlKeys.U; }
-		if(jsKey == 86) { return GlKeys.V; }
-		if(jsKey == 87) { return GlKeys.W; }
-		if(jsKey == 88) { return GlKeys.X; }
-		if(jsKey == 89) { return GlKeys.Y; }
-		if(jsKey == 90) { return GlKeys.Z; }
-		if(jsKey == 112) { return GlKeys.F1; }
-		if(jsKey == 113) { return GlKeys.F2; }
-		if(jsKey == 114) { return GlKeys.F3; }
-		if(jsKey == 115) { return GlKeys.F4; }
-		if(jsKey == 116) { return GlKeys.F5; }
-		if(jsKey == 117) { return GlKeys.F6; }
-		if(jsKey == 118) { return GlKeys.F7; }
-		if(jsKey == 119) { return GlKeys.F8; }
-		if(jsKey == 120) { return GlKeys.F9; }
-		if(jsKey == 121) { return GlKeys.F10; }
-		if(jsKey == 122) { return GlKeys.F11; }
-		if(jsKey == 123) { return GlKeys.F12; }
-		return 0;
+		switch(jsKey)
+    		{
+    			case 8: return GlKeys.BACK_SPACE;
+			case 9: return GlKeys.TAB;
+			case 13: return GlKeys.ENTER;
+			case 16: return GlKeys.SHIFT_LEFT;
+			case 27: return GlKeys.ESCAPE;
+			case 32: return GlKeys.SPACE;
+			case 33: return GlKeys.PAGE_UP;
+			case 34: return GlKeys.PAGE_DOWN;
+			case 37: return GlKeys.LEFT;
+			case 38: return GlKeys.UP;
+			case 39: return GlKeys.RIGHT;
+			case 40: return GlKeys.DOWN;
+			case 48: return GlKeys.NUMBER0;
+			case 49: return GlKeys.NUMBER1;
+			case 50: return GlKeys.NUMBER2;
+			case 51: return GlKeys.NUMBER3;
+			case 52: return GlKeys.NUMBER4;
+			case 53: return GlKeys.NUMBER5;
+			case 54: return GlKeys.NUMBER6;
+			case 55: return GlKeys.NUMBER7;
+			case 56: return GlKeys.NUMBER8;
+			case 57: return GlKeys.NUMBER9;
+			case 65: return GlKeys.A;
+			case 66: return GlKeys.B;
+			case 67: return GlKeys.C;
+			case 68: return GlKeys.D;
+			case 69: return GlKeys.E;
+			case 70: return GlKeys.F;
+			case 71: return GlKeys.G;
+			case 72: return GlKeys.H;
+			case 73: return GlKeys.I;
+			case 74: return GlKeys.J;
+			case 75: return GlKeys.K;
+			case 76: return GlKeys.L;
+			case 77: return GlKeys.M;
+			case 78: return GlKeys.N;
+			case 79: return GlKeys.O;
+			case 80: return GlKeys.P;
+			case 81: return GlKeys.Q;
+			case 82: return GlKeys.R;
+			case 83: return GlKeys.S;
+			case 84: return GlKeys.T;
+			case 85: return GlKeys.U;
+			case 86: return GlKeys.V;
+			case 87: return GlKeys.W;
+			case 88: return GlKeys.X;
+			case 89: return GlKeys.Y;
+			case 90: return GlKeys.Z;
+			case 112: return GlKeys.F1;
+			case 113: return GlKeys.F2;
+			case 114: return GlKeys.F3;
+			case 115: return GlKeys.F4;
+			case 116: return GlKeys.F5;
+			case 117: return GlKeys.F6;
+			case 118: return GlKeys.F7;
+			case 119: return GlKeys.F8;
+			case 120: return GlKeys.F9;
+			case 121: return GlKeys.F10;
+			case 122: return GlKeys.F11;
+			case 123: return GlKeys.F12;
+			default: return 0;
+		}
 	}
 
 	function handleKeyUp(event) {
