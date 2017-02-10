@@ -20,10 +20,10 @@ script:
  - zip -r -9 ManicDiggerBinary.zip ManicDiggerBinary
  - mv ManicDiggerBinary output
 # inno setup
-# release pinned to 5.5.6 due to innoextract compatibility issues
+# release pinned to 5.5.8 due to innoextract compatibility issues
 # - wget http://www.jrsoftware.org/download.php/is-unicode.exe
- - wget http://files.jrsoftware.org/is/5/isetup-5.5.6-unicode.exe
- - mv isetup-5.5.6-unicode.exe is-unicode.exe
+ - wget http://files.jrsoftware.org/is/5/isetup-5.5.8-unicode.exe
+ - mv isetup-5.5.8-unicode.exe is-unicode.exe
  - innoextract is-unicode.exe
  - wine app/ISCC.exe setup.iss
  - mv output2/ManicDiggerSetup.exe ./
