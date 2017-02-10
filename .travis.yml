@@ -26,7 +26,7 @@ script:
  - mv isetup-5.5.6-unicode.exe is-unicode.exe
  - innoextract is-unicode.exe
  - wine app/ISCC.exe setup.iss
- - mv output2/setup.exe ManicDiggerSetup.exe
+ - mv output2/ManicDiggerSetup.exe ./
 # deploy builds
  - ./extra/travis_deploy_ghpages.sh
 
