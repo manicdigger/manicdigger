@@ -10,6 +10,7 @@ install:
  - sudo apt-get install wine1.7
  - sudo apt-get install innoextract
  - sudo apt-get clean
+ - nuget restore ManicDigger.sln
 
 script:
  - xbuild /p:Configuration=Release ManicDigger.sln
