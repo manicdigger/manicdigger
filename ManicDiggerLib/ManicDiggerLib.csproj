@@ -71,9 +71,6 @@
     <Reference Include="LibNoise">
       <HintPath>..\Lib\LibNoise.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK">
-      <HintPath>..\Lib\OpenTK.dll</HintPath>
-    </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\Lib\protobuf-net.dll</HintPath>
     </Reference>

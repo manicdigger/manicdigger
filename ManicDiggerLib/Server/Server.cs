@@ -8,7 +8,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 using ManicDigger;
-using OpenTK;
 using ProtoBuf;
 using System.Xml.Serialization;
 using System.Drawing;
@@ -1589,9 +1588,9 @@ public partial class Server : ICurrentTime, IDropItem
                 }
                 else
                 {
-                    Vector3 from = new Vector3(DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
-                    Vector3 to = new Vector3(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
-                    Vector3 v = to - from;
+                    Vector3f from = new Vector3f(DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
+                    Vector3f to = new Vector3f(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
+                    Vector3f v = to - from;
                     v.Normalize();
                     v *= BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed;
                     SendProjectile(clientid, DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ),
@@ -1656,7 +1655,7 @@ public partial class Server : ICurrentTime, IDropItem
                     pick.Start = new float[] { DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ) };
                     pick.End = new float[] { DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ) };
 
-                    Vector3 feetpos = new Vector3((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
+                    Vector3f feetpos = new Vector3f((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
                     //var p = PlayerPositionSpawn;
                     Box3D bodybox = new Box3D();
                     float headsize = (k.Value.ModelHeight - k.Value.EyeHeight) * 2; //0.4f;
@@ -2496,7 +2495,6 @@ public partial class Server : ICurrentTime, IDropItem
 
     private bool DoCommandBuild(int player_id, bool execute, Packet_ClientSetBlock cmd)
     {
-        Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
         Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
         if (cmd.Mode == Packet_BlockSetModeEnum.Use)
         {
@@ -4370,6 +4368,82 @@ public struct Vector3i
     {
         return string.Format("[{0}, {1}, {2}]", x, y, z);
     }
+}
+public struct Vector3f
+{
+	public float X;
+	public float Y;
+	public float Z;
+
+	public Vector3f(float x, float y, float z)
+	{
+		this.X = x;
+		this.Y = y;
+		this.Z = z;
+	}
+
+	public Vector3f Add(Vector3f v)
+	{
+		return Add(v.X, v.Y, v.Z);
+	}
+
+	public Vector3f Add(float x, float y, float z)
+	{
+		return new Vector3f(this.X + x, this.Y + y, this.Z + z);
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj is Vector3f)
+		{
+			Vector3f other = (Vector3f)obj;
+			return this.X == other.X && this.Y == other.Y && this.Z == other.Z;
+		}
+		return base.Equals(obj);
+	}
+	public void Normalize()
+	{
+		float len = (float)Math.Sqrt(X * X + Y * Y + Z * Z);
+		if (len <= 0) { return; }
+		X /= len;
+		Y /= len;
+		Z /= len;
+	}
+	public static bool operator ==(Vector3f a, Vector3f b)
+	{
+		return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+	}
+	public static bool operator !=(Vector3f a, Vector3f b)
+	{
+		return !(a.X == b.X && a.Y == b.Y && a.Z == b.Z);
+	}
+	public override int GetHashCode()
+	{
+		int hash = 23;
+		unchecked
+		{
+			hash = hash * 37 + X.GetHashCode();
+			hash = hash * 37 + Y.GetHashCode();
+			hash = hash * 37 + Z.GetHashCode();
+		}
+		return hash;
+	}
+	public static Vector3f operator +(Vector3f a, Vector3f b)
+	{
+		return new Vector3f(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+	}
+	public static Vector3f operator -(Vector3f a, Vector3f b)
+	{
+		return new Vector3f(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+	}
+	public static Vector3f operator *(Vector3f a, float b)
+	{
+		return new Vector3f(a.X * b, a.Y * b, a.Z * b);
+	}
+	public override string ToString()
+	{
+		return string.Format("[{0}, {1}, {2}]", X, Y, Z);
+	}
 }
 
 [ProtoContract()]
