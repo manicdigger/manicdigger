@@ -27,6 +27,10 @@ xcopy /s ManicDiggerLib\Server\Mods output\Mods\
 REM Third-party libraries
 xcopy /y /s Lib\*.* output\
 
+REM NuGet packages
+xcopy /s /y packages\OpenTK.2.0.0\lib\net20\OpenTK.dll output\
+xcopy /s /y packages\OpenTK.2.0.0\content\OpenTK.dll.config output\
+
 del output\*vshost.exe
 copy COPYING.md output\credits.txt
 
