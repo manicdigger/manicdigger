@@ -328,69 +328,6 @@ public class ConnectData
     }
 }
 
-public class Ping_
-{
-    public Ping_()
-    {
-        RoundtripTimeMilliseconds = 0;
-        ready = true;
-        timeSendMilliseconds = 0;
-        timeout = 10;
-    }
-
-    int RoundtripTimeMilliseconds;
-
-    bool ready;
-    int timeSendMilliseconds;
-    int timeout; //in seconds
-
-    public int GetTimeoutValue()
-    {
-        return timeout;
-    }
-    public void SetTimeoutValue(int value)
-    {
-        timeout = value;
-    }
-
-    public bool Send(GamePlatform platform)
-    {
-        if (!ready)
-        {
-            return false;
-        }
-        ready = false;
-        this.timeSendMilliseconds = platform.TimeMillisecondsFromStart();
-        return true;
-    }
-
-    public bool Receive(GamePlatform platform)
-    {
-        if (ready)
-        {
-            return false;
-        }
-        this.RoundtripTimeMilliseconds = platform.TimeMillisecondsFromStart() - timeSendMilliseconds;
-        ready = true;
-        return true;
-    }
-
-    public bool Timeout(GamePlatform platform)
-    {
-        if ((platform.TimeMillisecondsFromStart() - timeSendMilliseconds) / 1000 > this.timeout)
-        {
-            this.ready = true;
-            return true;
-        }
-        return false;
-    }
-
-    internal int RoundtripTimeTotalMilliseconds()
-    {
-        return RoundtripTimeMilliseconds;
-    }
-}
-
 public class ConnectedPlayer
 {
     internal int id;

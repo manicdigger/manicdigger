@@ -2459,18 +2459,18 @@ public class GameData
         return id >= BlockIdRailstart() && id < BlockIdRailstart() + 64;
     }
 
-    public void UseBlockTypes(GamePlatform platform, Packet_BlockType[] blocktypes, int count)
+    public void UseBlockTypes(Packet_BlockType[] blocktypes, int count)
     {
         for (int i = 0; i < count; i++)
         {
             if (blocktypes[i] != null)
             {
-                UseBlockType(platform, i, blocktypes[i]);
+                UseBlockType(i, blocktypes[i]);
             }
         }
     }
 
-    public void UseBlockType(GamePlatform platform, int id, Packet_BlockType b)
+    public void UseBlockType(int id, Packet_BlockType b)
     {
         if (b.Name == null)//!b.IsValid)
         {
@@ -2500,19 +2500,19 @@ public class GameData
         {
             for (int i = 0; i < b.Sounds.WalkCount; i++)
             {
-                WalkSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Walk[i], ".wav");
+                WalkSound()[id][i] = b.Sounds.Walk[i];
             }
             for (int i = 0; i < b.Sounds.Break1Count; i++)
             {
-                BreakSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Break1[i], ".wav");
+                BreakSound()[id][i] = b.Sounds.Break1[i];
             }
             for (int i = 0; i < b.Sounds.BuildCount; i++)
             {
-                BuildSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Build[i], ".wav");
+                BuildSound()[id][i] = b.Sounds.Build[i];
             }
             for (int i = 0; i < b.Sounds.CloneCount; i++)
             {
-                CloneSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Clone[i], ".wav");
+                CloneSound()[id][i] = b.Sounds.Clone[i];
             }
         }
         LightRadius()[id] = b.LightRadius;

@@ -99,6 +99,10 @@
       <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
       <Name>ManicDiggerLib</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
+      <Project>{650bc108-c744-4da1-aefd-cd8f011483b3}</Project>
+      <Name>ManicDigger</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

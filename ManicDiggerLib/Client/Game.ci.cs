@@ -17,7 +17,7 @@
             TextureId[i] = new int[6];
         }
         TextureIdForInventory = new int[MaxBlockTypes];
-        language = new Language();
+        language = new LanguageCi();
         lastplacedblockX = -1;
         lastplacedblockY = -1;
         lastplacedblockZ = -1;
@@ -405,7 +405,7 @@
 
     internal GamePlatform platform;
     internal Packet_BlockType[] blocktypes;
-    internal Language language;
+    internal LanguageCi language;
     internal TerrainChunkTesselatorCi d_TerrainChunkTesselator;
 
     internal Map map;

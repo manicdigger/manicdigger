@@ -16,10 +16,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Jint.Delegates;
 using System.Diagnostics;
-using ManicDigger.ClientNative;
+using ManicDigger.Common;
 
-
-
+namespace ManicDigger.Server
+{
 public class ClientException : Exception
 {
     public ClientException(Exception innerException, int clientid)
@@ -86,8 +86,7 @@ public partial class Server : ICurrentTime, IDropItem
         // systems[systemsCount++] = new ServerSystemPermissionSign();
 
         //Load translations
-        gameplatform = new GamePlatformNative();
-        language.platform = gameplatform;
+        language = new LanguageNative();
         language.LoadTranslations();
     }
     
@@ -97,7 +96,6 @@ public partial class Server : ICurrentTime, IDropItem
     internal int systemsCount;
     internal ServerPlatform serverPlatform;
 
-    GamePlatform gameplatform;
     public GameExit exit;
     public ServerMap d_Map;
     public GameData d_Data;
@@ -179,7 +177,7 @@ public partial class Server : ICurrentTime, IDropItem
 
     public bool Public;
     public bool enableshadows = true;
-    public Language language = new Language();
+    public Language language = new LanguageNative();
 
     Stopwatch stopwatchDt = new Stopwatch();
     public Stopwatch serverUptime = new Stopwatch();
@@ -379,7 +377,7 @@ public partial class Server : ICurrentTime, IDropItem
         {
             server.mainSockets = new NetServer[3];
             server.mainSocketsCount = 3;
-            mainSockets[0] = new EnetNetServer() { platform = gameplatform };
+            mainSockets[0] = new EnetNetServer();
             if (mainSockets[1] == null)
             {
                 mainSockets[1] = new WebSocketNetServer();
@@ -704,8 +702,6 @@ public partial class Server : ICurrentTime, IDropItem
         }
         return i;
     }
-
-    public GamePlatformNative platform = new GamePlatformNative();
 
     private void ProcessNetMessage(NetIncomingMessage msg, NetServer mainSocket, Stopwatch s)
     {
@@ -1190,7 +1186,7 @@ public partial class Server : ICurrentTime, IDropItem
         switch (packet.Id)
         {
             case Packet_ClientIdEnum.PingReply:
-                clients[clientid].Ping.Receive(platform);
+        		clients[clientid].Ping.Receive((int)serverUptime.ElapsedMilliseconds);
                 clients[clientid].LastPing = ((float)clients[clientid].Ping.RoundtripTimeTotalMilliseconds() / 1000);
                 this.NotifyPing(clientid, (int)clients[clientid].Ping.RoundtripTimeTotalMilliseconds());
                 break;
@@ -3341,7 +3337,7 @@ public partial class Server : ICurrentTime, IDropItem
     {
         BlockTypes[id] = block;
         block.Name = name;
-        d_Data.UseBlockType(platform, id, BlockTypeConverter.GetBlockType(block));
+        d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(block));
     }
     public void SetBlockType(string name, BlockType block)
     {
@@ -4450,4 +4446,5 @@ public class ServerPlatformNative : ServerPlatform
     {
         return (int)value;
     }
+}
 }

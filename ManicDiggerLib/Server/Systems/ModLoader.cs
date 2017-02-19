@@ -4,9 +4,9 @@ using System.Text;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.IO;
-using ManicDigger.ClientNative;
+using ManicDigger.Common;
 
-namespace ManicDigger
+namespace ManicDigger.Server
 {
     public class ServerSystemModLoader : ServerSystem
     {

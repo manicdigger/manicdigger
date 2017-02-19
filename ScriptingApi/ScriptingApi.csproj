@@ -80,9 +80,6 @@
     <Compile Include="ServerClient.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="a.snk" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="libHTTP\libHTTP.csproj" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -58,7 +58,7 @@
             string s = "";
             string[] l = new string[64];
             int lCount = 0;
-            for (int i = 0; i < m.GetPerformanceInfo().count; i++)
+            for (int i = 0; i < m.GetPerformanceInfo().size; i++)
             {
                 if (m.GetPerformanceInfo().items[i] == null)
                 {

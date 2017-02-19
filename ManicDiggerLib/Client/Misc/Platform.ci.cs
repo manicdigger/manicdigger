@@ -142,7 +142,6 @@
     // Enet
     public abstract bool EnetAvailable();
     public abstract EnetHost EnetCreateHost();
-    public abstract void EnetHostInitializeServer(EnetHost host, int port, int peerLimit);
     public abstract bool EnetHostService(EnetHost host, int timeout, EnetEventRef enetEvent);
     public abstract bool EnetHostCheckEvents(EnetHost host, EnetEventRef event_);
     public abstract EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit);
@@ -202,20 +201,18 @@
     public abstract void SinglePlayerServerDisable();
     public abstract DummyNetwork SinglePlayerServerGetNetwork();
     public abstract PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a);
-    public abstract EnetNetConnection CastToEnetNetConnection(NetConnection connection);
+    
+    // Translation
+    public abstract bool LanguageNativeAvailable();
+    public abstract Language GetLanguageHandler();
 }
 
 public class Asset
 {
-    internal string name;
-    internal string md5;
-    internal byte[] data;
-    internal int dataLength;
-
-    public string GetName() { return name; } public void SetName(string value) { name = value; }
-    public string GetMd5() { return md5; }public void SetMd5(string value) { md5 = value; }
-    public byte[] GetData() { return data; } public void SetData(byte[] value) { data = value; }
-    public int GetDataLength() { return dataLength; } public void SetDataLength(int value) { dataLength = value; }
+    public string name;
+    public string md5;
+    public byte[] data;
+    public int dataLength;
 }
 
 public class AssetList
@@ -255,6 +252,9 @@ public class Preferences
     }
     internal GamePlatform platform;
     internal DictionaryStringString items;
+    
+    public void SetPlatform(GamePlatform value_) { platform = value_; }
+    public DictionaryStringString GetItems() { return items; }
 
     public string GetKey(int i)
     {
@@ -270,7 +270,7 @@ public class Preferences
 
     public int GetKeysCount()
     {
-        return items.count;
+        return items.size;
     }
 
     public string GetString(string key, string default_)
@@ -340,10 +340,10 @@ public class UriCi
     internal string ip;
     internal int port;
     internal DictionaryStringString get;
-    public string GetUrl() { return url; }
-    public string GetIp() { return ip; }
-    public int GetPort() { return port; }
-    public DictionaryStringString GetGet() { return get; }
+    public string GetUrl() { return url; } public void SetUrl(string value_) { url = value_; }
+    public string GetIp() { return ip; } public void SetIp(string value_) { ip = value_; }
+    public int GetPort() { return port; } public void SetPort(int value_) { port = value_; }
+    public DictionaryStringString GetGet() { return get; } public void SetGet(DictionaryStringString value_) { get = value_; }
 }
 
 public class EnetHost
@@ -360,6 +360,9 @@ public abstract class EnetEvent
 public class EnetEventRef
 {
     internal EnetEvent e;
+    
+    public EnetEvent GetEvent() { return e; }
+    public void SetEvent(EnetEvent value_) { e = value_; }
 }
 
 public enum EnetEventType
@@ -393,9 +396,6 @@ public abstract class EnetPacket
     public abstract void Dispose();
 }
 
-public class MonitorObject
-{
-}
 
 public class FloatRef
 {

@@ -20,19 +20,18 @@ namespace ManicDigger.Renderers
 		{
 			Font font;
 			//outlined font looks smaller
-			float oldfontsize = t.fontsize;
-			t.fontsize = Math.Max(t.fontsize, 9);
-			t.fontsize *= 1.65f;
+			float fontsize = Math.Max(t.GetFontSize(), 9);
+			fontsize *= 1.65f;
 			try
 			{
-				font = new Font(t.GetFontFamily(), t.fontsize, (FontStyle)t.GetFontStyle());
+				font = new Font(t.GetFontFamily(), fontsize, (FontStyle)t.GetFontStyle());
 			}
 			catch
 			{
 				throw new Exception();
 			}
 
-			SizeF size = MeasureTextSize(t.text, font);
+			SizeF size = MeasureTextSize(t.GetText(), font);
 			size.Width *= 0.7f;
 
 			SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
@@ -50,18 +49,18 @@ namespace ManicDigger.Renderers
 					g2.FillRectangle(new SolidBrush(Color.FromArgb(textalpha, 0, 0, 0)), 0, 0, size.Width, size.Height);
 					g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
 					Rectangle rect = new Rectangle() { X = 0, Y = 0 };
-					using (GraphicsPath path = GetStringPath(t.text, t.fontsize, rect, font, format))
+					using (GraphicsPath path = GetStringPath(t.GetText(), fontsize, rect, font, format))
 					{
 						g2.SmoothingMode = SmoothingMode.AntiAlias;
 						RectangleF off = rect;
 						off.Offset(2, 2);
-						using (GraphicsPath offPath = GetStringPath(t.text, t.fontsize, off, font, format))
+						using (GraphicsPath offPath = GetStringPath(t.GetText(), fontsize, off, font, format))
 						{
 							Brush b = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
 							g2.FillPath(b, offPath);
 							b.Dispose();
 						}
-						g2.FillPath(new SolidBrush(Color.FromArgb(t.color)), path);
+						g2.FillPath(new SolidBrush(Color.FromArgb(t.GetColor())), path);
 						g2.DrawPath(Pens.Black, path);
 					}
 				}
@@ -74,14 +73,14 @@ namespace ManicDigger.Renderers
 			Font font;
 			try
 			{
-				font = new Font(t.GetFontFamily(), t.fontsize, (FontStyle)t.GetFontStyle());
+				font = new Font(t.GetFontFamily(), t.GetFontSize(), (FontStyle)t.GetFontStyle());
 			}
 			catch
 			{
 				throw new Exception();
 			}
 
-			SizeF size = MeasureTextSize(t.text, font);
+			SizeF size = MeasureTextSize(t.GetText(), font);
 			SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
 			if (size2.Width == 0 || size2.Height == 0)
 			{
@@ -95,7 +94,7 @@ namespace ManicDigger.Renderers
 					// Draw black background
 					g2.FillRectangle(new SolidBrush(Color.Black), 0, 0, size.Width, size.Height);
 					// Draw text
-					g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(t.color)), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0);
 				}
 			}
 			return bmp2;
@@ -103,9 +102,8 @@ namespace ManicDigger.Renderers
 
 		private Bitmap simpleFont(Text_ t)
 		{
-			float fontsize = t.fontsize;
 			Font font;
-			fontsize = Math.Max(t.fontsize, 9);
+			float fontsize = Math.Max(t.GetFontSize(), 9);
 			fontsize *= 1.1f;
 			try
 			{
@@ -116,7 +114,7 @@ namespace ManicDigger.Renderers
 				throw new Exception();
 			}
 
-			SizeF size = MeasureTextSize(t.text, font);
+			SizeF size = MeasureTextSize(t.GetText(), font);
 			SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
 			if (size2.Width == 0 || size2.Height == 0)
 			{
@@ -131,7 +129,7 @@ namespace ManicDigger.Renderers
 					g2.SmoothingMode = SmoothingMode.AntiAlias;
 					g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 					// Draw text
-					g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(t.color)), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0);
 				}
 			}
 			return bmp2;
@@ -139,9 +137,8 @@ namespace ManicDigger.Renderers
 
 		private Bitmap niceFont(Text_ t)
 		{
-			float fontsize = t.fontsize;
 			Font font;
-			fontsize = Math.Max(fontsize, 9);
+			float fontsize = Math.Max(t.GetFontSize(), 9);
 			fontsize *= 1.1f;
 			try
 			{
@@ -152,7 +149,7 @@ namespace ManicDigger.Renderers
 				throw new Exception();
 			}
 
-			SizeF size = MeasureTextSize(t.text, font);
+			SizeF size = MeasureTextSize(t.GetText(), font);
 			SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
 			if (size2.Width == 0 || size2.Height == 0)
 			{
@@ -172,10 +169,10 @@ namespace ManicDigger.Renderers
 					// Draw text shadow
 					Matrix mx = new Matrix(1f, 0, 0, 1f, 1, 1);
 					g2.Transform = mx;
-					g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(128, Color.Black)), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(128, Color.Black)), 0, 0);
 					g2.ResetTransform();
 					// Draw text
-					g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(t.color)), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0);
 				}
 			}
 			return bmp2;

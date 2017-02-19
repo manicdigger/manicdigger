@@ -1335,24 +1335,8 @@ PlatformJs.prototype.byteArrayLength = function(arr) {
 	return arr.length;
 }
 
-PlatformJs.prototype.castToDummyNetOutgoingMessage = function(message) {
-	return message;
-}
-
-PlatformJs.prototype.castToEnetNetConnection = function(connection) {
-	return connection;
-}
-
-PlatformJs.prototype.castToEnetNetOutgoingMessage = function(msg) {
-	return msg;
-}
-
 PlatformJs.prototype.castToPlayerInterpolationState = function(a) {
 	return a;
-}
-
-PlatformJs.prototype.castToTcpNetOutgoingMessage = function(message) {
-	return message;
 }
 
 PlatformJs.prototype.changeResolution = function(width, height, bitsPerPixel, refreshRate) {
@@ -1546,9 +1530,6 @@ PlatformJs.prototype.enetHostConnect = function(host, hostName, port, data, chan
 }
 
 PlatformJs.prototype.enetHostInitialize = function(host, address, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth) {
-}
-
-PlatformJs.prototype.enetHostInitializeServer = function(host, port, peerLimit) {
 }
 
 PlatformJs.prototype.enetHostService = function(host, timeout, enetEvent) {
@@ -2091,6 +2072,14 @@ PlatformJs.prototype.singlePlayerServerLoaded = function() {
 }
 
 PlatformJs.prototype.singlePlayerServerStart = function(saveFilename) {
+}
+
+PlatformJs.prototype.languageNativeAvailable = function() {
+	return false;
+}
+
+PlatformJs.prototype.getLanguageHandler = function() {
+	return new LanguageCi();
 }
 
 PlatformJs.prototype.stringContains = function(a, b) {

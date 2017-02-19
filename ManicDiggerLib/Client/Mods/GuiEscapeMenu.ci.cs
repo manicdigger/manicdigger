@@ -25,7 +25,7 @@
     int widgetsCount;
     void MainSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
         buttonMainReturnToGame = new Button();
         buttonMainReturnToGame.Text = language.ReturnToGame();
         buttonMainOptions = new Button();
@@ -62,7 +62,7 @@
     Button optionsReturnToMainMenu;
     void OptionsSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
         optionsGraphics = new Button();
         optionsGraphics.Text = language.Graphics();
         optionsKeys = new Button();
@@ -111,7 +111,7 @@
     void GraphicsSet()
     {
         OptionsCi options = game.options;
-        Language language = game.language;
+        LanguageCi language = game.language;
         graphicsOptionSmoothShadows = new Button();
         graphicsOptionSmoothShadows.Text = game.platform.StringFormat(language.OptionSmoothShadows(), options.Smoothshadows ? language.On() : language.Off());
         graphicsOptionDarkenSides = new Button();
@@ -203,7 +203,7 @@
     Button otherLanguageSetting;
     void OtherSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
 
         otherSoundOption = new Button();
         otherSoundOption.Text = game.platform.StringFormat(language.SoundOption(), (game.AudioEnabled ? language.On() : language.Off()));
@@ -250,7 +250,7 @@
     const int keyButtonsCount = 1024;
     void KeysSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
 
         keyButtons = new Button[keyButtonsCount];
         for (int i = 0; i < keyButtonsCount; i++)
@@ -351,7 +351,7 @@
 
     void SetEscapeMenuState(EscapeMenuState state)
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
         escapemenustate = state;
         WidgetsClear();
         if (state == EscapeMenuState.Main)
@@ -564,7 +564,7 @@
         {
             helps[i] = null;
         }
-        Language language = game.language;
+        LanguageCi language = game.language;
         int count = 0;
         helps[count++] = KeyHelpCreate(language.KeyMoveFoward(), GlKeys.W);
         helps[count++] = KeyHelpCreate(language.KeyMoveBack(), GlKeys.S);
@@ -799,12 +799,8 @@ public class KeyHelp
 
 public class DisplayResolutionCi
 {
-    internal int Width;
-    internal int Height;
-    internal int BitsPerPixel;
-    internal float RefreshRate;
-    public int GetWidth() { return Width; } public void SetWidth(int value) { Width = value; }
-    public int GetHeight() { return Height; } public void SetHeight(int value) { Height = value; }
-    public int GetBitsPerPixel() { return BitsPerPixel; } public void SetBitsPerPixel(int value) { BitsPerPixel = value; }
-    public float GetRefreshRate() { return RefreshRate; } public void SetRefreshRate(float value) { RefreshRate = value; }
+    public int Width;
+    public int Height;
+    public int BitsPerPixel;
+    public float RefreshRate;
 }

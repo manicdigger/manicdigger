@@ -68,12 +68,6 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="csogg">
-      <HintPath>..\Lib\csogg.dll</HintPath>
-    </Reference>
-    <Reference Include="csvorbis">
-      <HintPath>..\Lib\csvorbis.dll</HintPath>
-    </Reference>
     <Reference Include="LibNoise">
       <HintPath>..\Lib\LibNoise.dll</HintPath>
     </Reference>
@@ -101,7 +95,6 @@
     <Compile Include="..\Packet.Serializer.ci.cs">
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
-    <Compile Include="ClientNative\PlatformNative.cs" />
     <Compile Include="Client\Misc\AnimatedModel.ci.cs" />
     <Compile Include="Client\MainMenu\ConnectToIp.ci.cs" />
     <Compile Include="Client\MainMenu\GameScreen.ci.cs" />
@@ -112,6 +105,7 @@
     <Compile Include="Client\MainMenu\Singleplayer.ci.cs" />
     <Compile Include="Client\Misc\Collections.ci.cs" />
     <Compile Include="Client\Misc\GameMisc.ci.cs" />
+    <Compile Include="Client\Misc\LanguageCi.ci.cs" />
     <Compile Include="Client\Misc\Packets.ci.cs" />
     <Compile Include="Client\Misc\TaskScheduler.ci.cs" />
     <Compile Include="Client\Mods\Audio.ci.cs" />
@@ -120,10 +114,6 @@
     <Compile Include="Client\Mods\DrawArea.ci.cs" />
     <Compile Include="Client\Mods\GuiCrafting.ci.cs" />
     <Compile Include="Client\Mods\GuiEscapeMenu.ci.cs" />
-    <Compile Include="ClientNative\Audio.cs" />
-    <Compile Include="ClientNative\AviWriter.cs" />
-    <Compile Include="ClientNative\Misc.cs" />
-    <Compile Include="ClientNative\Screenshot.cs" />
     <Compile Include="Client\Mods\GuiPlayerStats.ci.cs" />
     <Compile Include="Client\Mods\GuiInventory.ci.cs" />
     <Compile Include="Client\Mods\BlockDamageToPlayer.ci.cs" />
@@ -161,16 +151,14 @@
     <Compile Include="Client\Mods\SkySphereAnimated.ci.cs" />
     <Compile Include="Client\Mods\GuiTouchButtons.ci.cs" />
     <Compile Include="Client\Mods\WalkSound.ci.cs" />
-    <Compile Include="Client\Misc\NetworkTcp.ci.cs" />
+    <Compile Include="Client\Misc\NetworkTcpClient.ci.cs" />
     <Compile Include="Client\Misc\QueryClient.ci.cs" />
     <Compile Include="Client\Server.ci.cs" />
-    <Compile Include="Client\Misc\ServerSimple.ci.cs" />
     <Compile Include="Client\Mods\GuiTextEditor.ci.cs" />
     <Compile Include="Client\Misc\FrustumCulling.ci.cs" />
     <Compile Include="Client\Mods\GuiChat.ci.cs" />
     <Compile Include="Client\Misc\Interpolation.ci.cs" />
     <Compile Include="Client\Misc\Inventory.ci.cs" />
-    <Compile Include="Client\Misc\Language.ci.cs" />
     <Compile Include="Client\Misc\MeshBatcher.ci.cs" />
     <Compile Include="Client\Mods\AutoCamera.ci.cs" />
     <Compile Include="Client\Mods\CharacterPhysics.ci.cs" />
@@ -178,9 +166,8 @@
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc\Misc.ci.cs" />
     <Compile Include="Client\Mods\FpsHistoryGraph.ci.cs" />
-    <Compile Include="Client\Misc\Network.ci.cs" />
-    <Compile Include="Client\Misc\NetworkDummy.ci.cs" />
-    <Compile Include="Client\Misc\NetworkEnet.ci.cs" />
+    <Compile Include="Client\Misc\NetworkDummyClient.ci.cs" />
+    <Compile Include="Client\Misc\NetworkEnetClient.ci.cs" />
     <Compile Include="Client\Mods\ParticleEffectBlockBreak.ci.cs" />
     <Compile Include="Client\Misc\Primitives.ci.cs" />
     <Compile Include="Client\Misc\Shadows.ci.cs" />
@@ -189,13 +176,31 @@
     <Compile Include="Client\Misc\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\Misc\GlMatrix.ci.cs" />
     <Compile Include="Client\Misc\NetworkWebSocket.ci.cs" />
+    <Compile Include="Client\SimpleServer\NetworkDummyServer.ci.cs" />
+    <Compile Include="Client\SimpleServer\ServerSimple.ci.cs" />
+    <Compile Include="Common\AssetLoader.cs" />
+    <Compile Include="Common\Compression.cs" />
+    <Compile Include="Common\CrashReporter.cs" />
+    <Compile Include="Common\GameStorePath.cs" />
+    <Compile Include="Common\GameVersion.cs" />
+    <Compile Include="Common\Language.ci.cs" />
+    <Compile Include="Common\LanguageNative.cs" />
+    <Compile Include="Common\Misc.cs" />
+    <Compile Include="Common\Network.ci.cs" />
+    <Compile Include="Common\NetworkDummyCommon.ci.cs" />
+    <Compile Include="Common\NetworkEnetCommon.cs" />
+    <Compile Include="Common\NetworkTcpCommon.cs" />
+    <Compile Include="Common\Ping.ci.cs" />
+    <Compile Include="Common\XmlTool.cs" />
+    <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Mods\Fortress\Default.cs" />
     <Compile Include="Server\Mods\Fortress\Food.cs" />
     <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\Mods\War\Food.cs" />
+    <Compile Include="Server\NetworkDummyServer.cs" />
+    <Compile Include="Server\NetworkEnetServer.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\ServerEntity.cs" />
-    <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
@@ -254,16 +259,13 @@
     <Compile Include="Server\ServerMonitor.cs" />
     <Compile Include="Server\ServerWorldManager.cs" />
     <Compile Include="Server\Mod.cs" />
-    <Compile Include="ClientNative\OggDecoder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
-    <Compile Include="ClientNative\TextRenderer.cs" />
     <Compile Include="Server\Systems\Sign.cs" />
     <Compile Include="Server\Systems\UnloadUnusedChunks.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="c.snk" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Packet.proto">
@@ -285,6 +287,9 @@
       <Link>ENetX86.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Client\SimpleServer" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

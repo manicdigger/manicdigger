@@ -14,7 +14,7 @@
     }
 
     internal GamePlatform p;
-    internal Language lang;
+    internal LanguageCi lang;
 
     internal float one;
 
@@ -27,7 +27,7 @@
         this.p = p_;
 
         //Initialize translations
-        lang = new Language();
+        lang = new LanguageCi();
         lang.platform = p;
         lang.LoadTranslations();
         p.SetTitle(lang.GameName());
@@ -958,6 +958,12 @@ public class ThumbnailResponseCi
     internal string serverMessage;
     internal byte[] data;
     internal int dataLength;
+    
+    public bool GetDone() { return done; } public void SetDone(bool value_) { done = value_; }
+    public bool GetError() { return error; } public void SetError(bool value_) { error = value_; }
+    public byte[] GetData() { return data; } public void SetData(byte[] value_) { data = value_; }
+    public int GetDataLength() { return dataLength; } public void SetDataLength(int value_) { dataLength = value_; }
+    public string GetServerMessage() { return serverMessage; } public void SetServerMessage(string value_) { serverMessage = value_; }
 }
 
 public class ServerOnList

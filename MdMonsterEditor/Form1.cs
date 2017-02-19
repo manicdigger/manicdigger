@@ -2,15 +2,16 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Text;
 using System.Windows.Forms;
-using OpenTK.Graphics.OpenGL;
-using OpenTK;
 using ManicDigger;
-using System.Diagnostics;
-using ManicDigger.Renderers;
-using System.IO;
+using ManicDigger.ClientNative;
+using ManicDigger.Server;
+using OpenTK;
+using OpenTK.Graphics.OpenGL;
 
 namespace MdMonsterEditor
 {
@@ -23,7 +24,10 @@ namespace MdMonsterEditor
 		IGetFileStream getfile;
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+			string[] datapaths = new[] {
+				Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"),
+				"data"
+			};
 			getfile = new GetFileStream(datapaths);
 			richTextBox1.Text = new StreamReader(getfile.GetFile("player.txt")).ReadToEnd();
 			RichTextBoxContextMenu(richTextBox1);
@@ -44,7 +48,10 @@ namespace MdMonsterEditor
 		{
 			ContextMenu cm = new ContextMenu();
 			MenuItem mi = new MenuItem("Cut");
-			mi.Click += (a, b) => { richTextBox.Cut(); };
+			mi.Click += (a, b) =>
+			{
+				richTextBox.Cut();
+			};
 			cm.MenuItems.Add(mi);
 
 			mi = new MenuItem("Copy");
@@ -231,10 +238,14 @@ namespace MdMonsterEditor
 			RectangleF rect = new RectangleF(0, 0, 1 * width, 1 * height);
 			float x2 = x1 + width;
 			float y2 = y1 + height;
-			GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex3(x2, z1, y2);
-			GL.TexCoord2(rect.Right, rect.Top); GL.Vertex3(x2, z1, y1);
-			GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, z1, y1);
-			GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, z1, y2);
+			GL.TexCoord2(rect.Right, rect.Bottom);
+			GL.Vertex3(x2, z1, y2);
+			GL.TexCoord2(rect.Right, rect.Top);
+			GL.Vertex3(x2, z1, y1);
+			GL.TexCoord2(rect.Left, rect.Top);
+			GL.Vertex3(x1, z1, y1);
+			GL.TexCoord2(rect.Left, rect.Bottom);
+			GL.Vertex3(x1, z1, y2);
 		}
 		AnimatedModelRenderer d;
 		//CharacterDrawerBlock d = new CharacterDrawerBlock();
@@ -273,8 +284,7 @@ namespace MdMonsterEditor
 			Vector3 center_ = new Vector3(center.GetX(), center.GetY(), center.GetZ());
 
 			Matrix4 camera = Matrix4.LookAt(position_, center_, up);
-			m = new float[]
-			{
+			m = new float[] {
 				camera.M11, camera.M12, camera.M13, camera.M14,
 				camera.M21, camera.M22, camera.M23, camera.M24,
 				camera.M31, camera.M32, camera.M33, camera.M34,
@@ -306,8 +316,14 @@ namespace MdMonsterEditor
 				oldmousey = e.Y;
 				overheadcameraK.SetT(overheadcameraK.GetT() + (float)deltax * 0.05f);
 				overheadcameraK.SetAngle(overheadcameraK.GetAngle() + (float)deltay * 1f);
-				if (overheadcameraK.GetAngle() > 89) { overheadcameraK.SetAngle(89); }
-				if (overheadcameraK.GetAngle() < -89) { overheadcameraK.SetAngle(-89); }
+				if (overheadcameraK.GetAngle() > 89)
+				{
+					overheadcameraK.SetAngle(89);
+				}
+				if (overheadcameraK.GetAngle() < -89)
+				{
+					overheadcameraK.SetAngle(-89);
+				}
 				glControl1.Invalidate();
 			}
 		}
