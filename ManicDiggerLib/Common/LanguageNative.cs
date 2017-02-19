@@ -19,33 +19,33 @@ namespace ManicDigger.Common
 			loadedLanguages = new string[loadedLanguagesMax];
 		}
 
-		internal GamePlatform platform;
 		internal string[] loadedLanguages;
 		internal int loadedLanguagesMax;
 		internal int loadedLanguagesCount;
 
 		public override void LoadTranslations()
 		{
-			IntRef fileCount = IntRef.Create(0);
-			string[] fileList = platform.DirectoryGetFiles(platform.PathCombine("data", "localization"), fileCount);
-			//Iterate over all files in the directory
-			for (int i = 0; i < fileCount.value; i++)
+			string translationPath = Path.Combine("data", "localization");
+			if (Directory.Exists(translationPath))
 			{
-				IntRef lineCount = IntRef.Create(0);
-				string[] lineList = platform.FileReadAllLines(fileList[i], lineCount);
-				//Iterate over each line in these files
-				for (int j = 1; j < lineCount.value; j++)
+				string[] fileList = Directory.GetFiles(translationPath);
+				//Iterate over all files in the directory
+				for (int i = 0; i < fileList.Length; i++)
 				{
-					if (platform.StringEmpty(lineList[j]))
+					string[] lineList = File.ReadAllLines(fileList[i]);
+					//Iterate over each line in these files
+					for (int j = 1; j < lineList.Length; j++)
 					{
-						//Skip line if empty
-						continue;
-					}
-					IntRef splitCount = IntRef.Create(0);
-					string[] splitList = platform.StringSplit(lineList[j], "=", splitCount);
-					if (splitCount.value >= 2)
-					{
-						Add(lineList[0], splitList[0], splitList[1]);
+						if (string.IsNullOrEmpty(lineList[j]))
+						{
+							//Skip line if empty
+							continue;
+						}
+						string[] splitList = lineList[j].Split('=');
+						if (splitList.Length >= 2)
+						{
+							Add(lineList[0], splitList[0], splitList[1]);
+						}
 					}
 				}
 			}
@@ -93,8 +93,8 @@ namespace ManicDigger.Common
 			{
 				Add(language, id, translated);
 			}
-		//Otherwise overwrite the existing string
-		else
+			//Otherwise overwrite the existing string
+			else
 			{
 				int replaceIndex = -1;
 				for (int i = 0; i < stringsCount; i++)
@@ -148,15 +148,11 @@ namespace ManicDigger.Common
 
 		public override string Get(string id)
 		{
+			// English as default language
 			string currentLanguage = "en";
 			if (OverrideLanguage != null)
 			{
 				currentLanguage = OverrideLanguage;  //Use specific language if defined
-			}
-			else
-			if (platform != null)
-			{
-				currentLanguage = platform.GetLanguageIso6391();  //Else use system language if defined
 			}
 			for (int i = 0; i < stringsCount; i++)
 			{
@@ -187,15 +183,11 @@ namespace ManicDigger.Common
 	
 		public override string GetUsedLanguage()
 		{
+			// English as default language
 			string currentLanguage = "en";
 			if (OverrideLanguage != null)
 			{
 				currentLanguage = OverrideLanguage;  //Use specific language if defined
-			}
-			else
-			if (platform != null)
-			{
-				currentLanguage = platform.GetLanguageIso6391();  //Else use system language if defined
 			}
 			return currentLanguage;
 		}
