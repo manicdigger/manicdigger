@@ -234,25 +234,27 @@ namespace ManicDigger.ClientNative
 			System.Windows.Forms.Clipboard.SetText(s);
 		}
 		ManicDigger.Renderers.TextRenderer r = new ManicDigger.Renderers.TextRenderer();
-		Dictionary<TextAndSize, SizeF> textsizes = new Dictionary<TextAndSize, SizeF>();
-		public SizeF TextSize(string text, float fontsize)
+		Dictionary<TextAndFont, SizeF> textsizes = new Dictionary<TextAndFont, SizeF>();
+		public SizeF TextSize(string text, FontCi font)
 		{
 			SizeF size;
-			if (textsizes.TryGetValue(new TextAndSize() {
+			if (textsizes.TryGetValue(new TextAndFont() {
 				text = text,
-				size = fontsize
+				size = font.GetFontSize(),
+				family = font.GetFontFamily(),
+				style = font.GetFontStyle()
 			}, out size))
 			{
 				return size;
 			}
-			size = textrenderer.MeasureTextSize(text, fontsize);
-			textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
+			size = textrenderer.MeasureTextSize(text, font);
+			textsizes[new TextAndFont() { text = text, size = font.GetFontSize(), family = font.GetFontFamily(), style = font.GetFontStyle() }] = size;
 			return size;
 		}
 
-		public override void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight)
+		public override void TextSize(string text, FontCi font, IntRef outWidth, IntRef outHeight)
 		{
-			SizeF size = TextSize(text, fontSize);
+			SizeF size = TextSize(text, font);
 			outWidth.SetValue((int)size.Width);
 			outHeight.SetValue((int)size.Height);
 		}

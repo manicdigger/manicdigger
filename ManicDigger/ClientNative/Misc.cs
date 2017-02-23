@@ -81,22 +81,27 @@ namespace ManicDigger.ClientNative
 	}
 	
 	
-	struct TextAndSize
+	struct TextAndFont
 	{
 		public string text;
 		public float size;
+		public string family;
+		public int style;
 		public override int GetHashCode()
 		{
 			if (text == null) {
 				return 0;
 			}
-			return text.GetHashCode() ^ size.GetHashCode();
+			return text.GetHashCode() ^ size.GetHashCode() ^ family.GetHashCode() ^ style.GetHashCode();
 		}
 		public override bool Equals(object obj)
 		{
-			if (obj is TextAndSize) {
-				TextAndSize other = (TextAndSize)obj;
-				return this.text == other.text && this.size == other.size;
+			if (obj is TextAndFont) {
+				TextAndFont other = (TextAndFont)obj;
+				return this.text == other.text
+					&& this.size == other.size
+					&& this.family == other.family
+					&& this.style == other.style;
 			}
 			return base.Equals(obj);
 		}

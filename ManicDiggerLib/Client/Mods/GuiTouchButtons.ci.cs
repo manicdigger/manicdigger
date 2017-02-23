@@ -17,6 +17,7 @@
         widgets[3] = buttonCamera;
         touchIdMove = -1;
         touchIdRotate = -1;
+        fontGuiTouchButtons = new FontCi();
     }
 
     bool touchButtonsEnabled;
@@ -24,6 +25,7 @@
     MenuWidget buttonInventory;
     MenuWidget buttonTalk;
     MenuWidget buttonCamera;
+    FontCi fontGuiTouchButtons;
 
     public override void OnNewFrameDraw2d(Game game_, float deltaTime)
     {
@@ -66,8 +68,9 @@
         {
             if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
             {
-                game.Draw2dText1("Move", game.Width() * 5 / 100, game.Height() * 85 / 100, game.platform.FloatToInt(Scale() * 50), null, false);
-                game.Draw2dText1("Look", game.Width() * 80 / 100, game.Height() * 85 / 100, game.platform.FloatToInt(Scale() * 50), null, false);
+                fontGuiTouchButtons.size = Scale() * 50;
+                game.Draw2dText("Move", fontGuiTouchButtons, game.Width() * 5 / 100, game.Height() * 85 / 100, null, false);
+                game.Draw2dText("Look", fontGuiTouchButtons, game.Width() * 80 / 100, game.Height() * 85 / 100, null, false);
             }
             DrawWidgets();
         }

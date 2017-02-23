@@ -2219,12 +2219,12 @@ PlatformJs.prototype.tcpReceive = function(data, dataLength) {
 PlatformJs.prototype.tcpSend = function(data, length) {
 }
 
-PlatformJs.prototype.textSize = function(text, fontSize, outWidth, outHeight) {
+PlatformJs.prototype.textSize = function(text, font, outWidth, outHeight) {
 	var canvas1 = document.getElementById('textureCanvas');
 	var ctx = canvas1.getContext('2d');
-	setFont(ctx, text, fontSize, 0);
+	setFont(ctx, text, font.size, 0);
 	outWidth.value = ctx.measureText(text).width;
-	outHeight.value = 2 * fontSize;
+	outHeight.value = 2 * font.size;
 }
 
 PlatformJs.prototype.threadSpinWait = function(iterations) {

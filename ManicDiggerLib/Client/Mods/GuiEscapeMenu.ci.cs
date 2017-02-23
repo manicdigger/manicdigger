@@ -16,11 +16,13 @@
         fontValues[3] = 3;
         widgets = new Button[1024];
         keyselectid = -1;
+        fontEscapeMenu = FontCi.Create("Arial", 20, 0);
     }
     float one;
     Button buttonMainReturnToGame;
     Button buttonMainOptions;
     Button buttonMainExit;
+    FontCi fontEscapeMenu;
 
     int widgetsCount;
     void MainSet()
@@ -357,29 +359,29 @@
         if (state == EscapeMenuState.Main)
         {
             MainSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Options)
         {
             OptionsSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Graphics)
         {
             GraphicsSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Other)
         {
             OtherSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Keys)
         {
             KeysSet();
-            int fontsize = 12;
+            FontCi fontKeys = FontCi.Create("Arial", 12, 0);
             int textheight = 20;
-            MakeSimpleOptions(fontsize, textheight);
+            MakeSimpleOptions(fontKeys, textheight);
         }
     }
 
@@ -505,14 +507,14 @@
         return game.platform.KeyName(key);
     }
 
-    void MakeSimpleOptions(int fontsize, int textheight)
+    void MakeSimpleOptions(FontCi font, int textheight)
     {
         int starty = game.ycenter(widgetsCount * textheight);
         for (int i = 0; i < widgetsCount; i++)
         {
             string s = widgets[i].Text;
-            float sizeWidth = game.TextSizeWidth(s, fontsize);
-            float sizeHeight = game.TextSizeHeight(s, fontsize);
+            float sizeWidth = game.TextSizeWidth(s, font);
+            float sizeHeight = game.TextSizeHeight(s, font);
             int Width = game.platform.FloatToInt(sizeWidth) + 10;
             int Height = game.platform.FloatToInt(sizeHeight);
             int X = game.xcenter(sizeWidth);
@@ -521,7 +523,7 @@
             widgets[i].y = Y;
             widgets[i].width = Width;
             widgets[i].height = Height;
-            widgets[i].fontsize = fontsize;
+            widgets[i].font = font;
             if (i == keyselectid)
             {
                 widgets[i].fontcolor = Game.ColorFromArgb(255, 0, 255, 0);
@@ -552,7 +554,7 @@
         for (int i = 0; i < widgetsCount; i++)
         {
             Button w = widgets[i];
-            game.Draw2dText1(w.Text, w.x, w.y, w.fontsize, IntRef.Create(w.selected ? w.fontcolorselected : w.fontcolor), false);
+            game.Draw2dText(w.Text, w.font, w.x, w.y, IntRef.Create(w.selected ? w.fontcolorselected : w.fontcolor), false);
         }
     }
     Button[] widgets;
@@ -778,7 +780,7 @@ public class Button
     {
         fontcolor = Game.ColorFromArgb(255, 255, 255, 255);
         fontcolorselected = Game.ColorFromArgb(255, 255, 0, 0);
-        fontsize = 20;
+        font = new FontCi();
     }
     internal int x;
     internal int y;
@@ -786,7 +788,7 @@ public class Button
     internal int height;
     internal string Text;
     internal bool selected;
-    internal int fontsize;
+    internal FontCi font;
     internal int fontcolor;
     internal int fontcolorselected;
 }

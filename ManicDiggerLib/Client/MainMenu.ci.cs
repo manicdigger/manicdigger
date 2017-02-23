@@ -11,10 +11,13 @@
         loginClient = new LoginClientCi();
         assets = new AssetList();
         assetsLoadProgress = new FloatRef();
+        fontMenuHeading = new FontCi();
+        fontMenuHeading.size = 20;
     }
 
     internal GamePlatform p;
     internal LanguageCi lang;
+    internal FontCi fontMenuHeading;
 
     internal float one;
 
@@ -120,19 +123,19 @@
 
     Screen screen;
 
-    internal void DrawButton(string text, float fontSize, float dx, float dy, float dw, float dh, bool pressed)
+    internal void DrawButton(string text, FontCi font, float dx, float dy, float dw, float dh, bool pressed)
     {
         Draw2dQuad(pressed ? GetTexture("button_sel.png") : GetTexture("button.png"), dx, dy, dw, dh);
         
         if ((text != null) && (text != ""))
         {
-            DrawText(text, fontSize, dx + dw / 2, dy + dh / 2, TextAlign.Center, TextBaseline.Middle);
+            DrawText(text, font, dx + dw / 2, dy + dh / 2, TextAlign.Center, TextBaseline.Middle);
         }
     }
 
-    internal void DrawText(string text, float fontSize, float x, float y, TextAlign align, TextBaseline baseline)
+    internal void DrawText(string text, FontCi font, float x, float y, TextAlign align, TextBaseline baseline)
     {
-        TextTexture t = GetTextTexture(text, fontSize);
+        TextTexture t = GetTextTexture(text, font);
         int dx = 0;
         int dy = 0;
         if (align == TextAlign.Center)
@@ -154,20 +157,7 @@
         Draw2dQuad(t.texture, x + dx, y + dy, t.texturewidth, t.textureheight);
     }
 
-    internal void DrawServerButton(string name, string motd, string gamemode, string playercount, float x, float y, float width, float height, string image)
-    {
-        //Server buttons default to: (screen width - 200) x 64
-        Draw2dQuad(GetTexture("serverlist_entry_background.png"), x, y, width, height);
-        Draw2dQuad(GetTexture(image), x, y, height, height);
-
-        //       value          size    x position              y position              text alignment      text baseline
-        DrawText(name,          14,     x + 70,                 y + 5,                  TextAlign.Left,     TextBaseline.Top);
-        DrawText(gamemode,      12,     x + width - 10,         y + height - 5,         TextAlign.Right,    TextBaseline.Bottom);
-        DrawText(playercount,   12,     x + width - 10,         y + 5,                  TextAlign.Right,    TextBaseline.Top);
-        DrawText(motd,          12,     x + 70,                 y + height - 5,         TextAlign.Left,     TextBaseline.Bottom);
-    }
-
-    TextTexture GetTextTexture(string text, float fontSize)
+    TextTexture GetTextTexture(string text, FontCi font)
     {
         for (int i = 0; i < textTexturesCount; i++)
         {
@@ -176,7 +166,10 @@
             {
                 continue;
             }
-            if (t.text == text && t.size == fontSize)
+            if (t.text == text
+                && t.font.size == font.size
+                && t.font.family == font.family
+                && t.font.style == font.style)
             {
                 return t;
             }
@@ -185,8 +178,7 @@
 
         Text_ text_ = new Text_();
         text_.text = text;
-        text_.fontsize = fontSize;
-        text_.fontfamily = "Arial";
+        text_.font = font;
         text_.color = Game.ColorFromArgb(255, 255, 255, 255);
         BitmapCi textBitmap = textColorRenderer.CreateTextTexture(text_);
 
@@ -194,13 +186,13 @@
         
         IntRef textWidth = new IntRef();
         IntRef textHeight = new IntRef();
-        p.TextSize(text, fontSize, textWidth, textHeight);
+        p.TextSize(text, font, textWidth, textHeight);
 
         textTexture.texture = texture;
         textTexture.texturewidth = p.FloatToInt(p.BitmapGetWidth(textBitmap));
         textTexture.textureheight = p.FloatToInt(p.BitmapGetHeight(textBitmap));
         textTexture.text = text;
-        textTexture.size = fontSize;
+        textTexture.font = font;
         textTexture.textwidth = textWidth.value;
         textTexture.textheight = textHeight.value;
 
@@ -621,7 +613,7 @@
 
 public class TextTexture
 {
-    internal float size;
+    internal FontCi font;
     internal string text;
     internal int texture;
     internal int texturewidth;
@@ -853,37 +845,14 @@ public class Screen
                         {
                             menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
                         }
-                        menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
+                        menu.DrawText(text, w.font, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
                     }
                     else if (w.buttonStyle == ButtonStyle.Button)
                     {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
+                        menu.DrawButton(text, w.font, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
                         if (w.description != null)
                         {
-                            menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
-                        }
-                    }
-                    else
-                    {
-                        string[] strings = menu.p.StringSplit(w.text, "\n", new IntRef());
-                        if (w.selected)
-                        {
-                            //Highlight text if selected
-                            strings[0] = StringTools.StringAppend(menu.p, "&2", strings[0]);
-                            strings[1] = StringTools.StringAppend(menu.p, "&2", strings[1]);
-                            strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
-                            strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
-                        }
-                        menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image);
-                        if (w.description != null)
-                        {
-                            //Display a warning sign, when server does not respond to queries
-                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38 * menu.GetScale(), w.y, w.sizey / 2, w.sizey / 2);
-                        }
-                        if (strings[4] != menu.p.GetGameVersion())
-                        {
-                            //Display an icon if server version differs from client version
-                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38 * menu.GetScale(), w.y + w.sizey / 2, w.sizey / 2, w.sizey / 2);
+                            menu.DrawText(w.description, w.font, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
                         }
                     }
                 }
@@ -903,15 +872,15 @@ public class Screen
                         {
                             menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
                         }
-                        menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
+                        menu.DrawText(text, w.font, w.x, w.y, TextAlign.Left, TextBaseline.Top);
                     }
                     else
                     {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing || w.hasKeyboardFocus));
+                        menu.DrawButton(text, w.font, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing || w.hasKeyboardFocus));
                     }
                     if (w.description != null)
                     {
-                        menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                        menu.DrawText(w.description, w.font, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
                     }
                 }
             }
@@ -995,7 +964,8 @@ public class MenuWidget
     public MenuWidget()
     {
         visible = true;
-        fontSize = 14;
+        font = new FontCi();
+        font.size = 14;
         nextWidget = -1;
         hasKeyboardFocus = false;
     }
@@ -1025,7 +995,6 @@ public class MenuWidget
     internal WidgetType type;
     internal bool editing;
     internal bool visible;
-    internal float fontSize;
     internal string description;
     internal bool password;
     internal bool selected;

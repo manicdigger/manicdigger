@@ -31,7 +31,7 @@ public class TextColorRenderer
 		{
 			IntRef outWidth = new IntRef();
 			IntRef outHeight = new IntRef();
-			platform.TextSize(parts[i].text, t.fontsize, outWidth, outHeight);
+			platform.TextSize(parts[i].text, t.font, outWidth, outHeight);
 
 			sizesX[i] = outWidth.value;
 			sizesY[i] = outHeight.value;
@@ -58,9 +58,7 @@ public class TextColorRenderer
 			Text_ partText = new Text_();
 			partText.text = parts[i].text;
 			partText.color = parts[i].color;
-			partText.fontsize = t.fontsize;
-			partText.fontstyle = t.fontstyle;
-			partText.fontfamily = t.fontfamily;
+			partText.font = t.font;
 			
 			BitmapCi partBmp = platform.CreateTextTexture(partText);
 			int partWidth = platform.FloatToInt(platform.BitmapGetWidth(partBmp));

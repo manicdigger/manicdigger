@@ -35,7 +35,7 @@
     // Misc
     public abstract string Timestamp();
     public abstract void ClipboardSetText(string s);
-    public abstract void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight);
+    public abstract void TextSize(string text, FontCi font, IntRef outWidth, IntRef outHeight);
     public abstract void Exit();
     public abstract bool ExitAvailable();
     public abstract string PathSavegames();

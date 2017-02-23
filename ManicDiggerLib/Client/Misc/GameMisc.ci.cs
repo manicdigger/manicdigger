@@ -199,7 +199,7 @@
                         {
                             game.Draw2dTexture(game.WhiteTexture(), screenx + w.x, screeny + w.y, w.sizex, w.sizey, null, 0, w.color, false);
                         }
-                        game.Draw2dText1(text, screenx + game.platform.FloatToInt(w.x), screeny + game.platform.FloatToInt(w.y + w.sizey / 2), game.platform.FloatToInt(w.fontSize), null, false);
+                        game.Draw2dText(text, w.font, screenx + w.x, screeny + w.y + w.sizey / 2, null, false);
                     }
                 }
                 if (w.type == WidgetType.Textbox)
@@ -1610,7 +1610,6 @@ public class ClientModManager1 : ClientModManager
     public override void Draw2dText(string text, float x, float y, float fontsize)
     {
         FontCi font = new FontCi();
-        font.family = "Arial";
         font.size = fontsize;
         game.Draw2dText(text, font, x, y, null, false);
     }
@@ -1767,25 +1766,26 @@ public class CachedTexture
 public class Text_
 {
     internal string text;
-    internal float fontsize;
     internal int color;
-    internal string fontfamily;
-    internal int fontstyle;
+    internal FontCi font;
 
     internal bool Equals_(Text_ t)
     {
         return this.text == t.text
-            && this.fontsize == t.fontsize
             && this.color == t.color
-            && this.fontfamily == t.fontfamily
-            && this.fontstyle == t.fontstyle;
+            && this.font != null
+            && t.font != null
+            && this.font.size == t.font.size
+            && this.font.family == t.font.family
+            && this.font.style == t.font.style;
     }
 
     public string GetText() { return text; } public void SetText(string value) { text = value; }
-    public float GetFontSize() { return fontsize; } public void SetFontSize(float value) { fontsize = value; }
     public int GetColor() { return color; } public void SetColor(int value) { color = value; }
-    public string GetFontFamily() { return fontfamily; } public void SetFontFamily(string value) { fontfamily = value; }
-    public int GetFontStyle() { return fontstyle; } public void SetFontStyle(int value) { fontstyle = value; }
+    public FontCi GetFont() { return font; } public void SetFont(FontCi value) { font = value; }
+    public float GetFontSize() { return font.size; }
+    public string GetFontFamily() { return font.family; }
+    public int GetFontStyle() { return font.style; }
 }
 
 public class CachedTextTexture
@@ -1798,7 +1798,27 @@ public class FontCi
 {
     internal string family;
     internal float size;
+    /// <summary>
+    /// The font style to use. Can be one of the following:<br/>
+    /// 0: Regular<br/>
+    /// 1: Bold<br/>
+    /// 2: Italic<br/>
+    /// 3: Bold Italic<br/>
+    /// 4: Underline<br/>
+    /// 5: Bold Underline<br/>
+    /// 6: Italic Underline<br/>
+    /// 7: Bold Italic Underline<br/>
+    /// 8: Strikethrough<br/>
+    /// </summary>
     internal int style;
+
+    public FontCi()
+    {
+        // Default font style
+        family = "Arial";
+        size = 12;
+        style = 0;
+    }
 
     internal static FontCi Create(string family_, float size_, int style_)
     {
@@ -1808,6 +1828,10 @@ public class FontCi
         f.style = style_;
         return f;
     }
+
+    public float GetFontSize() { return size; }
+    public string GetFontFamily() { return family; }
+    public int GetFontStyle() { return style; }
 }
 
 public class CameraMove
