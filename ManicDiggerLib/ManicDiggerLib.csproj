@@ -105,6 +105,7 @@
     <Compile Include="Client\Misc\LanguageCi.ci.cs" />
     <Compile Include="Client\Misc\Packets.ci.cs" />
     <Compile Include="Client\Misc\TaskScheduler.ci.cs" />
+    <Compile Include="Client\Misc\TextColorRenderer.ci.cs" />
     <Compile Include="Client\Mods\Audio.ci.cs" />
     <Compile Include="Client\Mods\DebugChunk.ci.cs" />
     <Compile Include="Client\Mods\Draw2dMisc.ci.cs" />
