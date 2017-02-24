@@ -14,4 +14,4 @@ mono CiTo.exe -D CITO -D JS -D JSTA -l js-ta -o cito/output/JsTa/Assets.js Asset
 mono CiTo.exe -D CITO -D JS -D JSTA -l js-ta -o cito/output/JsTa/ManicDigger.js $(ls ManicDiggerLib/Client/*.ci.cs) $(ls ManicDiggerLib/Client/Mods/*.ci.cs) $(ls ManicDiggerLib/Client/MainMenu/*.ci.cs) $(ls ManicDiggerLib/Client/Misc/*.ci.cs) $(ls ManicDiggerLib/Client/SimpleServer/*.ci.cs) $(ls ManicDiggerLib/Common/*.ci.cs) Packet.Serializer.ci.cs
 
 # Copy skeleton files
-cp -r cito/platform/JsTa cito/output/JsTa
+cp -r cito/platform/JsTa/* cito/output/JsTa/
