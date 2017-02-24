@@ -1465,9 +1465,9 @@ function cloneCanvas(oldCanvas) {
 
 PlatformJs.prototype.createTextTexture = function(t) {
 	textureCanvas.width = getPowerOfTwo(textureCanvasContext.measureText(t.text).width);
-	textureCanvas.height = getPowerOfTwo(2 * t.fontsize);
+	textureCanvas.height = getPowerOfTwo(2 * t.font.size);
 
-	setFont(textureCanvasContext, t.text, t.fontsize, t.color);
+	setFont(textureCanvasContext, t.text, t.font.size, t.color);
 	textureCanvasContext.fillText(t.text, 0, 0);
 
 	return cloneCanvas(textureCanvas);

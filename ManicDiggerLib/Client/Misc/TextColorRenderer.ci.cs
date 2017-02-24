@@ -172,7 +172,7 @@ public class TextColorRenderer
 			else
 			{
 				// If a space character is found begin a new word
-				if (sChars[i] == ' ')
+				if (platform.IsFastSystem() && sChars[i] == ' ')
 				{
 					// Word boundary detected
 					if (currenttextLength != 0)
