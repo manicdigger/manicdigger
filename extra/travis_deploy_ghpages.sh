@@ -10,6 +10,7 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ]; 
   cp ../ManicDiggerBinary.zip ./ManicDigger`date +%Y-%m-%d`Binary.zip
   cp ../ManicDiggerBinary.zip ./ManicDiggerLatestBinary.zip
   cp ../ManicDiggerSetup.exe ./ManicDigger`date +%Y-%m-%d`Setup.exe
+  mkdir Html;
   cp -r ../cito/output/JsTa/* ./Html
   git add .
   git commit -m "Deployed to Github Pages"
