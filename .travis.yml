@@ -1,15 +1,16 @@
+sudo: false
 language: csharp
 mono:
   - 3.12.0
 
-install:
-# innosetup
- - sudo add-apt-repository -y ppa:ubuntu-wine/ppa
- - sudo add-apt-repository -y ppa:arx/release
- - sudo apt-get update
- - sudo apt-get install wine1.7
- - sudo apt-get install innoextract
- - sudo apt-get clean
+addons:
+  apt:
+    sources:
+    - sourceline: 'ppa:ubuntu-wine/ppa'
+    - sourceline: 'ppa:arx/release'
+    packages:
+    - wine1.7
+    - innoextract
 
 script:
  - xbuild /p:Configuration=Release ManicDigger.sln
