@@ -1766,7 +1766,9 @@ PlatformJs.prototype.isChecksum = function(checksum) {
 }
 
 PlatformJs.prototype.decodeHTMLEntities = function(htmlencodedstring) {
-	return htmlencodedstring;
+	var parser = new DOMParser();
+	var dom = parser.parseFromString('<body>' + htmlencodedstring, 'text/html');
+	return dom.body.textContent;
 }
 
 PlatformJs.prototype.isDebuggerAttached = function() {
