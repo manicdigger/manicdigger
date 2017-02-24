@@ -144,7 +144,7 @@ namespace ManicDigger.ClientNative
 
 		public override bool StringEmpty(string data)
 		{
-			return string.IsNullOrEmpty(data);
+			return string.IsNullOrWhiteSpace(data);
 		}
 
 		public override string StringTrim(string value)

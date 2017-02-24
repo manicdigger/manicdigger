@@ -113,15 +113,6 @@ public class TextColorRenderer
 		// Process each character
 		for (int i = 0; i < sLength.value; i++)
 		{
-			// If a space character is found begin a new word
-//			if (sChars[i] == ' ')
-//			{
-//				// Specify that some space should be left between this and the next word
-//				parts[partsCount].spaceAfter = true;
-//
-//				// TODO: Implement
-//			}
-			
 			// If a & is found, try to parse a color code
 			if (sChars[i] == '&')
 			{
@@ -147,13 +138,10 @@ public class TextColorRenderer
 							parts[partsCount] = part;
 							partsCount++;
 						}
-						//Update current color and reset stored text
-						for (int k = 0; k < currenttextLength; k++)
-						{
-							currenttext[k] = 0;
-						}
+						//Update current color and reset current text length
 						currenttextLength = 0;
 						currentcolor = GetColor(color);
+
 						//Increment i to prevent the code from being read again
 						i++;
 					}
@@ -183,14 +171,46 @@ public class TextColorRenderer
 			}
 			else
 			{
-				//Nothing special. Just add the current character
-				if (currenttextLength >= wordMax)
+				// If a space character is found begin a new word
+				if (sChars[i] == ' ')
 				{
-					// Skip all input exceeding maximum word length
-					continue;
+					// Word boundary detected
+					if (currenttextLength != 0)
+					{
+						string word = platform.CharArrayToString(currenttext, currenttextLength);
+						if (platform.StringEmpty(word))
+						{
+							currenttextLength = 0;
+							continue;
+						}
+						//Add content so far to return value
+						TextPart part = new TextPart();
+						part.text = word;
+						part.color = currentcolor;
+						// Specify that some space should be left between this and the next word
+						part.spaceAfter = true;
+						if (partsCount >= messageMax)
+						{
+							// Quit parsing text is message has reached maximum length
+							break;
+						}
+						parts[partsCount] = part;
+						partsCount++;
+					}
+					// Reset length counter
+					currenttextLength = 0;
 				}
-				currenttext[currenttextLength] = sChars[i];
-				currenttextLength++;
+				else
+				{
+					//Nothing special. Just add the current character
+					if (currenttextLength >= wordMax)
+					{
+						// Skip all input exceeding maximum word length
+						continue;
+					}
+					currenttext[currenttextLength] = sChars[i];
+					currenttextLength++;
+				}
 			}
 		}
 		
