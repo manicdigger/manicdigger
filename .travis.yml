@@ -1,5 +1,7 @@
 sudo: false
 language: csharp
+solution: ManicDigger.sln
+
 mono:
   - latest
 
