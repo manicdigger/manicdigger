@@ -30,6 +30,7 @@ xcopy /y /s Lib\*.* output\
 REM NuGet packages
 xcopy /s /y packages\OpenTK.2.0.0\lib\net20\OpenTK.dll output\
 xcopy /s /y packages\OpenTK.2.0.0\content\OpenTK.dll.config output\
+xcopy /s /y packages\protobuf-net.2.1.0\lib\net45\protobuf-net.dll output\
 
 del output\*vshost.exe
 copy COPYING.md output\credits.txt
