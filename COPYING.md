@@ -162,11 +162,6 @@ Jint (MIT)
 ----------
 http://jint.codeplex.com/license
 
-	
-BCrypt.Net (New BSD License)
-----------------------------
-http://bcrypt.codeplex.com/license
-
 
 libHTTP (MIT)
 -------------
