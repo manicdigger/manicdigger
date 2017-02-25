@@ -1,7 +1,7 @@
 sudo: false
 language: csharp
 mono:
-  - 3.12.0
+  - latest
 
 addons:
   apt:
