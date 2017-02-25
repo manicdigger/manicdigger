@@ -163,6 +163,10 @@ Jint (MIT)
 http://jint.codeplex.com/license
 
 
+ANTLR 3 Runtime (BSD)
+---------------------
+http://www.antlr3.org/license.html
+
 libHTTP (MIT)
 -------------
 https://github.com/JohnACarruthers/libHTTP
