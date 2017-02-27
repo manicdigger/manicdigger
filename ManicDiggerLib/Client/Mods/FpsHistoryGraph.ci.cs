@@ -15,6 +15,7 @@
         {
             todraw[i] = new Draw2dData();
         }
+        StatsLines = new string[StatsMaxLineCount];
         displayFont = new FontCi();
         displayFont.size = 10;
     }
@@ -22,7 +23,6 @@
     float one;
     int lasttitleupdateMilliseconds;
     int fpscount;
-    string fpstext;
     float longestframedt;
     FontCi displayFont;
 
@@ -32,6 +32,9 @@
     }
     float[] dtHistory;
     const int MaxCount = 300;
+    int StatsLineCount;
+    const int StatsMaxLineCount = 8;
+    string[] StatsLines;
     ClientModManager m;
 
     public override void OnNewFrame(Game game, NewFrameEventArgs args)
@@ -58,32 +61,20 @@
             fpscount = 0;
             m.GetPerformanceInfo().Set("fps", fpstext1);
 
-            string s = "";
-            string[] l = new string[64];
-            int lCount = 0;
+            StatsLineCount = 0;
             for (int i = 0; i < m.GetPerformanceInfo().size; i++)
             {
                 if (m.GetPerformanceInfo().items[i] == null)
                 {
                     continue;
                 }
-                l[lCount++] = m.GetPerformanceInfo().items[i].value;
-            }
-
-            int perline = 2;
-            for (int i = 0; i < lCount; i++)
-            {
-                s = StringTools.StringAppend(p, s, l[i]);
-                if ((i % perline == 0) && (i != lCount - 1))
+                if (StatsLineCount >= StatsMaxLineCount)
                 {
-                    s = StringTools.StringAppend(p, s, ", ");
+                    // Prevent running out of bounds
+                    break;
                 }
-                if (i % perline != 0)
-                {
-                    s = StringTools.StringAppend(p, s, "\n");
-                }
+                StatsLines[StatsLineCount++] = m.GetPerformanceInfo().items[i].value;
             }
-            fpstext = s;
         }
     }
 
@@ -157,7 +148,10 @@
             }
             if (drawfpstext)
             {
-                m.Draw2dText(fpstext, 20, 20, displayFont);
+                for (int i = 0; i < StatsLineCount; i++)
+                {
+                    m.Draw2dText(StatsLines[i], 20 + 200 * (i/4), 20 + 1.5f * (i%4) * displayFont.size, displayFont);
+                }
             }
             m.PerspectiveMode();
         }
