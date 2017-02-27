@@ -15,6 +15,8 @@
         {
             todraw[i] = new Draw2dData();
         }
+        displayFont = new FontCi();
+        displayFont.size = 10;
     }
 
     float one;
@@ -22,6 +24,7 @@
     int fpscount;
     string fpstext;
     float longestframedt;
+    FontCi displayFont;
 
     public override void Start(ClientModManager modmanager)
     {
@@ -154,7 +157,7 @@
             }
             if (drawfpstext)
             {
-                m.Draw2dText(fpstext, 20, 20, ChatFontSize);
+                m.Draw2dText(fpstext, 20, 20, displayFont);
             }
             m.PerspectiveMode();
         }
@@ -198,11 +201,9 @@
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight * (one * 60 / 75), MaxCount, 1, null, linecolor);
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight * (one * 60 / 30), MaxCount, 1, null, linecolor);
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight * (one * 60 / 150), MaxCount, 1, null, linecolor);
-        m.Draw2dText("60", posx, posy - historyheight * (one * 60 / 60), 6);
-        m.Draw2dText("75", posx, posy - historyheight * (one * 60 / 75), 6);
-        m.Draw2dText("30", posx, posy - historyheight * (one * 60 / 30), 6);
-        m.Draw2dText("150", posx, posy - historyheight * (one * 60 / 150), 6);
+        m.Draw2dText("60", posx, posy - historyheight * (one * 60 / 60), displayFont);
+        m.Draw2dText("75", posx, posy - historyheight * (one * 60 / 75), displayFont);
+        m.Draw2dText("30", posx, posy - historyheight * (one * 60 / 30), displayFont);
+        m.Draw2dText("150", posx, posy - historyheight * (one * 60 / 150), displayFont);
     }
-
-    const int ChatFontSize = 11;
 }

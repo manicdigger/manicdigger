@@ -1459,7 +1459,7 @@ public abstract class ClientModManager
     public abstract int WhiteTexture();
     public abstract void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color);
     public abstract void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureId);
-    public abstract void Draw2dText(string text, float x, float y, float fontsize);
+    public abstract void Draw2dText(string text, float x, float y, FontCi font);
     public abstract void OrthoMode();
     public abstract void PerspectiveMode();
     public abstract DictionaryStringString GetPerformanceInfo();
@@ -1607,10 +1607,8 @@ public class ClientModManager1 : ClientModManager
     }
 
 
-    public override void Draw2dText(string text, float x, float y, float fontsize)
+    public override void Draw2dText(string text, float x, float y, FontCi font)
     {
-        FontCi font = new FontCi();
-        font.size = fontsize;
         game.Draw2dText(text, font, x, y, null, false);
     }
 
