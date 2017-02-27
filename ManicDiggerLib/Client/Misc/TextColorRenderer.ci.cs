@@ -95,7 +95,7 @@ public class TextColorRenderer
 	{
 		// Maximum word/message length
 		int messageMax = 256;
-		int wordMax = 256;
+		int wordMax = 64;
 		
 		// Prepare temporary arrays
 		TextPart[] parts = new TextPart[messageMax];
@@ -126,15 +126,15 @@ public class TextColorRenderer
 						//Color has been parsed successfully
 						if (currenttextLength != 0)
 						{
-							//Add content so far to return value
-							TextPart part = new TextPart();
-							part.text = platform.CharArrayToString(currenttext, currenttextLength);
-							part.color = currentcolor;
 							if (partsCount >= messageMax)
 							{
 								// Quit parsing text is message has reached maximum length
 								break;
 							}
+							//Add content so far to return value
+							TextPart part = new TextPart();
+							part.text = platform.CharArrayToString(currenttext, currenttextLength);
+							part.color = currentcolor;
 							parts[partsCount] = part;
 							partsCount++;
 						}
@@ -171,8 +171,26 @@ public class TextColorRenderer
 			}
 			else
 			{
+				// Nothing special. Just add the current character
+				if (currenttextLength >= wordMax)
+				{
+					if (partsCount >= messageMax)
+					{
+						break;
+					}
+					// begin a new word as text exceeds maximum word length
+					TextPart part = new TextPart();
+					part.text = platform.CharArrayToString(currenttext, currenttextLength);
+					part.color = currentcolor;
+					parts[partsCount] = part;
+					partsCount++;
+					currenttextLength = 0;
+				}
+				currenttext[currenttextLength] = sChars[i];
+				currenttextLength++;
+
 				// If a space character is found begin a new word
-				if (platform.IsFastSystem() && sChars[i] == ' ')
+				if (sChars[i] == ' ')
 				{
 					// Word boundary detected
 					if (currenttextLength != 0)
@@ -199,17 +217,6 @@ public class TextColorRenderer
 					}
 					// Reset length counter
 					currenttextLength = 0;
-				}
-				else
-				{
-					//Nothing special. Just add the current character
-					if (currenttextLength >= wordMax)
-					{
-						// Skip all input exceeding maximum word length
-						continue;
-					}
-					currenttext[currenttextLength] = sChars[i];
-					currenttextLength++;
 				}
 			}
 		}

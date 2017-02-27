@@ -91,7 +91,7 @@ namespace ManicDigger.Renderers
 					// Draw black background
 					g2.FillRectangle(new SolidBrush(Color.Black), 0, 0, size.Width, size.Height);
 					// Draw text
-					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0, StringFormat.GenericTypographic);
 				}
 			}
 			return bmp2;
@@ -124,7 +124,7 @@ namespace ManicDigger.Renderers
 					g2.SmoothingMode = SmoothingMode.AntiAlias;
 					g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 					// Draw text
-					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0, StringFormat.GenericTypographic);
 				}
 			}
 			return bmp2;
@@ -162,10 +162,10 @@ namespace ManicDigger.Renderers
 					// Draw text shadow
 					Matrix mx = new Matrix(1f, 0, 0, 1f, 1, 1);
 					g2.Transform = mx;
-					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(128, Color.Black)), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(128, Color.Black)), 0, 0, StringFormat.GenericTypographic);
 					g2.ResetTransform();
 					// Draw text
-					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0);
+					g2.DrawString(t.GetText(), font, new SolidBrush(Color.FromArgb(t.GetColor())), 0, 0, StringFormat.GenericTypographic);
 				}
 			}
 			return bmp2;
@@ -212,7 +212,8 @@ namespace ManicDigger.Renderers
 				using (Graphics g = Graphics.FromImage(bmp))
 				{
 					g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-					StringFormat tmpFormat = new StringFormat(StringFormatFlags.MeasureTrailingSpaces);
+					StringFormat tmpFormat = StringFormat.GenericTypographic;
+					tmpFormat.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
 					return g.MeasureString(StripColorCodes(text), font, new PointF(0, 0), tmpFormat);
 				}
 			}
