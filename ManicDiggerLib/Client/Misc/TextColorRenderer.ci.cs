@@ -2,7 +2,6 @@
 {
 	internal int color;
 	internal string text;
-	internal bool spaceAfter;
 }
 
 /// <summary>
@@ -54,12 +53,12 @@ public class TextColorRenderer
 			{
 				continue;
 			}
-			
+
 			Text_ partText = new Text_();
 			partText.text = parts[i].text;
 			partText.color = parts[i].color;
 			partText.font = t.font;
-			
+
 			BitmapCi partBmp = platform.CreateTextTexture(partText);
 			int partWidth = platform.FloatToInt(platform.BitmapGetWidth(partBmp));
 			int partHeight = platform.FloatToInt(platform.BitmapGetHeight(partBmp));
@@ -96,75 +95,88 @@ public class TextColorRenderer
 		// Maximum word/message length
 		int messageMax = 256;
 		int wordMax = 64;
-		
+
 		// Prepare temporary arrays
 		TextPart[] parts = new TextPart[messageMax];
 		int partsCount = 0;
 		int[] currenttext = new int[wordMax];
 		int currenttextLength = 0;
-		
+		bool endCurrentWord = false;
+
 		// Split the given string into single characters
 		IntRef sLength = new IntRef();
 		int[] sChars = platform.StringToCharArray(s, sLength);
-		
+
 		// Set default color
-		int currentcolor = defaultcolor;
-		
+		int currentColor = defaultcolor;
+		bool changeColor = false;
+		int nextColor = defaultcolor;
+
 		// Process each character
 		for (int i = 0; i < sLength.value; i++)
 		{
-			// If a & is found, try to parse a color code
-			if (sChars[i] == '&')
+			if (partsCount >= messageMax)
 			{
-				//check if there's a character after it
+				// Quit parsing text if message has reached maximum length
+				break;
+			}
+
+			if (endCurrentWord || currenttextLength >= wordMax)
+			{
+				if (currenttextLength > 0)
+				{
+					//Add content so far to return value
+					TextPart part = new TextPart();
+					part.text = platform.CharArrayToString(currenttext, currenttextLength);
+					part.color = currentColor;
+					parts[partsCount] = part;
+					partsCount++;
+					currenttextLength = 0;
+				}
+				endCurrentWord = false;
+			}
+
+			if (changeColor)
+			{
+				currentColor = nextColor;
+				changeColor = false;
+			}
+
+			if (sChars[i] == ' ')
+			{
+				// Begin a new word if a space character is found
+				currenttext[currenttextLength] = sChars[i];
+				currenttextLength++;
+				endCurrentWord = true;
+			}
+			else if (sChars[i] == '&')
+			{
+				// If a & is found, try to parse a color code
 				if (i + 1 < sLength.value)
 				{
-					//try to parse the color code
 					int color = HexToInt(sChars[i + 1]);
 					if (color != -1)
 					{
-						//Color has been parsed successfully
-						if (currenttextLength != 0)
-						{
-							if (partsCount >= messageMax)
-							{
-								// Quit parsing text is message has reached maximum length
-								break;
-							}
-							//Add content so far to return value
-							TextPart part = new TextPart();
-							part.text = platform.CharArrayToString(currenttext, currenttextLength);
-							part.color = currentcolor;
-							parts[partsCount] = part;
-							partsCount++;
-						}
-						//Update current color and reset current text length
-						currenttextLength = 0;
-						currentcolor = GetColor(color);
+						// Update current color and end word
+						nextColor = GetColor(color);
+						changeColor = true;
+						endCurrentWord = true;
 
-						//Increment i to prevent the code from being read again
+						// Increment i to prevent the code from being read again
 						i++;
+
+						continue;
 					}
 					else
 					{
-						//no valid color code found. display as normal character
-						if (currenttextLength >= wordMax)
-						{
-							// Skip all input exceeding maximum word length
-							continue;
-						}
+						// No valid color code found. Display as normal character
 						currenttext[currenttextLength] = sChars[i];
 						currenttextLength++;
 					}
 				}
 				else
 				{
-					//if not, just display it as normal character
-					if (currenttextLength >= wordMax)
-					{
-						// Skip all input exceeding maximum word length
-						continue;
-					}
+					// End of string. Display as normal character
 					currenttext[currenttextLength] = sChars[i];
 					currenttextLength++;
 				}
@@ -172,69 +184,21 @@ public class TextColorRenderer
 			else
 			{
 				// Nothing special. Just add the current character
-				if (currenttextLength >= wordMax)
-				{
-					if (partsCount >= messageMax)
-					{
-						break;
-					}
-					// begin a new word as text exceeds maximum word length
-					TextPart part = new TextPart();
-					part.text = platform.CharArrayToString(currenttext, currenttextLength);
-					part.color = currentcolor;
-					parts[partsCount] = part;
-					partsCount++;
-					currenttextLength = 0;
-				}
 				currenttext[currenttextLength] = sChars[i];
 				currenttextLength++;
-
-				// If a space character is found begin a new word
-				if (sChars[i] == ' ')
-				{
-					// Word boundary detected
-					if (currenttextLength != 0)
-					{
-						string word = platform.CharArrayToString(currenttext, currenttextLength);
-						if (platform.StringEmpty(word))
-						{
-							currenttextLength = 0;
-							continue;
-						}
-						//Add content so far to return value
-						TextPart part = new TextPart();
-						part.text = word;
-						part.color = currentcolor;
-						// Specify that some space should be left between this and the next word
-						part.spaceAfter = true;
-						if (partsCount >= messageMax)
-						{
-							// Quit parsing text is message has reached maximum length
-							break;
-						}
-						parts[partsCount] = part;
-						partsCount++;
-					}
-					// Reset length counter
-					currenttextLength = 0;
-				}
 			}
 		}
-		
-		//Add any leftover text parts in current color
-		if (currenttextLength != 0)
+
+		// Add any leftover text parts in current color
+		if (currenttextLength != 0 && partsCount < messageMax)
 		{
 			TextPart part = new TextPart();
 			part.text = platform.CharArrayToString(currenttext, currenttextLength);
-			part.color = currentcolor;
-			if (partsCount < messageMax)
-			{
-				// Only add text if message is not full yet
-				parts[partsCount] = part;
-				partsCount++;
-			}
+			part.color = currentColor;
+			parts[partsCount] = part;
+			partsCount++;
 		}
-		
+
 		// Set length of returned array and return result
 		retLength.value = partsCount;
 		return parts;
