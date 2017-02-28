@@ -15,13 +15,12 @@ namespace ManicDigger.Renderers
 			Font = (FontType)fontID;
 		}
 
-		// TODO: Currently broken in mono (Graphics Path).
 		private Bitmap defaultFont(Text_ t)
 		{
 			Font font;
 			try
 			{
-				font = new Font(t.GetFontFamily(), t.GetFontSize()*1.65f, (FontStyle)t.GetFontStyle());
+				font = new Font(t.GetFontFamily(), t.GetFontSize()*1.25f, (FontStyle)t.GetFontStyle());
 			}
 			catch
 			{
@@ -29,7 +28,6 @@ namespace ManicDigger.Renderers
 			}
 
 			SizeF size = MeasureTextSize(t.GetText(), font);
-			//size.Width *= 0.7f;
 
 			SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
 			if (size2.Width == 0 || size2.Height == 0)
@@ -191,7 +189,6 @@ namespace ManicDigger.Renderers
 		GraphicsPath GetStringPath(string s, RectangleF rect, Font font, StringFormat format)
 		{
 			GraphicsPath path = new GraphicsPath();
-			// TODO: Bug in Mono. Returns incomplete list of points / cuts string.
 			path.AddString(s, font.FontFamily, (int)font.Style, font.Size, rect, format);
 			return path;
 		}
