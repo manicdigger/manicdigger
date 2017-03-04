@@ -659,7 +659,8 @@ namespace ManicDigger.Server
 		}
 	}
 	/// <summary>
-	/// Chunk storage using a plain file structure to store data - TODO
+	/// Chunk storage using a plain file structure to store data
+	/// TODO: This is just a draft. Implement.
 	/// </summary>
 	/*public class ChunkDbPlainFile : IChunkDb
 	{

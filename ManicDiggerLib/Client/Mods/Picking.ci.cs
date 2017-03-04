@@ -213,7 +213,7 @@
             }
             if (left && !fastclicking)
             {
-                //todo animation
+                //TODO: animation
                 fastclicking = false;
             }
             if ((left || right || middle) && (!isgrenade))

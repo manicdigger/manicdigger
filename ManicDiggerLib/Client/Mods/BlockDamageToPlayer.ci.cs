@@ -21,7 +21,7 @@
 
     float one;
 
-    //TODO server side?
+    //TODO: server side?
     internal void UpdateBlockDamageToPlayer(Game game, float dt)
     {
         float pX = game.player.position.x;

@@ -84,7 +84,7 @@ namespace ManicDigger.Server
 		}
 		void UpdateColumnHeight(int x, int y)
 		{
-			//todo faster
+			//TODO: faster
 			int height = MapSizeZ - 1;
 			for (int i = MapSizeZ - 1; i >= 0; i--)
 			{
@@ -131,7 +131,7 @@ namespace ManicDigger.Server
 				if (serializedChunk != null)
 				{
 					SetChunkValid(x, y, z, DeserializeChunk(serializedChunk));
-					//todo get heightmap from disk
+					//TODO: get heightmap from disk
 					UpdateChunkHeight(x, y, z);
 					return GetChunkValid(x, y, z);
 				}
@@ -214,7 +214,7 @@ namespace ManicDigger.Server
 		public InfiniteMapChunked2dServer d_Heightmap;
 		public unsafe ushort[] GetHeightmapChunk(int x, int y)
 		{
-			//todo don't copy
+			//TODO: don't copy
 			ushort[] chunk2d = d_Heightmap.GetChunk(x, y);
 			ushort[] chunk = new ushort[chunksize * chunksize];
 			for (int xx = 0; xx < chunksize; xx++)
@@ -224,7 +224,7 @@ namespace ManicDigger.Server
 					chunk[MapUtilCi.Index2d(xx, yy, chunksize)] = chunk2d[MapUtilCi.Index2d(xx, yy, chunksize)];
 				}
 			}
-			//todo ushort[]
+			//TODO: ushort[]
 			return chunk;
 		}
 

@@ -73,7 +73,7 @@
         {
             case Packet_ServerIdEnum.ChunkPart:
                 byte[] arr = packet.ChunkPart.CompressedChunkPart;
-                int arrLength = game.platform.ByteArrayLength(arr); // todo
+                int arrLength = game.platform.ByteArrayLength(arr); // TODO: what is needed here?
                 for (int i = 0; i < arrLength; i++)
                 {
                     CurrentChunk[CurrentChunkCount++] = arr[i];
@@ -120,7 +120,7 @@
                             {
                                 for (int zz = 0; zz < 2; zz++)
                                 {
-                                    //d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
+                                    //d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//TODO: what is needed here?
                                 }
                             }
                         }

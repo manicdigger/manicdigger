@@ -111,8 +111,6 @@
         {
             currentvehiclespeed = 0;
         }
-        //todo fix
-        //if (viewport.keypressed != null && viewport.keypressed.Key == GlKeys.Q)            
         if (!wasqpressed && game.keyboardState[game.GetKey(GlKeys.Q)] && game.GuiTyping != TypingState.Typing)
         {
             Reverse();

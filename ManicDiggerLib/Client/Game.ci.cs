@@ -1363,7 +1363,7 @@
         {
             return false;
         }
-        return platform.StringContains(name, "Water"); // todo
+        return platform.StringContains(name, "Water"); // TODO: Do not use name
     }
 
     internal int mouseCurrentX;
@@ -1756,7 +1756,7 @@
     
     internal void UpdateColumnHeight(int x, int y)
     {
-        //todo faster
+        //TODO: faster
         int height = map.MapSizeZ - 1;
         for (int i = map.MapSizeZ - 1; i >= 0; i--)
         {
@@ -1784,7 +1784,7 @@
                 map.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, true);
             }
         }
-        //Todo: too many redraws. Optimize.
+        //TODO: too many redraws. Optimize.
         //Now placing a single block updates 27 chunks,
         //and each of those chunk updates calculates light from 27 chunks.
         //So placing a block is often 729x slower than it should be.
@@ -2328,7 +2328,7 @@
         {
             return false;
         }
-        return platform.StringContains(name, "Lava"); // todo
+        return platform.StringContains(name, "Lava"); // TODO: Do not use name
     }
 
     internal int terraincolor()
@@ -2684,7 +2684,7 @@
         }
         else
         {
-            //TODO
+            //TODO: what to do here?
         }
     }
 
@@ -3244,7 +3244,7 @@
 
     internal void UseTerrainTextures(string[] textureIds, int textureIdsCount)
     {
-        //todo bigger than 32x32
+        //TODO: bigger than 32x32
         int tilesize = 32;
         BitmapData_ atlas2d = BitmapData_.Create(tilesize * atlas2dtiles(), tilesize * atlas2dtiles());
 

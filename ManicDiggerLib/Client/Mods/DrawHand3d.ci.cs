@@ -64,7 +64,7 @@
         }
         else
         {
-            //todo
+            //TODO: add rendering for other item classes as needed
             return 0;
         }
     }
@@ -324,7 +324,7 @@
         }
         //back - same as front, but x is 1 greater.
         //if (drawback)
-        {//todo fix tcoords
+        {//TODO: fix tcoords
             int sidetexture = GetWeaponTextureId(TileSide.Back);
             RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, texturesPacked());
             int lastelement = m.GetVerticesCount();
@@ -357,7 +357,7 @@
         }
         //right - same as left, but y is 1 greater.
         //if (drawright)
-        {//todo fix tcoords
+        {//TODO: fix tcoords
             int sidetexture = GetWeaponTextureId(TileSide.Right);
             RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, texturesPacked());
             int lastelement = m.GetVerticesCount();

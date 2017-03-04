@@ -190,7 +190,7 @@
 
     const int framerate = 60;
 
-    // Todo: cubic interpolation
+    // TODO: cubic interpolation
     public override void OnNewFrame(Game game, NewFrameEventArgs args)
     {
         float dt = args.GetDt();

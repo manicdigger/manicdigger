@@ -601,7 +601,7 @@ public partial class Server : ICurrentTime, IDropItem
         SaveAll();
         if (filename != GetSaveFilename())
         {
-            //todo load
+            //TODO: load
         }
         var dbcompressed = (ChunkDbCompressed)d_Map.d_ChunkDb;
         var db = (ChunkDbSqlite)dbcompressed.d_ChunkDb;
@@ -873,8 +873,6 @@ public partial class Server : ICurrentTime, IDropItem
             p.Inventory.DragDropItem = ConvertItem(inv.Inventory.DragDropItem);
             p.Inventory.Gauntlet = ConvertItem(inv.Inventory.Gauntlet);
             p.Inventory.Helmet = ConvertItem(inv.Inventory.Helmet);
-            // todo
-            //p.Inventory.Items = inv.Inventory.Items;
             p.Inventory.Items = new Packet_PositionItem[inv.Inventory.Items.Count];
             p.Inventory.ItemsCount = inv.Inventory.Items.Count;
             p.Inventory.ItemsLength = inv.Inventory.Items.Count;
@@ -1506,7 +1504,7 @@ public partial class Server : ICurrentTime, IDropItem
                 break;
             case Packet_ClientIdEnum.Health:
                 {
-                    //todo server side
+                    //TODO: server side
                     var stats = GetPlayerStats(clients[clientid].playername);
                     stats.CurrentHealth = packet.Health.CurrentHealth;
                     if (stats.CurrentHealth < 1)
@@ -1537,7 +1535,7 @@ public partial class Server : ICurrentTime, IDropItem
                 break;
             case Packet_ClientIdEnum.Oxygen:
                 {
-                    //todo server side
+                    //TODO: server side
                     var stats = GetPlayerStats(clients[clientid].playername);
                     stats.CurrentOxygen = packet.Oxygen.CurrentOxygen;
                     clients[clientid].IsPlayerStatsDirty = true;
@@ -2579,7 +2577,7 @@ public partial class Server : ICurrentTime, IDropItem
                     }
                     break;
                 default:
-                    //TODO
+                    //TODO: exception handling?
                     return false;
             }
         }
@@ -3276,7 +3274,7 @@ public partial class Server : ICurrentTime, IDropItem
                 }
                 break;
             default:
-                //todo
+                //TODO: exception handling?
                 break;
         }
     }

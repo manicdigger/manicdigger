@@ -473,7 +473,7 @@ namespace ManicDigger
 		/// Disables use of given privilege for all players
 		/// </summary>
 		/// <param name="privilege">Privilege to be disabled</param>
-		void DisablePrivilege(string privilege); //todo privileges
+		void DisablePrivilege(string privilege); //TODO: privilege access from mods (permanent grant/revoke)
 		
 		/// <summary>
 		/// Registers the given method to be called each time the player changes their selected material

@@ -437,7 +437,7 @@ namespace ManicDigger.Server
 
 		public override void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
 		{
-			//todo
+			//TODO: what to do here?
 			ProtoPoint originPoint = new ProtoPoint(from.AreaX, from.AreaY);
 			if (from.Type == Packet_InventoryPositionTypeEnum.MainArea
 			         && to.Type == Packet_InventoryPositionTypeEnum.MaterialSelector
@@ -452,7 +452,7 @@ namespace ManicDigger.Server
 
 		public override void MoveToInventory(Packet_InventoryPosition from)
 		{
-			//todo
+			//TODO: what to do here?
 			if (from.Type == Packet_InventoryPositionTypeEnum.MaterialSelector)
 			{
 				//duplicate code with GrabItem().
@@ -532,7 +532,7 @@ namespace ManicDigger.Server
 				{
 					return null;
 				}
-				//todo stack size limit
+				//TODO: stack size limit
 				Item ret = new Item();
 				ret.ItemClass = itemA.ItemClass;
 				ret.BlockId = itemA.BlockId;
