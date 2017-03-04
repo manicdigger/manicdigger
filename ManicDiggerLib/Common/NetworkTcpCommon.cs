@@ -103,6 +103,8 @@ namespace ManicDigger.Common
 			}
 			catch (Exception e)
 			{
+				// Dump error to console
+				Console.WriteLine("TCPConnectionRaw.Send() error: " + e.ToString());
 			}
 		}
 		void OnSend(IAsyncResult result)

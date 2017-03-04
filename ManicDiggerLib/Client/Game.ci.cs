@@ -1896,7 +1896,6 @@
     public const string playertexturedefaultfilename = "mineplayer.png";
     internal bool ENABLE_DRAW_TEST_CHARACTER;
     internal AnimationState a;
-    internal ModSkySphereStatic skysphere;
     internal int reloadblock;
     internal int reloadstartMilliseconds;
     internal int lastOxygenTickMilliseconds;
@@ -3805,7 +3804,6 @@
     }
 
     internal int Font;
-    internal GameExit d_Exit;
 
     internal void OnFocusChanged()
     {

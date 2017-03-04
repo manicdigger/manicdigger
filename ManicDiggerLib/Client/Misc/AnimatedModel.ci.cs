@@ -308,12 +308,10 @@ public class AnimatedModelRenderer
 {
     public AnimatedModelRenderer()
     {
-        one = 1;
         tempframes = new Keyframe[256];
         tempframesCount = new IntRef();
         tempVec3 = new float[3];
     }
-    float one;
     internal Game game;
     public void Start(Game game_, AnimatedModel model_)
     {
