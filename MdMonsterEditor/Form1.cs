@@ -155,7 +155,7 @@ namespace MdMonsterEditor
 				game.GLMatrixModeModelView();
 				game.GLLoadMatrix(m);
 				GL.BindTexture(TextureTarget.Texture2D, playertexture);
-				d.Render(dt, PitchDeg(), true, 1);
+				d.Render(dt, PitchDeg(), 1);
 			}
 			catch (Exception ee)
 			{

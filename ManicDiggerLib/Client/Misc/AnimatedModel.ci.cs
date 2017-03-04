@@ -327,9 +327,16 @@ public class AnimatedModelRenderer
 	AnimatedModel m;
 
 	int anim;
-	public int GetAnimationId()
+	public int GetAnimationId(string animationName)
 	{
-		return anim;
+		for (int i = 0; i < m.animationsCount; i++)
+		{
+			if (m.animations[i].name == animationName)
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 	public void SetAnimationId(int animationId)
 	{
@@ -343,54 +350,44 @@ public class AnimatedModelRenderer
 			anim = animationId;
 		}
 	}
+	public void SetAnimation(string animationName)
+	{
+		SetAnimationId(GetAnimationId(animationName));
+	}
 	public int GetAnimationCount()
 	{
+		if (m == null) { return 0; }
 		return m.animationsCount;
 	}
-	public int GetAnimationLength(int animationId)
+	public int GetAnimationLength()
 	{
-		return m.animations[animationId].length;
+		if (m == null) { return 0; }
+		if (m.animations == null) { return 0; }
+		if (m.animations[anim] == null) { return 0; }
+		return m.animations[anim].length;
 	}
 	public string GetAnimationName(int animationId)
 	{
 		return m.animations[animationId].name;
 	}
+	public float GetAnimationFrame()
+	{
+		return frame;
+	}
 
 	const int fps = 60;
 	float frame;
-	public void Render(float dt, float headDeg, bool moves, float light)
+	public void Render(float dt, float headDeg, float light)
 	{
 		if (m == null) { return; }
 		if (m.animations == null) { return; }
 		if (m.animations[anim] == null) { return; }
+
+		// Update animation frame
 		float length = m.animations[anim].length;
-		if (moves)
-		{
-			frame += dt * fps;
-			frame = frame % length;
-		}
-		else
-		{
-			if (frame != 0 && frame != length / 2 && frame != length)
-			{
-				if (frame < length / 2)
-				{
-					frame += dt * fps;
-					if (frame > length / 2)
-					{
-						frame = length / 2;
-					}
-				}
-				else
-				{
-					frame += dt * fps;
-					if (frame > length)
-					{
-						frame = length;
-					}
-				}
-			}
-		}
+		frame += dt * fps;
+		frame = frame % length;
+
 		DrawNode("root", headDeg, light);
 	}
 
