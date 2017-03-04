@@ -43,7 +43,7 @@ namespace MdMonsterEditor
 			glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
 			loaded = true;
 			GL.ClearColor(Color.SkyBlue);
-			overheadcameraK.SetDistance(3);
+			overheadcameraK.SetDistance(4);
 			overheadcameraK.SetT((float)Math.PI);
 			SetupViewport();
 			Application.Idle += new EventHandler(Application_Idle);
@@ -79,7 +79,6 @@ namespace MdMonsterEditor
 		{
 			label1.Text = string.Format("Heading: {0} degrees.", HeadingDeg());
 			label2.Text = string.Format("Pitch: {0} degrees.", PitchDeg());
-			label3.Text = string.Format("Speed: {0} / second.", trackBar3.Value * 0.1);
 		}
 		private float HeadingDeg()
 		{
@@ -87,7 +86,7 @@ namespace MdMonsterEditor
 		}
 		private float PitchDeg()
 		{
-			return -trackBar2.Value * 15;
+			return trackBar2.Value * 15;
 		}
 		Stopwatch sw = new Stopwatch();
 		void Application_Idle(object sender, EventArgs e)
@@ -118,9 +117,10 @@ namespace MdMonsterEditor
 		{
 			Render();
 		}
+		bool modelLoaded;
 		private void Render()
 		{
-			if (!loaded)
+			if (!loaded || !modelLoaded)
 				return;
 
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -146,15 +146,13 @@ namespace MdMonsterEditor
 			bool exception = false;
 			byte headingbyte = (byte)(HeadingDeg() / 360 * 256);
 			byte pitchbyte = (byte)(PitchDeg() / 360 * 256);
-			float speed = 1.0f;
-			//d.SetAnimPeriod(1.0f / (trackBar3.Value * 0.1f));
-			//progressBar1.Value = (int)((animstate.GetInterp() % (d.GetAnimPeriod())) / d.GetAnimPeriod() * 100);
 
 			try
 			{
 				game.GLMatrixModeModelView();
 				game.GLLoadMatrix(m);
 				GL.BindTexture(TextureTarget.Texture2D, playertexture);
+				game.GLRotate(HeadingDeg(), 0, 1, 0);
 				d.Render(dt, PitchDeg(), 1);
 			}
 			catch (Exception ee)
@@ -170,6 +168,7 @@ namespace MdMonsterEditor
 			{
 				richTextBox2.Text = "";
 				richTextBox2Text = "";
+				progressBar1.Value = (int)((d.GetAnimationFrame() / d.GetAnimationLength()) * progressBar1.Maximum);
 			}
 
 			glControl1.SwapBuffers();
@@ -260,19 +259,10 @@ namespace MdMonsterEditor
 		Vector3 up = new Vector3(0f, 1f, 0f);
 		private void SetupViewport()
 		{
-			int w = glControl1.Width;
-			int h = glControl1.Height;
-			/*
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            GL.Ortho(0, w, 0, h, -1, 1); // Bottom-left corner pixel has coordinate (0, 0)
-            GL.Viewport(0, 0, w, h); // Use all of the glControl painting area
-			 */
-			float aspect_ratio = Width / (float)Height;
-			Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
-			//Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
+			float aspect_ratio = glControl1.Width / (float)glControl1.Height;
+			Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
 			GL.MatrixMode(MatrixMode.Projection);
-			GL.LoadMatrix(ref perpective);
+			GL.LoadMatrix(ref perspective);
 			OverheadCamera();
 		}
 		GamePlatformNative platform = new GamePlatformNative();
@@ -351,11 +341,18 @@ namespace MdMonsterEditor
 		{
 			LoadModel();
 
+			// update animation list
+			int oldAnmimationIndex = listBox1.SelectedIndex;
 			listBox1.Items.Clear();
 			int animationCount = d.GetAnimationCount();
 			for (int i = 0; i < animationCount; i++)
 			{
 				listBox1.Items.Add(d.GetAnimationName(i));
+			}
+			if (oldAnmimationIndex < listBox1.Items.Count)
+			{
+				// if animation still exists switch to the same as before the change
+				listBox1.SelectedIndex = oldAnmimationIndex;
 			}
 		}
 		Game game;
@@ -368,10 +365,13 @@ namespace MdMonsterEditor
 			try
 			{
 				model = AnimatedModelSerializer.Deserialize(game.GetPlatform(), richTextBox1.Text);
+				modelLoaded = true;
 			}
-			catch
+			catch (Exception ex)
 			{
-
+				modelLoaded = false;
+				model = null;
+				richTextBox2.Text = "Error in LoadModel():" + Environment.NewLine + ex.ToString();
 			}
 			if (model != null)
 			{
