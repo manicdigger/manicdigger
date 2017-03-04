@@ -345,15 +345,13 @@ namespace MdMonsterEditor
 		private void richTextBox1_TextChanged(object sender, EventArgs e)
 		{
 			LoadModel();
-			//string[] lines = richTextBox1.Lines;
-			//d.Load(lines, lines.Length);
-			//listBox1.Items.Clear();
-			//IntRef animationsCount = new IntRef();
-			//string[] animations = d.Animations(animationsCount);
-			//for (int i = 0; i < animationsCount.GetValue(); i++)
-			//{
-			//    listBox1.Items.Add(animations[i]);
-			//}
+
+			listBox1.Items.Clear();
+			int animationCount = d.GetAnimationCount();
+			for (int i = 0; i < animationCount; i++)
+			{
+				listBox1.Items.Add(d.GetAnimationName(i));
+			}
 		}
 		Game game;
 		void LoadModel()
@@ -384,7 +382,7 @@ namespace MdMonsterEditor
 		}
 		private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
-			//d.SetAnimation((string)listBox1.SelectedItem);
+			d.SetAnimationId(listBox1.SelectedIndex);
 		}
 		private void listBox1_SelectedValueChanged(object sender, EventArgs e)
 		{
