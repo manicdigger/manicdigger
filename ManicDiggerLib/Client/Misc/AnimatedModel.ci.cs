@@ -269,6 +269,11 @@ public class TableSerializer
 				string[] ss = p.StringSplit(s, "\t", ssLength);
 				for (int k = 0; k < ssLength.value; k++)
 				{
+					if (k >= headerLength.value)
+					{
+						// discard all data longer than header fields
+						continue;
+					}
 					b.Set(current, currentI, header[k], ss[k]);
 				}
 
