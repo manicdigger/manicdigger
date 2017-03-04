@@ -13,6 +13,7 @@ anim	node	frame	type	x	y	z
 
 section=animations
 name	len
+idle	60
 walk	40
 
 section=global
