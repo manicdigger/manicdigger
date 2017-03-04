@@ -353,7 +353,7 @@ public class AnimatedModelRenderer
 
 	const int fps = 60;
 	float frame;
-	public void Render(float dt, float headDeg, bool walkAnimation, bool moves, float light)
+	public void Render(float dt, float headDeg, bool moves, float light)
 	{
 		if (m == null) { return; }
 		if (m.animations == null) { return; }
@@ -364,27 +364,24 @@ public class AnimatedModelRenderer
 			frame += dt * fps;
 			frame = frame % length;
 		}
-		if (walkAnimation)
+		else
 		{
-			if (!moves)
+			if (frame != 0 && frame != length / 2 && frame != length)
 			{
-				if (frame != 0 && frame != length / 2 && frame != length)
+				if (frame < length / 2)
 				{
-					if (frame < length / 2)
+					frame += dt * fps;
+					if (frame > length / 2)
 					{
-						frame += dt * fps;
-						if (frame > length / 2)
-						{
-							frame = length / 2;
-						}
+						frame = length / 2;
 					}
-					else
+				}
+				else
+				{
+					frame += dt * fps;
+					if (frame > length)
 					{
-						frame += dt * fps;
-						if (frame > length)
-						{
-							frame = length;
-						}
+						frame = length;
 					}
 				}
 			}

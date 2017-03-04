@@ -24,15 +24,20 @@ namespace MdMonsterEditor
 		IGetFileStream getfile;
 		private void Form1_Load(object sender, EventArgs e)
 		{
+			// load skin file
 			string[] datapaths = new[] {
 				Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"),
 				"data"
 			};
 			getfile = new GetFileStream(datapaths);
 			richTextBox1.Text = new StreamReader(getfile.GetFile("player.txt")).ReadToEnd();
+
+			// init UI
 			RichTextBoxContextMenu(richTextBox1);
 			RichTextBoxContextMenu(richTextBox2);
 			UpdateLabels();
+
+			// init 3D rendering
 			the3d = new ManicDigger.TextureLoader() { d_Config3d = config3d };
 			glControl1.Paint += new PaintEventHandler(glControl1_Paint);
 			glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
@@ -150,7 +155,7 @@ namespace MdMonsterEditor
 				game.GLMatrixModeModelView();
 				game.GLLoadMatrix(m);
 				GL.BindTexture(TextureTarget.Texture2D, playertexture);
-				d.Render(dt, PitchDeg(), true, true, 1);
+				d.Render(dt, PitchDeg(), true, 1);
 			}
 			catch (Exception ee)
 			{

@@ -98,7 +98,7 @@
                 game.GLRotate(PlayerInterpolate.RadToDeg(-p_.position.roty + Game.GetPi()), 0, 1, 0);
                 //game.GLRotate(PlayerInterpolate.RadToDeg(p_.position.rotz), 0, 0, 1);
                 game.platform.BindTexture2d(game.entities[i].drawModel.CurrentTexture);
-                p_.drawModel.renderer.Render(dt, PlayerInterpolate.RadToDeg(p_.position.rotx + Game.GetPi()), true, p_.playerDrawInfo.moves, shadow);
+                p_.drawModel.renderer.Render(dt, PlayerInterpolate.RadToDeg(p_.position.rotx + Game.GetPi()), p_.playerDrawInfo.moves, shadow);
                 game.GLPopMatrix();
             }
         }
