@@ -53,9 +53,10 @@
         ENABLE_ZFAR = true;
         TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
         LoadedAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
-        AllowedFontsCount = 1;
+        AllowedFontsCount = 2;
         AllowedFonts = new string[AllowedFontsCount];
         AllowedFonts[0] = "Verdana";
+        AllowedFonts[1] = "Courier New";
         fov = Game.GetPi() / 3;
         cameratype = CameraType.Fpp;
         ENABLE_TPP_VIEW = false;
