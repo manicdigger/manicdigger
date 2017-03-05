@@ -509,6 +509,7 @@
 
     public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
     {
+        platform.GLDisableAlphaTest();
         if (color == ColorFromArgb(255, 255, 255, 255) && inAtlasId == null)
         {
             Draw2dTextureSimple(textureid, x1, y1, width, height, enabledepthtest);
@@ -517,6 +518,7 @@
         {
             Draw2dTextureInAtlas(textureid, x1, y1, width, height, inAtlasId, atlastextures, color, enabledepthtest);
         }
+        platform.GLEnableAlphaTest();
     }
 
     Model quadModel;
@@ -994,9 +996,7 @@
 
         ct = GetCachedTextTexture(t);
         ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
-        platform.GLDisableAlphaTest();
         Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, Game.ColorFromArgb(255, 255, 255, 255), enabledepthtest);
-        platform.GLEnableAlphaTest();
         DeleteUnusedCachedTextTextures();
     }
 
