@@ -194,6 +194,7 @@ public class ProcessPacketTask : Action_
             case Packet_ServerIdEnum.PlayerPing:
                 {
                     game.ServerInfo.ServerPing.Receive(game.platform.TimeMillisecondsFromStart());
+                    game.performanceinfo.Set("Ping", game.platform.IntToString(game.ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds()));
                 }
                 break;
             case Packet_ServerIdEnum.LevelInitialize:

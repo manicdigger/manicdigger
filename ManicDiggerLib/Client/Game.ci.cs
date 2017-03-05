@@ -3384,7 +3384,7 @@
             if ((playerx >= 0 && playerx < map.MapSizeX)
                 && (playery >= 0 && playery < map.MapSizeY))
             {
-                performanceinfo.Set("height", platform.StringFormat("Height: {0}", platform.IntToString(d_Heightmap.GetBlock(playerx, playery))));
+                performanceinfo.Set("Terrain height", platform.IntToString(d_Heightmap.GetBlock(playerx, playery)));
             }
             if (eKey == GetKey(GlKeys.F5))
             {
