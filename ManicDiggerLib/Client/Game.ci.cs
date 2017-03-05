@@ -1917,7 +1917,6 @@
     internal int clientmodsCount;
     internal bool SkySphereNight;
     internal ModDrawParticleEffectBlockBreak particleEffectBlockBreak;
-    internal bool ENABLE_DRAWPOSITION;
 
     public int SerializeFloat(float p)
     {
@@ -1932,18 +1931,6 @@
     public float NextFloat(float min, float max)
     {
         return rnd.NextFloat() * (max - min) + min;
-    }
-
-    public byte HeadingByte(float orientationX, float orientationY, float orientationZ)
-    {
-        return Game.IntToByte(platform.FloatToInt((((orientationY) % (2 * Game.GetPi())) / (2 * Game.GetPi())) * 256));
-    }
-
-    public byte PitchByte(float orientationX, float orientationY, float orientationZ)
-    {
-        float xx = (orientationX + Game.GetPi()) % (2 * Game.GetPi());
-        xx = xx / (2 * Game.GetPi());
-        return Game.IntToByte(platform.FloatToInt(xx * 256));
     }
 
     public void PlaySoundAt(string name, float x, float y, float z)
@@ -2823,10 +2810,6 @@
                 else { Log("Mouse smoothing disabled."); }
             }
             // Commands requiring boolean arguments
-            else if (cmd == "pos")
-            {
-                ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
-            }
             else if (cmd == "noclip")
             {
                 if (this.AllowFreemove)
