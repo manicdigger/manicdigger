@@ -55,9 +55,8 @@
 			this.glControl1.Name = "glControl1";
 			this.glControl1.Size = new System.Drawing.Size(640, 360);
 			this.glControl1.TabIndex = 0;
-			this.glControl1.VSync = false;
+			this.glControl1.VSync = true;
 			this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
-			this.glControl1.MouseHover += new System.EventHandler(this.glControl1_MouseHover);
 			this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
 			this.glControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseUp);
 			// 
@@ -139,7 +138,6 @@
 			this.listBox1.Size = new System.Drawing.Size(210, 199);
 			this.listBox1.TabIndex = 12;
 			this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
-			this.listBox1.SelectedValueChanged += new System.EventHandler(this.listBox1_SelectedValueChanged);
 			// 
 			// menuStrip1
 			// 
