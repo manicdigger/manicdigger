@@ -5,9 +5,13 @@
 	int fpscount;
 	float longestframedt;
 	FontCi displayFont;
+	FontCi displayFontHeadings;
 
-	float[] dtHistory;
 	const int MaxCount = 300;
+	float[] dtHistory;
+	float[] chunkUpdateHistory;
+	float[] pingHistory;
+
 	int StatsLineCount;
 	const int StatsMaxLineCount = 8;
 	string[] StatsLines;
@@ -30,6 +34,16 @@
 		{
 			dtHistory[i] = 0;
 		}
+		chunkUpdateHistory = new float[MaxCount];
+		for (int i = 0; i < MaxCount; i++)
+		{
+			chunkUpdateHistory[i] = 0;
+		}
+		pingHistory = new float[MaxCount];
+		for (int i = 0; i < MaxCount; i++)
+		{
+			pingHistory[i] = 0;
+		}
 		todraw = new Draw2dData[MaxCount];
 		for (int i = 0; i < MaxCount; i++)
 		{
@@ -38,6 +52,9 @@
 		StatsLines = new string[StatsMaxLineCount];
 		displayFont = new FontCi();
 		displayFont.size = 10;
+		displayFontHeadings = new FontCi();
+		displayFontHeadings.size = 10;
+		displayFontHeadings.style = 1;
 		PositionLines = new string[PositionLinesCount];
 	}
 
@@ -112,13 +129,32 @@
 		return false;
 	}
 
+	const int HISTORY_FPS_SCALE = 30;
 	void UpdateFpsHistory(float dt)
 	{
 		for (int i = 0; i < MaxCount - 1; i++)
 		{
 			dtHistory[i] = dtHistory[i + 1];
 		}
-		dtHistory[MaxCount - 1] = dt;
+		dtHistory[MaxCount - 1] = dt * 60 * HISTORY_FPS_SCALE;
+	}
+
+	void UpdateChunkHistory(int updates)
+	{
+		for (int i = 0; i < MaxCount - 1; i++)
+		{
+			chunkUpdateHistory[i] = chunkUpdateHistory[i + 1];
+		}
+		chunkUpdateHistory[MaxCount - 1] = updates;
+	}
+
+	void UpdatePingHistory(int ping)
+	{
+		for (int i = 0; i < MaxCount - 1; i++)
+		{
+			pingHistory[i] = pingHistory[i + 1];
+		}
+		pingHistory[MaxCount - 1] = ping;
 	}
 
 	void UpdateStatisticsText(float dt)
@@ -129,13 +165,12 @@
 		float elapsed = one * (p.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
 		if (elapsed >= 1)
 		{
-			string fpstext1 = "";
 			lasttitleupdateMilliseconds = p.TimeMillisecondsFromStart();
-			fpstext1 = StringTools.StringAppend(p, fpstext1, p.StringFormat("FPS: {0}", p.IntToString(p.FloatToInt((one * fpscount) / elapsed))));
+			string fpstext1 = p.IntToString(p.FloatToInt((one * fpscount) / elapsed));
 			fpstext1 = StringTools.StringAppend(p, fpstext1, p.StringFormat(" (min: {0})", p.IntToString(p.FloatToInt(one / longestframedt))));
 			longestframedt = 0;
 			fpscount = 0;
-			m.GetPerformanceInfo().Set("fps", fpstext1);
+			m.GetPerformanceInfo().Set("FPS", fpstext1);
 
 			StatsLineCount = 0;
 			for (int i = 0; i < m.GetPerformanceInfo().size; i++)
@@ -144,78 +179,163 @@
 				{
 					continue;
 				}
+				if (m.GetPerformanceInfo().items[i].key == "Chunk updates")
+				{
+					UpdateChunkHistory(p.IntParse(m.GetPerformanceInfo().items[i].value));
+				}
+				if (m.GetPerformanceInfo().items[i].key == "Ping")
+				{
+					UpdatePingHistory(p.IntParse(m.GetPerformanceInfo().items[i].value));
+				}
 				if (StatsLineCount >= StatsMaxLineCount)
 				{
 					// Prevent running out of bounds
 					break;
 				}
-				StatsLines[StatsLineCount++] = m.GetPerformanceInfo().items[i].value;
+				StatsLines[StatsLineCount++] = p.StringFormat2("{0}: {1}", m.GetPerformanceInfo().items[i].key, m.GetPerformanceInfo().items[i].value);
 			}
 		}
 	}
 
 	void Draw()
 	{
-		if (DRAW_FPS_GRAPH || DRAW_FPS_TEXT)
+		if (ENABLE_STATS)
 		{
+			// switch to orthographic mode
 			m.OrthoMode();
-			if (DRAW_FPS_GRAPH)
+
+			if (DRAW_FPS_GRAPH || DRAW_FPS_TEXT)
 			{
-				DrawFpsGraph();
-			}
-			if (DRAW_FPS_TEXT)
-			{
-				for (int i = 0; i < StatsLineCount; i++)
+				if (DRAW_FPS_GRAPH)
 				{
-					m.Draw2dText(StatsLines[i], 20 + 200 * (i / 4), 20 + 1.5f * (i % 4) * displayFont.size, displayFont);
+					DrawFpsGraph(m.GetWindowWidth() - MaxCount - 20, 20);
 				}
+				if (DRAW_FPS_TEXT)
+				{
+					for (int i = 0; i < StatsLineCount; i++)
+					{
+						m.Draw2dText(StatsLines[i], 20 + 200 * (i / 4), 20 + 1.5f * (i % 4) * displayFont.size, displayFont);
+					}
+				}
+
 			}
+
+			// draw additional graphs
+			DrawChunkGraph(m.GetWindowWidth() - MaxCount - 20, 120);
+			DrawPingGraph(m.GetWindowWidth() - MaxCount - 20, 220);
+
+			// switch back to perspective mode
 			m.PerspectiveMode();
 		}
 	}
 
-	Draw2dData[] todraw;
-	void DrawFpsGraph()
+	void DrawFpsGraph(int posx, int posy)
 	{
 		// general size settings
-		int historyheight = 80;
-		int historyscale = 30;
-		int posx = m.GetWindowWidth() - MaxCount - 20;
-		int posy = historyheight + 20;
+		const int historyheight = 80;
 
 		// color settings
 		int color_graph = Game.ColorFromArgb(128, 220, 20, 20);
-		int color_outofrange = Game.ColorFromArgb(255, 255, 255, 0);
+		int color_outofrange = Game.ColorFromArgb(128, 255, 255, 0);
 		int color_lines = Game.ColorFromArgb(255, 255, 255, 255);
 
-		// assemble and draw the graph
-		for (int i = 0; i < MaxCount; i++)
-		{
-			float time = dtHistory[i];
-			time = (time * 60) * historyscale;
+		posy += historyheight;
 
-			todraw[i].x1 = posx + i;
-			todraw[i].y1 = posy - time;
-			todraw[i].width = 1;
-			todraw[i].height = time;
-			todraw[i].inAtlasId = null;
-			todraw[i].color = color_graph;
-			if (todraw[i].height > historyheight)
-			{
-				// value too big. clamp and mark
-				todraw[i].y1 = posy - historyheight;
-				todraw[i].height = historyheight;
-				todraw[i].color = color_outofrange;
-			}
-		}
-		m.Draw2dTextures(todraw, MaxCount, m.WhiteTexture());
+		// draw graph
+		DrawGraph(posx, posy, MaxCount, historyheight, dtHistory, color_graph, color_outofrange);
 
 		// draw legend
-		m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyscale, MaxCount, 1, null, color_lines);
-		m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyscale * (one * 60 / 30), MaxCount, 1, null, color_lines);
-		m.Draw2dText("60", posx, posy - historyscale * (one * 60 / 60), displayFont);
-		m.Draw2dText("30", posx, posy - historyscale * (one * 60 / 30), displayFont);
-		m.Draw2dText("FPS", posx, posy - historyheight, displayFont);
+		m.Draw2dTexture(m.WhiteTexture(), posx, posy - HISTORY_FPS_SCALE, MaxCount, 1, null, color_lines);
+		m.Draw2dTexture(m.WhiteTexture(), posx, posy - HISTORY_FPS_SCALE * (one * 60 / 30), MaxCount, 1, null, color_lines);
+		m.Draw2dText("60", posx, posy - HISTORY_FPS_SCALE * (one * 60 / 60), displayFont);
+		m.Draw2dText("30", posx, posy - HISTORY_FPS_SCALE * (one * 60 / 30), displayFont);
+		m.Draw2dText("FPS", posx, posy - historyheight, displayFontHeadings);
+	}
+
+	void DrawChunkGraph(int posx, int posy)
+	{
+		// general size settings
+		const int historyheight = 80;
+
+		// color settings
+		int color_graph = Game.ColorFromArgb(128, 20, 20, 220);
+		int color_outofrange = Game.ColorFromArgb(128, 60, 60, 220);
+		int color_lines = Game.ColorFromArgb(255, 255, 255, 255);
+
+		posy += historyheight;
+
+		// draw graph
+		DrawGraph(posx, posy, MaxCount, historyheight, chunkUpdateHistory, color_graph, color_outofrange);
+
+		// draw legend
+		m.Draw2dTexture(m.WhiteTexture(), posx, posy - 60, MaxCount, 1, null, color_lines);
+		m.Draw2dTexture(m.WhiteTexture(), posx, posy - 30, MaxCount, 1, null, color_lines);
+		m.Draw2dText("60", posx, posy - 60, displayFont);
+		m.Draw2dText("30", posx, posy - 30, displayFont);
+		m.Draw2dText("Chunk updates", posx, posy - historyheight, displayFontHeadings);
+	}
+
+	void DrawPingGraph(int posx, int posy)
+	{
+		// general size settings
+		const int historyheight = 80;
+
+		// color settings
+		int color_graph = Game.ColorFromArgb(128, 20, 220, 20);
+		int color_outofrange = Game.ColorFromArgb(128, 120, 220, 20);
+		int color_lines = Game.ColorFromArgb(255, 255, 255, 255);
+
+		posy += historyheight;
+
+		// draw graph
+		DrawGraph(posx, posy, MaxCount, historyheight, pingHistory, color_graph, color_outofrange);
+
+		// draw legend
+		m.Draw2dTexture(m.WhiteTexture(), posx, posy - 40, MaxCount, 1, null, color_lines);
+		m.Draw2dTexture(m.WhiteTexture(), posx, posy - 20, MaxCount, 1, null, color_lines);
+		m.Draw2dText("40 ms", posx, posy - 40, displayFont);
+		m.Draw2dText("20 ms", posx, posy - 20, displayFont);
+		m.Draw2dText("Server Ping", posx, posy - historyheight, displayFontHeadings);
+	}
+
+	Draw2dData[] todraw;
+	/// <summary>
+	/// Draw a graph into the scene using the given parameters.
+	/// </summary>
+	/// <param name="posX">Bottom left X coordinate.</param>
+	/// <param name="posY">Bottom left Y coordinate.</param>
+	/// <param name="sizeX">Size of the graph in X direction. Must be lower than or equal to data array size!</param>
+	/// <param name="sizeY">Size of the graph in Y direction. Any value higher than this will be clamped and treated as "outlier".</param>
+	/// <param name="data">Data source for the graph.</param>
+	/// <param name="color_graph">Color used for drawing the graph.</param>
+	/// <param name="color_outlier">Color used to highlight outliers.</param>
+	void DrawGraph(float posX, float posY, int sizeX, int sizeY, float[] data, int color_graph, int color_outlier)
+	{
+		int color_background = Game.ColorFromArgb(80, 0, 0, 0);
+
+		// draw background
+		const int margin = 4;
+		m.Draw2dTexture(m.WhiteTexture(), posX - margin, posY + margin, sizeX + 2 * margin, -sizeY - 2 * margin, null, color_background);
+
+		// assemble the graph
+		for (int i = 0; i < sizeX; i++)
+		{
+			todraw[i].x1 = posX + i;
+			todraw[i].y1 = posY - data[i];
+			todraw[i].width = 1;
+			todraw[i].height = data[i];
+			todraw[i].inAtlasId = null;
+			todraw[i].color = color_graph;
+			if (data[i] > sizeY)
+			{
+				// value too big. clamp and mark
+				todraw[i].y1 = posY - sizeY;
+				todraw[i].height = sizeY;
+				todraw[i].color = color_outlier;
+			}
+		}
+		// draw the result
+		m.Draw2dTextures(todraw, sizeX, m.WhiteTexture());
 	}
 
 	string[] PositionLines;
