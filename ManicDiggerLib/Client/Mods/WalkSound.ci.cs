@@ -46,7 +46,7 @@
             {
                 lastwalksound = game.rnd.Next() % (GetSoundCount(soundwalk));
             }
-            game.AudioPlay(soundwalk[lastwalksound]);
+            game.AudioPlay(game.platform.StringFormat("{0}.ogg", soundwalk[lastwalksound]));
         }
     }
     internal float walksoundtimer;

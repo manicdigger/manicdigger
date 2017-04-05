@@ -188,12 +188,12 @@ public class ProcessPacketTask : Action_
             case Packet_ServerIdEnum.Ping:
                 {
                     game.SendPingReply();
-                    game.ServerInfo.ServerPing.Send(game.platform);
+                    game.ServerInfo.ServerPing.Send(game.platform.TimeMillisecondsFromStart());
                 }
                 break;
             case Packet_ServerIdEnum.PlayerPing:
                 {
-                    game.ServerInfo.ServerPing.Receive(game.platform);
+                    game.ServerInfo.ServerPing.Receive(game.platform.TimeMillisecondsFromStart());
                 }
                 break;
             case Packet_ServerIdEnum.LevelInitialize:
@@ -525,7 +525,7 @@ public class ProcessPacketTask : Action_
                         }
                     }
                 }
-                game.d_Data.UseBlockTypes(game.platform, game.blocktypes, GlobalVar.MAX_BLOCKTYPES);
+                game.d_Data.UseBlockTypes(game.blocktypes, GlobalVar.MAX_BLOCKTYPES);
                 for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
                 {
                     Packet_BlockType b = game.blocktypes[i];

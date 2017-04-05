@@ -31,10 +31,9 @@
         string screenshottext = "&0Screenshot";
         IntRef textWidth = new IntRef();
         IntRef textHeight = new IntRef();
-        game.platform.TextSize(screenshottext, 50, textWidth, textHeight);
         FontCi font = new FontCi();
-        font.family = "Arial";
         font.size = 50;
+        game.platform.TextSize(screenshottext, font, textWidth, textHeight);
         game.Draw2dText(screenshottext, font, game.xcenter(textWidth.value), game.ycenter(textHeight.value), null, false);
     }
     

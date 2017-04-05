@@ -40,9 +40,8 @@
                     game.GLScale(scale, scale, scale);
 
                     FontCi font = new FontCi();
-                    font.family = "Arial";
                     font.size = 14;
-                    game.Draw2dText(text, font, -game.TextSizeWidth(text, 14) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
+                    game.Draw2dText(text, font, -game.TextSizeWidth(text, font) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
 
                     game.GLPopMatrix();
                 }

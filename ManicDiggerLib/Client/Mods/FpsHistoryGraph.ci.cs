@@ -15,13 +15,16 @@
         {
             todraw[i] = new Draw2dData();
         }
+        StatsLines = new string[StatsMaxLineCount];
+        displayFont = new FontCi();
+        displayFont.size = 10;
     }
 
     float one;
     int lasttitleupdateMilliseconds;
     int fpscount;
-    string fpstext;
     float longestframedt;
+    FontCi displayFont;
 
     public override void Start(ClientModManager modmanager)
     {
@@ -29,6 +32,9 @@
     }
     float[] dtHistory;
     const int MaxCount = 300;
+    int StatsLineCount;
+    const int StatsMaxLineCount = 8;
+    string[] StatsLines;
     ClientModManager m;
 
     public override void OnNewFrame(Game game, NewFrameEventArgs args)
@@ -55,32 +61,20 @@
             fpscount = 0;
             m.GetPerformanceInfo().Set("fps", fpstext1);
 
-            string s = "";
-            string[] l = new string[64];
-            int lCount = 0;
-            for (int i = 0; i < m.GetPerformanceInfo().count; i++)
+            StatsLineCount = 0;
+            for (int i = 0; i < m.GetPerformanceInfo().size; i++)
             {
                 if (m.GetPerformanceInfo().items[i] == null)
                 {
                     continue;
                 }
-                l[lCount++] = m.GetPerformanceInfo().items[i].value;
-            }
-
-            int perline = 2;
-            for (int i = 0; i < lCount; i++)
-            {
-                s = StringTools.StringAppend(p, s, l[i]);
-                if ((i % perline == 0) && (i != lCount - 1))
+                if (StatsLineCount >= StatsMaxLineCount)
                 {
-                    s = StringTools.StringAppend(p, s, ", ");
+                    // Prevent running out of bounds
+                    break;
                 }
-                if (i % perline != 0)
-                {
-                    s = StringTools.StringAppend(p, s, "\n");
-                }
+                StatsLines[StatsLineCount++] = m.GetPerformanceInfo().items[i].value;
             }
-            fpstext = s;
         }
     }
 
@@ -154,7 +148,10 @@
             }
             if (drawfpstext)
             {
-                m.Draw2dText(fpstext, 20, 20, ChatFontSize);
+                for (int i = 0; i < StatsLineCount; i++)
+                {
+                    m.Draw2dText(StatsLines[i], 20 + 200 * (i/4), 20 + 1.5f * (i%4) * displayFont.size, displayFont);
+                }
             }
             m.PerspectiveMode();
         }
@@ -198,11 +195,9 @@
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight * (one * 60 / 75), MaxCount, 1, null, linecolor);
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight * (one * 60 / 30), MaxCount, 1, null, linecolor);
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight * (one * 60 / 150), MaxCount, 1, null, linecolor);
-        m.Draw2dText("60", posx, posy - historyheight * (one * 60 / 60), 6);
-        m.Draw2dText("75", posx, posy - historyheight * (one * 60 / 75), 6);
-        m.Draw2dText("30", posx, posy - historyheight * (one * 60 / 30), 6);
-        m.Draw2dText("150", posx, posy - historyheight * (one * 60 / 150), 6);
+        m.Draw2dText("60", posx, posy - historyheight * (one * 60 / 60), displayFont);
+        m.Draw2dText("75", posx, posy - historyheight * (one * 60 / 75), displayFont);
+        m.Draw2dText("30", posx, posy - historyheight * (one * 60 / 30), displayFont);
+        m.Draw2dText("150", posx, posy - historyheight * (one * 60 / 150), displayFont);
     }
-
-    const int ChatFontSize = 11;
 }

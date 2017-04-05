@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ManicDigger
+namespace ManicDigger.Server
 {
 	public class ServerSystemLoadLast : ServerSystem
 	{

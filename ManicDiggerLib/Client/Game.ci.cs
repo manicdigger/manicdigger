@@ -17,7 +17,7 @@
             TextureId[i] = new int[6];
         }
         TextureIdForInventory = new int[MaxBlockTypes];
-        language = new Language();
+        language = new LanguageCi();
         lastplacedblockX = -1;
         lastplacedblockY = -1;
         lastplacedblockZ = -1;
@@ -405,7 +405,7 @@
 
     internal GamePlatform platform;
     internal Packet_BlockType[] blocktypes;
-    internal Language language;
+    internal LanguageCi language;
     internal TerrainChunkTesselatorCi d_TerrainChunkTesselator;
 
     internal Map map;
@@ -968,9 +968,7 @@
         Text_ t = new Text_();
         t.text = text;
         t.color = color.value;
-        t.fontsize = font.size;
-        t.fontfamily = font.family;
-        t.fontstyle = font.style;
+        t.font = font;
         CachedTexture ct;
 
         if (GetCachedTextTexture(t) == null)
@@ -2136,19 +2134,19 @@
         return blocktypes[blocktype].Name != null;
     }
 
-    internal int TextSizeWidth(string s, int size)
+    internal int TextSizeWidth(string s, FontCi font)
     {
         IntRef width = new IntRef();
         IntRef height = new IntRef();
-        platform.TextSize(s, size, width, height);
+        platform.TextSize(s, font, width, height);
         return width.value;
     }
 
-    internal int TextSizeHeight(string s, int size)
+    internal int TextSizeHeight(string s, FontCi font)
     {
         IntRef width = new IntRef();
         IntRef height = new IntRef();
-        platform.TextSize(s, size, width, height);
+        platform.TextSize(s, font, width, height);
         return height.value;
     }
 
@@ -2626,14 +2624,6 @@
         playerPositionSpawnZ = player.position.z;
     }
     internal int[] materialSlots;
-
-    internal void Draw2dText1(string text, int x, int y, int fontsize, IntRef color, bool enabledepthtest)
-    {
-        FontCi font = new FontCi();
-        font.family = "Arial";
-        font.size = fontsize;
-        Draw2dText(text, font, x, y, color, enabledepthtest);
-    }
 
     internal InventoryUtilClient d_InventoryUtil;
     internal void UseInventory(Packet_Inventory packet_Inventory)
@@ -3411,7 +3401,7 @@
             if ((playerx >= 0 && playerx < map.MapSizeX)
                 && (playery >= 0 && playery < map.MapSizeY))
             {
-                performanceinfo.Set("height", platform.StringFormat("height:{0}", platform.IntToString(d_Heightmap.GetBlock(playerx, playery))));
+                performanceinfo.Set("height", platform.StringFormat("Height: {0}", platform.IntToString(d_Heightmap.GetBlock(playerx, playery))));
             }
             if (eKey == GetKey(GlKeys.F5))
             {

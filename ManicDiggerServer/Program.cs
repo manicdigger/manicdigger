@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading;
-using ManicDigger;
 using System.IO;
-using ManicDigger.ClientNative;
 using System.Runtime.InteropServices;
+using System.Threading;
+using ManicDigger.Common;
+using ManicDigger.Server;
 
 namespace ManicDiggerServer
 {

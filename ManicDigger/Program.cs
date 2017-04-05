@@ -1,17 +1,12 @@
 ﻿#region Using Statements
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Threading;
 using System.Windows.Forms;
-using System.Xml;
-using ManicDigger;
-using ManicDigger.Renderers;
-using System.Text;
-using System.Net.Sockets;
 using ManicDigger.ClientNative;
+using ManicDigger.Common;
+using ManicDigger.Server;
 using OpenTK.Graphics;
 #endregion
 
