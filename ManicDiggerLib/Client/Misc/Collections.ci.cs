@@ -261,18 +261,20 @@ public class DictionaryStringString
         Start(64);
     }
 
-    public void Start(int count_)
+    public void Start(int size_)
     {
-        items = new KeyValueStringString[count_];
-        count = count_;
+        items = new KeyValueStringString[size_];
+        size = size_;
     }
 
-    internal KeyValueStringString[] items;
-    internal int count;
+    public KeyValueStringString[] items;
+    internal int size;
+    
+    public int GetSize() { return size; }
 
     public void Set(string key, string value)
     {
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < size; i++)
         {
             if (items[i] == null)
             {
@@ -284,7 +286,7 @@ public class DictionaryStringString
                 return;
             }
         }
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < size; i++)
         {
             if (items[i] == null)
             {
@@ -298,7 +300,7 @@ public class DictionaryStringString
 
     internal bool ContainsKey(string key)
     {
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < size; i++)
         {
             if (items[i] == null)
             {
@@ -314,7 +316,7 @@ public class DictionaryStringString
 
     internal string Get(string key)
     {
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < size; i++)
         {
             if (items[i] == null)
             {
@@ -330,7 +332,7 @@ public class DictionaryStringString
 
     internal void Remove(string key)
     {
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < size; i++)
         {
             if (items[i] == null)
             {
@@ -346,8 +348,8 @@ public class DictionaryStringString
 
 public class KeyValueStringString
 {
-    internal string key;
-    internal string value;
+    public string key;
+    public string value;
 }
 
 public class DictionaryStringInt1024

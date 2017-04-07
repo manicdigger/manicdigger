@@ -506,7 +506,7 @@
                         string[] sound = game.d_Data.CloneSound()[clonesource];
                         if (sound != null) // && sound.Length > 0)
                         {
-                            game.AudioPlay(sound[0]); //todo sound cycle
+                            game.AudioPlay(game.platform.StringFormat("{0}.ogg", sound[0])); //TODO: sound cycle
                         }
                     }
                 }
@@ -546,7 +546,7 @@
                             string[] sound = left ? game.d_Data.BreakSound()[blocktype] : game.d_Data.BuildSound()[blocktype];
                             if (sound != null) // && sound.Length > 0)
                             {
-                                game.AudioPlay(sound[0]); //todo sound cycle
+                                game.AudioPlay(game.platform.StringFormat("{0}.ogg", sound[0])); //TODO: sound cycle
                             }
                         }
                         //normal attack

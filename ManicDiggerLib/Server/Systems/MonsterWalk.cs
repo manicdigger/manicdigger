@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
-class ServerSystemMonsterWalk : ServerSystem
+namespace ManicDigger.Server
 {
+	/// <summary>
+	/// TODO: Implement monster movement
+	/// </summary>
+	class ServerSystemMonsterWalk : ServerSystem
+	{
+		
+	}
 }

@@ -10,6 +10,8 @@
         widgets[2] = exit;
         queryStringChecked = false;
         cursorLoaded = false;
+        fontDefault = new FontCi();
+        fontDefault.size = 20;
     }
 
     MenuWidget singleplayer;
@@ -19,6 +21,7 @@
     internal float windowY;
     bool queryStringChecked;
     bool cursorLoaded;
+    FontCi fontDefault;
 
     public override void Render(float dt)
     {
@@ -30,7 +33,7 @@
         if (menu.assetsLoadProgress.value != 1)
         {
             string s = menu.p.StringFormat(menu.lang.Get("MainMenu_AssetsLoadProgress"), menu.p.FloatToString(menu.p.FloatToInt(menu.assetsLoadProgress.value * 100)));
-            menu.DrawText(s, 20 * scale, windowX / 2, windowY / 2, TextAlign.Center, TextBaseline.Middle);
+            menu.DrawText(s, fontDefault, windowX / 2, windowY / 2, TextAlign.Center, TextBaseline.Middle);
             return;
         }
 

@@ -45,6 +45,13 @@
         logout.buttonStyle = ButtonStyle.Button;
 
         title = "Multiplayer";
+        
+        fontServerHeading = new FontCi();
+        fontServerHeading.style = 1;
+        fontServerHeading.size = 14;
+        fontServerDescription = new FontCi();
+        fontDefault = new FontCi();
+        fontDefault.size = 14;
 
         widgets[0] = back;
         widgets[1] = connect;
@@ -84,6 +91,7 @@
     int serversPerPage;
     string title;
     bool loading;
+    FontCi fontDefault;
 
     public override void LoadTranslations()
     {
@@ -148,25 +156,21 @@
         back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
-        back.fontSize = 14 * scale;
 
         connect.x = p.GetCanvasWidth() / 2 - 300 * scale;
         connect.y = p.GetCanvasHeight() - 104 * scale;
         connect.sizex = 256 * scale;
         connect.sizey = 64 * scale;
-        connect.fontSize = 14 * scale;
 
         connectToIp.x = p.GetCanvasWidth() / 2 - 0 * scale;
         connectToIp.y = p.GetCanvasHeight() - 104 * scale;
         connectToIp.sizex = 256 * scale;
         connectToIp.sizey = 64 * scale;
-        connectToIp.fontSize = 14 * scale;
 
         refresh.x = p.GetCanvasWidth() / 2 + 350 * scale;
         refresh.y = p.GetCanvasHeight() - 104 * scale;
         refresh.sizex = 256 * scale;
         refresh.sizey = 64 * scale;
-        refresh.fontSize = 14 * scale;
 
         pageUp.x = p.GetCanvasWidth() - 94 * scale;
         pageUp.y = 100 * scale + (serversPerPage - 1) * 70 * scale;
@@ -184,7 +188,6 @@
         loggedInName.y = 32 * scale;
         loggedInName.sizex = 128 * scale;
         loggedInName.sizey = 32 * scale;
-        loggedInName.fontSize = 12 * scale;
         if (loggedInName.text == "")
         {
             if (p.GetPreferences().GetString("Password", "") != "")
@@ -198,16 +201,15 @@
         logout.y = 62 * scale;
         logout.sizex = 128 * scale;
         logout.sizey = 32 * scale;
-        logout.fontSize = 12 * scale;
         logout.text = "Logout";
 
         menu.DrawBackground();
-        menu.DrawText(title, 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
-        menu.DrawText(p.IntToString(page + 1), 14 * scale, p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
+        menu.DrawText(title, menu.fontMenuHeading, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText(p.IntToString(page + 1), fontDefault, p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
 
         if (loading)
         {
-            menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), 14 * scale, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
+            menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), fontDefault, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
         }
 
         UpdateThumbnails();
@@ -270,6 +272,7 @@
         }
         UpdateScrollButtons();
         DrawWidgets();
+        DrawServerWidgets();
     }
 
     ThumbnailResponseCi[] thumbResponses;
@@ -459,4 +462,64 @@
             loggedInName.text = "";
         }
     }
+    
+    void DrawServerWidgets()
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (!w.visible)
+                {
+                    continue;
+                }
+                string text = w.text;
+                if (w.selected)
+                {
+                    text = StringTools.StringAppend(menu.p, "&2", text);
+                }
+                if (w.type == WidgetType.Button)
+                {
+                    if (w.buttonStyle == ButtonStyle.ServerEntry)
+                    {
+                        string[] strings = menu.p.StringSplit(w.text, "\n", new IntRef());
+                        if (w.selected)
+                        {
+                            //Highlight text if selected
+                            strings[0] = StringTools.StringAppend(menu.p, "&2", strings[0]);
+                            strings[1] = StringTools.StringAppend(menu.p, "&2", strings[1]);
+                            strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
+                            strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
+                        }
+                        DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image);
+                        if (w.description != null)
+                        {
+                            //Display a warning sign, when server does not respond to queries
+                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38 * menu.GetScale(), w.y, w.sizey / 2, w.sizey / 2);
+                        }
+                        if (strings[4] != menu.p.GetGameVersion())
+                        {
+                            //Display an icon if server version differs from client version
+                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38 * menu.GetScale(), w.y + w.sizey / 2, w.sizey / 2, w.sizey / 2);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    FontCi fontServerHeading;
+    FontCi fontServerDescription;
+    internal void DrawServerButton(string name, string motd, string gamemode, string playercount, float x, float y, float width, float height, string image)
+    {
+        //Server buttons default to: (screen width - 200) x 64
+        menu.Draw2dQuad(menu.GetTexture("serverlist_entry_background.png"), x, y, width, height);
+        menu.Draw2dQuad(menu.GetTexture(image), x, y, height, height);
+
+        menu.DrawText(name, fontServerHeading, x + 70, y + 5, TextAlign.Left, TextBaseline.Top);
+		menu.DrawText(gamemode, fontServerDescription, x + width - 10, y + height - 5, TextAlign.Right, TextBaseline.Bottom);
+		menu.DrawText(playercount, fontServerDescription, x + width - 10, y + 5, TextAlign.Right, TextBaseline.Top);
+		menu.DrawText(motd, fontServerDescription, x + 70, y + height - 5, TextAlign.Left, TextBaseline.Bottom);
+	}
 }

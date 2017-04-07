@@ -511,7 +511,6 @@
             {
                 FontCi font = new FontCi();
                 font.size = 8;
-                font.family = "Arial";
                 game.Draw2dText(game.platform.IntToString(item.BlockCount), font, screenposX, screenposY, null, false);
             }
         }
@@ -529,7 +528,9 @@
         IntRef tw = new IntRef();
         IntRef th = new IntRef();
         float one = 1;
-        game.platform.TextSize(dataItems.ItemInfo(item), 11 + one / 2, tw, th);
+        FontCi font = new FontCi();
+        font.size = 10;
+        game.platform.TextSize(dataItems.ItemInfo(item), font, tw, th);
         tw.value += 6;
         th.value += 4;
         int w = game.platform.FloatToInt(tw.value + CellDrawSize * sizex);
@@ -540,9 +541,6 @@
         if (screenposY > game.Height() - (h + 20)) { screenposY = game.Height() - (h + 20); }
         game.Draw2dTexture(game.WhiteTexture(), screenposX - w, screenposY - h, w, h, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
         game.Draw2dTexture(game.WhiteTexture(), screenposX - w + 2, screenposY - h + 2, w - 4, h - 4, null, 0, Game.ColorFromArgb(255, 105, 105, 105), false);
-        FontCi font = new FontCi();
-        font.family = "Arial";
-        font.size = 10;
         game.Draw2dText(dataItems.ItemInfo(item), font, screenposX - tw.value + 4, screenposY - h + 2, null, false);
         Packet_Item item2 = new Packet_Item();
         item2.BlockId = item.BlockId;
