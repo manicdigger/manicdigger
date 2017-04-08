@@ -22,7 +22,7 @@
             float posX = - game.platform.MathSin(e.position.roty) * p.dx + e.position.x;
             float posY = p.dy + e.position.y;
             float posZ = game.platform.MathCos(e.position.roty) * p.dz + e.position.z;
-            //todo if picking
+            //TODO: if picking
             if ((game.Dist(game.player.position.x, game.player.position.y, game.player.position.z, posX, posY, posZ) < 20)
                 || game.keyboardState[Game.KeyAltLeft] || game.keyboardState[Game.KeyAltRight])
             {
@@ -40,9 +40,8 @@
                     game.GLScale(scale, scale, scale);
 
                     FontCi font = new FontCi();
-                    font.family = "Arial";
                     font.size = 14;
-                    game.Draw2dText(text, font, -game.TextSizeWidth(text, 14) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
+                    game.Draw2dText(text, font, -game.TextSizeWidth(text, font) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
 
                     game.GLPopMatrix();
                 }

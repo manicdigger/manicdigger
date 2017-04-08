@@ -196,7 +196,7 @@
     int glTexturesLength;
     ToCall[] tocallSolid;
     ToCall[] tocallTransparent;
-    // todo dynamic
+    // TODO: dynamic
     public const int texturesCount = 10;
 
     // Not really needed because display lists perform (at least on some computers)

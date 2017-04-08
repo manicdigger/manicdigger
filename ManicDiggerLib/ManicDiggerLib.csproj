@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -16,7 +16,7 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>c.snk</AssemblyOriginatorKeyFile>
     <PlatformTarget>x86</PlatformTarget>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -48,19 +48,19 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BCrypt.Net, Version=0.1.4056.18965, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\BCrypt.Net.dll</HintPath>
-    </Reference>
     <Reference Include="ENet, Version=1.3.6.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\ENet.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="protobuf-net, Version=2.1.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <HintPath>..\packages\protobuf-net.2.1.0\lib\net45\protobuf-net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.DataSetExtensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Drawing" />
@@ -68,29 +68,14 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="csogg">
-      <HintPath>..\Lib\csogg.dll</HintPath>
-    </Reference>
-    <Reference Include="csvorbis">
-      <HintPath>..\Lib\csvorbis.dll</HintPath>
-    </Reference>
     <Reference Include="LibNoise">
       <HintPath>..\Lib\LibNoise.dll</HintPath>
-    </Reference>
-    <Reference Include="OpenTK">
-      <HintPath>..\Lib\OpenTK.dll</HintPath>
-    </Reference>
-    <Reference Include="protobuf-net">
-      <HintPath>..\Lib\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.SQLite">
       <HintPath>..\Lib\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="Jint">
       <HintPath>..\Lib\Jint.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="websocket-sharp, Version=1.0.2.26683, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -111,18 +96,16 @@
     <Compile Include="Client\MainMenu\Singleplayer.ci.cs" />
     <Compile Include="Client\Misc\Collections.ci.cs" />
     <Compile Include="Client\Misc\GameMisc.ci.cs" />
+    <Compile Include="Client\Misc\LanguageCi.ci.cs" />
     <Compile Include="Client\Misc\Packets.ci.cs" />
     <Compile Include="Client\Misc\TaskScheduler.ci.cs" />
+    <Compile Include="Client\Misc\TextColorRenderer.ci.cs" />
     <Compile Include="Client\Mods\Audio.ci.cs" />
     <Compile Include="Client\Mods\DebugChunk.ci.cs" />
     <Compile Include="Client\Mods\Draw2dMisc.ci.cs" />
     <Compile Include="Client\Mods\DrawArea.ci.cs" />
     <Compile Include="Client\Mods\GuiCrafting.ci.cs" />
     <Compile Include="Client\Mods\GuiEscapeMenu.ci.cs" />
-    <Compile Include="ClientNative\Audio.cs" />
-    <Compile Include="ClientNative\AviWriter.cs" />
-    <Compile Include="ClientNative\Misc.cs" />
-    <Compile Include="ClientNative\Screenshot.cs" />
     <Compile Include="Client\Mods\GuiPlayerStats.ci.cs" />
     <Compile Include="Client\Mods\GuiInventory.ci.cs" />
     <Compile Include="Client\Mods\BlockDamageToPlayer.ci.cs" />
@@ -160,26 +143,23 @@
     <Compile Include="Client\Mods\SkySphereAnimated.ci.cs" />
     <Compile Include="Client\Mods\GuiTouchButtons.ci.cs" />
     <Compile Include="Client\Mods\WalkSound.ci.cs" />
-    <Compile Include="Client\Misc\NetworkTcp.ci.cs" />
+    <Compile Include="Client\Misc\NetworkTcpClient.ci.cs" />
     <Compile Include="Client\Misc\QueryClient.ci.cs" />
     <Compile Include="Client\Server.ci.cs" />
-    <Compile Include="Client\Misc\ServerSimple.ci.cs" />
     <Compile Include="Client\Mods\GuiTextEditor.ci.cs" />
     <Compile Include="Client\Misc\FrustumCulling.ci.cs" />
     <Compile Include="Client\Mods\GuiChat.ci.cs" />
     <Compile Include="Client\Misc\Interpolation.ci.cs" />
     <Compile Include="Client\Misc\Inventory.ci.cs" />
-    <Compile Include="Client\Misc\Language.ci.cs" />
     <Compile Include="Client\Misc\MeshBatcher.ci.cs" />
     <Compile Include="Client\Mods\AutoCamera.ci.cs" />
     <Compile Include="Client\Mods\CharacterPhysics.ci.cs" />
     <Compile Include="Client\Misc\Collisions.ci.cs" />
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc\Misc.ci.cs" />
-    <Compile Include="Client\Mods\FpsHistoryGraph.ci.cs" />
-    <Compile Include="Client\Misc\Network.ci.cs" />
-    <Compile Include="Client\Misc\NetworkDummy.ci.cs" />
-    <Compile Include="Client\Misc\NetworkEnet.ci.cs" />
+    <Compile Include="Client\Mods\DrawStatistics.ci.cs" />
+    <Compile Include="Client\Misc\NetworkDummyClient.ci.cs" />
+    <Compile Include="Client\Misc\NetworkEnetClient.ci.cs" />
     <Compile Include="Client\Mods\ParticleEffectBlockBreak.ci.cs" />
     <Compile Include="Client\Misc\Primitives.ci.cs" />
     <Compile Include="Client\Misc\Shadows.ci.cs" />
@@ -188,13 +168,31 @@
     <Compile Include="Client\Misc\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\Misc\GlMatrix.ci.cs" />
     <Compile Include="Client\Misc\NetworkWebSocket.ci.cs" />
+    <Compile Include="Client\SimpleServer\NetworkDummyServer.ci.cs" />
+    <Compile Include="Client\SimpleServer\ServerSimple.ci.cs" />
+    <Compile Include="Common\AssetLoader.cs" />
+    <Compile Include="Common\Compression.cs" />
+    <Compile Include="Common\CrashReporter.cs" />
+    <Compile Include="Common\GameStorePath.cs" />
+    <Compile Include="Common\GameVersion.cs" />
+    <Compile Include="Common\Language.ci.cs" />
+    <Compile Include="Common\LanguageNative.cs" />
+    <Compile Include="Common\Misc.cs" />
+    <Compile Include="Common\Network.ci.cs" />
+    <Compile Include="Common\NetworkDummyCommon.ci.cs" />
+    <Compile Include="Common\NetworkEnetCommon.cs" />
+    <Compile Include="Common\NetworkTcpCommon.cs" />
+    <Compile Include="Common\Ping.ci.cs" />
+    <Compile Include="Common\XmlTool.cs" />
+    <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Mods\Fortress\Default.cs" />
     <Compile Include="Server\Mods\Fortress\Food.cs" />
     <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\Mods\War\Food.cs" />
+    <Compile Include="Server\NetworkDummyServer.cs" />
+    <Compile Include="Server\NetworkEnetServer.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\ServerEntity.cs" />
-    <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
@@ -233,7 +231,6 @@
     <Compile Include="Server\NetworkTcpServer.cs" />
     <Compile Include="Server\Packets.cs" />
     <Compile Include="Client\Misc\Platform.ci.cs" />
-    <Compile Include="Client\Misc\PlatformNative.cs" />
     <Compile Include="Server\ScriptConsole.cs" />
     <Compile Include="Server\ScriptInterpreter.cs" />
     <Compile Include="Server\Server.cs" />
@@ -254,16 +251,14 @@
     <Compile Include="Server\ServerMonitor.cs" />
     <Compile Include="Server\ServerWorldManager.cs" />
     <Compile Include="Server\Mod.cs" />
-    <Compile Include="ClientNative\OggDecoder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
-    <Compile Include="ClientNative\TextRenderer.cs" />
     <Compile Include="Server\Systems\Sign.cs" />
     <Compile Include="Server\Systems\UnloadUnusedChunks.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="c.snk" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Packet.proto">
@@ -286,6 +281,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

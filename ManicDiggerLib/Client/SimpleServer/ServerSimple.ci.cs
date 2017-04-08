@@ -521,7 +521,7 @@ public class ModManagerSimple1 : ModManagerSimple
                 break;
             }
         }
-        // todo main inventory
+        // TODO: main inventory
         server.clients[player].inventoryDirty = true;
     }
 }

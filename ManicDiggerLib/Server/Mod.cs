@@ -7,7 +7,7 @@ using System.Net;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace ManicDigger
+namespace ManicDigger.Server
 {
 	public class ModManager1 : ModManager
 	{
@@ -55,7 +55,7 @@ namespace ManicDigger
 				throw new Exception(blockType);
 			}
 			server.BlockTypes[id].IsBuildable = true;
-			server.d_Data.UseBlockType(server.platform, id, BlockTypeConverter.GetBlockType(server.BlockTypes[id]));
+			server.d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(server.BlockTypes[id]));
 		}
 
 		public void RegisterOnBlockBuild(ModDelegates.BlockBuild f)
@@ -779,7 +779,7 @@ namespace ManicDigger
 					IntPtr buf = Marshal.AllocHGlobal(8192);
 					if (uname(buf) == 0)
 					{
-						// todo
+						// TODO: is this working?
 						for (int i = 0; i < 8192 - 3; i++)
 						{
 							if (Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 0)) == 'a'
@@ -878,7 +878,7 @@ namespace ManicDigger
 			server.clients[id] = c;
 			c.state = ClientStateOnServer.Playing;
 			DummyNetwork network = new DummyNetwork() { ClientReceiveBufferLock = new MonitorObject(), ServerReceiveBufferLock = new MonitorObject() };
-			c.socket = new DummyNetConnection() { network = network, platform = new GamePlatformNative() };
+			c.socket = new DummyNetConnection() { network = network };
 			c.Ping.SetTimeoutValue(int.MaxValue);
 			c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
 			                        * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];

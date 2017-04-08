@@ -17,7 +17,7 @@
             TextureId[i] = new int[6];
         }
         TextureIdForInventory = new int[MaxBlockTypes];
-        language = new Language();
+        language = new LanguageCi();
         lastplacedblockX = -1;
         lastplacedblockY = -1;
         lastplacedblockZ = -1;
@@ -53,9 +53,10 @@
         ENABLE_ZFAR = true;
         TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
         LoadedAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
-        AllowedFontsCount = 1;
+        AllowedFontsCount = 2;
         AllowedFonts = new string[AllowedFontsCount];
         AllowedFonts[0] = "Verdana";
+        AllowedFonts[1] = "Courier New";
         fov = Game.GetPi() / 3;
         cameratype = CameraType.Fpp;
         ENABLE_TPP_VIEW = false;
@@ -405,7 +406,7 @@
 
     internal GamePlatform platform;
     internal Packet_BlockType[] blocktypes;
-    internal Language language;
+    internal LanguageCi language;
     internal TerrainChunkTesselatorCi d_TerrainChunkTesselator;
 
     internal Map map;
@@ -508,6 +509,7 @@
 
     public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
     {
+        platform.GLDisableAlphaTest();
         if (color == ColorFromArgb(255, 255, 255, 255) && inAtlasId == null)
         {
             Draw2dTextureSimple(textureid, x1, y1, width, height, enabledepthtest);
@@ -516,6 +518,7 @@
         {
             Draw2dTextureInAtlas(textureid, x1, y1, width, height, inAtlasId, atlastextures, color, enabledepthtest);
         }
+        platform.GLEnableAlphaTest();
     }
 
     Model quadModel;
@@ -968,9 +971,7 @@
         Text_ t = new Text_();
         t.text = text;
         t.color = color.value;
-        t.fontsize = font.size;
-        t.fontfamily = font.family;
-        t.fontstyle = font.style;
+        t.font = font;
         CachedTexture ct;
 
         if (GetCachedTextTexture(t) == null)
@@ -995,9 +996,7 @@
 
         ct = GetCachedTextTexture(t);
         ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
-        platform.GLDisableAlphaTest();
         Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, Game.ColorFromArgb(255, 255, 255, 255), enabledepthtest);
-        platform.GLEnableAlphaTest();
         DeleteUnusedCachedTextTextures();
     }
 
@@ -1364,7 +1363,7 @@
         {
             return false;
         }
-        return platform.StringContains(name, "Water"); // todo
+        return platform.StringContains(name, "Water"); // TODO: Do not use name
     }
 
     internal int mouseCurrentX;
@@ -1757,7 +1756,7 @@
     
     internal void UpdateColumnHeight(int x, int y)
     {
-        //todo faster
+        //TODO: faster
         int height = map.MapSizeZ - 1;
         for (int i = map.MapSizeZ - 1; i >= 0; i--)
         {
@@ -1785,7 +1784,7 @@
                 map.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, true);
             }
         }
-        //Todo: too many redraws. Optimize.
+        //TODO: too many redraws. Optimize.
         //Now placing a single block updates 27 chunks,
         //and each of those chunk updates calculates light from 27 chunks.
         //So placing a block is often 729x slower than it should be.
@@ -1897,7 +1896,6 @@
     public const string playertexturedefaultfilename = "mineplayer.png";
     internal bool ENABLE_DRAW_TEST_CHARACTER;
     internal AnimationState a;
-    internal ModSkySphereStatic skysphere;
     internal int reloadblock;
     internal int reloadstartMilliseconds;
     internal int lastOxygenTickMilliseconds;
@@ -1919,7 +1917,6 @@
     internal int clientmodsCount;
     internal bool SkySphereNight;
     internal ModDrawParticleEffectBlockBreak particleEffectBlockBreak;
-    internal bool ENABLE_DRAWPOSITION;
 
     public int SerializeFloat(float p)
     {
@@ -1934,18 +1931,6 @@
     public float NextFloat(float min, float max)
     {
         return rnd.NextFloat() * (max - min) + min;
-    }
-
-    public byte HeadingByte(float orientationX, float orientationY, float orientationZ)
-    {
-        return Game.IntToByte(platform.FloatToInt((((orientationY) % (2 * Game.GetPi())) / (2 * Game.GetPi())) * 256));
-    }
-
-    public byte PitchByte(float orientationX, float orientationY, float orientationZ)
-    {
-        float xx = (orientationX + Game.GetPi()) % (2 * Game.GetPi());
-        xx = xx / (2 * Game.GetPi());
-        return Game.IntToByte(platform.FloatToInt(xx * 256));
     }
 
     public void PlaySoundAt(string name, float x, float y, float z)
@@ -2136,19 +2121,19 @@
         return blocktypes[blocktype].Name != null;
     }
 
-    internal int TextSizeWidth(string s, int size)
+    internal int TextSizeWidth(string s, FontCi font)
     {
         IntRef width = new IntRef();
         IntRef height = new IntRef();
-        platform.TextSize(s, size, width, height);
+        platform.TextSize(s, font, width, height);
         return width.value;
     }
 
-    internal int TextSizeHeight(string s, int size)
+    internal int TextSizeHeight(string s, FontCi font)
     {
         IntRef width = new IntRef();
         IntRef height = new IntRef();
-        platform.TextSize(s, size, width, height);
+        platform.TextSize(s, font, width, height);
         return height.value;
     }
 
@@ -2329,7 +2314,7 @@
         {
             return false;
         }
-        return platform.StringContains(name, "Lava"); // todo
+        return platform.StringContains(name, "Lava"); // TODO: Do not use name
     }
 
     internal int terraincolor()
@@ -2627,14 +2612,6 @@
     }
     internal int[] materialSlots;
 
-    internal void Draw2dText1(string text, int x, int y, int fontsize, IntRef color, bool enabledepthtest)
-    {
-        FontCi font = new FontCi();
-        font.family = "Arial";
-        font.size = fontsize;
-        Draw2dText(text, font, x, y, color, enabledepthtest);
-    }
-
     internal InventoryUtilClient d_InventoryUtil;
     internal void UseInventory(Packet_Inventory packet_Inventory)
     {
@@ -2693,7 +2670,7 @@
         }
         else
         {
-            //TODO
+            //TODO: what to do here?
         }
     }
 
@@ -2833,10 +2810,6 @@
                 else { Log("Mouse smoothing disabled."); }
             }
             // Commands requiring boolean arguments
-            else if (cmd == "pos")
-            {
-                ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
-            }
             else if (cmd == "noclip")
             {
                 if (this.AllowFreemove)
@@ -3253,7 +3226,7 @@
 
     internal void UseTerrainTextures(string[] textureIds, int textureIdsCount)
     {
-        //todo bigger than 32x32
+        //TODO: bigger than 32x32
         int tilesize = 32;
         BitmapData_ atlas2d = BitmapData_.Create(tilesize * atlas2dtiles(), tilesize * atlas2dtiles());
 
@@ -3411,7 +3384,7 @@
             if ((playerx >= 0 && playerx < map.MapSizeX)
                 && (playery >= 0 && playery < map.MapSizeY))
             {
-                performanceinfo.Set("height", platform.StringFormat("height:{0}", platform.IntToString(d_Heightmap.GetBlock(playerx, playery))));
+                performanceinfo.Set("Terrain height", platform.IntToString(d_Heightmap.GetBlock(playerx, playery)));
             }
             if (eKey == GetKey(GlKeys.F5))
             {
@@ -3814,7 +3787,6 @@
     }
 
     internal int Font;
-    internal GameExit d_Exit;
 
     internal void OnFocusChanged()
     {

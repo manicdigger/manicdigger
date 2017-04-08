@@ -199,7 +199,7 @@
                         {
                             game.Draw2dTexture(game.WhiteTexture(), screenx + w.x, screeny + w.y, w.sizex, w.sizey, null, 0, w.color, false);
                         }
-                        game.Draw2dText1(text, screenx + game.platform.FloatToInt(w.x), screeny + game.platform.FloatToInt(w.y + w.sizey / 2), game.platform.FloatToInt(w.fontSize), null, false);
+                        game.Draw2dText(text, w.font, screenx + w.x, screeny + w.y + w.sizey / 2, null, false);
                     }
                 }
                 if (w.type == WidgetType.Textbox)
@@ -223,7 +223,7 @@
                 }
                 if (w.type == WidgetType.Label)
                 {
-                    game.Draw2dText(text, w.font, screenx + w.x, screeny + w.y, IntRef.Create(Game.ColorFromArgb(255, 0, 0, 0)), false);
+                    game.Draw2dText(text, w.font, screenx + w.x, screeny + w.y, IntRef.Create(w.color), false);
                 }
                 if (w.description != null)
                 {
@@ -1459,7 +1459,7 @@ public abstract class ClientModManager
     public abstract int WhiteTexture();
     public abstract void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color);
     public abstract void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureId);
-    public abstract void Draw2dText(string text, float x, float y, float fontsize);
+    public abstract void Draw2dText(string text, float x, float y, FontCi font);
     public abstract void OrthoMode();
     public abstract void PerspectiveMode();
     public abstract DictionaryStringString GetPerformanceInfo();
@@ -1607,11 +1607,8 @@ public class ClientModManager1 : ClientModManager
     }
 
 
-    public override void Draw2dText(string text, float x, float y, float fontsize)
+    public override void Draw2dText(string text, float x, float y, FontCi font)
     {
-        FontCi font = new FontCi();
-        font.family = "Arial";
-        font.size = fontsize;
         game.Draw2dText(text, font, x, y, null, false);
     }
 
@@ -1767,25 +1764,26 @@ public class CachedTexture
 public class Text_
 {
     internal string text;
-    internal float fontsize;
     internal int color;
-    internal string fontfamily;
-    internal int fontstyle;
+    internal FontCi font;
 
     internal bool Equals_(Text_ t)
     {
         return this.text == t.text
-            && this.fontsize == t.fontsize
             && this.color == t.color
-            && this.fontfamily == t.fontfamily
-            && this.fontstyle == t.fontstyle;
+            && this.font != null
+            && t.font != null
+            && this.font.size == t.font.size
+            && this.font.family == t.font.family
+            && this.font.style == t.font.style;
     }
 
     public string GetText() { return text; } public void SetText(string value) { text = value; }
-    public float GetFontSize() { return fontsize; } public void SetFontSize(float value) { fontsize = value; }
     public int GetColor() { return color; } public void SetColor(int value) { color = value; }
-    public string GetFontFamily() { return fontfamily; } public void SetFontFamily(string value) { fontfamily = value; }
-    public int GetFontStyle() { return fontstyle; } public void SetFontStyle(int value) { fontstyle = value; }
+    public FontCi GetFont() { return font; } public void SetFont(FontCi value) { font = value; }
+    public float GetFontSize() { return font.size; }
+    public string GetFontFamily() { return font.family; }
+    public int GetFontStyle() { return font.style; }
 }
 
 public class CachedTextTexture
@@ -1798,7 +1796,27 @@ public class FontCi
 {
     internal string family;
     internal float size;
+    /// <summary>
+    /// The font style to use. Can be one of the following:<br/>
+    /// 0: Regular<br/>
+    /// 1: Bold<br/>
+    /// 2: Italic<br/>
+    /// 3: Bold Italic<br/>
+    /// 4: Underline<br/>
+    /// 5: Bold Underline<br/>
+    /// 6: Italic Underline<br/>
+    /// 7: Bold Italic Underline<br/>
+    /// 8: Strikethrough<br/>
+    /// </summary>
     internal int style;
+
+    public FontCi()
+    {
+        // Default font style
+        family = "Arial";
+        size = 12;
+        style = 0;
+    }
 
     internal static FontCi Create(string family_, float size_, int style_)
     {
@@ -1808,211 +1826,10 @@ public class FontCi
         f.style = style_;
         return f;
     }
-}
 
-public class TextPart
-{
-    internal int color;
-    internal string text;
-}
-
-public class TextColorRenderer
-{
-    internal GamePlatform platform;
-
-    internal BitmapCi CreateTextTexture(Text_ t)
-    {
-        IntRef partsCount = new IntRef();
-        TextPart[] parts = DecodeColors(t.text, t.color, partsCount);
-
-        float totalwidth = 0;
-        float totalheight = 0;
-        int[] sizesX = new int[partsCount.value];
-        int[] sizesY = new int[partsCount.value];
-
-        for (int i = 0; i < partsCount.value; i++)
-        {
-            IntRef outWidth = new IntRef();
-            IntRef outHeight = new IntRef();
-            platform.TextSize(parts[i].text, t.fontsize, outWidth, outHeight);
-
-            sizesX[i] = outWidth.value;
-            sizesY[i] = outHeight.value;
-
-            totalwidth += outWidth.value;
-            totalheight = MathCi.MaxFloat(totalheight, outHeight.value);
-        }
-
-        int size2X = NextPowerOfTwo(platform.FloatToInt(totalwidth) + 1);
-        int size2Y = NextPowerOfTwo(platform.FloatToInt(totalheight) + 1);
-        BitmapCi bmp2 = platform.BitmapCreate(size2X, size2Y);
-        int[] bmp2Pixels = new int[size2X * size2Y];
-
-        float currentwidth = 0;
-        for (int i = 0; i < partsCount.value; i++)
-        {
-            int sizeiX = sizesX[i];
-            int sizeiY = sizesY[i];
-            if (sizeiX == 0 || sizeiY == 0)
-            {
-                continue;
-            }
-            Text_ partText = new Text_();
-            partText.text = parts[i].text;
-            partText.color = parts[i].color;
-            partText.fontsize = t.fontsize;
-            partText.fontstyle = t.fontstyle;
-            partText.fontfamily = t.fontfamily;
-            BitmapCi partBmp = platform.CreateTextTexture(partText);
-            int partWidth = platform.FloatToInt(platform.BitmapGetWidth(partBmp));
-            int partHeight = platform.FloatToInt(platform.BitmapGetHeight(partBmp));
-            int[] partBmpPixels = new int[partWidth * partHeight];
-            platform.BitmapGetPixelsArgb(partBmp, partBmpPixels);
-            for (int x = 0; x < partWidth; x++)
-            {
-                for (int y = 0; y < partHeight; y++)
-                {
-                    if (x + currentwidth >= size2X) { continue; }
-                    if (y >= size2Y) { continue; }
-                    int c = partBmpPixels[MapUtilCi.Index2d(x, y, partWidth)];
-                    if (Game.ColorA(c) > 0)
-                    {
-                        bmp2Pixels[MapUtilCi.Index2d(platform.FloatToInt(currentwidth) + x, y, size2X)] = c;
-                    }
-                }
-            }
-            currentwidth += sizeiX;
-        }
-        platform.BitmapSetPixelsArgb(bmp2, bmp2Pixels);
-        return bmp2;
-    }
-
-    public TextPart[] DecodeColors(string s, int defaultcolor, IntRef retLength)
-    {
-        TextPart[] parts = new TextPart[256];
-        int partsCount = 0;
-        int currentcolor = defaultcolor;
-        int[] currenttext = new int[256];
-        int currenttextLength = 0;
-        IntRef sLength = new IntRef();
-        int[] sChars = platform.StringToCharArray(s, sLength);
-        for (int i = 0; i < sLength.value; i++)
-        {
-            // If a & is found, try to parse a color code
-            if (sChars[i] == '&')
-            {
-                //check if there's a character after it
-                if (i + 1 < sLength.value)
-                {
-                    //try to parse the color code
-                    int color = HexToInt(sChars[i + 1]);
-                    if (color != -1)
-                    {
-                        //Color has been parsed successfully
-                        if (currenttextLength != 0)
-                        {
-                            //Add content so far to return value
-                            TextPart part = new TextPart();
-                            part.text = platform.CharArrayToString(currenttext, currenttextLength);
-                            part.color = currentcolor;
-                            parts[partsCount++] = part;
-                        }
-                        //Update current color and reset stored text
-                        for (int k = 0; k < currenttextLength; k++)
-                        {
-                            currenttext[k] = 0;
-                        }
-                        currenttextLength = 0;
-                        currentcolor = GetColor(color);
-                        //Increment i to prevent the code from being read again
-                        i++;
-                    }
-                    else
-                    {
-                        //no valid color code found. display as normal character
-                        currenttext[currenttextLength++] = sChars[i];
-                    }
-                }
-                else
-                {
-                    //if not, just display it as normal character
-                    currenttext[currenttextLength++] = sChars[i];
-                }
-            }
-            else
-            {
-                //Nothing special. Just add the current character
-                currenttext[currenttextLength++] = s[i];
-            }
-        }
-        //Add any leftover text parts in current color
-        if (currenttextLength != 0)
-        {
-            TextPart part = new TextPart();
-            part.text = platform.CharArrayToString(currenttext, currenttextLength);
-            part.color = currentcolor;
-            parts[partsCount++] = part;
-        }
-        retLength.value = partsCount;
-        return parts;
-    }
-
-    int NextPowerOfTwo(int x)
-    {
-        x--;
-        x |= x >> 1;  // handle  2 bit numbers
-        x |= x >> 2;  // handle  4 bit numbers
-        x |= x >> 4;  // handle  8 bit numbers
-        x |= x >> 8;  // handle 16 bit numbers
-        //x |= x >> 16; // handle 32 bit numbers
-        x++;
-        return x;
-    }
-
-    int GetColor(int currentcolor)
-    {
-        switch (currentcolor)
-        {
-            case 0: { return Game.ColorFromArgb(255, 0, 0, 0); }
-            case 1: { return Game.ColorFromArgb(255, 0, 0, 191); }
-            case 2: { return Game.ColorFromArgb(255, 0, 191, 0); }
-            case 3: { return Game.ColorFromArgb(255, 0, 191, 191); }
-            case 4: { return Game.ColorFromArgb(255, 191, 0, 0); }
-            case 5: { return Game.ColorFromArgb(255, 191, 0, 191); }
-            case 6: { return Game.ColorFromArgb(255, 191, 191, 0); }
-            case 7: { return Game.ColorFromArgb(255, 191, 191, 191); }
-            case 8: { return Game.ColorFromArgb(255, 40, 40, 40); }
-            case 9: { return Game.ColorFromArgb(255, 64, 64, 255); }
-            case 10: { return Game.ColorFromArgb(255, 64, 255, 64); }
-            case 11: { return Game.ColorFromArgb(255, 64, 255, 255); }
-            case 12: { return Game.ColorFromArgb(255, 255, 64, 64); }
-            case 13: { return Game.ColorFromArgb(255, 255, 64, 255); }
-            case 14: { return Game.ColorFromArgb(255, 255, 255, 64); }
-            case 15: { return Game.ColorFromArgb(255, 255, 255, 255); }
-            default: return Game.ColorFromArgb(255, 255, 255, 255);
-        }
-    }
-
-    int HexToInt(int c)
-    {
-        if (c == '0') { return 0; }
-        if (c == '1') { return 1; }
-        if (c == '2') { return 2; }
-        if (c == '3') { return 3; }
-        if (c == '4') { return 4; }
-        if (c == '5') { return 5; }
-        if (c == '6') { return 6; }
-        if (c == '7') { return 7; }
-        if (c == '8') { return 8; }
-        if (c == '9') { return 9; }
-        if (c == 'a') { return 10; }
-        if (c == 'b') { return 11; }
-        if (c == 'c') { return 12; }
-        if (c == 'd') { return 13; }
-        if (c == 'e') { return 14; }
-        if (c == 'f') { return 15; }
-        return -1;
-    }
+    public float GetFontSize() { return size; }
+    public string GetFontFamily() { return family; }
+    public int GetFontStyle() { return style; }
 }
 
 public class CameraMove
@@ -2459,18 +2276,18 @@ public class GameData
         return id >= BlockIdRailstart() && id < BlockIdRailstart() + 64;
     }
 
-    public void UseBlockTypes(GamePlatform platform, Packet_BlockType[] blocktypes, int count)
+    public void UseBlockTypes(Packet_BlockType[] blocktypes, int count)
     {
         for (int i = 0; i < count; i++)
         {
             if (blocktypes[i] != null)
             {
-                UseBlockType(platform, i, blocktypes[i]);
+                UseBlockType(i, blocktypes[i]);
             }
         }
     }
 
-    public void UseBlockType(GamePlatform platform, int id, Packet_BlockType b)
+    public void UseBlockType(int id, Packet_BlockType b)
     {
         if (b.Name == null)//!b.IsValid)
         {
@@ -2500,19 +2317,19 @@ public class GameData
         {
             for (int i = 0; i < b.Sounds.WalkCount; i++)
             {
-                WalkSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Walk[i], ".wav");
+                WalkSound()[id][i] = b.Sounds.Walk[i];
             }
             for (int i = 0; i < b.Sounds.Break1Count; i++)
             {
-                BreakSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Break1[i], ".wav");
+                BreakSound()[id][i] = b.Sounds.Break1[i];
             }
             for (int i = 0; i < b.Sounds.BuildCount; i++)
             {
-                BuildSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Build[i], ".wav");
+                BuildSound()[id][i] = b.Sounds.Build[i];
             }
             for (int i = 0; i < b.Sounds.CloneCount; i++)
             {
-                CloneSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Clone[i], ".wav");
+                CloneSound()[id][i] = b.Sounds.Clone[i];
             }
         }
         LightRadius()[id] = b.LightRadius;

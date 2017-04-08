@@ -2,7 +2,7 @@
 ###############
 output
 output2
-CitoOutput
+/cito/output
 bin
 obj
 /Packet.Serializer.cs
@@ -11,8 +11,6 @@ obj
 /Packet.cs
 /ProtocolParser.cs
 /Assets.ci.cs
-/Html/Assets.js
-/Html/ManicDigger.js
 
 # NuGet package cache #
 #######################
@@ -25,6 +23,7 @@ _ReSharper.*
 *.suo
 *.sdsettings
 local.properties
+packages/
 
 # OS generated files #
 ######################

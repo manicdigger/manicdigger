@@ -16,6 +16,9 @@
         open.type = WidgetType.Button;
 
         title = "Singleplayer";
+        
+        fontDefault = new FontCi();
+        fontDefault.size = 16;
 
         widgets[0] = play;
         widgets[1] = newWorld;
@@ -43,6 +46,7 @@
     string[] savegames;
     int savegamesCount;
     string title;
+    FontCi fontDefault;
 
     public override void LoadTranslations()
     {
@@ -58,7 +62,7 @@
         float scale = menu.GetScale();
 
         menu.DrawBackground();
-        menu.DrawText(title, 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText(title, menu.fontMenuHeading, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
 
         float leftx = p.GetCanvasWidth() / 2 - 128 * scale;
         float y = p.GetCanvasHeight() / 2 + 0 * scale;
@@ -67,31 +71,26 @@
         play.y = y + 100 * scale;
         play.sizex = 256 * scale;
         play.sizey = 64 * scale;
-        play.fontSize = 14 * scale;
 
         newWorld.x = leftx;
         newWorld.y = y + 170 * scale;
         newWorld.sizex = 256 * scale;
         newWorld.sizey = 64 * scale;
-        newWorld.fontSize = 14 * scale;
 
         modify.x = leftx;
         modify.y = y + 240 * scale;
         modify.sizex = 256 * scale;
         modify.sizey = 64 * scale;
-        modify.fontSize = 14 * scale;
 
         back.x = 40 * scale;
         back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
-        back.fontSize = 14 * scale;
 
         open.x = leftx;
         open.y = y + 0 * scale;
         open.sizex = 256 * scale;
         open.sizey = 64 * scale;
-        open.fontSize = 14 * scale;
 
         if (savegames == null)
         {
@@ -112,7 +111,6 @@
             worldButtons[i].y = 100 + 100 * scale * i;
             worldButtons[i].sizex = 256 * scale;
             worldButtons[i].sizey = 64 * scale;
-            worldButtons[i].fontSize = 14 * scale;
         }
 
         open.visible = menu.p.SinglePlayerServerAvailable();
@@ -128,7 +126,7 @@
 
         if (!menu.p.SinglePlayerServerAvailable())
         {
-            menu.DrawText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.", 16 * scale, menu.p.GetCanvasWidth() / 2, menu.p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
+            menu.DrawText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.", fontDefault, menu.p.GetCanvasWidth() / 2, menu.p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
         }
     }
 

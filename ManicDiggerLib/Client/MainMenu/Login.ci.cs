@@ -43,6 +43,9 @@
         back.text = "Back";
         back.type = WidgetType.Button;
         back.nextWidget = 1;
+        
+        fontLoginMessage = new FontCi();
+        fontLoginMessage.size = 14;
 
         title = "Login";
 
@@ -72,6 +75,7 @@
     MenuWidget createAccountRememberMe;
 
     MenuWidget back;
+    FontCi fontLoginMessage;
 
     bool triedSavedLogin;
     string title;
@@ -140,34 +144,30 @@
         }
         if (loginResultText != null)
         {
-            menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
+            menu.DrawText(loginResultText, fontLoginMessage, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
         }
 
-        menu.DrawText(title, 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+        menu.DrawText(title, menu.fontMenuHeading, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
 
         loginUsername.x = leftx;
         loginUsername.y = y + 100 * scale;
         loginUsername.sizex = 256 * scale;
         loginUsername.sizey = 64 * scale;
-        loginUsername.fontSize = 14 * scale;
 
         loginPassword.x = leftx;
         loginPassword.y = y + 200 * scale;
         loginPassword.sizex = 256 * scale;
         loginPassword.sizey = 64 * scale;
-        loginPassword.fontSize = 14 * scale;
 
         loginRememberMe.x = leftx;
         loginRememberMe.y = y + 300 * scale;
         loginRememberMe.sizex = 256 * scale;
         loginRememberMe.sizey = 64 * scale;
-        loginRememberMe.fontSize = 14 * scale;
 
         login.x = leftx;
         login.y = y + 400 * scale;
         login.sizex = 256 * scale;
         login.sizey = 64 * scale;
-        login.fontSize = 14 * scale;
 
         float rightx = p.GetCanvasWidth() / 2 + 150 * scale;
 
@@ -177,25 +177,21 @@
         createAccountUsername.y = y + 100 * scale;
         createAccountUsername.sizex = 256 * scale;
         createAccountUsername.sizey = 64 * scale;
-        createAccountUsername.fontSize = 14 * scale;
 
         createAccountPassword.x = rightx;
         createAccountPassword.y = y + 200 * scale;
         createAccountPassword.sizex = 256 * scale;
         createAccountPassword.sizey = 64 * scale;
-        createAccountPassword.fontSize = 14 * scale;
 
         createAccountRememberMe.x = rightx;
         createAccountRememberMe.y = y + 300 * scale;
         createAccountRememberMe.sizex = 256 * scale;
         createAccountRememberMe.sizey = 64 * scale;
-        createAccountRememberMe.fontSize = 14 * scale;
 
         createAccount.x = rightx;
         createAccount.y = y + 400 * scale;
         createAccount.sizex = 256 * scale;
         createAccount.sizey = 64 * scale;
-        createAccount.fontSize = 14 * scale;
 
         createAccountUsername.visible = false;
         createAccountPassword.visible = false;
@@ -206,7 +202,6 @@
         back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
-        back.fontSize = 14 * scale;
 
         DrawWidgets();
     }

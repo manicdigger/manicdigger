@@ -16,16 +16,18 @@
         fontValues[3] = 3;
         widgets = new Button[1024];
         keyselectid = -1;
+        fontEscapeMenu = FontCi.Create("Arial", 20, 0);
     }
     float one;
     Button buttonMainReturnToGame;
     Button buttonMainOptions;
     Button buttonMainExit;
+    FontCi fontEscapeMenu;
 
     int widgetsCount;
     void MainSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
         buttonMainReturnToGame = new Button();
         buttonMainReturnToGame.Text = language.ReturnToGame();
         buttonMainOptions = new Button();
@@ -62,7 +64,7 @@
     Button optionsReturnToMainMenu;
     void OptionsSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
         optionsGraphics = new Button();
         optionsGraphics.Text = language.Graphics();
         optionsKeys = new Button();
@@ -111,7 +113,7 @@
     void GraphicsSet()
     {
         OptionsCi options = game.options;
-        Language language = game.language;
+        LanguageCi language = game.language;
         graphicsOptionSmoothShadows = new Button();
         graphicsOptionSmoothShadows.Text = game.platform.StringFormat(language.OptionSmoothShadows(), options.Smoothshadows ? language.On() : language.Off());
         graphicsOptionDarkenSides = new Button();
@@ -203,7 +205,7 @@
     Button otherLanguageSetting;
     void OtherSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
 
         otherSoundOption = new Button();
         otherSoundOption.Text = game.platform.StringFormat(language.SoundOption(), (game.AudioEnabled ? language.On() : language.Off()));
@@ -250,7 +252,7 @@
     const int keyButtonsCount = 1024;
     void KeysSet()
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
 
         keyButtons = new Button[keyButtonsCount];
         for (int i = 0; i < keyButtonsCount; i++)
@@ -351,35 +353,35 @@
 
     void SetEscapeMenuState(EscapeMenuState state)
     {
-        Language language = game.language;
+        LanguageCi language = game.language;
         escapemenustate = state;
         WidgetsClear();
         if (state == EscapeMenuState.Main)
         {
             MainSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Options)
         {
             OptionsSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Graphics)
         {
             GraphicsSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Other)
         {
             OtherSet();
-            MakeSimpleOptions(20, 50);
+            MakeSimpleOptions(fontEscapeMenu, 50);
         }
         else if (state == EscapeMenuState.Keys)
         {
             KeysSet();
-            int fontsize = 12;
+            FontCi fontKeys = FontCi.Create("Arial", 12, 0);
             int textheight = 20;
-            MakeSimpleOptions(fontsize, textheight);
+            MakeSimpleOptions(fontKeys, textheight);
         }
     }
 
@@ -505,14 +507,14 @@
         return game.platform.KeyName(key);
     }
 
-    void MakeSimpleOptions(int fontsize, int textheight)
+    void MakeSimpleOptions(FontCi font, int textheight)
     {
         int starty = game.ycenter(widgetsCount * textheight);
         for (int i = 0; i < widgetsCount; i++)
         {
             string s = widgets[i].Text;
-            float sizeWidth = game.TextSizeWidth(s, fontsize);
-            float sizeHeight = game.TextSizeHeight(s, fontsize);
+            float sizeWidth = game.TextSizeWidth(s, font);
+            float sizeHeight = game.TextSizeHeight(s, font);
             int Width = game.platform.FloatToInt(sizeWidth) + 10;
             int Height = game.platform.FloatToInt(sizeHeight);
             int X = game.xcenter(sizeWidth);
@@ -521,7 +523,7 @@
             widgets[i].y = Y;
             widgets[i].width = Width;
             widgets[i].height = Height;
-            widgets[i].fontsize = fontsize;
+            widgets[i].font = font;
             if (i == keyselectid)
             {
                 widgets[i].fontcolor = Game.ColorFromArgb(255, 0, 255, 0);
@@ -552,7 +554,7 @@
         for (int i = 0; i < widgetsCount; i++)
         {
             Button w = widgets[i];
-            game.Draw2dText1(w.Text, w.x, w.y, w.fontsize, IntRef.Create(w.selected ? w.fontcolorselected : w.fontcolor), false);
+            game.Draw2dText(w.Text, w.font, w.x, w.y, IntRef.Create(w.selected ? w.fontcolorselected : w.fontcolor), false);
         }
     }
     Button[] widgets;
@@ -564,7 +566,7 @@
         {
             helps[i] = null;
         }
-        Language language = game.language;
+        LanguageCi language = game.language;
         int count = 0;
         helps[count++] = KeyHelpCreate(language.KeyMoveFoward(), GlKeys.W);
         helps[count++] = KeyHelpCreate(language.KeyMoveBack(), GlKeys.S);
@@ -778,7 +780,7 @@ public class Button
     {
         fontcolor = Game.ColorFromArgb(255, 255, 255, 255);
         fontcolorselected = Game.ColorFromArgb(255, 255, 0, 0);
-        fontsize = 20;
+        font = new FontCi();
     }
     internal int x;
     internal int y;
@@ -786,7 +788,7 @@ public class Button
     internal int height;
     internal string Text;
     internal bool selected;
-    internal int fontsize;
+    internal FontCi font;
     internal int fontcolor;
     internal int fontcolorselected;
 }
@@ -799,12 +801,8 @@ public class KeyHelp
 
 public class DisplayResolutionCi
 {
-    internal int Width;
-    internal int Height;
-    internal int BitsPerPixel;
-    internal float RefreshRate;
-    public int GetWidth() { return Width; } public void SetWidth(int value) { Width = value; }
-    public int GetHeight() { return Height; } public void SetHeight(int value) { Height = value; }
-    public int GetBitsPerPixel() { return BitsPerPixel; } public void SetBitsPerPixel(int value) { BitsPerPixel = value; }
-    public float GetRefreshRate() { return RefreshRate; } public void SetRefreshRate(float value) { RefreshRate = value; }
+    public int Width;
+    public int Height;
+    public int BitsPerPixel;
+    public float RefreshRate;
 }

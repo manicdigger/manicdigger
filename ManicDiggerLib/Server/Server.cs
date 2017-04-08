@@ -7,8 +7,6 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
-using ManicDigger;
-using OpenTK;
 using ProtoBuf;
 using System.Xml.Serialization;
 using System.Drawing;
@@ -16,10 +14,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Jint.Delegates;
 using System.Diagnostics;
-using ManicDigger.ClientNative;
+using ManicDigger.Common;
 
-
-
+namespace ManicDigger.Server
+{
 public class ClientException : Exception
 {
     public ClientException(Exception innerException, int clientid)
@@ -86,8 +84,7 @@ public partial class Server : ICurrentTime, IDropItem
         // systems[systemsCount++] = new ServerSystemPermissionSign();
 
         //Load translations
-        gameplatform = new GamePlatformNative();
-        language.platform = gameplatform;
+        language = new LanguageNative();
         language.LoadTranslations();
     }
     
@@ -97,7 +94,6 @@ public partial class Server : ICurrentTime, IDropItem
     internal int systemsCount;
     internal ServerPlatform serverPlatform;
 
-    GamePlatform gameplatform;
     public GameExit exit;
     public ServerMap d_Map;
     public GameData d_Data;
@@ -179,7 +175,7 @@ public partial class Server : ICurrentTime, IDropItem
 
     public bool Public;
     public bool enableshadows = true;
-    public Language language = new Language();
+    public Language language = new LanguageNative();
 
     Stopwatch stopwatchDt = new Stopwatch();
     public Stopwatch serverUptime = new Stopwatch();
@@ -379,7 +375,7 @@ public partial class Server : ICurrentTime, IDropItem
         {
             server.mainSockets = new NetServer[3];
             server.mainSocketsCount = 3;
-            mainSockets[0] = new EnetNetServer() { platform = gameplatform };
+            mainSockets[0] = new EnetNetServer();
             if (mainSockets[1] == null)
             {
                 mainSockets[1] = new WebSocketNetServer();
@@ -604,7 +600,7 @@ public partial class Server : ICurrentTime, IDropItem
         SaveAll();
         if (filename != GetSaveFilename())
         {
-            //todo load
+            //TODO: load
         }
         var dbcompressed = (ChunkDbCompressed)d_Map.d_ChunkDb;
         var db = (ChunkDbSqlite)dbcompressed.d_ChunkDb;
@@ -704,8 +700,6 @@ public partial class Server : ICurrentTime, IDropItem
         }
         return i;
     }
-
-    public GamePlatformNative platform = new GamePlatformNative();
 
     private void ProcessNetMessage(NetIncomingMessage msg, NetServer mainSocket, Stopwatch s)
     {
@@ -878,8 +872,6 @@ public partial class Server : ICurrentTime, IDropItem
             p.Inventory.DragDropItem = ConvertItem(inv.Inventory.DragDropItem);
             p.Inventory.Gauntlet = ConvertItem(inv.Inventory.Gauntlet);
             p.Inventory.Helmet = ConvertItem(inv.Inventory.Helmet);
-            // todo
-            //p.Inventory.Items = inv.Inventory.Items;
             p.Inventory.Items = new Packet_PositionItem[inv.Inventory.Items.Count];
             p.Inventory.ItemsCount = inv.Inventory.Items.Count;
             p.Inventory.ItemsLength = inv.Inventory.Items.Count;
@@ -1190,7 +1182,7 @@ public partial class Server : ICurrentTime, IDropItem
         switch (packet.Id)
         {
             case Packet_ClientIdEnum.PingReply:
-                clients[clientid].Ping.Receive(platform);
+        		clients[clientid].Ping.Receive((int)serverUptime.ElapsedMilliseconds);
                 clients[clientid].LastPing = ((float)clients[clientid].Ping.RoundtripTimeTotalMilliseconds() / 1000);
                 this.NotifyPing(clientid, (int)clients[clientid].Ping.RoundtripTimeTotalMilliseconds());
                 break;
@@ -1511,7 +1503,7 @@ public partial class Server : ICurrentTime, IDropItem
                 break;
             case Packet_ClientIdEnum.Health:
                 {
-                    //todo server side
+                    //TODO: server side
                     var stats = GetPlayerStats(clients[clientid].playername);
                     stats.CurrentHealth = packet.Health.CurrentHealth;
                     if (stats.CurrentHealth < 1)
@@ -1542,7 +1534,7 @@ public partial class Server : ICurrentTime, IDropItem
                 break;
             case Packet_ClientIdEnum.Oxygen:
                 {
-                    //todo server side
+                    //TODO: server side
                     var stats = GetPlayerStats(clients[clientid].playername);
                     stats.CurrentOxygen = packet.Oxygen.CurrentOxygen;
                     clients[clientid].IsPlayerStatsDirty = true;
@@ -1593,9 +1585,9 @@ public partial class Server : ICurrentTime, IDropItem
                 }
                 else
                 {
-                    Vector3 from = new Vector3(DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
-                    Vector3 to = new Vector3(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
-                    Vector3 v = to - from;
+                    Vector3f from = new Vector3f(DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
+                    Vector3f to = new Vector3f(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
+                    Vector3f v = to - from;
                     v.Normalize();
                     v *= BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed;
                     SendProjectile(clientid, DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ),
@@ -1660,7 +1652,7 @@ public partial class Server : ICurrentTime, IDropItem
                     pick.Start = new float[] { DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ) };
                     pick.End = new float[] { DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ) };
 
-                    Vector3 feetpos = new Vector3((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
+                    Vector3f feetpos = new Vector3f((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
                     //var p = PlayerPositionSpawn;
                     Box3D bodybox = new Box3D();
                     float headsize = (k.Value.ModelHeight - k.Value.EyeHeight) * 2; //0.4f;
@@ -2500,7 +2492,6 @@ public partial class Server : ICurrentTime, IDropItem
 
     private bool DoCommandBuild(int player_id, bool execute, Packet_ClientSetBlock cmd)
     {
-        Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
         Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
         if (cmd.Mode == Packet_BlockSetModeEnum.Use)
         {
@@ -2585,7 +2576,7 @@ public partial class Server : ICurrentTime, IDropItem
                     }
                     break;
                 default:
-                    //TODO
+                    //TODO: exception handling?
                     return false;
             }
         }
@@ -3282,7 +3273,7 @@ public partial class Server : ICurrentTime, IDropItem
                 }
                 break;
             default:
-                //todo
+                //TODO: exception handling?
                 break;
         }
     }
@@ -3341,7 +3332,7 @@ public partial class Server : ICurrentTime, IDropItem
     {
         BlockTypes[id] = block;
         block.Name = name;
-        d_Data.UseBlockType(platform, id, BlockTypeConverter.GetBlockType(block));
+        d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(block));
     }
     public void SetBlockType(string name, BlockType block)
     {
@@ -4375,6 +4366,82 @@ public struct Vector3i
         return string.Format("[{0}, {1}, {2}]", x, y, z);
     }
 }
+public struct Vector3f
+{
+	public float X;
+	public float Y;
+	public float Z;
+
+	public Vector3f(float x, float y, float z)
+	{
+		this.X = x;
+		this.Y = y;
+		this.Z = z;
+	}
+
+	public Vector3f Add(Vector3f v)
+	{
+		return Add(v.X, v.Y, v.Z);
+	}
+
+	public Vector3f Add(float x, float y, float z)
+	{
+		return new Vector3f(this.X + x, this.Y + y, this.Z + z);
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj is Vector3f)
+		{
+			Vector3f other = (Vector3f)obj;
+			return this.X == other.X && this.Y == other.Y && this.Z == other.Z;
+		}
+		return base.Equals(obj);
+	}
+	public void Normalize()
+	{
+		float len = (float)Math.Sqrt(X * X + Y * Y + Z * Z);
+		if (len <= 0) { return; }
+		X /= len;
+		Y /= len;
+		Z /= len;
+	}
+	public static bool operator ==(Vector3f a, Vector3f b)
+	{
+		return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+	}
+	public static bool operator !=(Vector3f a, Vector3f b)
+	{
+		return !(a.X == b.X && a.Y == b.Y && a.Z == b.Z);
+	}
+	public override int GetHashCode()
+	{
+		int hash = 23;
+		unchecked
+		{
+			hash = hash * 37 + X.GetHashCode();
+			hash = hash * 37 + Y.GetHashCode();
+			hash = hash * 37 + Z.GetHashCode();
+		}
+		return hash;
+	}
+	public static Vector3f operator +(Vector3f a, Vector3f b)
+	{
+		return new Vector3f(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
+	}
+	public static Vector3f operator -(Vector3f a, Vector3f b)
+	{
+		return new Vector3f(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+	}
+	public static Vector3f operator *(Vector3f a, float b)
+	{
+		return new Vector3f(a.X * b, a.Y * b, a.Z * b);
+	}
+	public override string ToString()
+	{
+		return string.Format("[{0}, {1}, {2}]", X, Y, Z);
+	}
+}
 
 [ProtoContract()]
 public class Ingredient
@@ -4450,4 +4517,5 @@ public class ServerPlatformNative : ServerPlatform
     {
         return (int)value;
     }
+}
 }

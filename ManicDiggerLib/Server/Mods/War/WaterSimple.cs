@@ -97,7 +97,7 @@ namespace ManicDigger.Mods.War
 					}
 				}
 			}
-			//maybe sponge destroyed. todo faster test.
+			//maybe sponge destroyed. TODO: faster test.
 			for (int xx = x - spongerange; xx <= x + spongerange; xx++)
 			{
 				for (int yy = y - spongerange; yy <= y + spongerange; yy++)

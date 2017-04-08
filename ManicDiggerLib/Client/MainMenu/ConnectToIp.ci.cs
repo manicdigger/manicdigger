@@ -81,42 +81,30 @@
         float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
         float y = p.GetCanvasHeight() / 2 - 250 * scale;
 
-        string loginResultText = null;
-        if (errorText != null)
-        {
-            menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
-        }
-
-        menu.DrawText(title, 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+        menu.DrawText(title, menu.fontMenuHeading, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
 
         textboxIp.x = leftx;
         textboxIp.y = y + 100 * scale;
         textboxIp.sizex = 256 * scale;
         textboxIp.sizey = 64 * scale;
-        textboxIp.fontSize = 14 * scale;
 
         textboxPort.x = leftx;
         textboxPort.y = y + 200 * scale;
         textboxPort.sizex = 256 * scale;
         textboxPort.sizey = 64 * scale;
-        textboxPort.fontSize = 14 * scale;
 
         buttonConnect.x = leftx;
         buttonConnect.y = y + 400 * scale;
         buttonConnect.sizex = 256 * scale;
         buttonConnect.sizey = 64 * scale;
-        buttonConnect.fontSize = 14 * scale;
 
         back.x = 40 * scale;
         back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
-        back.fontSize = 14 * scale;
 
         DrawWidgets();
     }
-
-    string errorText;
 
     public override void OnBackPressed()
     {

@@ -205,8 +205,8 @@ namespace ManicDigger.Mods
 		int BLOCK_CLAY; //stone
 		int BLOCK_BEDROCK;
 		int BLOCK_AIR;
-		int BLOCK_SNOW; //todo
-		int BLOCK_ICE; //todo
+		int BLOCK_SNOW; //TODO: create blocktype
+		int BLOCK_ICE; //TODO: create blocktype
 		int BLOCK_GRASS;
 		int BLOCK_WATER;
 		int BLOCK_GRAVEL;

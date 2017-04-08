@@ -4,6 +4,7 @@
     {
         handler = new PacketHandlerCraftingRecipes();
         handler.mod = this;
+        fontCraftingGui = new FontCi();
     }
     PacketHandlerCraftingRecipes handler;
     public override void OnNewFrameDraw2d(Game game, float deltaTime)
@@ -46,6 +47,7 @@
     internal int craftingblocksCount;
     internal int craftingselectedrecipe;
     internal CraftingTableTool d_CraftingTableTool;
+    FontCi fontCraftingGui;
 
     internal void DrawCraftingRecipes(Game game)
     {
@@ -82,7 +84,7 @@
         int menustarty = game.ycenter(currentRecipesCount * 80);
         if (currentRecipesCount == 0)
         {
-            game.Draw2dText1(game.language.NoMaterialsForCrafting(), game.xcenter(200), game.ycenter(20), 12, null, false);
+            game.Draw2dText(game.language.NoMaterialsForCrafting(), fontCraftingGui, game.xcenter(200), game.ycenter(20), null, false);
             return;
         }
         for (int i = 0; i < currentRecipesCount; i++)
@@ -93,14 +95,14 @@
                 int xx = menustartx + 20 + ii * 130;
                 int yy = menustarty + i * 80;
                 game.Draw2dTexture(game.d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(game.TextureIdForInventory[r.Ingredients[ii].Type]), game.texturesPacked(), Game.ColorFromArgb(255, 255, 255, 255), false);
-                game.Draw2dText1(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Ingredients[ii].Amount), game.blocktypes[r.Ingredients[ii].Type].Name), xx + 50, yy, 12,
+                game.Draw2dText(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Ingredients[ii].Amount), game.blocktypes[r.Ingredients[ii].Type].Name), fontCraftingGui, xx + 50, yy,
                    IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
             }
             {
                 int xx = menustartx + 20 + 400;
                 int yy = menustarty + i * 80;
                 game.Draw2dTexture(game.d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(game.TextureIdForInventory[r.Output.Type]), game.texturesPacked(), Game.ColorFromArgb(255, 255, 255, 255), false);
-                game.Draw2dText1(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Output.Amount), game.blocktypes[r.Output.Type].Name), xx + 50, yy, 12,
+                game.Draw2dText(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Output.Amount), game.blocktypes[r.Output.Type].Name), fontCraftingGui, xx + 50, yy,
                   IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
             }
         }

@@ -4,9 +4,9 @@ using System.Text;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.IO;
-using ManicDigger.ClientNative;
+using ManicDigger.Common;
 
-namespace ManicDigger
+namespace ManicDigger.Server
 {
     public class ServerSystemModLoader : ServerSystem
     {
@@ -295,7 +295,7 @@ namespace ManicDigger
         void StartJsMods(ModManager m)
         {
             jintEngine.SetParameter("m", m);
-            // todo: javascript mod requirements
+            // TODO: javascript mod requirements
             foreach (var k in javascriptScripts)
             {
                 try

@@ -9,7 +9,7 @@ anim	node	frame	type	x	y	z
 
 section=animations
 name	len
-walk	40
+none	60
 
 section=global
 texw	texh

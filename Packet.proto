@@ -152,7 +152,7 @@ package Packet;
     }
     
     //Temporary, for client-side health.
-    //Todo fix because it allows cheating.
+    //TODO: fix because it allows cheating.
     message ClientHealth
     {
         optional int32 currentHealth = 1;
@@ -468,7 +468,7 @@ package Packet;
     message ServerBlobInitialize
     {
         //[ProtoMember(1, IsRequired = false)]
-        //optional byte[] hash; //todo, currently ignored.
+        //optional byte[] hash; //TODO: currently ignored.
 
         optional string name = 2;
         optional string md5 = 3;

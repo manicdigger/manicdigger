@@ -401,14 +401,14 @@ namespace ManicDigger.Mods.War
 			{
 				if (widget == "Subclass1")
 				{
-					//todo medic subclass
+					//TODO: medic subclass
 				}
 			}
 			if (pclass == PlayerClass.Support)
 			{
 				if (widget == "Subclass1")
 				{
-					//todo support subclass
+					//TODO: support subclass
 				}
 			}
 			ResetInventoryOnRespawn(playerid);

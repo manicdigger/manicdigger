@@ -131,22 +131,24 @@
     {
         return serverMessage;
     }
+    
+    public bool GetQuerySuccess() { return querySuccess; }
 }
 
 public class QueryResult
 {
-    internal string Name;
-    internal string MOTD;
-    internal int PlayerCount;
-    internal int MaxPlayers;
-    internal string PlayerList;
-    internal int Port;
-    internal string GameMode;
-    internal bool Password;
-    internal string PublicHash;
-    internal string ServerVersion;
-    internal int MapSizeX;
-    internal int MapSizeY;
-    internal int MapSizeZ;
-    internal byte[] ServerThumbnail;
+    public string Name;
+    public string MOTD;
+    public int PlayerCount;
+    public int MaxPlayers;
+    public string PlayerList;
+    public int Port;
+    public string GameMode;
+    public bool Password;
+    public string PublicHash;
+    public string ServerVersion;
+    public int MapSizeX;
+    public int MapSizeY;
+    public int MapSizeZ;
+    public byte[] ServerThumbnail;
 }
