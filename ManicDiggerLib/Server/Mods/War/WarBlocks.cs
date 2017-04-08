@@ -187,11 +187,11 @@ namespace ManicDigger.Mods.War
 			               });
 			m.SetBlockType(161, "Flag", new BlockType()
 			               {
-			               	AllTextures = "WhiteCloth",
-			               	DrawType = DrawType.Solid,
-			               	WalkableType = WalkableType.Solid,
-			               	Sounds = solidSounds,
-			               });
+							AllTextures = "FlagWhite",
+							DrawType = DrawType.Fence,
+							WalkableType = WalkableType.Empty,
+							Sounds = solidSounds,
+							});
 			m.SetBlockType(162, "BluePodest", new BlockType()
 			               {
 			               	TextureIdTop = "BlueCloth",
