@@ -192,7 +192,6 @@
     <Compile Include="Server\NetworkDummyServer.cs" />
     <Compile Include="Server\NetworkEnetServer.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
-    <Compile Include="Server\ServerEntity.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
