@@ -1,5 +1,4 @@
 using System;
-using ManicDigger;
 using System.Threading;
 
 namespace ManicDigger.Server

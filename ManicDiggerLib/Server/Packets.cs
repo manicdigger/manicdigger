@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using ProtoBuf;
-using ManicDigger;
 
 namespace ManicDigger.Server
 {

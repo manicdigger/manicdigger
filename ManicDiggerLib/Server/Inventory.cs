@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
 using ProtoBuf;
 using System.Runtime.Serialization;
-using ManicDigger;
 
 namespace ManicDigger.Server
 {

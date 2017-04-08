@@ -7,7 +7,6 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
-using ManicDigger;
 using ProtoBuf;
 using System.Xml.Serialization;
 using System.Drawing;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using ManicDigger;
 using ProtoBuf;
 using System.Collections.Generic;
 using Jint.Delegates;

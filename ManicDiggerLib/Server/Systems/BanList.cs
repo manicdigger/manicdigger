@@ -1,5 +1,4 @@
 ﻿using System;
-using ManicDigger;
 using System.Collections.Generic;
 using System.IO;
 using ManicDigger.Common;

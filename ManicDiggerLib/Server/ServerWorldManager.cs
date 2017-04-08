@@ -1,9 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Text;
-using System.Drawing;
-using ManicDigger;
 using PointG = System.Drawing.Point;
 using System.Diagnostics;
 using ProtoBuf;
