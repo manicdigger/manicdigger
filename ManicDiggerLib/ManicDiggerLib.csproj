@@ -185,6 +185,7 @@
     <Compile Include="Common\NetworkTcpCommon.cs" />
     <Compile Include="Common\Ping.ci.cs" />
     <Compile Include="Common\XmlTool.cs" />
+    <Compile Include="Server\ClientOnServer.cs" />
     <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Mods\Fortress\Default.cs" />
     <Compile Include="Server\Mods\Fortress\EntitySigns.cs" />
