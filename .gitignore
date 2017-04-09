@@ -12,6 +12,10 @@ obj
 /ProtocolParser.cs
 /Assets.ci.cs
 
+# NuGet package cache #
+#######################
+/packages
+
 # General #
 ###########
 _ReSharper.*

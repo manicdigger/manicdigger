@@ -3,7 +3,6 @@
 	internal string OverrideLanguage;
 	
 	public string CannotWriteChatLog() { return Get("CannotWriteChatLog"); }
-	public string ChunkUpdates() { return Get("ChunkUpdates"); }
 	public string Connecting() { return Get("Connecting"); }
 	public string ConnectingProgressKilobytes() { return Get("ConnectingProgressKilobytes"); }
 	public string ConnectingProgressPercent() { return Get("ConnectingProgressPercent"); }
@@ -63,7 +62,6 @@
 	public string ClientLanguageOption() { return Get("ClientLanguageOption"); }
 	public string SpawnPositionSet() { return Get("SpawnPositionSet"); }
 	public string SpawnPositionSetTo() { return Get("SpawnPositionSetTo"); }
-	public string Triangles() { return Get("Triangles"); }
 	public string UseServerTexturesOption() { return Get("UseServerTexturesOption"); }
 	public string ViewDistanceOption() { return Get("ViewDistanceOption"); }
 	public string OptionSmoothShadows() { return Get("OptionSmoothShadows"); }

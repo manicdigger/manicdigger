@@ -150,7 +150,7 @@ public class GameDataItemsClient
             //{
             //    return null;
             //}
-            //todo stack size limit
+            //TODO: stack size limit
             Packet_Item ret = new Packet_Item();
             ret.ItemClass = itemA.ItemClass;
             ret.BlockId = itemA.BlockId;

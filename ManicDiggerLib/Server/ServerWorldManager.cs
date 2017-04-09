@@ -1,9 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Text;
-using System.Drawing;
-using ManicDigger;
 using PointG = System.Drawing.Point;
 using System.Diagnostics;
 using ProtoBuf;
@@ -140,7 +137,7 @@ namespace ManicDigger.Server
 				// update related chunk at clients
 				foreach (var k in clients)
 				{
-					//todo wrong
+					//TODO: wrong?
 					//k.Value.chunksseen.Clear();
 					Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
 				}
@@ -175,7 +172,7 @@ namespace ManicDigger.Server
 			// update related chunk at clients
 			foreach (var k in clients)
 			{
-				//TODO wrong
+				//TODO: wrong
 				//k.Value.chunksseen.Clear();
 				Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
 			}
@@ -209,7 +206,7 @@ namespace ManicDigger.Server
 			// update related chunk at clients
 			foreach (var k in clients)
 			{
-				//TODO wrong
+				//TODO: wrong
 				//k.Value.chunksseen.Clear();
 				Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
 			}
@@ -238,7 +235,7 @@ namespace ManicDigger.Server
 				// update related chunk at clients
 				foreach (var k in clients)
 				{
-					//todo wrong
+					//TODO: wrong?
 					//k.Value.chunksseen.Clear();
 					Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
 				}
@@ -264,7 +261,7 @@ namespace ManicDigger.Server
 				// force to update chunks at clients
 				foreach (var k in clients)
 				{
-					//todo wrong
+					//TODO: wrong?
 					//k.Value.chunksseen.Clear();
 					Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
 				}

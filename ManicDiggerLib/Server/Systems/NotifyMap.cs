@@ -142,8 +142,7 @@ namespace ManicDigger.Server
 			else
 			{
 				compressedchunk = server.CompressChunkNetwork(chunk.data);
-				//todo!
-				//commented because it was being sent too early, before full column was generated.
+				//TODO: commented because it was being sent too early, before full column was generated.
 				//if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
 				{
 					byte[] heightmapchunk = Misc.UshortArrayToByteArray(server.d_Map.GetHeightmapChunk(globalpos.x, globalpos.y));

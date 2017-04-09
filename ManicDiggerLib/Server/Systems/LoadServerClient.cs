@@ -4,7 +4,6 @@ using System.Text;
 using System.IO;
 using ManicDigger.Common;
 using System.Xml.Serialization;
-using ManicDigger;
 using System.Xml;
 
 namespace ManicDigger.Server

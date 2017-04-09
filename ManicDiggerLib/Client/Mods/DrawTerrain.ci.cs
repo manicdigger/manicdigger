@@ -63,9 +63,9 @@
         {
             lastPerformanceInfoupdateMilliseconds = game.platform.TimeMillisecondsFromStart();
             int chunkupdates_ = ChunkUpdates();
-            game.performanceinfo.Set("chunk updates", game.platform.StringFormat(game.language.ChunkUpdates(), game.platform.IntToString(chunkupdates_ - lastchunkupdates)));
+            game.performanceinfo.Set("Chunk updates", game.platform.IntToString(chunkupdates_ - lastchunkupdates));
             lastchunkupdates = ChunkUpdates();
-            game.performanceinfo.Set("triangles", game.platform.StringFormat(game.language.Triangles(), game.platform.IntToString(triangles)));
+            game.performanceinfo.Set("Triangles", game.platform.IntToString(triangles));
         }
     }
 

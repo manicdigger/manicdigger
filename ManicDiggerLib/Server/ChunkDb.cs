@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ManicDigger;
 using System.Data.Common;
 using System.Data;
 using System.Data.SQLite;
@@ -659,7 +658,8 @@ namespace ManicDigger.Server
 		}
 	}
 	/// <summary>
-	/// Chunk storage using a plain file structure to store data - TODO
+	/// Chunk storage using a plain file structure to store data
+	/// TODO: This is just a draft. Implement.
 	/// </summary>
 	/*public class ChunkDbPlainFile : IChunkDb
 	{

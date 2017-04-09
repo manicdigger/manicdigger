@@ -157,7 +157,7 @@
     <Compile Include="Client\Misc\Collisions.ci.cs" />
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc\Misc.ci.cs" />
-    <Compile Include="Client\Mods\FpsHistoryGraph.ci.cs" />
+    <Compile Include="Client\Mods\DrawStatistics.ci.cs" />
     <Compile Include="Client\Misc\NetworkDummyClient.ci.cs" />
     <Compile Include="Client\Misc\NetworkEnetClient.ci.cs" />
     <Compile Include="Client\Mods\ParticleEffectBlockBreak.ci.cs" />
@@ -281,9 +281,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Client\SimpleServer" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

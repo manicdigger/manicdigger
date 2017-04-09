@@ -779,7 +779,7 @@ namespace ManicDigger.Server
 					IntPtr buf = Marshal.AllocHGlobal(8192);
 					if (uname(buf) == 0)
 					{
-						// todo
+						// TODO: is this working?
 						for (int i = 0; i < 8192 - 3; i++)
 						{
 							if (Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 0)) == 'a'

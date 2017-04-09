@@ -295,7 +295,7 @@ namespace ManicDigger.Server
         void StartJsMods(ModManager m)
         {
             jintEngine.SetParameter("m", m);
-            // todo: javascript mod requirements
+            // TODO: javascript mod requirements
             foreach (var k in javascriptScripts)
             {
                 try

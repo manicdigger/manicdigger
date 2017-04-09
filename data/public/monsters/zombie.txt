@@ -10,6 +10,7 @@ arml	torso	6	6	0	4	12	4	40	16	-90	0	0	0	-6	0	0	0	0	0
 
 section=keyframes
 anim	node	frame	type	x	y	z
+idle	torso	0	pos	0	18	0
 walk	legr	10	rot	-20	0	0
 walk	legr	30	rot	20	0	0
 walk	legl	10	rot	20	0	0
@@ -27,6 +28,7 @@ walk	head	35	rot	5	5	5
 
 section=animations
 name	len
+idle	60
 walk	40
 
 section=global

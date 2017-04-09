@@ -10,7 +10,6 @@
         {
             DrawEnemyHealthBlock(game);
             DrawAmmo(game);
-            DrawLocalPosition(game);
             DrawBlockInfo(game);
         }
         DrawMouseCursor(game);
@@ -162,28 +161,6 @@
                         game.Height() - game.TextSizeHeight(s, font) - 80, IntRef.Create(Game.ColorFromArgb(255, 255, 0, 0)), false);
                 }
             }
-        }
-    }
-
-    void DrawLocalPosition(Game game)
-    {
-        float one = 1;
-        if (game.ENABLE_DRAWPOSITION)
-        {
-            float heading = one * game.HeadingByte(game.player.position.rotx, game.player.position.roty, game.player.position.rotz);
-            float pitch = one * game.PitchByte(game.player.position.rotx, game.player.position.roty, game.player.position.rotz);
-            string postext = game.platform.StringFormat("X: {0}", game.platform.IntToString(game.MathFloor(game.player.position.x)));
-            postext = StringTools.StringAppend(game.platform, postext, ",\tY: ");
-            postext = StringTools.StringAppend(game.platform, postext, game.platform.IntToString(game.MathFloor(game.player.position.z)));
-            postext = StringTools.StringAppend(game.platform, postext, ",\tZ: ");
-            postext = StringTools.StringAppend(game.platform, postext, game.platform.IntToString(game.MathFloor(game.player.position.y)));
-            postext = StringTools.StringAppend(game.platform, postext, "\nHeading: ");
-            postext = StringTools.StringAppend(game.platform, postext, game.platform.IntToString(game.MathFloor(heading)));
-            postext = StringTools.StringAppend(game.platform, postext, "\nPitch: ");
-            postext = StringTools.StringAppend(game.platform, postext, game.platform.IntToString(game.MathFloor(pitch)));
-            FontCi font = new FontCi();
-            font.size = Game.ChatFontSize;
-            game.Draw2dText(postext, font, 100, 460, null, false);
         }
     }
 

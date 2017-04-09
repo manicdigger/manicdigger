@@ -13,8 +13,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Serialization;
-using ManicDigger;
-using ManicDigger.ClientNative;
 using ManicDigger.Common;
 using OpenTK;
 using OpenTK.Audio;
