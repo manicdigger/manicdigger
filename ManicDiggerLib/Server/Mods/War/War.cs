@@ -43,12 +43,15 @@ namespace ManicDigger.Mods.War
 			
 			//Register timers
 			m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
+			m.RegisterTimer(UpdateFlagHolder, 0.1);
 			m.RegisterTimer(UpdateRespawnTimer, 1);
 			m.RegisterTimer(UpdateRoundTimer, 1);
 			m.RegisterTimer(UpdateTab, 1);
 			
 			
 			startGame(true); //bool = worldStart (if you have a complete world with podests and flag, then comment this please)
+			
+			whiteFlag = m.GetBlockId("Flag");
 		}
 		
 		ModManager m;
@@ -1520,26 +1523,11 @@ namespace ManicDigger.Mods.War
 			}
 		}
 		
+		int whiteFlag;
+		
 		void OnDelete(int player, int x, int y, int z, int oldBlock)
 		{
-			if (oldBlock == 161)
-			{
-				if(players[player].haveflag == false)
-				{
-					m.SetBlock(x, y, z, 0);
-					players[player].flag = 161;
-					players[player].haveflag = true;
-					m.SendMessageToAll("&4" + m.GetPlayerName(player) + " is flag holder!");
-					players[player].flagowns++;
-					if(firstFlag == true)
-					{
-						firstFlag = false;
-						flagPosition[0] = x;
-						flagPosition[1] = y;
-						flagPosition[2] = z;
-					}
-				}
-			}
+			
 		}
 		
 		bool CheckOnDelete(int player, int x, int y, int z)
@@ -1548,7 +1536,6 @@ namespace ManicDigger.Mods.War
 			{
 				if(warmode == WarMode.CaptureTheFlag)
 				{
-					m.SendMessage(player, "Cheating is uncool");
 					return false;
 				}
 				else
@@ -1556,10 +1543,15 @@ namespace ManicDigger.Mods.War
 					return true;
 				}
 			}
+			else if (m.GetBlockNameAt(x, y, z) == "Flag" && warmode == WarMode.CaptureTheFlag)
+			{
+				return false;
+			}
 			else
 			{
 				return true;
 			}
+			
 		}
 		
 		bool CheckOnBuild(int player, int x, int y, int z)
@@ -1591,6 +1583,60 @@ namespace ManicDigger.Mods.War
 				return true;
 			}
 			
+		}
+		
+		void UpdateFlagHolder()
+		{
+			if (warmode == WarMode.CaptureTheFlag)
+			{
+				int[] allplayers = m.AllPlayers();
+				foreach (int p in allplayers)
+				{
+					int px = (int)m.GetPlayerPositionX(p);
+					int py = (int)m.GetPlayerPositionY(p);
+					int pz = (int)m.GetPlayerPositionZ(p);
+					if (m.IsValidPos(px, py, pz) && players[p].team != Team.Spectator)
+					{
+						int block = m.GetBlock(px, py, pz);
+						if (block == whiteFlag)
+						{
+							m.SetBlock(px, py, pz, 0);
+							players[p].flag = whiteFlag;
+							players[p].haveflag = true;
+							m.SendMessageToAll("&4" + m.GetPlayerName(p) + " is flag holder!");
+							players[p].flagowns++;
+							if(firstFlag == true)
+							{
+								firstFlag = false;
+								flagPosition[0] = px;
+								flagPosition[1] = py;
+								flagPosition[2] = pz;
+							}
+						}
+					}
+					if(m.IsValidPos(px, py, pz - 1) && players[p].team != Team.Spectator)
+					{
+						int block = m.GetBlock(px, py, pz - 1);
+						int playerPodest = 0;
+						if(players[p].team == Team.Blue)
+						{
+							playerPodest = m.GetBlockId("BluePodest");
+						}
+						else if(players[p].team == Team.Green)
+						{
+							playerPodest = m.GetBlockId("GreenPodest");
+						}
+						if(players[p].haveflag && block == playerPodest)
+						{
+							
+						}
+				    }
+				}
+			}
+			else
+			{
+				return;
+			}
 		}
 	}
 }
