@@ -123,9 +123,9 @@ namespace ManicDigger.Server
 				{
 					continue;
 				}
-				for (int k = 0; k < server.modEventHandlers.onupdateentity.Count; k++)
+				for (int k = 0; k < server.modEventHandlers.onentityupdate.Count; k++)
 				{
-					server.modEventHandlers.onupdateentity[k](e.chunkx, e.chunky, e.chunkz, e.id);
+					server.modEventHandlers.onentityupdate[k](e);
 				}
 			}
 
@@ -250,11 +250,7 @@ namespace ManicDigger.Server
 							{
 								continue;
 							}
-							ServerEntityId id = new ServerEntityId();
-							id.chunkx = chunkx;
-							id.chunky = chunky;
-							id.chunkz = chunkz;
-							id.id = i;
+							ServerEntityId id = new ServerEntityId(chunkx, chunky, chunkz, i);
 							list.Add(id);
 						}
 					}

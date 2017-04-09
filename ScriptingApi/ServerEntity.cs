@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using System;
+using ProtoBuf;
 
 namespace ManicDigger
 {
@@ -141,5 +142,27 @@ namespace ManicDigger
 	{
 		[ProtoMember(1)]
 		public float range;
+	}
+
+	public class ServerEntityId
+	{
+		public int chunkx;
+		public int chunky;
+		public int chunkz;
+		public int id;
+
+		public ServerEntityId() { }
+		public ServerEntityId(int cx, int cy, int cz, int eid)
+		{
+			chunkx = cx;
+			chunky = cy;
+			chunkz = cz;
+			id = eid;
+		}
+
+		public ServerEntityId Clone()
+		{
+			return new ServerEntityId(chunkx, chunky, chunkz, id);
+		}
 	}
 }

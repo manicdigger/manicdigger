@@ -13,8 +13,8 @@ namespace ManicDigger.Server
 			{
 				started = true;
 				server_.modManager.RegisterOnBlockUseWithTool(OnUseWithTool);
-				server_.modEventHandlers.onupdateentity.Add(UpdateEntity);
-				server_.modEventHandlers.onuseentity.Add(OnUseEntity);
+				server_.modEventHandlers.onentityupdate.Add(UpdateEntity);
+				server_.modEventHandlers.onentityuse.Add(OnUseEntity);
 				server.modEventHandlers.ondialogclick2.Add(OnDialogClick);
 			}
 		}
