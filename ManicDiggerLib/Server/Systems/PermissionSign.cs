@@ -17,10 +17,12 @@ namespace ManicDigger.Server
 				server_.modEventHandlers.onentityuse.Add(OnUseEntity);
 				server.modEventHandlers.ondialogclick2.Add(OnDialogClick);
 				server.modEventHandlers.onpermission.Add(OnPermission);
+				editingSign = new ServerEntityId[server.modManager.GetMaxPlayers()];
 			}
 		}
 		bool started;
 		Server server;
+		ServerEntityId[] editingSign;
 
 		void OnUseWithTool(int player, int x, int y, int z, int tool)
 		{
@@ -48,7 +50,7 @@ namespace ManicDigger.Server
 				e.position.x = x + one / 2;
 				e.position.y = z;
 				e.position.z = y + one / 2;
-				e.position.heading = EntityHeading.GetHeading(server.modManager.GetPlayerPositionX(player), server.modManager.GetPlayerPositionY(player), e.position.x, e.position.z);
+				e.position.heading = GetHeadingLookAt(server.modManager.GetPlayerPositionX(player), server.modManager.GetPlayerPositionY(player), e.position.x, e.position.z);
 
 				e.permissionSign = new ServerEntityPermissionSign();
 				e.permissionSign.name = "Admin";
@@ -57,9 +59,9 @@ namespace ManicDigger.Server
 			}
 		}
 
-		void UpdateEntity(int chunkx, int chunky, int chunkz, int id)
+		void UpdateEntity(ServerEntityId id)
 		{
-			ServerEntity e = server.GetEntity(chunkx, chunky, chunkz, id);
+			ServerEntity e = server.GetEntity(id);
 			if (e.permissionSign == null)
 			{
 				return;
@@ -134,9 +136,9 @@ namespace ManicDigger.Server
 			e.drawArea.sizez = sizez;
 		}
 
-		void OnUseEntity(int player, int chunkx, int chunky, int chunkz, int id)
+		void OnUseEntity(int player, ServerEntityId id)
 		{
-			ServerEntity e = server.GetEntity(chunkx, chunky, chunkz, id);
+			ServerEntity e = server.GetEntity(id);
 			if (e.permissionSign == null)
 			{
 				return;
@@ -169,12 +171,7 @@ namespace ManicDigger.Server
 			okHandler.Id = "UsePermissionSign_OK";
 			d.Widgets[widgetCount++] = okHandler;
 			d.Widgets[widgetCount++] = Widget.MakeText("Set player", font, 200, 50, Game.ColorFromArgb(255, 0, 0, 0));
-			ServerEntityId id_ = new ServerEntityId();
-			id_.chunkx = chunkx;
-			id_.chunky = chunky;
-			id_.chunkz = chunkz;
-			id_.id = id;
-			server.clients[player].editingSign = id_;
+			editingSign[player] = id;
 			server.SendDialog(player, "UseSign", d);
 		}
 
@@ -215,12 +212,11 @@ namespace ManicDigger.Server
 				return;
 			}
 
-			ClientOnServer c = server.clients[args.GetPlayer()];
-			ServerEntityId id = c.editingSign;
+			ServerEntityId id = editingSign[args.GetPlayer()];
 			if (name != "")
 			{
-				c.editingSign = null;
-				ServerEntity e = server.GetEntity(id.chunkx, id.chunky, id.chunkz, id.id);
+				editingSign[args.GetPlayer()] = null;
+				ServerEntity e = server.GetEntity(id);
 				e.permissionSign.name = name;
 				e.permissionSign.type = type;
 				server.SetEntityDirty(id);
@@ -268,8 +264,8 @@ namespace ManicDigger.Server
 								continue;
 							}
 							if (!InArea(args.GetX(), args.GetY(), args.GetZ(),
-								                     e.drawArea.x, e.drawArea.z, e.drawArea.y,
-								                     e.drawArea.sizex, e.drawArea.sizez, e.drawArea.sizey))
+													 e.drawArea.x, e.drawArea.z, e.drawArea.y,
+													 e.drawArea.sizex, e.drawArea.sizez, e.drawArea.sizey))
 							{
 								continue;
 							}
@@ -301,6 +297,29 @@ namespace ManicDigger.Server
 			&& x < (areaX + areaSizeX)
 			&& y < (areaY + areaSizeY)
 			&& z < (areaZ + areaSizeZ);
+		}
+
+		static byte GetHeadingLookAt(float posx, float posy, float targetx, float targety)
+		{
+			float deltaX = targetx - posx;
+			float deltaY = targety - posy;
+			//Angle to x-axis: cos(beta) = x / |length|
+			double headingDeg = (360.0 / (2.0 * Math.PI)) * Math.Acos(deltaX / Math.Sqrt(deltaX * deltaX + deltaY * deltaY)) + 90.0;
+			//Add 2 Pi if value is negative
+			if (deltaY < 0)
+			{
+				headingDeg = -headingDeg - 180.0;
+			}
+			if (headingDeg < 0)
+			{
+				headingDeg += 360.0;
+			}
+			if (headingDeg > 360.0)
+			{
+				headingDeg -= 360.0;
+			}
+			//Convert to value between 0 and 255 and return
+			return (byte)((headingDeg / 360.0) * 256.0);
 		}
 	}
 }
