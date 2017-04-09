@@ -79,10 +79,6 @@ public partial class Server : ICurrentTime, IDropItem
         // This ServerSystem should always be loaded last
         systems[systemsCount++] = new ServerSystemLoadLast();
 
-        // Not finished
-        // systems[systemsCount++] = new ServerSystemSign();
-        // systems[systemsCount++] = new ServerSystemPermissionSign();
-
         //Load translations
         language = new LanguageNative();
         language.LoadTranslations();
@@ -1811,17 +1807,17 @@ public partial class Server : ICurrentTime, IDropItem
                 switch (packet.EntityInteraction.InteractionType)
                 {
                     case Packet_EntityInteractionTypeEnum.Use:
-                        for (int i = 0; i < modEventHandlers.onuseentity.Count; i++)
+                        for (int i = 0; i < modEventHandlers.onentityuse.Count; i++)
                         {
                             ServerEntityId id = c.spawnedEntities[packet.EntityInteraction.EntityId - 64];
-                            modEventHandlers.onuseentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
+                            modEventHandlers.onentityuse[i](clientid, id);
                         }
                         break;
                     case Packet_EntityInteractionTypeEnum.Hit:
-                        for (int i = 0; i < modEventHandlers.onhitentity.Count; i++)
+                        for (int i = 0; i < modEventHandlers.onentityhit.Count; i++)
                         {
                             ServerEntityId id = c.spawnedEntities[packet.EntityInteraction.EntityId - 64];
-                            modEventHandlers.onhitentity[i](clientid, id.chunkx, id.chunky, id.chunkz, id.id);
+                            modEventHandlers.onentityhit[i](clientid, id);
                         }
                         break;
                     default:
@@ -3568,10 +3564,10 @@ public partial class Server : ICurrentTime, IDropItem
         }
     }
 
-    internal ServerEntity GetEntity(int chunkx, int chunky, int chunkz, int id)
+    internal ServerEntity GetEntity(ServerEntityId id)
     {
-        ServerChunk c = d_Map.GetChunk(chunkx * chunksize, chunky * chunksize, chunkz * chunksize);
-        return c.Entities[id];
+        ServerChunk c = d_Map.GetChunk_(id.chunkx, id.chunky, id.chunkz);
+        return c.Entities[id.id];
     }
 
     internal void SetEntityDirty(ServerEntityId id)
@@ -3609,7 +3605,7 @@ public partial class Server : ICurrentTime, IDropItem
         chunk.DirtyForSaving = true;
     }
 
-    internal void AddEntity(int x, int y, int z, ServerEntity e)
+    internal ServerEntityId AddEntity(int x, int y, int z, ServerEntity e)
     {
         ServerChunk c = d_Map.GetChunk(x, y, z);
         if (c.Entities == null)
@@ -3622,6 +3618,7 @@ public partial class Server : ICurrentTime, IDropItem
         }
         c.Entities[c.EntitiesCount++] = e;
         c.DirtyForSaving = true;
+        return new ServerEntityId(x / d_Map.chunksize, x / d_Map.chunksize, x / d_Map.chunksize, c.EntitiesCount - 1);
     }
 }
 
@@ -3736,24 +3733,6 @@ public class ClientOnServer
     internal bool[] updateEntity;
 }
 
-public class ServerEntityId
-{
-    internal int chunkx;
-    internal int chunky;
-    internal int chunkz;
-    internal int id;
-
-    internal ServerEntityId Clone()
-    {
-        ServerEntityId ret = new ServerEntityId();
-        ret.chunkx = chunkx;
-        ret.chunky = chunky;
-        ret.chunkz = chunkz;
-        ret.id = id;
-        return ret;
-    }
-}
-
 public class ModEventHandlers
 {
     public List<ModDelegates.WorldGenerator> getchunk = new List<ModDelegates.WorldGenerator>();
@@ -3776,9 +3755,9 @@ public class ModEventHandlers
     public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
     public List<ModDelegates.DialogClick2> ondialogclick2 = new List<ModDelegates.DialogClick2>();
     public List<ModDelegates.LoadWorld> onloadworld = new List<ModDelegates.LoadWorld>();
-    public List<ModDelegates.UpdateEntity> onupdateentity = new List<ModDelegates.UpdateEntity>();
-    public List<ModDelegates.UseEntity> onuseentity = new List<ModDelegates.UseEntity>();
-    public List<ModDelegates.HitEntity> onhitentity = new List<ModDelegates.HitEntity>();
+    public List<ModDelegates.EntityUpdate> onentityupdate = new List<ModDelegates.EntityUpdate>();
+    public List<ModDelegates.EntityUse> onentityuse = new List<ModDelegates.EntityUse>();
+    public List<ModDelegates.EntityHit> onentityhit = new List<ModDelegates.EntityHit>();
     public List<ModDelegates.Permission> onpermission = new List<ModDelegates.Permission>();
     public List<ModDelegates.CheckBlockUse> checkonuse = new List<ModDelegates.CheckBlockUse>();
     public List<ModDelegates.CheckBlockBuild> checkonbuild = new List<ModDelegates.CheckBlockBuild>();
@@ -4459,32 +4438,6 @@ public class CraftingRecipe
     public Ingredient[] ingredients;
     [ProtoMember(2)]
     public Ingredient output;
-}
-
-public class EntityHeading
-{
-    public static byte GetHeading(float posx, float posy, float targetx, float targety)
-    {
-        float deltaX = targetx - posx;
-        float deltaY = targety - posy;
-        //Angle to x-axis: cos(beta) = x / |length|
-        double headingDeg = (360.0 / (2.0 * Math.PI)) * Math.Acos(deltaX / Math.Sqrt(deltaX * deltaX + deltaY * deltaY)) + 90.0;
-        //Add 2 Pi if value is negative
-        if (deltaY < 0)
-        {
-            headingDeg = -headingDeg - 180.0;
-        }
-        if (headingDeg < 0)
-        {
-            headingDeg += 360.0;
-        }
-        if (headingDeg > 360.0)
-        {
-            headingDeg -= 360.0;
-        }
-        //Convert to value between 0 and 255 and return
-        return (byte)((headingDeg / 360.0) * 256.0);
-    }
 }
 
 

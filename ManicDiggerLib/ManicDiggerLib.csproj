@@ -95,6 +95,7 @@
     <Compile Include="Client\MainMenu\Multiplayer.ci.cs" />
     <Compile Include="Client\MainMenu\Singleplayer.ci.cs" />
     <Compile Include="Client\Misc\Collections.ci.cs" />
+    <Compile Include="Client\Misc\Entities.ci.cs" />
     <Compile Include="Client\Misc\GameMisc.ci.cs" />
     <Compile Include="Client\Misc\LanguageCi.ci.cs" />
     <Compile Include="Client\Misc\Packets.ci.cs" />
@@ -186,13 +187,13 @@
     <Compile Include="Common\XmlTool.cs" />
     <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Mods\Fortress\Default.cs" />
+    <Compile Include="Server\Mods\Fortress\EntitySigns.cs" />
     <Compile Include="Server\Mods\Fortress\Food.cs" />
     <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\Mods\War\Food.cs" />
     <Compile Include="Server\NetworkDummyServer.cs" />
     <Compile Include="Server\NetworkEnetServer.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
-    <Compile Include="Server\ServerEntity.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
@@ -245,7 +246,7 @@
     <Compile Include="Server\Systems\NotifyEntities.cs" />
     <Compile Include="Server\Systems\NotifyMap.cs" />
     <Compile Include="Server\Systems\NotifyPing.cs" />
-    <Compile Include="Server\Systems\PermissionSign.cs" />
+    <None Include="Server\Systems\PermissionSign.cs" />
     <Compile Include="Server\Systems\ServerHeartbeat.cs" />
     <Compile Include="Server\ServerMap.cs" />
     <Compile Include="Server\ServerMonitor.cs" />
@@ -253,7 +254,6 @@
     <Compile Include="Server\Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
-    <Compile Include="Server\Systems\Sign.cs" />
     <Compile Include="Server\Systems\UnloadUnusedChunks.cs" />
   </ItemGroup>
   <ItemGroup>

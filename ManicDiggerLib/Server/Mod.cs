@@ -650,11 +650,6 @@ namespace ManicDigger.Server
 			server.SendDialog(player, id, dialog);
 		}
 
-		public void RegisterOnDialogClick(ModDelegates.DialogClick a)
-		{
-			server.modEventHandlers.ondialogclick.Add(a);
-		}
-
 		public void SetPlayerModel(int player, string model, string texture)
 		{
 			server.clients[player].Model = model;
@@ -1095,6 +1090,66 @@ namespace ManicDigger.Server
 			server.modEventHandlers.checkonuse.Add(f);
 		}
 
+		public void RegisterOnEntityUpdate(ModDelegates.EntityUpdate f)
+		{
+			server.modEventHandlers.onentityupdate.Add(f);
+		}
+
+		public void RegisterOnEntityUse(ModDelegates.EntityUse f)
+		{
+			server.modEventHandlers.onentityuse.Add(f);
+		}
+
+		public void RegisterOnEntityHit(ModDelegates.EntityHit f)
+		{
+			server.modEventHandlers.onentityhit.Add(f);
+		}
+
+		public void RegisterOnDialogClick2(ModDelegates.DialogClick2 a)
+		{
+			server.modEventHandlers.ondialogclick2.Add(a);
+		}
+
+		public ServerEntityId EntityCreate(ServerEntity entity)
+		{
+			if (entity == null)
+			{
+				throw new ArgumentNullException("entity", "The entity given must not be null!");
+			}
+			if (entity.position == null)
+			{
+				throw new ArgumentException("The given entity must have its field 'position' set!");
+			}
+			int x = (int)entity.position.x;
+			int y = (int)entity.position.y;
+			int z = (int)entity.position.z;
+			return server.AddEntity(x, z, y, entity);
+		}
+		public ServerEntity EntityGet(ServerEntityId id)
+		{
+			if (id == null)
+			{
+				throw new ArgumentNullException("id", "The entity ID must not be null!");
+			}
+			return server.GetEntity(id);
+		}
+		public void EntitySetDirty(ServerEntityId id)
+		{
+			if (id == null)
+			{
+				throw new ArgumentNullException("id", "The entity ID must not be null!");
+			}
+			server.SetEntityDirty(id);
+		}
+		public void EntityDelete(ServerEntityId id)
+		{
+			if (id == null)
+			{
+				throw new ArgumentNullException("id", "The entity ID must not be null!");
+			}
+			server.DespawnEntity(id);
+		}
+
 		#region Deprecated methods
 		public double GetCurrentYearTotal()
 		{
@@ -1111,6 +1166,11 @@ namespace ManicDigger.Server
 		public void SetGameYearRealHours(double hours)
 		{
 			throw new NotImplementedException("SetGameYearRealHours is no longer supported!");
+		}
+
+		public void RegisterOnDialogClick(ModDelegates.DialogClick a)
+		{
+			server.modEventHandlers.ondialogclick.Add(a);
 		}
 		#endregion
 	}
