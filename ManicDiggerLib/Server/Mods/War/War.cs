@@ -1405,15 +1405,15 @@ namespace ManicDigger.Mods.War
 			{
 				if(blueTeamPoints > greenTeamPoints)
 				{
-					m.SendMessageToAll("Team Blue wins with " + blueTeamPoints + "Points! Special thanks to: " + bestBluePlayerName);
+					m.SendMessageToAll("Team Blue wins with " + blueTeamPoints + "points! Special thanks to: " + bestBluePlayerName);
 				}
 				else if(blueTeamPoints < greenTeamPoints)
 				{
-					m.SendMessageToAll("Team Green wins with " + greenTeamPoints + "Points! Special thanks to: " + bestGreenPlayerName) ;
+					m.SendMessageToAll("Team Green wins with " + greenTeamPoints + "points! Special thanks to: " + bestGreenPlayerName) ;
 				}
 				else if(blueTeamPoints == greenTeamPoints)
 				{
-					m.SendMessageToAll("The Game end without a winner!");
+					m.SendMessageToAll("The game ends without a winner!");
 				}
 				Restart();
 				blueTeamPoints = 0;
