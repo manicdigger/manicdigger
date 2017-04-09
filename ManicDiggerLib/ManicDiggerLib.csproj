@@ -187,6 +187,7 @@
     <Compile Include="Common\XmlTool.cs" />
     <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Mods\Fortress\Default.cs" />
+    <Compile Include="Server\Mods\Fortress\EntitySigns.cs" />
     <Compile Include="Server\Mods\Fortress\Food.cs" />
     <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\Mods\War\Food.cs" />
