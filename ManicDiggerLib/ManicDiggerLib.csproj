@@ -95,6 +95,7 @@
     <Compile Include="Client\MainMenu\Multiplayer.ci.cs" />
     <Compile Include="Client\MainMenu\Singleplayer.ci.cs" />
     <Compile Include="Client\Misc\Collections.ci.cs" />
+    <Compile Include="Client\Misc\Entities.ci.cs" />
     <Compile Include="Client\Misc\GameMisc.ci.cs" />
     <Compile Include="Client\Misc\LanguageCi.ci.cs" />
     <Compile Include="Client\Misc\Packets.ci.cs" />
