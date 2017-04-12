@@ -1,70 +1,71 @@
-﻿using ProtoBuf;
+﻿using System;
+using ProtoBuf;
 
-namespace ManicDigger.Server
+namespace ManicDigger
 {
 	[ProtoContract()]
 	public class ServerEntity
 	{
 		[ProtoMember(1, IsRequired = false)]
-		internal ServerEntityPositionAndOrientation position;
+		public ServerEntityPositionAndOrientation position;
 		[ProtoMember(2, IsRequired = false)]
-		internal ServerEntityDrawName drawName;
+		public ServerEntityDrawName drawName;
 		[ProtoMember(3, IsRequired = false)]
-		internal ServerEntityAnimatedModel drawModel;
+		public ServerEntityAnimatedModel drawModel;
 		[ProtoMember(4, IsRequired = false)]
-		internal ServerEntityDrawText drawText;
+		public ServerEntityDrawText drawText;
 		[ProtoMember(5, IsRequired = false)]
-		internal ServerEntityPush push;
+		public ServerEntityPush push;
 		[ProtoMember(7, IsRequired = false)]
-		internal bool usable;
+		public bool usable;
 		[ProtoMember(9, IsRequired = false)]
-		internal ServerEntityDrawArea drawArea;
+		public ServerEntityDrawArea drawArea;
 
 		[ProtoMember(6, IsRequired = false)]
-		internal ServerEntitySign sign;
+		public ServerEntitySign sign;
 		[ProtoMember(8, IsRequired = false)]
-		internal ServerEntityPermissionSign permissionSign;
+		public ServerEntityPermissionSign permissionSign;
 	}
 
 	[ProtoContract()]
 	public class ServerEntityDrawArea
 	{
-		internal int x;
-		internal int y;
-		internal int z;
-		internal int sizex;
-		internal int sizey;
-		internal int sizez;
-		internal int visibleToClientId;
+		public int x;
+		public int y;
+		public int z;
+		public int sizex;
+		public int sizey;
+		public int sizez;
+		public int visibleToClientId;
 	}
 
 	[ProtoContract()]
 	public class ServerEntityDrawName
 	{
 		[ProtoMember(1)]
-		internal string name;
+		public string name;
 		[ProtoMember(2)]
-		internal bool onlyWhenSelected;
+		public bool onlyWhenSelected;
 		[ProtoMember(3)]
-		internal bool clientAutoComplete;
+		public bool clientAutoComplete;
 		[ProtoMember(4)]
-		internal string color;
+		public string color;
 	}
 
 	[ProtoContract()]
 	public class ServerEntitySign
 	{
 		[ProtoMember(1)]
-		internal string text;
+		public string text;
 	}
 
 	[ProtoContract()]
 	public class ServerEntityPermissionSign
 	{
 		[ProtoMember(1)]
-		internal string name;
+		public string name;
 		[ProtoMember(2)]
-		internal PermissionSignType type;
+		public PermissionSignType type;
 	}
 
 	public enum PermissionSignType
@@ -77,34 +78,34 @@ namespace ManicDigger.Server
 	public class ServerEntityAnimatedModel
 	{
 		[ProtoMember(1, IsRequired = false)]
-		internal string model;
+		public string model;
 		[ProtoMember(2, IsRequired = false)]
-		internal string texture;
+		public string texture;
 		[ProtoMember(3, IsRequired = false)]
-		internal float eyeHeight;
+		public float eyeHeight;
 		[ProtoMember(4, IsRequired = false)]
-		internal float modelHeight;
+		public float modelHeight;
 		[ProtoMember(5, IsRequired = false)]
-		internal bool downloadSkin;
+		public bool downloadSkin;
 	}
 
 	[ProtoContract()]
 	public class ServerEntityPositionAndOrientation
 	{
 		[ProtoMember(1, IsRequired = false)]
-		internal float x;
+		public float x;
 		[ProtoMember(2, IsRequired = false)]
-		internal float y;
+		public float y;
 		[ProtoMember(3, IsRequired = false)]
-		internal float z;
+		public float z;
 		[ProtoMember(4, IsRequired = false)]
-		internal byte heading;
+		public byte heading;
 		[ProtoMember(5, IsRequired = false)]
-		internal byte pitch;
+		public byte pitch;
 		[ProtoMember(6, IsRequired = false)]
-		internal byte stance;
+		public byte stance;
 
-		internal ServerEntityPositionAndOrientation Clone()
+		public ServerEntityPositionAndOrientation Clone()
 		{
 			ServerEntityPositionAndOrientation ret = new ServerEntityPositionAndOrientation();
 			ret.x = x;
@@ -121,25 +122,47 @@ namespace ManicDigger.Server
 	public class ServerEntityDrawText
 	{
 		[ProtoMember(1, IsRequired = false)]
-		internal string text;
+		public string text;
 		[ProtoMember(2, IsRequired = false)]
-		internal float dx;
+		public float dx;
 		[ProtoMember(3, IsRequired = false)]
-		internal float dy;
+		public float dy;
 		[ProtoMember(4, IsRequired = false)]
-		internal float dz;
+		public float dz;
 		[ProtoMember(5, IsRequired = false)]
-		internal float rotx;
+		public float rotx;
 		[ProtoMember(6, IsRequired = false)]
-		internal float roty;
+		public float roty;
 		[ProtoMember(7, IsRequired = false)]
-		internal float rotz;
+		public float rotz;
 	}
 
 	[ProtoContract()]
 	public class ServerEntityPush
 	{
 		[ProtoMember(1)]
-		internal float range;
+		public float range;
+	}
+
+	public class ServerEntityId
+	{
+		public int chunkx;
+		public int chunky;
+		public int chunkz;
+		public int id;
+
+		public ServerEntityId() { }
+		public ServerEntityId(int cx, int cy, int cz, int eid)
+		{
+			chunkx = cx;
+			chunky = cy;
+			chunkz = cz;
+			id = eid;
+		}
+
+		public ServerEntityId Clone()
+		{
+			return new ServerEntityId(chunkx, chunky, chunkz, id);
+		}
 	}
 }

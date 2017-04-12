@@ -131,7 +131,7 @@
     <Content Include="..\Lib\Jint.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="md.ico" />
+    <EmbeddedResource Include="md.ico" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
