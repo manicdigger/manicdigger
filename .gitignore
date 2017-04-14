@@ -25,6 +25,10 @@ _ReSharper.*
 local.properties
 packages/
 
+# Visual Studio Files #
+#######################
+.vs
+
 # OS generated files #
 ######################
 .DS_Store
