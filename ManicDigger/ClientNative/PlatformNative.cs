@@ -2251,7 +2251,7 @@ namespace ManicDigger.ClientNative
 		public GameWindowNative(OpenTK.Graphics.GraphicsMode mode)
 			: base(1280, 720, mode)
 		{
-			VSync = OpenTK.VSyncMode.Off;
+			VSync = OpenTK.VSyncMode.On;
 			WindowState = OpenTK.WindowState.Normal;
 		}
 	}

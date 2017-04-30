@@ -463,6 +463,7 @@
         screen = new ScreenMain();
         screen.menu = this;
         p.ExitMousePointerLock();
+        p.SetVSync(true);
     }
 
     internal int backgroundW;
