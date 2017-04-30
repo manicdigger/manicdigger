@@ -17,6 +17,11 @@ namespace ManicDigger.Server
 		string databasefile;
 		public void Open(string filename)
 		{
+			if (sqliteConn != null)
+			{
+				// close existing connections before opening a new one
+				Close();
+			}
 			databasefile = filename;
 			bool newdatabase = false;
 			if (!File.Exists(databasefile))
