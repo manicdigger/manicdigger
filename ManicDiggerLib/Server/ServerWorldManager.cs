@@ -230,7 +230,7 @@ namespace ManicDigger.Server
 				x = x / chunksize;
 				y = y / chunksize;
 				z = z / chunksize;
-				ChunkDb.DeleteChunk(d_ChunkDb, x, y, z);
+				ChunkDb.DeleteChunk(d_Map.d_ChunkDb, x, y, z);
 				d_Map.SetChunkValid(x, y, z, null);
 				// update related chunk at clients
 				foreach (var k in clients)
@@ -257,7 +257,7 @@ namespace ManicDigger.Server
 			}
 			if (chunks.Count != 0)
 			{
-				ChunkDb.DeleteChunks(d_ChunkDb, chunks);
+				ChunkDb.DeleteChunks(d_Map.d_ChunkDb, chunks);
 				// force to update chunks at clients
 				foreach (var k in clients)
 				{
@@ -291,7 +291,7 @@ namespace ManicDigger.Server
 				y = y / chunksize;
 				z = z / chunksize;
 
-				byte[] serializedChunk = ChunkDb.GetChunkFromFile(d_ChunkDb, x, y, z, finalFilename);
+				byte[] serializedChunk = ChunkDb.GetChunkFromFile(d_Map.d_ChunkDb, x, y, z, finalFilename);
 				if (serializedChunk != null)
 				{
 					ServerChunk c = DeserializeChunk(serializedChunk);
@@ -319,7 +319,7 @@ namespace ManicDigger.Server
 			string finalFilename = Path.Combine(GameStorePath.gamepathbackup, filename + MapManipulator.BinSaveExtension);
 
 			Dictionary<Xyz, ushort[]> deserializedChunks = new Dictionary<Xyz, ushort[]>();
-			Dictionary<Xyz, byte[]> serializedChunks = ChunkDb.GetChunksFromFile(d_ChunkDb, chunks, finalFilename);
+			Dictionary<Xyz, byte[]> serializedChunks = ChunkDb.GetChunksFromFile(d_Map.d_ChunkDb, chunks, finalFilename);
 
 			foreach (var k in serializedChunks)
 			{

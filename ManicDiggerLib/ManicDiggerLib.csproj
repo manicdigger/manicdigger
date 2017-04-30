@@ -196,8 +196,16 @@
     <Compile Include="Server\NetworkEnetServer.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\Inventory.cs" />
-    <Compile Include="Server\ChunkDb.cs" />
+    <Compile Include="Server\Saves\ChunkDb.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
+    <Compile Include="Server\Saves\ChunkDbCompressed.cs" />
+    <Compile Include="Server\Saves\ChunkDbDummy.cs" />
+    <Compile Include="Server\Saves\ChunkDbPlainFile.cs" />
+    <Compile Include="Server\Saves\ChunkDbSqlite.cs" />
+    <Compile Include="Server\Saves\Helpers.cs" />
+    <Compile Include="Server\Saves\IChunkDb.cs" />
+    <Compile Include="Server\Saves\ManicDiggerSave.cs" />
+    <Compile Include="Server\Saves\ServerSaveOperations.cs" />
     <Compile Include="Server\Systems\LoadConfig.cs" />
     <Compile Include="Server\Systems\LoadFirst.cs" />
     <Compile Include="Server\Systems\LoadLast.cs" />

@@ -118,7 +118,7 @@ namespace ManicDigger.Server
 		void LoadAndSendChunk(Server server, int clientid, int vx, int vy, int vz, Stopwatch s)
 		{
 			//load
-			server.LoadChunk(vx, vy, vz);
+			server.d_Map.LoadChunk(vx, vy, vz);
 			//send
 			if (!server.ClientSeenChunk(clientid, vx, vy, vz))
 			{

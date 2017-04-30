@@ -974,7 +974,7 @@ namespace ManicDigger.Server
 
 		public void SetWorldDatabaseReadOnly(bool readOnly)
 		{
-			server.d_ChunkDb.SetReadOnly(readOnly);
+			server.d_Map.d_ChunkDb.SetReadOnly(readOnly);
 		}
 
 		public string CurrentWorld()
