@@ -8,9 +8,15 @@ namespace ManicDigger.Server
 	/// </summary>
 	public class ServerSystemNotifyMap : ServerSystem
 	{
+		Stopwatch s;
+
+		public ServerSystemNotifyMap()
+		{
+			s = new Stopwatch();
+		}
+
 		public override void Update(Server server, float dt)
 		{
-			Stopwatch s = new Stopwatch();
 			s.Start();
 			int areasizechunks = server.playerareasize / Server.chunksize;
 			int areasizeZchunks = server.d_Map.MapSizeZ / Server.chunksize;
@@ -39,12 +45,12 @@ namespace ManicDigger.Server
 					}
 				}
 			}
+			s.Reset();
 		}
 
-		const int intMaxValue = 2147483647;
 		void NearestDirty(Server server, int clientid, int playerx, int playery, int playerz, int[] retNearest)
 		{
-			int nearestdist = intMaxValue;
+			int nearestdist = int.MaxValue;
 			retNearest[0] = -1;
 			retNearest[1] = -1;
 			retNearest[2] = -1;
@@ -52,8 +58,8 @@ namespace ManicDigger.Server
 			int py = (int)(playery) / Server.chunksize;
 			int pz = (int)(playerz) / Server.chunksize;
 
-			int chunksxy = mapAreaSize(server) / Server.chunksize / 2;
-			int chunksz = mapAreaSizeZ(server) / Server.chunksize / 2;
+			int chunksxy = mapAreaSize(server);
+			int chunksz = mapAreaSizeZ(server);
 
 			int startx = px - chunksxy;
 			int endx = px + chunksxy;
@@ -190,7 +196,7 @@ namespace ManicDigger.Server
 
 		public int mapAreaSize(Server server)
 		{
-			return server.chunkdrawdistance * Server.chunksize * 2;
+			return server.chunkdrawdistance;
 		}
 		public int mapAreaSizeZ(Server server)
 		{
