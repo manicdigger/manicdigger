@@ -1041,6 +1041,7 @@ public partial class Server : ICurrentTime, IDropItem
                         }
                     }
                     clients[clientid].playername = username;
+                    clients[clientid].GameVersion = packet.Identification.MdProtocolVersion;
 
                     // Assign group to new client
                     //Check if client is in ServerClient.txt and assign corresponding group.
@@ -1101,7 +1102,7 @@ public partial class Server : ICurrentTime, IDropItem
 
                     string ip = (clients[clientid].socket.RemoteEndPoint()).AddressToString();
                     SendMessageToAll(string.Format(language.ServerPlayerJoin(), clients[clientid].ColoredPlayername(colorNormal)));
-                    ServerEventLog(string.Format("{0} {1} joins.", clients[clientid].playername, ip));
+                    ServerEventLog(string.Format("{0} {1} {2} joins.", ip, clients[clientid].GameVersion, clients[clientid].playername));
                     SendMessage(clientid, colorSuccess + config.WelcomeMessage);
                     SendBlobs(clientid, packet.RequestBlob.RequestedMd5);
                     SendBlockTypes(clientid);
