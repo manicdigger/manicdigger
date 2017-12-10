@@ -89,6 +89,7 @@
 		{
 			// Create new text widget if none exists
 			FontCi font = new FontCi();
+			font.size = 14;
 			//_text = new TextWidget(x + sizex / 2, y + sizey / 2, text, font, TextAlign.Center, TextBaseline.Middle);
 			_text = new TextWidget();
 			_text.SetAlignment(TextAlign.Center);

@@ -68,6 +68,20 @@
 		_texture = null;
 	}
 
+	public void SetX(float dx)
+	{
+		if (x == dx) { return; }
+		x = dx;
+		UpdateOffset_Alignment();
+	}
+
+	public void SetY(float dy)
+	{
+		if (y == dy) { return; }
+		y = dy;
+		UpdateOffset_Baseline();
+	}
+
 	public string GetText()
 	{
 		return _text;
