@@ -84,7 +84,6 @@
 	{
 		if (_texture == null) { return; }
 		_offsetX = 0;
-		_offsetY = 0;
 		switch (_align)
 		{
 			case TextAlign.Left:
@@ -101,7 +100,6 @@
 	void UpdateOffset_Baseline()
 	{
 		if (_texture == null) { return; }
-		_offsetX = 0;
 		_offsetY = 0;
 		switch (_baseline)
 		{
