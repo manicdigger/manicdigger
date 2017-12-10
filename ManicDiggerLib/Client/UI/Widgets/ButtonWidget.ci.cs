@@ -71,6 +71,8 @@
 
 		if (_text != null)
 		{
+			_text.SetX(x + sizex / 2);
+			_text.SetY(y + sizey / 2);
 			_text.Draw(m);
 		}
 	}
