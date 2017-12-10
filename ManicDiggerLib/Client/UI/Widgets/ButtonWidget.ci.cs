@@ -33,7 +33,7 @@
 	public override void OnMouseUp(GamePlatform p, MouseEventArgs args)
 	{
 		if (_state != ButtonState.Pressed) { return; }
-		SetState(ButtonState.Normal);
+		SetState(ButtonState.Hover);
 	}
 
 	public override void OnMouseMove(GamePlatform p, MouseEventArgs args)
