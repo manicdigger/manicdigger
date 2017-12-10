@@ -5,9 +5,9 @@
         singleplayer = new MenuWidget();
         multiplayer = new MenuWidget();
         exit = new MenuWidget();
-        widgets[0] = singleplayer;
-        widgets[1] = multiplayer;
-        widgets[2] = exit;
+		AddWidget(singleplayer);
+		AddWidget(multiplayer);
+		AddWidget(exit);
         queryStringChecked = false;
         cursorLoaded = false;
         fontDefault = new FontCi();

@@ -2,8 +2,8 @@
 {
     public ScreenMultiplayer()
     {
-        WidgetCount = 64 + serverButtonsCount;
-        widgets = new MenuWidget[WidgetCount];
+        WidgetMaxCount = 64 + serverButtonsCount;
+        widgets = new MenuWidget[WidgetMaxCount];
         back = new MenuWidget();
         back.text = "Back";
         back.type = WidgetType.Button;
@@ -53,14 +53,14 @@
         fontDefault = new FontCi();
         fontDefault.size = 14;
 
-        widgets[0] = back;
-        widgets[1] = connect;
-        widgets[2] = refresh;
-        widgets[3] = connectToIp;
-        widgets[4] = pageUp;
-        widgets[5] = pageDown;
-        widgets[6] = loggedInName;
-        widgets[7] = logout;
+		AddWidget(back);
+		AddWidget(connect);
+		AddWidget(refresh);
+		AddWidget(connectToIp);
+		AddWidget(pageUp);
+		AddWidget(pageDown);
+		AddWidget(loggedInName);
+		AddWidget(logout);
 
         serverListAddress = new HttpResponseCi();
         serverListCsv = new HttpResponseCi();
@@ -77,7 +77,7 @@
             b.visible = false;
             b.image = "serverlist_entry_noimage.png";
             serverButtons[i] = b;
-            widgets[8 + i] = b;
+			AddWidget(b);
         }
         loading = true;
     }

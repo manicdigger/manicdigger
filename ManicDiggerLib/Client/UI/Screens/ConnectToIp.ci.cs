@@ -24,10 +24,10 @@
 
         title = "Connect to IP";
 
-        widgets[0] = buttonConnect;
-        widgets[1] = textboxIp;
-        widgets[2] = textboxPort;
-        widgets[3] = back;
+        AddWidget(buttonConnect);
+		AddWidget(textboxIp);
+		AddWidget(textboxPort);
+		AddWidget(back);
 
         textboxIp.GetFocus();
     }

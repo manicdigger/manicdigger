@@ -20,11 +20,11 @@
         fontDefault = new FontCi();
         fontDefault.size = 16;
 
-        widgets[0] = play;
-        widgets[1] = newWorld;
-        widgets[2] = modify;
-        widgets[3] = back;
-        widgets[4] = open;
+		AddWidget(play);
+		AddWidget(newWorld);
+		AddWidget(modify);
+		AddWidget(back);
+		AddWidget(open);
 
         worldButtons = new MenuWidget[10];
         for (int i = 0; i < 10; i++)

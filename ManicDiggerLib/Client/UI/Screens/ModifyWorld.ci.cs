@@ -6,7 +6,7 @@
         back.text = "Back";
         back.type = WidgetType.Button;
 
-        widgets[0] = back;
+		AddWidget(back);
     }
 
     MenuWidget back;

@@ -49,15 +49,15 @@
 
         title = "Login";
 
-        widgets[0] = login;
-        widgets[1] = loginUsername;
-        widgets[2] = loginPassword;
-        widgets[3] = loginRememberMe;
-        widgets[4] = createAccount;
-        widgets[5] = createAccountUsername;
-        widgets[6] = createAccountPassword;
-        widgets[7] = createAccountRememberMe;
-        widgets[9] = back;
+		AddWidget(login);
+		AddWidget(loginUsername);
+		AddWidget(loginPassword);
+		AddWidget(loginRememberMe);
+		AddWidget(createAccount);
+		AddWidget(createAccountUsername);
+		AddWidget(createAccountPassword);
+		AddWidget(createAccountRememberMe);
+		AddWidget(back);
 
         loginUsername.GetFocus();
 

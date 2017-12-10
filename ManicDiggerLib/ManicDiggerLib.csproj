@@ -87,13 +87,17 @@
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
     <Compile Include="Client\Misc\AnimatedModel.ci.cs" />
-    <Compile Include="Client\MainMenu\ConnectToIp.ci.cs" />
-    <Compile Include="Client\MainMenu\GameScreen.ci.cs" />
-    <Compile Include="Client\MainMenu\Login.ci.cs" />
-    <Compile Include="Client\MainMenu\Main.ci.cs" />
-    <Compile Include="Client\MainMenu\ModifyWorld.ci.cs" />
-    <Compile Include="Client\MainMenu\Multiplayer.ci.cs" />
-    <Compile Include="Client\MainMenu\Singleplayer.ci.cs" />
+    <Compile Include="Client\UI\MenuWidget.ci.cs" />
+    <Compile Include="Client\UI\Misc.ci.cs" />
+    <Compile Include="Client\Misc\Model.ci.cs" />
+    <Compile Include="Client\UI\Screen.ci.cs" />
+    <Compile Include="Client\UI\Screens\ConnectToIp.ci.cs" />
+    <Compile Include="Client\UI\Screens\GameScreen.ci.cs" />
+    <Compile Include="Client\UI\Screens\Login.ci.cs" />
+    <Compile Include="Client\UI\Screens\Main.ci.cs" />
+    <Compile Include="Client\UI\Screens\ModifyWorld.ci.cs" />
+    <Compile Include="Client\UI\Screens\Multiplayer.ci.cs" />
+    <Compile Include="Client\UI\Screens\Singleplayer.ci.cs" />
     <Compile Include="Client\Misc\Collections.ci.cs" />
     <Compile Include="Client\Misc\Entities.ci.cs" />
     <Compile Include="Client\Misc\GameMisc.ci.cs" />
@@ -197,7 +201,7 @@
     <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\Saves\ChunkDb.cs" />
-    <Compile Include="Client\MainMenu.ci.cs" />
+    <Compile Include="Client\UI\MainMenu.ci.cs" />
     <Compile Include="Server\Saves\ChunkDbCompressed.cs" />
     <Compile Include="Server\Saves\ChunkDbDummy.cs" />
     <Compile Include="Server\Saves\ChunkDbPlainFile.cs" />
@@ -267,6 +271,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <Compile Include="Client\UI\EventHandlers.ci.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
