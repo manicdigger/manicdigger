@@ -5,23 +5,18 @@
 		WidgetCount = 0;
 		WidgetMaxCount = 64;
 		widgets = new MenuWidget[WidgetMaxCount];
+		widgetsnew = new AbstractMenuWidget[WidgetMaxCount];
 	}
 	internal MainMenu menu;
 	public virtual void Render(float dt) { }
-	public virtual void OnKeyDown(KeyEventArgs e) { KeyDown(e); }
-	public virtual void OnKeyPress(KeyPressEventArgs e) { KeyPress(e); }
-	public virtual void OnKeyUp(KeyEventArgs e) { }
-	public virtual void OnTouchStart(TouchEventArgs e) { MouseDown(e.GetX(), e.GetY()); }
-	public virtual void OnTouchMove(TouchEventArgs e) { }
-	public virtual void OnTouchEnd(TouchEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
-	public virtual void OnMouseDown(MouseEventArgs e) { MouseDown(e.GetX(), e.GetY()); }
-	public virtual void OnMouseUp(MouseEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
-	public virtual void OnMouseMove(MouseEventArgs e) { MouseMove(e); }
-	public virtual void OnBackPressed() { }
-	public virtual void LoadTranslations() { }
-
-	void KeyDown(KeyEventArgs e)
+	public virtual void OnKeyDown(KeyEventArgs e)
 	{
+		for (int i = 0; i < WidgetNewCount; i++)
+		{
+			widgetsnew[i].OnKeyDown(menu.p, e);
+		}
+
+		// TODO: Remove legacy code
 		for (int i = 0; i < WidgetCount; i++)
 		{
 			MenuWidget w = widgets[i];
@@ -75,9 +70,14 @@
 			}
 		}
 	}
-
-	void KeyPress(KeyPressEventArgs e)
+	public virtual void OnKeyPress(KeyPressEventArgs e)
 	{
+		for (int i = 0; i < WidgetNewCount; i++)
+		{
+			widgetsnew[i].OnKeyPress(menu.p, e);
+		}
+
+		// TODO: Remove legacy code
 		for (int i = 0; i < WidgetCount; i++)
 		{
 			MenuWidget w = widgets[i];
@@ -96,9 +96,18 @@
 			}
 		}
 	}
-
-	void MouseDown(int x, int y)
+	public virtual void OnKeyUp(KeyEventArgs e) { }
+	public virtual void OnTouchStart(TouchEventArgs e) { }
+	public virtual void OnTouchMove(TouchEventArgs e) { }
+	public virtual void OnTouchEnd(TouchEventArgs e) { }
+	public virtual void OnMouseDown(MouseEventArgs e)
 	{
+		for (int i = 0; i < WidgetNewCount; i++)
+		{
+			widgetsnew[i].OnMouseDown(menu.p, e);
+		}
+
+		// TODO: Remove legacy code
 		bool editingChange = false;
 		for (int i = 0; i < WidgetCount; i++)
 		{
@@ -107,11 +116,11 @@
 			{
 				if (w.type == WidgetType.Button)
 				{
-					w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+					w.pressed = pointInRect(e.GetX(), e.GetY(), w.x, w.y, w.sizex, w.sizey);
 				}
 				if (w.type == WidgetType.Textbox)
 				{
-					w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+					w.pressed = pointInRect(e.GetX(), e.GetY(), w.x, w.y, w.sizex, w.sizey);
 					bool wasEditing = w.editing;
 					w.editing = w.pressed;
 					if (w.editing && (!wasEditing))
@@ -133,21 +142,14 @@
 			}
 		}
 	}
-
-	void AllLoseFocus()
+	public virtual void OnMouseUp(MouseEventArgs e)
 	{
-		for (int i = 0; i < WidgetCount; i++)
+		for (int i = 0; i < WidgetNewCount; i++)
 		{
-			MenuWidget w = widgets[i];
-			if (w != null)
-			{
-				w.LoseFocus();
-			}
+			widgetsnew[i].OnMouseUp(menu.p, e);
 		}
-	}
 
-	void MouseUp(int x, int y)
-	{
+		// TODO: Remove legacy code
 		for (int i = 0; i < WidgetCount; i++)
 		{
 			MenuWidget w = widgets[i];
@@ -163,7 +165,7 @@
 			{
 				if (w.type == WidgetType.Button)
 				{
-					if (pointInRect(x, y, w.x, w.y, w.sizex, w.sizey))
+					if (pointInRect(e.GetX(), e.GetY(), w.x, w.y, w.sizex, w.sizey))
 					{
 						OnButton(w);
 					}
@@ -171,15 +173,18 @@
 			}
 		}
 	}
-
-	public virtual void OnButton(MenuWidget w) { }
-
-	void MouseMove(MouseEventArgs e)
+	public virtual void OnMouseMove(MouseEventArgs e)
 	{
 		if (e.GetEmulated() && !e.GetForceUsage())
 		{
 			return;
 		}
+		for (int i = 0; i < WidgetNewCount; i++)
+		{
+			widgetsnew[i].OnMouseMove(menu.p, e);
+		}
+
+		// TODO: Remove legacy code
 		for (int i = 0; i < WidgetCount; i++)
 		{
 			MenuWidget w = widgets[i];
@@ -189,6 +194,22 @@
 			}
 		}
 	}
+	public virtual void OnBackPressed() { }
+	public virtual void LoadTranslations() { }
+
+	void AllLoseFocus()
+	{
+		for (int i = 0; i < WidgetCount; i++)
+		{
+			MenuWidget w = widgets[i];
+			if (w != null)
+			{
+				w.LoseFocus();
+			}
+		}
+	}
+
+	public virtual void OnButton(MenuWidget w) { }
 
 	bool pointInRect(float x, float y, float rx, float ry, float rw, float rh)
 	{
@@ -199,14 +220,28 @@
 	internal int WidgetMaxCount;
 	internal int WidgetCount;
 	internal MenuWidget[] widgets;
+	internal int WidgetNewCount;
+	AbstractMenuWidget[] widgetsnew;
 	public void AddWidget(MenuWidget widget)
 	{
 		if (WidgetCount >= WidgetMaxCount) { return; }
 		widgets[WidgetCount] = widget;
 		WidgetCount++;
 	}
+	public void AddWidgetNew(AbstractMenuWidget widget)
+	{
+		if (WidgetNewCount >= WidgetMaxCount) { return; }
+		widgetsnew[WidgetNewCount] = widget;
+		WidgetNewCount++;
+	}
 	public void DrawWidgets()
 	{
+		for (int i = 0; i < WidgetNewCount; i++)
+		{
+			widgetsnew[i].Draw(menu);
+		}
+
+		// TODO: Remove legacy code
 		for (int i = 0; i < WidgetCount; i++)
 		{
 			MenuWidget w = widgets[i];
