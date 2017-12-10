@@ -175,6 +175,12 @@
     <Compile Include="Client\Misc\NetworkWebSocket.ci.cs" />
     <Compile Include="Client\SimpleServer\NetworkDummyServer.ci.cs" />
     <Compile Include="Client\SimpleServer\ServerSimple.ci.cs" />
+    <Compile Include="Client\UI\Widgets\ButtonWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\ImageWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\ProgressBarWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\ServerButtonWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\TextBoxWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\TextWidget.ci.cs" />
     <Compile Include="Common\AssetLoader.cs" />
     <Compile Include="Common\Compression.cs" />
     <Compile Include="Common\CrashReporter.cs" />

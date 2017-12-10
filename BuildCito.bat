@@ -18,6 +18,7 @@ for %%x in (ManicDiggerLib\Client\Misc\*.ci.cs) do set LIST=!LIST! %%x
 for %%x in (ManicDiggerLib\Client\SimpleServer\*.ci.cs) do set LIST=!LIST! %%x
 for %%x in (ManicDiggerLib\Client\UI\*.ci.cs) do set LIST=!LIST! %%x
 for %%x in (ManicDiggerLib\Client\UI\Screens\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDiggerLib\Client\UI\Widgets\*.ci.cs) do set LIST=!LIST! %%x
 for %%x in (ManicDiggerLib\Common\*.ci.cs) do set LIST=!LIST! %%x
 set LIST=%LIST:~1%
 echo %LIST%
