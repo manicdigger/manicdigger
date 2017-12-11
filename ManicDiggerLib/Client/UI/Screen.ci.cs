@@ -105,6 +105,10 @@
 		for (int i = 0; i < WidgetNewCount; i++)
 		{
 			widgetsnew[i].OnMouseDown(menu.p, e);
+			if (widgetsnew[i].HasBeenClicked(e))
+			{
+				OnButtonA(widgetsnew[i]);
+			}
 		}
 
 		// TODO: Remove legacy code
@@ -210,6 +214,7 @@
 	}
 
 	public virtual void OnButton(MenuWidget w) { }
+	public virtual void OnButtonA(AbstractMenuWidget w) { }
 
 	bool pointInRect(float x, float y, float rx, float ry, float rw, float rh)
 	{

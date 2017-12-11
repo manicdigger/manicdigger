@@ -68,15 +68,17 @@ public abstract class AbstractMenuWidget
 	internal float sizex;
 	internal float sizey;
 	internal bool visible;
-	internal int nextWidget;
+	internal bool clickable;
+	int nextWidget;
 	internal bool hasKeyboardFocus;
-	internal string id;
+	string id;
 
 	public AbstractMenuWidget()
 	{
 		visible = true;
 		nextWidget = -1;
 		hasKeyboardFocus = false;
+		clickable = false;
 	}
 	public virtual void OnKeyPress(GamePlatform p, KeyPressEventArgs args) { }
 	public virtual void OnKeyDown(GamePlatform p, KeyEventArgs args) { }
@@ -85,12 +87,8 @@ public abstract class AbstractMenuWidget
 	public virtual void OnMouseMove(GamePlatform p, MouseEventArgs args) { }
 	public virtual bool IsCursorInside(MouseEventArgs args)
 	{
-		if (args.GetX() >= x && args.GetX() <= x + sizex &&
-			args.GetY() >= y && args.GetY() <= y + sizey)
-		{
-			return true;
-		}
-		return false;
+		return (args.GetX() >= x && args.GetX() <= x + sizex &&
+			args.GetY() >= y && args.GetY() <= y + sizey);
 	}
 	public virtual void GetFocus()
 	{
@@ -101,6 +99,21 @@ public abstract class AbstractMenuWidget
 		hasKeyboardFocus = false;
 	}
 	public abstract void Draw(MainMenu m);
+
+	public virtual void SetVisible(bool isVisible)
+	{
+		visible = isVisible;
+	}
+
+	public virtual void SetClickable(bool isClickable)
+	{
+		clickable = isClickable;
+	}
+
+	public virtual bool HasBeenClicked(MouseEventArgs args)
+	{
+		return (clickable && IsCursorInside(args));
+	}
 }
 
 public enum WidgetType
