@@ -20,6 +20,7 @@ _ReSharper.*
 *.sdsettings
 local.properties
 packages/
+.vs/
 
 # OS generated files #
 ######################
