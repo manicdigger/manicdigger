@@ -15,6 +15,8 @@
 		y = 0;
 		_offsetX = 0;
 		_offsetY = 0;
+		_align = TextAlign.Left;
+		_baseline = TextBaseline.Top;
 	}
 	//public TextWidget(float dx, float dy, string text, FontCi font, TextAlign align, TextBaseline baseline)
 	//{
