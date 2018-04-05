@@ -27,6 +27,8 @@
 		_imagename = "serverlist_entry_noimage.png";
 
 		_fontServerHeading = new FontCi();
+		_fontServerHeading.style = 1;
+		_fontServerHeading.size = 14;
 		_fontServerDescription = new FontCi();
 
 		_textHeading = new TextWidget();
