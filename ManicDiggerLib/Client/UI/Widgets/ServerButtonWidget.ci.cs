@@ -68,6 +68,16 @@
 		m.Draw2dQuad(m.GetTexture("serverlist_entry_background.png"), x, y, sizex, sizey);
 		m.Draw2dQuad(m.GetTexture(_imagename), x, y, sizey, sizey);
 
+		// display warnings if server is unreachable or uses a different version
+		if (_errorConnect)
+		{
+			m.Draw2dQuad(m.GetTexture("serverlist_entry_noresponse.png"), x - 38 * m.GetScale(), y, sizey / 2, sizey / 2);
+		}
+		if (_errorVersion)
+		{
+			m.Draw2dQuad(m.GetTexture("serverlist_entry_differentversion.png"), x - 38 * m.GetScale(), y + sizey / 2, sizey / 2, sizey / 2);
+		}
+
 		// highlight text if button is selected
 		if (hasKeyboardFocus)
 		{
@@ -124,5 +134,13 @@
 		{
 			_imagename = image;
 		}
+	}
+	public void SetErrorConnect(bool error)
+	{
+		_errorConnect = error;
+	}
+	public void SetErrorVersion(bool error)
+	{
+		_errorVersion = error;
 	}
 }
