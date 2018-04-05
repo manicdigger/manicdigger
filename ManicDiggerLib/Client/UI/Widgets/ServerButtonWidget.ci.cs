@@ -68,6 +68,22 @@
 		m.Draw2dQuad(m.GetTexture("serverlist_entry_background.png"), x, y, sizex, sizey);
 		m.Draw2dQuad(m.GetTexture(_imagename), x, y, sizey, sizey);
 
+		// highlight text if button is selected
+		if (hasKeyboardFocus)
+		{
+			_textHeading.SetText(StringTools.StringAppend(m.p, "&2", _name));
+			_textGamemode.SetText(StringTools.StringAppend(m.p, "&2", _gamemode));
+			_textPlayercount.SetText(StringTools.StringAppend(m.p, "&2", _playercount));
+			_textDescription.SetText(StringTools.StringAppend(m.p, "&2", _motd));
+		}
+		else
+		{
+			_textHeading.SetText(_name);
+			_textGamemode.SetText(_gamemode);
+			_textPlayercount.SetText(_playercount);
+			_textDescription.SetText(_motd);
+		}
+
 		_textHeading.x = x + 70;
 		_textHeading.y = y + 5;
 		_textHeading.Draw(m);
@@ -84,19 +100,19 @@
 
 	public void SetTextHeading(string text)
 	{
-		_textHeading.SetText(text);
+		_name = text;
 	}
 	public void SetTextGamemode(string text)
 	{
-		_textGamemode.SetText(text);
+		_gamemode = text;
 	}
 	public void SetTextPlayercount(string text)
 	{
-		_textPlayercount.SetText(text);
+		_playercount = text;
 	}
 	public void SetTextDescription(string text)
 	{
-		_textDescription.SetText(text);
+		_motd = text;
 	}
 	public void SetServerImage(string image)
 	{
