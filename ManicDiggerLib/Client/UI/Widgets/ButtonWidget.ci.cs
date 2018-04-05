@@ -2,10 +2,16 @@
 {
 	TextWidget _text;
 	ButtonState _state;
+	string _textureNameIdle;
+	string _textureNameHover;
+	string _textureNamePressed;
 
 	public ButtonWidget()
 	{
 		_state = ButtonState.Normal;
+		_textureNameIdle = "button.png";
+		_textureNameHover = "button_sel.png";
+		_textureNamePressed = "button_sel.png";
 		x = 0;
 		y = 0;
 		sizex = 0;
@@ -59,13 +65,13 @@
 		{
 			// TODO: Use atlas textures
 			case ButtonState.Normal:
-				m.Draw2dQuad(m.GetTexture("button.png"), x, y, sizex, sizey);
+				m.Draw2dQuad(m.GetTexture(_textureNameIdle), x, y, sizex, sizey);
 				break;
 			case ButtonState.Hover:
-				m.Draw2dQuad(m.GetTexture("button_sel.png"), x, y, sizex, sizey);
+				m.Draw2dQuad(m.GetTexture(_textureNameHover), x, y, sizex, sizey);
 				break;
 			case ButtonState.Pressed:
-				m.Draw2dQuad(m.GetTexture("button_sel.png"), x, y, sizex, sizey);
+				m.Draw2dQuad(m.GetTexture(_textureNamePressed), x, y, sizex, sizey);
 				break;
 		}
 
@@ -101,6 +107,22 @@
 		{
 			// Change text of existing widget
 			_text.SetText(text);
+		}
+	}
+
+	public void SetTextureNames(string textureIdle, string textureHover, string texturePressed)
+	{
+		if (textureIdle != null && textureIdle != "")
+		{
+			_textureNameIdle = textureIdle;
+		}
+		if (textureHover != null && textureHover != "")
+		{
+			_textureNameHover = textureHover;
+		}
+		if (texturePressed != null && texturePressed != "")
+		{
+			_textureNamePressed = texturePressed;
 		}
 	}
 }
