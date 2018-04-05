@@ -14,6 +14,7 @@
 
 	public TextBoxWidget()
 	{
+		focusable = true;
 		_state = TextBoxState.Normal;
 		_textContent = "";
 		_textDisplay = "";
@@ -110,15 +111,17 @@
 		}
 	}
 
-	public override void GetFocus()
+	public override void SetFocused(bool hasFocus)
 	{
-		hasKeyboardFocus = true;
-		SetState(TextBoxState.Editing);
-	}
-	public override void LoseFocus()
-	{
-		hasKeyboardFocus = false;
-		SetState(TextBoxState.Normal);
+		hasKeyboardFocus = hasFocus;
+		if (hasFocus)
+		{
+			SetState(TextBoxState.Editing);
+		}
+		else
+		{
+			SetState(TextBoxState.Normal);
+		}
 	}
 
 	public override void Draw(MainMenu m)

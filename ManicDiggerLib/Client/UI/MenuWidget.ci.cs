@@ -69,16 +69,16 @@ public abstract class AbstractMenuWidget
 	internal float sizey;
 	internal bool visible;
 	internal bool clickable;
-	int nextWidget;
+	internal bool focusable;
 	internal bool hasKeyboardFocus;
 	string id;
 
 	public AbstractMenuWidget()
 	{
 		visible = true;
-		nextWidget = -1;
-		hasKeyboardFocus = false;
 		clickable = false;
+		focusable = false;
+		hasKeyboardFocus = false;
 	}
 	public virtual void OnKeyPress(GamePlatform p, KeyPressEventArgs args) { }
 	public virtual void OnKeyDown(GamePlatform p, KeyEventArgs args) { }
@@ -90,15 +90,13 @@ public abstract class AbstractMenuWidget
 		return (args.GetX() >= x && args.GetX() <= x + sizex &&
 			args.GetY() >= y && args.GetY() <= y + sizey);
 	}
-	public virtual void GetFocus()
-	{
-		hasKeyboardFocus = true;
-	}
-	public virtual void LoseFocus()
-	{
-		hasKeyboardFocus = false;
-	}
 	public abstract void Draw(MainMenu m);
+
+	public virtual void SetFocused(bool hasFocus)
+	{
+		if (!focusable) { return; }
+		hasKeyboardFocus = hasFocus;
+	}
 
 	public virtual void SetVisible(bool isVisible)
 	{
@@ -108,6 +106,16 @@ public abstract class AbstractMenuWidget
 	public virtual void SetClickable(bool isClickable)
 	{
 		clickable = isClickable;
+	}
+
+	public virtual void SetFocusable(bool isFocusable)
+	{
+		focusable = isFocusable;
+		if (!focusable && hasKeyboardFocus)
+		{
+			// Lose focus when property changes while focused
+			hasKeyboardFocus = false;
+		}
 	}
 
 	public virtual bool HasBeenClicked(MouseEventArgs args)
