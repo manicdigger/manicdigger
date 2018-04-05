@@ -120,7 +120,7 @@ public abstract class AbstractMenuWidget
 
 	public virtual bool HasBeenClicked(MouseEventArgs args)
 	{
-		return (clickable && IsCursorInside(args));
+		return (visible && clickable && IsCursorInside(args));
 	}
 }
 
