@@ -34,7 +34,6 @@ package Packet;
         optional string username = 2;
         optional string verificationKey = 3;
         optional string serverPassword = 4;
-        optional PositionAndOrientation requestPosition = 5;
 	}
 
 	message ClientRequestBlob

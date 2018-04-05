@@ -112,5 +112,6 @@ namespace ManicDigger.Server
 		internal int spawnedEntitiesCount;
 		internal ServerEntityId editingSign;
 		internal bool[] updateEntity;
+		internal string GameVersion;
 	}
 }
