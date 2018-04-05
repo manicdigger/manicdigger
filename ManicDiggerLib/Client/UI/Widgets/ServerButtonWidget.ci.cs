@@ -22,6 +22,8 @@
 		y = 0;
 		sizex = 0;
 		sizey = 0;
+		clickable = true;
+		focusable = true;
 		_imagename = "serverlist_entry_noimage.png";
 
 		_fontServerHeading = new FontCi();
