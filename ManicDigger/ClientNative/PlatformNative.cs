@@ -1240,6 +1240,7 @@ namespace ManicDigger.ClientNative
 			window.MouseWheel += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
 			window.RenderFrame += new EventHandler<OpenTK.FrameEventArgs>(window_RenderFrame);
 			window.Closed += new EventHandler<EventArgs>(window_Closed);
+			window.Resize += new EventHandler<EventArgs>(window_Resized);
 			window.TargetRenderFrequency = 0;
 			window.Title = "Manic Digger";
 		}
@@ -1247,6 +1248,19 @@ namespace ManicDigger.ClientNative
 		void window_Closed(object sender, EventArgs e)
 		{
 			gameexit.SetExit(true);
+		}
+
+		void window_Resized(object sender, EventArgs e)
+		{
+			Size sizeLimit = new Size(1280, 720);
+			if (window.Width < sizeLimit.Width)
+			{
+				window.Width = sizeLimit.Width;
+			}
+			if (window.Height < sizeLimit.Height)
+			{
+				window.Height = sizeLimit.Height;
+			}
 		}
 
 		public override void SetVSync(bool enabled)
