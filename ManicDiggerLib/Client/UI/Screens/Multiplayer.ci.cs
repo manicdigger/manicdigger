@@ -2,112 +2,307 @@
 {
 	public ScreenMultiplayer()
 	{
-		WidgetMaxCount = 64 + serverButtonsCount;
-		widgets = new MenuWidget[WidgetMaxCount];
-		back = new MenuWidget();
-		back.text = "Back";
-		back.type = WidgetType.Button;
-		back.nextWidget = 1;
-		connect = new MenuWidget();
-		connect.text = "Connect";
-		connect.type = WidgetType.Button;
-		connect.nextWidget = 3;
-		connectToIp = new MenuWidget();
-		connectToIp.text = "Connect to IP";
-		connectToIp.type = WidgetType.Button;
-		connectToIp.nextWidget = 2;
-		refresh = new MenuWidget();
-		refresh.text = "Refresh";
-		refresh.type = WidgetType.Button;
-		refresh.nextWidget = 0;
+		// Button Widgets
+		wbtn_back = new ButtonWidget();
+		wbtn_back.SetClickable(true);
+		wbtn_back.SetText("Back");
+		AddWidgetNew(wbtn_back);
+		wbtn_connect = new ButtonWidget();
+		wbtn_connect.SetClickable(true);
+		wbtn_connect.SetText("Connect");
+		AddWidgetNew(wbtn_connect);
+		wbtn_connectToIp = new ButtonWidget();
+		wbtn_connectToIp.SetClickable(true);
+		wbtn_connectToIp.SetText("Connect to IP");
+		AddWidgetNew(wbtn_connectToIp);
+		wbtn_refresh = new ButtonWidget();
+		wbtn_refresh.SetClickable(true);
+		wbtn_refresh.SetText("Refresh");
+		AddWidgetNew(wbtn_refresh);
+		wbtn_logout = new ButtonWidget();
+		wbtn_logout.SetClickable(true);
+		wbtn_logout.SetText("Logout");
+		wbtn_logout.SetVisible(false);
+		AddWidgetNew(wbtn_logout);
+		wbtn_pageUp = new ButtonWidget();
+		wbtn_pageUp.SetClickable(true);
+		wbtn_pageUp.SetVisible(false);
+		AddWidgetNew(wbtn_pageUp);
+		wbtn_pageDown = new ButtonWidget();
+		wbtn_pageDown.SetClickable(true);
+		wbtn_pageDown.SetVisible(false);
+		AddWidgetNew(wbtn_pageDown);
 
-		page = 0;
-		pageUp = new MenuWidget();
-		pageUp.text = "";
-		pageUp.type = WidgetType.Button;
-		pageUp.buttonStyle = ButtonStyle.Text;
-		pageUp.visible = false;
-		pageDown = new MenuWidget();
-		pageDown.text = "";
-		pageDown.type = WidgetType.Button;
-		pageDown.buttonStyle = ButtonStyle.Text;
-		pageDown.visible = false;
+		// Text Widgets
+		FontCi fontHeading = new FontCi();
+		fontHeading.size = 20;
+		FontCi fontDefault = new FontCi();
 
-		loggedInName = new MenuWidget();
-		loggedInName.text = "";
-		loggedInName.type = WidgetType.Button;
-		loggedInName.buttonStyle = ButtonStyle.Text;
+		wtxt_title = new TextWidget();
+		wtxt_title.SetFont(fontHeading);
+		wtxt_title.SetText("Multiplayer");
+		AddWidgetNew(wtxt_title);
+		wtxt_loadingText = new TextWidget();
+		wtxt_loadingText.SetFont(fontDefault);
+		wtxt_loadingText.SetText("Loading...");
+		wtxt_loadingText.SetVisible(false);
+		AddWidgetNew(wtxt_loadingText);
+		wtxt_userName = new TextWidget();
+		wtxt_userName.SetFont(fontDefault);
+		wtxt_userName.SetVisible(false);
+		AddWidgetNew(wtxt_userName);
+		wtxt_pageNr = new TextWidget();
+		wtxt_pageNr.SetFont(fontDefault);
+		AddWidgetNew(wtxt_pageNr);
 
-		logout = new MenuWidget();
-		logout.text = "";
-		logout.type = WidgetType.Button;
-		//logout.image = "serverlist_entry_background.png";
-		logout.buttonStyle = ButtonStyle.Button;
-
-		title = "Multiplayer";
-
-		fontServerHeading = new FontCi();
-		fontServerHeading.style = 1;
-		fontServerHeading.size = 14;
-		fontServerDescription = new FontCi();
-		fontDefault = new FontCi();
-		fontDefault.size = 14;
-
-		AddWidget(back);
-		AddWidget(connect);
-		AddWidget(refresh);
-		AddWidget(connectToIp);
-		AddWidget(pageUp);
-		AddWidget(pageDown);
-		AddWidget(loggedInName);
-		AddWidget(logout);
+		currentPage = 0;
 
 		serverListAddress = new HttpResponseCi();
 		serverListCsv = new HttpResponseCi();
 		serversOnList = new ServerOnList[serversOnListCount];
 		thumbResponses = new ThumbnailResponseCi[serversOnListCount];
 
-		serverButtons = new MenuWidget[serverButtonsCount];
-		for (int i = 0; i < serverButtonsCount; i++)
+		serverButtons = new ServerButtonWidget[serversPerPage];
+		for (int i = 0; i < serversPerPage; i++)
 		{
-			MenuWidget b = new MenuWidget();
-			b = new MenuWidget();
-			b.text = "Invalid";
-			b.type = WidgetType.Button;
-			b.visible = false;
-			b.image = "serverlist_entry_noimage.png";
+			ServerButtonWidget b = new ServerButtonWidget();
+			b.SetVisible(false);
 			serverButtons[i] = b;
-			AddWidget(b);
+			AddWidgetNew(b);
 		}
-		loading = true;
+		serverListDownloadInProgress = true;
 	}
 
-	bool loaded;
+	ButtonWidget wbtn_back;
+	ButtonWidget wbtn_connect;
+	ButtonWidget wbtn_connectToIp;
+	ButtonWidget wbtn_refresh;
+	ButtonWidget wbtn_logout;
+	ButtonWidget wbtn_pageUp;
+	ButtonWidget wbtn_pageDown;
+	TextWidget wtxt_title;
+	TextWidget wtxt_loadingText;
+	TextWidget wtxt_userName;
+	TextWidget wtxt_pageNr;
+	ServerButtonWidget[] serverButtons;
+
 	HttpResponseCi serverListAddress;
 	HttpResponseCi serverListCsv;
 	ServerOnList[] serversOnList;
+	ThumbnailResponseCi[] thumbResponses;
+
 	const int serversOnListCount = 1024;
-	int page;
-	int serversPerPage;
-	string title;
-	bool loading;
-	FontCi fontDefault;
+	const int serversPerPage = 8;
+	string selectedServerHash;
+	int currentPage;
+	bool serverListDownloadInProgress;
+	bool serverListDownloadStarted;
 
 	public override void LoadTranslations()
 	{
-		back.text = menu.lang.Get("MainMenu_ButtonBack");
-		connect.text = menu.lang.Get("MainMenu_MultiplayerConnect");
-		connectToIp.text = menu.lang.Get("MainMenu_MultiplayerConnectIP");
-		refresh.text = menu.lang.Get("MainMenu_MultiplayerRefresh");
-		title = menu.lang.Get("MainMenu_Multiplayer");
+		wbtn_back.SetText(menu.lang.Get("MainMenu_ButtonBack"));
+		wbtn_connect.SetText(menu.lang.Get("MainMenu_MultiplayerConnect"));
+		wbtn_connectToIp.SetText(menu.lang.Get("MainMenu_MultiplayerConnectIP"));
+		wbtn_refresh.SetText(menu.lang.Get("MainMenu_MultiplayerRefresh"));
+		wtxt_title.SetText(menu.lang.Get("MainMenu_Multiplayer"));
 	}
-
 	public override void Render(float dt)
 	{
-		if (!loaded)
+		GamePlatform p = menu.p;
+		float scale = menu.GetScale();
+
+		// setup widgets
+		wbtn_back.x = 40 * scale;
+		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.sizex = 256 * scale;
+		wbtn_back.sizey = 64 * scale;
+
+		wbtn_connect.x = p.GetCanvasWidth() / 2 - 300 * scale;
+		wbtn_connect.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_connect.sizex = 256 * scale;
+		wbtn_connect.sizey = 64 * scale;
+
+		wbtn_connectToIp.x = p.GetCanvasWidth() / 2 - 0 * scale;
+		wbtn_connectToIp.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_connectToIp.sizex = 256 * scale;
+		wbtn_connectToIp.sizey = 64 * scale;
+
+		wbtn_refresh.x = p.GetCanvasWidth() / 2 + 350 * scale;
+		wbtn_refresh.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_refresh.sizex = 256 * scale;
+		wbtn_refresh.sizey = 64 * scale;
+
+		wbtn_pageUp.x = p.GetCanvasWidth() - 94 * scale;
+		wbtn_pageUp.y = 100 * scale + (serversPerPage - 1) * 70 * scale;
+		wbtn_pageUp.sizex = 64 * scale;
+		wbtn_pageUp.sizey = 64 * scale;
+		string texName = "serverlist_nav_down.png";
+		wbtn_pageUp.SetTextureNames(texName, texName, texName);
+
+		wbtn_pageDown.x = p.GetCanvasWidth() - 94 * scale;
+		wbtn_pageDown.y = 100 * scale;
+		wbtn_pageDown.sizex = 64 * scale;
+		wbtn_pageDown.sizey = 64 * scale;
+		texName = "serverlist_nav_up.png";
+		wbtn_pageDown.SetTextureNames(texName, texName, texName);
+
+		wtxt_userName.x = p.GetCanvasWidth() - 228 * scale;
+		wtxt_userName.y = 32 * scale;
+		wtxt_userName.sizex = 128 * scale;
+		wtxt_userName.sizey = 32 * scale;
+		if (p.GetPreferences().GetString("Password", "") != "")
+		{
+			wtxt_userName.SetText(p.GetPreferences().GetString("Username", "Invalid"));
+			wtxt_userName.SetVisible(true);
+			wbtn_logout.SetVisible(true);
+		}
+
+		wbtn_logout.x = p.GetCanvasWidth() - 228 * scale;
+		wbtn_logout.y = 62 * scale;
+		wbtn_logout.sizex = 128 * scale;
+		wbtn_logout.sizey = 32 * scale;
+
+		wtxt_title.x = p.GetCanvasWidth() / 2;
+		wtxt_title.y = 10 * scale;
+		wtxt_title.SetAlignment(TextAlign.Center);
+
+		wtxt_pageNr.SetText(p.IntToString(currentPage + 1));
+		wtxt_pageNr.x = p.GetCanvasWidth() - 68 * scale;
+		wtxt_pageNr.y = p.GetCanvasHeight() / 2;
+		wtxt_pageNr.SetAlignment(TextAlign.Center);
+		wtxt_pageNr.SetBaseline(TextBaseline.Middle);
+
+		wtxt_loadingText.SetVisible(serverListDownloadInProgress);
+		wtxt_loadingText.SetText(menu.lang.Get("MainMenu_MultiplayerLoading"));
+		wtxt_loadingText.x = 100 * scale;
+		wtxt_loadingText.y = 50 * scale;
+
+		// update logic
+		UpdateServerList();
+		UpdateThumbnails();
+
+		for (int i = 0; i < serversPerPage; i++)
+		{
+			serverButtons[i].SetVisible(false);
+			int index = i + (serversPerPage * currentPage);
+			if (index > serversOnListCount)
+			{
+				// Skip entries if list exceeds server limit
+				continue;
+			}
+			ServerOnList s = serversOnList[index];
+			if (s == null)
+			{
+				// Skip entries when reaching the end of the list
+				continue;
+			}
+
+			serverButtons[i].SetTextHeading(s.name);
+			serverButtons[i].SetTextDescription(s.motd);
+			serverButtons[i].SetTextGamemode(s.gamemode);
+			serverButtons[i].SetTextPlayercount(menu.p.StringFormat2("{0}/{1}", menu.p.IntToString(s.users), menu.p.IntToString(s.max)));
+			serverButtons[i].x = 100 * scale;
+			serverButtons[i].y = 100 * scale + i * 70 * scale;
+			serverButtons[i].sizex = p.GetCanvasWidth() - 200 * scale;
+			serverButtons[i].sizey = 64 * scale;
+			serverButtons[i].SetVisible(true);
+			serverButtons[i].SetErrorVersion(s.version != menu.p.GetGameVersion());
+
+			if (s.thumbnailFetched && !s.thumbnailError)
+			{
+				serverButtons[i].SetServerImage(menu.p.StringFormat("serverlist_entry_{0}.png", s.hash));
+				serverButtons[i].SetErrorConnect(false);
+			}
+			else
+			{
+				serverButtons[i].SetServerImage(null);
+				serverButtons[i].SetErrorConnect(true);
+			}
+		}
+		UpdateScrollButtons();
+
+		// draw everything
+		menu.DrawBackground();
+		DrawWidgets();
+	}
+	public override void OnButtonA(AbstractMenuWidget w)
+	{
+		if (w == wbtn_back)
+		{
+			OnBackPressed();
+		}
+		if (w == wbtn_connect)
+		{
+			if (selectedServerHash == null) { return; }
+			menu.StartLogin(selectedServerHash, null, 0);
+		}
+		if (w == wbtn_connectToIp)
+		{
+			menu.StartConnectToIp();
+		}
+		if (w == wbtn_logout)
+		{
+			Preferences pref = menu.p.GetPreferences();
+			pref.Remove("Username");
+			pref.Remove("Password");
+			menu.p.SetPreferences(pref);
+			wtxt_userName.SetText("");
+		}
+		if (w == wbtn_pageDown)
+		{
+			PageDown_();
+		}
+		if (w == wbtn_pageUp)
+		{
+			PageUp_();
+		}
+		if (w == wbtn_refresh)
+		{
+			serverListDownloadStarted = false;
+			serverListDownloadInProgress = true;
+		}
+
+		for (int i = 0; i < serversPerPage; i++)
+		{
+			if (w == serverButtons[i])
+			{
+				serverButtons[i].SetFocused(true);
+				if (serversOnList[i + serversPerPage * currentPage] != null)
+				{
+					selectedServerHash = serversOnList[i + serversPerPage * currentPage].hash;
+				}
+			}
+			else
+			{
+				serverButtons[i].SetFocused(false);
+			}
+		}
+	}
+	public override void OnBackPressed()
+	{
+		menu.StartMainMenu();
+	}
+	public override void OnMouseWheel(MouseWheelEventArgs e)
+	{
+		//menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
+		if (e.GetDelta() < 0)
+		{
+			//Mouse wheel turned down
+			PageUp_();
+		}
+		else if (e.GetDelta() > 0)
+		{
+			//Mouse wheel turned up
+			PageDown_();
+		}
+	}
+
+	public void UpdateServerList()
+	{
+		if (!serverListDownloadStarted)
 		{
 			menu.p.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.php", serverListAddress);
-			loaded = true;
+			serverListDownloadStarted = true;
 		}
 		if (serverListAddress.done)
 		{
@@ -116,7 +311,7 @@
 		}
 		if (serverListCsv.done)
 		{
-			loading = false;
+			serverListDownloadInProgress = false;
 			serverListCsv.done = false;
 			for (int i = 0; i < serversOnListCount; i++)
 			{
@@ -147,135 +342,8 @@
 				serversOnList[i] = s;
 			}
 		}
-
-		GamePlatform p = menu.p;
-
-		float scale = menu.GetScale();
-
-		back.x = 40 * scale;
-		back.y = p.GetCanvasHeight() - 104 * scale;
-		back.sizex = 256 * scale;
-		back.sizey = 64 * scale;
-
-		connect.x = p.GetCanvasWidth() / 2 - 300 * scale;
-		connect.y = p.GetCanvasHeight() - 104 * scale;
-		connect.sizex = 256 * scale;
-		connect.sizey = 64 * scale;
-
-		connectToIp.x = p.GetCanvasWidth() / 2 - 0 * scale;
-		connectToIp.y = p.GetCanvasHeight() - 104 * scale;
-		connectToIp.sizex = 256 * scale;
-		connectToIp.sizey = 64 * scale;
-
-		refresh.x = p.GetCanvasWidth() / 2 + 350 * scale;
-		refresh.y = p.GetCanvasHeight() - 104 * scale;
-		refresh.sizex = 256 * scale;
-		refresh.sizey = 64 * scale;
-
-		pageUp.x = p.GetCanvasWidth() - 94 * scale;
-		pageUp.y = 100 * scale + (serversPerPage - 1) * 70 * scale;
-		pageUp.sizex = 64 * scale;
-		pageUp.sizey = 64 * scale;
-		pageUp.image = "serverlist_nav_down.png";
-
-		pageDown.x = p.GetCanvasWidth() - 94 * scale;
-		pageDown.y = 100 * scale;
-		pageDown.sizex = 64 * scale;
-		pageDown.sizey = 64 * scale;
-		pageDown.image = "serverlist_nav_up.png";
-
-		loggedInName.x = p.GetCanvasWidth() - 228 * scale;
-		loggedInName.y = 32 * scale;
-		loggedInName.sizex = 128 * scale;
-		loggedInName.sizey = 32 * scale;
-		if (loggedInName.text == "")
-		{
-			if (p.GetPreferences().GetString("Password", "") != "")
-			{
-				loggedInName.text = p.GetPreferences().GetString("Username", "Invalid");
-			}
-		}
-		logout.visible = loggedInName.text != "";
-
-		logout.x = p.GetCanvasWidth() - 228 * scale;
-		logout.y = 62 * scale;
-		logout.sizex = 128 * scale;
-		logout.sizey = 32 * scale;
-		logout.text = "Logout";
-
-		menu.DrawBackground();
-		menu.DrawText(title, menu.fontMenuHeading, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
-		menu.DrawText(p.IntToString(page + 1), fontDefault, p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
-
-		if (loading)
-		{
-			menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), fontDefault, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
-		}
-
-		UpdateThumbnails();
-		for (int i = 0; i < serverButtonsCount; i++)
-		{
-			serverButtons[i].visible = false;
-		}
-
-		serversPerPage = menu.p.FloatToInt((menu.p.GetCanvasHeight() - (2 * 100 * scale)) / 70 * scale);
-		if (serversPerPage <= 0)
-		{
-			// Do not let this get negative
-			serversPerPage = 1;
-		}
-		for (int i = 0; i < serversPerPage; i++)
-		{
-			int index = i + (serversPerPage * page);
-			if (index > serversOnListCount)
-			{
-				//Reset to first page
-				page = 0;
-				index = i + (serversPerPage * page);
-			}
-			ServerOnList s = serversOnList[index];
-			if (s == null)
-			{
-				continue;
-			}
-			string t = menu.p.StringFormat2("{1}", menu.p.IntToString(index), s.name);
-			t = menu.p.StringFormat2("{0}\n{1}", t, s.motd);
-			t = menu.p.StringFormat2("{0}\n{1}", t, s.gamemode);
-			t = menu.p.StringFormat2("{0}\n{1}", t, menu.p.IntToString(s.users));
-			t = menu.p.StringFormat2("{0}/{1}", t, menu.p.IntToString(s.max));
-			t = menu.p.StringFormat2("{0}\n{1}", t, s.version);
-
-			serverButtons[i].text = t;
-			serverButtons[i].x = 100 * scale;
-			serverButtons[i].y = 100 * scale + i * 70 * scale;
-			serverButtons[i].sizex = p.GetCanvasWidth() - 200 * scale;
-			serverButtons[i].sizey = 64 * scale;
-			serverButtons[i].visible = true;
-			serverButtons[i].buttonStyle = ButtonStyle.ServerEntry;
-			if (s.thumbnailError)
-			{
-				//Server did not respond to ServerQuery. Maybe not reachable?
-				serverButtons[i].description = "Server did not respond to query!";
-			}
-			else
-			{
-				serverButtons[i].description = null;
-			}
-			if (s.thumbnailFetched && !s.thumbnailError)
-			{
-				serverButtons[i].image = menu.p.StringFormat("serverlist_entry_{0}.png", s.hash);
-			}
-			else
-			{
-				serverButtons[i].image = "serverlist_entry_noimage.png";
-			}
-		}
-		UpdateScrollButtons();
-		DrawWidgets();
-		DrawServerWidgets();
 	}
 
-	ThumbnailResponseCi[] thumbResponses;
 	public void UpdateThumbnails()
 	{
 		for (int i = 0; i < serversOnListCount; i++)
@@ -336,190 +404,51 @@
 
 	public void PageUp_()
 	{
-		if (pageUp.visible && page < serverButtonsCount / serversPerPage - 1)
+		if (currentPage < serversOnListCount / serversPerPage - 1)
 		{
-			page++;
+			currentPage++;
 		}
 	}
+
 	public void PageDown_()
 	{
-		if (page > 0)
+		if (currentPage > 0)
 		{
-			page--;
+			currentPage--;
 		}
 	}
+
 	public void UpdateScrollButtons()
 	{
 		//Determine if this page is the highest page containing servers
 		bool maxpage = false;
-		if ((page + 1) * serversPerPage >= serversOnListCount)
+		if ((currentPage + 1) * serversPerPage >= serversOnListCount)
 		{
 			maxpage = true;
 		}
 		else
 		{
-			if (serversOnList[(page + 1) * serversPerPage] == null)
+			if (serversOnList[(currentPage + 1) * serversPerPage] == null)
 			{
 				maxpage = true;
 			}
 		}
 		//Hide scroll buttons
-		if (page == 0)
+		if (currentPage == 0)
 		{
-			pageDown.visible = false;
+			wbtn_pageDown.SetVisible(false);
 		}
 		else
 		{
-			pageDown.visible = true;
+			wbtn_pageDown.SetVisible(true);
 		}
 		if (maxpage)
 		{
-			pageUp.visible = false;
+			wbtn_pageUp.SetVisible(false);
 		}
 		else
 		{
-			pageUp.visible = true;
+			wbtn_pageUp.SetVisible(true);
 		}
-	}
-	MenuWidget back;
-	MenuWidget connect;
-	MenuWidget connectToIp;
-	MenuWidget refresh;
-	MenuWidget pageUp;
-	MenuWidget pageDown;
-	MenuWidget loggedInName;
-	MenuWidget logout;
-	MenuWidget[] serverButtons;
-	const int serverButtonsCount = 1024;
-
-	public override void OnBackPressed()
-	{
-		menu.StartMainMenu();
-	}
-	public override void OnMouseWheel(MouseWheelEventArgs e)
-	{
-		//menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
-		if (e.GetDelta() < 0)
-		{
-			//Mouse wheel turned down
-			PageUp_();
-		}
-		else if (e.GetDelta() > 0)
-		{
-			//Mouse wheel turned up
-			PageDown_();
-		}
-	}
-	string selectedServerHash;
-	public override void OnButton(MenuWidget w)
-	{
-		for (int i = 0; i < serverButtonsCount; i++)
-		{
-			serverButtons[i].selected = false;
-			if (serverButtons[i] == w)
-			{
-				serverButtons[i].selected = true;
-				if (serversOnList[i + serversPerPage * page] != null)
-				{
-					selectedServerHash = serversOnList[i + serversPerPage * page].hash;
-				}
-			}
-		}
-		if (w == pageUp)
-		{
-			PageUp_();
-		}
-		if (w == pageDown)
-		{
-			PageDown_();
-		}
-		if (w == back)
-		{
-			OnBackPressed();
-		}
-		if (w == connect)
-		{
-			if (selectedServerHash != null)
-			{
-				menu.StartLogin(selectedServerHash, null, 0);
-			}
-		}
-		if (w == connectToIp)
-		{
-			menu.StartConnectToIp();
-		}
-		if (w == refresh)
-		{
-			loaded = false;
-			loading = true;
-		}
-		if (w == logout)
-		{
-			Preferences pref = menu.p.GetPreferences();
-			pref.Remove("Username");
-			pref.Remove("Password");
-			menu.p.SetPreferences(pref);
-			loggedInName.text = "";
-		}
-	}
-
-	void DrawServerWidgets()
-	{
-		for (int i = 0; i < WidgetCount; i++)
-		{
-			MenuWidget w = widgets[i];
-			if (w != null)
-			{
-				if (!w.visible)
-				{
-					continue;
-				}
-				string text = w.text;
-				if (w.selected)
-				{
-					text = StringTools.StringAppend(menu.p, "&2", text);
-				}
-				if (w.type == WidgetType.Button)
-				{
-					if (w.buttonStyle == ButtonStyle.ServerEntry)
-					{
-						string[] strings = menu.p.StringSplit(w.text, "\n", new IntRef());
-						if (w.selected)
-						{
-							//Highlight text if selected
-							strings[0] = StringTools.StringAppend(menu.p, "&2", strings[0]);
-							strings[1] = StringTools.StringAppend(menu.p, "&2", strings[1]);
-							strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
-							strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
-						}
-						DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image);
-						if (w.description != null)
-						{
-							//Display a warning sign, when server does not respond to queries
-							menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38 * menu.GetScale(), w.y, w.sizey / 2, w.sizey / 2);
-						}
-						if (strings[4] != menu.p.GetGameVersion())
-						{
-							//Display an icon if server version differs from client version
-							menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38 * menu.GetScale(), w.y + w.sizey / 2, w.sizey / 2, w.sizey / 2);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	FontCi fontServerHeading;
-	FontCi fontServerDescription;
-	internal void DrawServerButton(string name, string motd, string gamemode, string playercount, float x, float y, float width, float height, string image)
-	{
-		//Server buttons default to: (screen width - 200) x 64
-		menu.Draw2dQuad(menu.GetTexture("serverlist_entry_background.png"), x, y, width, height);
-		menu.Draw2dQuad(menu.GetTexture(image), x, y, height, height);
-
-		menu.DrawText(name, fontServerHeading, x + 70, y + 5, TextAlign.Left, TextBaseline.Top);
-		menu.DrawText(gamemode, fontServerDescription, x + width - 10, y + height - 5, TextAlign.Right, TextBaseline.Bottom);
-		menu.DrawText(playercount, fontServerDescription, x + width - 10, y + 5, TextAlign.Right, TextBaseline.Top);
-		menu.DrawText(motd, fontServerDescription, x + 70, y + height - 5, TextAlign.Left, TextBaseline.Bottom);
 	}
 }
