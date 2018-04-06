@@ -32,13 +32,8 @@
 		wtxt_singleplayerUnavailable.SetVisible(false);
 		AddWidgetNew(wtxt_singleplayerUnavailable);
 
-		worldButtons = new ButtonWidget[10];
-		for (int i = 0; i < 10; i++)
-		{
-			worldButtons[i] = new ButtonWidget();
-			worldButtons[i].SetVisible(false);
-			AddWidgetNew(worldButtons[i]);
-		}
+		wlst_worldList = new ListWidget();
+		AddWidgetNew(wlst_worldList);
 	}
 
 	ButtonWidget wbtn_newWorld;
@@ -48,8 +43,7 @@
 	ButtonWidget wbtn_openFile;
 	TextWidget wtxt_title;
 	TextWidget wtxt_singleplayerUnavailable;
-
-	ButtonWidget[] worldButtons;
+	ListWidget wlst_worldList;
 
 	string[] savegames;
 	int savegamesCount;
@@ -97,21 +91,13 @@
 		wtxt_title.y = 10;
 		wtxt_title.SetAlignment(TextAlign.Center);
 
+		wlst_worldList.x = leftx;
+		wlst_worldList.y = 100;
+		wlst_worldList.sizex = 256 * scale;
+		wlst_worldList.sizey = 400 * scale;
+
 		// TODO: Implement savegame handling in game menu
-		//UpdateSavegameList();
-		for (int i = 0; i < 10; i++)
-		{
-			worldButtons[i].visible = false;
-		}
-		for (int i = 0; i < savegamesCount; i++)
-		{
-			worldButtons[i].SetVisible(true);
-			worldButtons[i].SetText(menu.p.FileName(savegames[i]));
-			worldButtons[i].x = leftx;
-			worldButtons[i].y = 100 + 100 * scale * i;
-			worldButtons[i].sizex = 256 * scale;
-			worldButtons[i].sizey = 64 * scale;
-		}
+		//LoadSavegameList(p);
 
 		menu.DrawBackground();
 		DrawWidgets();
@@ -173,13 +159,20 @@
 		}
 	}
 
-	void UpdateSavegameList()
+	void LoadSavegameList(GamePlatform p)
 	{
 		if (savegames == null)
 		{
 			IntRef savegamesCount_ = new IntRef();
 			savegames = menu.GetSavegames(savegamesCount_);
 			savegamesCount = savegamesCount_.value;
+
+			for (int i = 0; i < savegamesCount; i++)
+			{
+				ListEntry e = new ListEntry();
+				e.textTopLeft = menu.p.FileName(savegames[i]);
+				wlst_worldList.AddElement(e);
+			}
 		}
 	}
 }

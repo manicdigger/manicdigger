@@ -197,6 +197,7 @@
     <Compile Include="Client\SimpleServer\ServerSimple.ci.cs" />
     <Compile Include="Client\UI\Widgets\ButtonWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ImageWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\ListWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ProgressBarWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ServerButtonWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\TextBoxWidget.ci.cs" />
