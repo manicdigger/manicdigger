@@ -228,7 +228,13 @@
 		return x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 	}
 
-	public virtual void OnMouseWheel(MouseWheelEventArgs e) { }
+	public virtual void OnMouseWheel(MouseWheelEventArgs e)
+	{
+		for (int i = 0; i < WidgetNewCount; i++)
+		{
+			widgetsnew[i].OnMouseWheel(menu.p, e);
+		}
+	}
 	internal int WidgetMaxCount;
 	internal int WidgetCount;
 	internal MenuWidget[] widgets;

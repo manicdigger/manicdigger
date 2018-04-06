@@ -71,7 +71,6 @@ public abstract class AbstractMenuWidget
 	internal bool clickable;
 	internal bool focusable;
 	internal bool hasKeyboardFocus;
-	string id;
 
 	public AbstractMenuWidget()
 	{
@@ -85,6 +84,7 @@ public abstract class AbstractMenuWidget
 	public virtual void OnMouseDown(GamePlatform p, MouseEventArgs args) { }
 	public virtual void OnMouseUp(GamePlatform p, MouseEventArgs args) { }
 	public virtual void OnMouseMove(GamePlatform p, MouseEventArgs args) { }
+	public virtual void OnMouseWheel(GamePlatform p, MouseWheelEventArgs args) { }
 	public virtual bool IsCursorInside(MouseEventArgs args)
 	{
 		return (args.GetX() >= x && args.GetX() <= x + sizex &&
