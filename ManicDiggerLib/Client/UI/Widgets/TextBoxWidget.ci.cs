@@ -14,6 +14,7 @@
 
 	public TextBoxWidget()
 	{
+		clickable = true;
 		focusable = true;
 		_state = TextBoxState.Normal;
 		_textContent = "";

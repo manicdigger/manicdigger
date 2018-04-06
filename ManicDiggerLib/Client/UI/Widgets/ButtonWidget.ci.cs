@@ -16,6 +16,7 @@
 		y = 0;
 		sizex = 0;
 		sizey = 0;
+		clickable = true;
 	}
 	//public ButtonWidget(float dx, float dy, float dw, float dh, string text, FontCi font)
 	//{

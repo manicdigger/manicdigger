@@ -4,32 +4,25 @@
 	{
 		// Button Widgets
 		wbtn_back = new ButtonWidget();
-		wbtn_back.SetClickable(true);
 		wbtn_back.SetText("Back");
 		AddWidgetNew(wbtn_back);
 		wbtn_connect = new ButtonWidget();
-		wbtn_connect.SetClickable(true);
 		wbtn_connect.SetText("Connect");
 		AddWidgetNew(wbtn_connect);
 		wbtn_connectToIp = new ButtonWidget();
-		wbtn_connectToIp.SetClickable(true);
 		wbtn_connectToIp.SetText("Connect to IP");
 		AddWidgetNew(wbtn_connectToIp);
 		wbtn_refresh = new ButtonWidget();
-		wbtn_refresh.SetClickable(true);
 		wbtn_refresh.SetText("Refresh");
 		AddWidgetNew(wbtn_refresh);
 		wbtn_logout = new ButtonWidget();
-		wbtn_logout.SetClickable(true);
 		wbtn_logout.SetText("Logout");
 		wbtn_logout.SetVisible(false);
 		AddWidgetNew(wbtn_logout);
 		wbtn_pageUp = new ButtonWidget();
-		wbtn_pageUp.SetClickable(true);
 		wbtn_pageUp.SetVisible(false);
 		AddWidgetNew(wbtn_pageUp);
 		wbtn_pageDown = new ButtonWidget();
-		wbtn_pageDown.SetClickable(true);
 		wbtn_pageDown.SetVisible(false);
 		AddWidgetNew(wbtn_pageDown);
 

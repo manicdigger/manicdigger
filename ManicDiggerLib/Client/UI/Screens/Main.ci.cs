@@ -19,15 +19,12 @@
 		AddWidgetNew(wimg_logo);
 
 		wbtn_singleplayer = new ButtonWidget();
-		wbtn_singleplayer.SetClickable(true);
 		AddWidgetNew(wbtn_singleplayer);
 
 		wbtn_multiplayer = new ButtonWidget();
-		wbtn_multiplayer.SetClickable(true);
 		AddWidgetNew(wbtn_multiplayer);
 
 		wbtn_exit = new ButtonWidget();
-		wbtn_exit.SetClickable(true);
 		AddWidgetNew(wbtn_exit);
 	}
 
