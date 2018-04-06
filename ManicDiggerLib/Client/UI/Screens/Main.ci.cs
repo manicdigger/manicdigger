@@ -7,8 +7,6 @@
 		assetsLoaded = false;
 
 		wtxt_loading = new TextWidget();
-		FontCi fontDefault = new FontCi();
-		fontDefault.size = 20;
 		wtxt_loading.SetFont(fontDefault);
 		wtxt_loading.SetAlignment(TextAlign.Center);
 		wtxt_loading.SetBaseline(TextBaseline.Middle);

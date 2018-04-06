@@ -6,8 +6,15 @@
 		WidgetMaxCount = 64;
 		widgets = new MenuWidget[WidgetMaxCount];
 		widgetsnew = new AbstractMenuWidget[WidgetMaxCount];
+
+		fontTitle = new FontCi();
+		fontTitle.size = 20;
+		fontTitle.style = 1;
+		fontDefault = new FontCi();
 	}
 	internal MainMenu menu;
+	internal FontCi fontTitle;
+	internal FontCi fontDefault;
 	public virtual void Render(float dt) { }
 	public virtual void OnKeyDown(KeyEventArgs e)
 	{

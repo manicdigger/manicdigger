@@ -27,12 +27,8 @@
 		AddWidgetNew(wbtn_pageDown);
 
 		// Text Widgets
-		FontCi fontHeading = new FontCi();
-		fontHeading.size = 20;
-		FontCi fontDefault = new FontCi();
-
 		wtxt_title = new TextWidget();
-		wtxt_title.SetFont(fontHeading);
+		wtxt_title.SetFont(fontTitle);
 		wtxt_title.SetText("Multiplayer");
 		AddWidgetNew(wtxt_title);
 		wtxt_loadingText = new TextWidget();
