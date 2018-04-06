@@ -107,6 +107,17 @@
 		_textDescription.y = y + sizey - 5;
 		_textDescription.Draw(m);
 	}
+	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
+	{
+		if (HasBeenClicked(args))
+		{
+			hasKeyboardFocus = true;
+		}
+		else
+		{
+			hasKeyboardFocus = false;
+		}
+	}
 
 	public void SetTextHeading(string text)
 	{

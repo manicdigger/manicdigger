@@ -255,15 +255,10 @@
 		{
 			if (w == serverButtons[i])
 			{
-				serverButtons[i].SetFocused(true);
 				if (serversOnList[i + serversPerPage * currentPage] != null)
 				{
 					selectedServerHash = serversOnList[i + serversPerPage * currentPage].hash;
 				}
-			}
-			else
-			{
-				serverButtons[i].SetFocused(false);
 			}
 		}
 	}
