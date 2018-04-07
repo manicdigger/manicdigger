@@ -90,7 +90,6 @@
 	}
 	public void SetText(string text)
 	{
-		if (text == null) { return; }
 		if (text == _text) { return; }
 		_text = text;
 		_texture = null;
