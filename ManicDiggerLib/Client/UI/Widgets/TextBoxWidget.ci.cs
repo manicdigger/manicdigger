@@ -1,8 +1,9 @@
 ﻿public class TextBoxWidget : AbstractMenuWidget
 {
 	TextWidget _text;
-	TextBoxState _state;
 	FontCi _inputFont;
+	string _textureNameInactive;
+	string _textureNameActive;
 
 	string _placeholderText;
 	const string _placeholderColorCode = "&7";
@@ -16,13 +17,10 @@
 	{
 		clickable = true;
 		focusable = true;
-		_state = TextBoxState.Normal;
 		_textContent = "";
 		_textDisplay = "";
-		x = 0;
-		y = 0;
-		sizex = 0;
-		sizey = 0;
+		_textureNameInactive = "button.png";
+		_textureNameActive = "button_sel.png";
 
 		_inputFont = new FontCi();
 		_text = new TextWidget();
@@ -49,35 +47,12 @@
 
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{
-		if (_state != TextBoxState.Hover) { return; }
-		SetState(TextBoxState.Editing);
-	}
-
-	public override void OnMouseUp(GamePlatform p, MouseEventArgs args)
-	{
-		if (_state != TextBoxState.Editing) { return; }
-		SetState(TextBoxState.Normal);
-	}
-
-	public override void OnMouseMove(GamePlatform p, MouseEventArgs args)
-	{
-		// Check if mouse is inside the textbox rectangle
-		if (IsCursorInside(args))
-		{
-			if (_state == TextBoxState.Normal)
-			{
-				SetState(TextBoxState.Hover);
-			}
-		}
-		else
-		{
-			SetState(TextBoxState.Normal);
-		}
+		SetFocused(HasBeenClicked(args));
 	}
 
 	public override void OnKeyPress(GamePlatform p, KeyPressEventArgs args)
 	{
-		if (_state != TextBoxState.Editing)
+		if (hasKeyboardFocus)
 		{
 			if (p.IsValidTypingChar(args.GetKeyChar()))
 			{
@@ -88,7 +63,7 @@
 
 	public override void OnKeyDown(GamePlatform p, KeyEventArgs args)
 	{
-		if (_state != TextBoxState.Editing)
+		if (hasKeyboardFocus)
 		{
 			int key = args.GetKeyCode();
 			// pasting text from clipboard
@@ -112,39 +87,16 @@
 		}
 	}
 
-	public override void SetFocused(bool hasFocus)
-	{
-		hasKeyboardFocus = hasFocus;
-		if (hasFocus)
-		{
-			SetState(TextBoxState.Editing);
-		}
-		else
-		{
-			SetState(TextBoxState.Normal);
-		}
-	}
-
 	public override void Draw(MainMenu m)
 	{
 		if (!visible) { return; }
-		switch (_state)
-		{
-			// TODO: Use atlas textures
-			case TextBoxState.Normal:
-				m.Draw2dQuad(m.GetTexture("button.png"), x, y, sizex, sizey);
-				break;
-			case TextBoxState.Hover:
-				m.Draw2dQuad(m.GetTexture("button_sel.png"), x, y, sizex, sizey);
-				break;
-			case TextBoxState.Editing:
-				m.Draw2dQuad(m.GetTexture("button_sel.png"), x, y, sizex, sizey);
-				break;
-		}
+		m.Draw2dQuad(m.GetTexture(hasKeyboardFocus ? _textureNameActive : _textureNameInactive), x, y, sizex, sizey);
 
 		if (_text != null)
 		{
-			if (_state == TextBoxState.Editing)
+			_text.x = x + sizex / 2;
+			_text.y = y + sizey / 2;
+			if (hasKeyboardFocus)
 			{
 				_text.SetText(StringTools.StringAppend(m.p, _textDisplay, "_"));
 			}
@@ -156,9 +108,9 @@
 		}
 	}
 
-	public void SetState(TextBoxState state)
+	public void SetInputHidden(bool hideInput)
 	{
-		_state = state;
+		_hideInput = hideInput;
 	}
 
 	public void SetContent(GamePlatform p, string c)
@@ -177,6 +129,10 @@
 		}
 		_text.SetText(_textDisplay);
 	}
+	public string GetContent()
+	{
+		return _textContent;
+	}
 
 	string CharToString(GamePlatform p, int a)
 	{
@@ -193,11 +149,4 @@
 		}
 		return p.CharArrayToString(charArray, length);
 	}
-}
-
-public enum TextBoxState
-{
-	Normal,
-	Hover,
-	Editing
 }
