@@ -35,6 +35,7 @@
 	public override void Draw(MainMenu m)
 	{
 		if (!visible) { return; }
+		if (sizex < 0 || sizey < 0) { return; }
 
 		const int padding = 6;
 		const int elementSizeY = 64;
