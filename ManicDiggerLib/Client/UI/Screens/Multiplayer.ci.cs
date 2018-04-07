@@ -19,12 +19,6 @@
 		wbtn_logout.SetText("Logout");
 		wbtn_logout.SetVisible(false);
 		AddWidgetNew(wbtn_logout);
-		wbtn_pageUp = new ButtonWidget();
-		wbtn_pageUp.SetVisible(false);
-		AddWidgetNew(wbtn_pageUp);
-		wbtn_pageDown = new ButtonWidget();
-		wbtn_pageDown.SetVisible(false);
-		AddWidgetNew(wbtn_pageDown);
 
 		// Text Widgets
 		wtxt_title = new TextWidget();
@@ -40,9 +34,10 @@
 		wtxt_userName.SetFont(fontDefault);
 		wtxt_userName.SetVisible(false);
 		AddWidgetNew(wtxt_userName);
-		wtxt_pageNr = new TextWidget();
-		wtxt_pageNr.SetFont(fontDefault);
-		AddWidgetNew(wtxt_pageNr);
+
+		// list widget
+		wlst_serverList = new ListWidget();
+		AddWidgetNew(wlst_serverList);
 
 		currentPage = 0;
 
@@ -51,14 +46,6 @@
 		serversOnList = new ServerOnList[serversOnListCount];
 		thumbResponses = new ThumbnailResponseCi[serversOnListCount];
 
-		serverButtons = new ServerButtonWidget[serversPerPage];
-		for (int i = 0; i < serversPerPage; i++)
-		{
-			ServerButtonWidget b = new ServerButtonWidget();
-			b.SetVisible(false);
-			serverButtons[i] = b;
-			AddWidgetNew(b);
-		}
 		serverListDownloadInProgress = true;
 	}
 
@@ -67,13 +54,10 @@
 	ButtonWidget wbtn_connectToIp;
 	ButtonWidget wbtn_refresh;
 	ButtonWidget wbtn_logout;
-	ButtonWidget wbtn_pageUp;
-	ButtonWidget wbtn_pageDown;
 	TextWidget wtxt_title;
 	TextWidget wtxt_loadingText;
 	TextWidget wtxt_userName;
-	TextWidget wtxt_pageNr;
-	ServerButtonWidget[] serverButtons;
+	ListWidget wlst_serverList;
 
 	HttpResponseCi serverListAddress;
 	HttpResponseCi serverListCsv;
@@ -82,7 +66,6 @@
 
 	const int serversOnListCount = 1024;
 	const int serversPerPage = 8;
-	string selectedServerHash;
 	int currentPage;
 	bool serverListDownloadInProgress;
 	bool serverListDownloadStarted;
@@ -121,20 +104,6 @@
 		wbtn_refresh.sizex = 256 * scale;
 		wbtn_refresh.sizey = 64 * scale;
 
-		wbtn_pageUp.x = p.GetCanvasWidth() - 94 * scale;
-		wbtn_pageUp.y = 100 * scale + (serversPerPage - 1) * 70 * scale;
-		wbtn_pageUp.sizex = 64 * scale;
-		wbtn_pageUp.sizey = 64 * scale;
-		string texName = "serverlist_nav_down.png";
-		wbtn_pageUp.SetTextureNames(texName, texName, texName);
-
-		wbtn_pageDown.x = p.GetCanvasWidth() - 94 * scale;
-		wbtn_pageDown.y = 100 * scale;
-		wbtn_pageDown.sizex = 64 * scale;
-		wbtn_pageDown.sizey = 64 * scale;
-		texName = "serverlist_nav_up.png";
-		wbtn_pageDown.SetTextureNames(texName, texName, texName);
-
 		wtxt_userName.x = p.GetCanvasWidth() - 228 * scale;
 		wtxt_userName.y = 32 * scale;
 		wtxt_userName.sizex = 128 * scale;
@@ -155,16 +124,15 @@
 		wtxt_title.y = 10 * scale;
 		wtxt_title.SetAlignment(TextAlign.Center);
 
-		wtxt_pageNr.SetText(p.IntToString(currentPage + 1));
-		wtxt_pageNr.x = p.GetCanvasWidth() - 68 * scale;
-		wtxt_pageNr.y = p.GetCanvasHeight() / 2;
-		wtxt_pageNr.SetAlignment(TextAlign.Center);
-		wtxt_pageNr.SetBaseline(TextBaseline.Middle);
-
 		wtxt_loadingText.SetVisible(serverListDownloadInProgress);
 		wtxt_loadingText.SetText(menu.lang.Get("MainMenu_MultiplayerLoading"));
 		wtxt_loadingText.x = 100 * scale;
 		wtxt_loadingText.y = 50 * scale;
+
+		wlst_serverList.x = 100 * scale;
+		wlst_serverList.y = 100 * scale;
+		wlst_serverList.sizex = p.GetCanvasWidth() - 200 * scale;
+		wlst_serverList.sizey = p.GetCanvasHeight() - 200 * scale;
 
 		// update logic
 		UpdateServerList();
@@ -172,7 +140,6 @@
 
 		for (int i = 0; i < serversPerPage; i++)
 		{
-			serverButtons[i].SetVisible(false);
 			int index = i + (serversPerPage * currentPage);
 			if (index > serversOnListCount)
 			{
@@ -186,29 +153,17 @@
 				continue;
 			}
 
-			serverButtons[i].SetTextHeading(s.name);
-			serverButtons[i].SetTextDescription(s.motd);
-			serverButtons[i].SetTextGamemode(s.gamemode);
-			serverButtons[i].SetTextPlayercount(menu.p.StringFormat2("{0}/{1}", menu.p.IntToString(s.users), menu.p.IntToString(s.max)));
-			serverButtons[i].x = 100 * scale;
-			serverButtons[i].y = 100 * scale + i * 70 * scale;
-			serverButtons[i].sizex = p.GetCanvasWidth() - 200 * scale;
-			serverButtons[i].sizey = 64 * scale;
-			serverButtons[i].SetVisible(true);
-			serverButtons[i].SetErrorVersion(s.version != menu.p.GetGameVersion());
-
+			wlst_serverList.GetElement(index).imageStatusBottom = (s.version != menu.p.GetGameVersion()) ? null : "";
 			if (s.thumbnailFetched && !s.thumbnailError)
 			{
-				serverButtons[i].SetServerImage(menu.p.StringFormat("serverlist_entry_{0}.png", s.hash));
-				serverButtons[i].SetErrorConnect(false);
+				wlst_serverList.GetElement(index).imageMain = menu.p.StringFormat("serverlist_entry_{0}.png", s.hash);
 			}
 			else
 			{
-				serverButtons[i].SetServerImage(null);
-				serverButtons[i].SetErrorConnect(true);
+				wlst_serverList.GetElement(index).imageStatusTop = null;
+				wlst_serverList.GetElement(index).imageMain = null;
 			}
 		}
-		UpdateScrollButtons();
 
 		// draw everything
 		menu.DrawBackground();
@@ -222,7 +177,10 @@
 		}
 		if (w == wbtn_connect)
 		{
-			if (selectedServerHash == null) { return; }
+			int selectedIndex = wlst_serverList.GetIndexSelected();
+			if (selectedIndex < 0) { return; }
+			if (serversOnList[selectedIndex] == null) { return; }
+			string selectedServerHash = serversOnList[selectedIndex].hash;
 			menu.StartLogin(selectedServerHash, null, 0);
 		}
 		if (w == wbtn_connectToIp)
@@ -237,48 +195,15 @@
 			menu.p.SetPreferences(pref);
 			wtxt_userName.SetText("");
 		}
-		if (w == wbtn_pageDown)
-		{
-			PageDown_();
-		}
-		if (w == wbtn_pageUp)
-		{
-			PageUp_();
-		}
 		if (w == wbtn_refresh)
 		{
 			serverListDownloadStarted = false;
 			serverListDownloadInProgress = true;
 		}
-
-		for (int i = 0; i < serversPerPage; i++)
-		{
-			if (w == serverButtons[i])
-			{
-				if (serversOnList[i + serversPerPage * currentPage] != null)
-				{
-					selectedServerHash = serversOnList[i + serversPerPage * currentPage].hash;
-				}
-			}
-		}
 	}
 	public override void OnBackPressed()
 	{
 		menu.StartMainMenu();
-	}
-	public override void OnMouseWheel(MouseWheelEventArgs e)
-	{
-		//menu.p.MessageBoxShowError(menu.p.IntToString(e.GetDelta()), "Delta");
-		if (e.GetDelta() < 0)
-		{
-			//Mouse wheel turned down
-			PageUp_();
-		}
-		else if (e.GetDelta() > 0)
-		{
-			//Mouse wheel turned up
-			PageDown_();
-		}
 	}
 
 	public void UpdateServerList()
@@ -304,6 +229,7 @@
 			}
 			IntRef serversCount = new IntRef();
 			string[] servers = menu.p.StringSplit(serverListCsv.GetString(menu.p), "\n", serversCount);
+			wlst_serverList.Clear();
 			for (int i = 0; i < serversCount.value; i++)
 			{
 				IntRef ssCount = new IntRef();
@@ -324,6 +250,13 @@
 				s.gamemode = ss[8];
 				s.players = ss[9];
 				serversOnList[i] = s;
+
+				ListEntry e = new ListEntry();
+				e.textTopLeft = serversOnList[i].name;
+				e.textBottomLeft = serversOnList[i].motd;
+				e.textTopRight = menu.p.StringFormat2("{0}/{1}", menu.p.IntToString(serversOnList[i].users), menu.p.IntToString(serversOnList[i].max));
+				e.textBottomRight = serversOnList[i].gamemode;
+				wlst_serverList.AddElement(e);
 			}
 		}
 	}
@@ -383,56 +316,6 @@
 					server.thumbnailFetched = true;
 				}
 			}
-		}
-	}
-
-	public void PageUp_()
-	{
-		if (currentPage < serversOnListCount / serversPerPage - 1)
-		{
-			currentPage++;
-		}
-	}
-
-	public void PageDown_()
-	{
-		if (currentPage > 0)
-		{
-			currentPage--;
-		}
-	}
-
-	public void UpdateScrollButtons()
-	{
-		//Determine if this page is the highest page containing servers
-		bool maxpage = false;
-		if ((currentPage + 1) * serversPerPage >= serversOnListCount)
-		{
-			maxpage = true;
-		}
-		else
-		{
-			if (serversOnList[(currentPage + 1) * serversPerPage] == null)
-			{
-				maxpage = true;
-			}
-		}
-		//Hide scroll buttons
-		if (currentPage == 0)
-		{
-			wbtn_pageDown.SetVisible(false);
-		}
-		else
-		{
-			wbtn_pageDown.SetVisible(true);
-		}
-		if (maxpage)
-		{
-			wbtn_pageUp.SetVisible(false);
-		}
-		else
-		{
-			wbtn_pageUp.SetVisible(true);
 		}
 	}
 }
