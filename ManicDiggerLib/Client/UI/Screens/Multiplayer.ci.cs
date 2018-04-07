@@ -193,7 +193,9 @@
 			pref.Remove("Username");
 			pref.Remove("Password");
 			menu.p.SetPreferences(pref);
-			wtxt_userName.SetText("");
+			wtxt_userName.SetText(null);
+			wtxt_userName.SetVisible(false);
+			wbtn_logout.SetVisible(false);
 		}
 		if (w == wbtn_refresh)
 		{
