@@ -157,6 +157,8 @@
 		Add("en", "MainMenu_ConnectToIpConnect", "Connect");
 		Add("en", "MainMenu_ConnectToIpIp", "IP");
 		Add("en", "MainMenu_ConnectToIpPort", "Port");
+		Add("en", "MainMenu_ConnectToIpErrorIp", "&4Please enter a valid address!");
+		Add("en", "MainMenu_ConnectToIpErrorPort", "&4Please enter a valid port!");
 
 		Add("en", "CannotWriteChatLog", "Cannot write to chat log file {0}.");
 		Add("en", "ChunkUpdates", "Chunk updates: {0}");

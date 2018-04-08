@@ -117,11 +117,11 @@
 			IntRef ret = new IntRef();
 			if (Game.StringEquals(wtbx_ip.GetContent(), ""))
 			{
-				wtxt_statusMessage.SetText("&4Please enter a valid address!");
+				wtxt_statusMessage.SetText(menu.lang.Get("MainMenu_ConnectToIpErrorIp"));
 			}
 			else if (!menu.p.IntTryParse(wtbx_port.GetContent(), ret))
 			{
-				wtxt_statusMessage.SetText("&4Please enter a valid port!");
+				wtxt_statusMessage.SetText(menu.lang.Get("MainMenu_ConnectToIpErrorPort"));
 			}
 			else
 			{
