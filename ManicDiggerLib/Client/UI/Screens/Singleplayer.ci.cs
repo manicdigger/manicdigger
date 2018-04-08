@@ -16,22 +16,17 @@
 		wbtn_modifyWorld.SetVisible(false);
 		AddWidgetNew(wbtn_modifyWorld);
 		wbtn_back = new ButtonWidget();
-		wbtn_back.SetText("Back");
 		AddWidgetNew(wbtn_back);
 		wbtn_openFile = new ButtonWidget();
-		wbtn_openFile.SetText("Create or open...");
 		AddWidgetNew(wbtn_openFile);
-
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
-		wtxt_title.SetText("Singleplayer");
 		AddWidgetNew(wtxt_title);
 		wtxt_singleplayerUnavailable = new TextWidget();
 		wtxt_singleplayerUnavailable.SetFont(fontDefault);
 		wtxt_singleplayerUnavailable.SetText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.");
 		wtxt_singleplayerUnavailable.SetVisible(false);
 		AddWidgetNew(wtxt_singleplayerUnavailable);
-
 		wlst_worldList = new ListWidget();
 		AddWidgetNew(wlst_worldList);
 	}

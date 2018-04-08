@@ -6,8 +6,6 @@
 		textures = new DictionaryStringInt1024();
 		textTextures = new TextTexture[256];
 		textTexturesCount = 0;
-		screen = new ScreenMain();
-		screen.menu = this;
 		loginClient = new LoginClientCi();
 		assets = new AssetList();
 		assetsLoadProgress = new FloatRef();
@@ -34,6 +32,8 @@
 		lang.platform = p;
 		lang.LoadTranslations();
 		p.SetTitle(lang.GameName());
+
+		StartMainMenu();
 
 		textColorRenderer = new TextColorRenderer();
 		textColorRenderer.platform = p_;
@@ -462,6 +462,7 @@
 	{
 		screen = new ScreenMain();
 		screen.menu = this;
+		screen.LoadTranslations();
 		p.ExitMousePointerLock();
 		p.SetVSync(true);
 	}

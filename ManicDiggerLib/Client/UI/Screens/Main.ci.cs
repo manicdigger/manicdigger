@@ -11,17 +11,13 @@
 		wtxt_loading.SetAlignment(TextAlign.Center);
 		wtxt_loading.SetBaseline(TextBaseline.Middle);
 		AddWidgetNew(wtxt_loading);
-
 		wimg_logo = new ImageWidget();
 		wimg_logo.SetTextureName("logo.png");
 		AddWidgetNew(wimg_logo);
-
 		wbtn_singleplayer = new ButtonWidget();
 		AddWidgetNew(wbtn_singleplayer);
-
 		wbtn_multiplayer = new ButtonWidget();
 		AddWidgetNew(wbtn_multiplayer);
-
 		wbtn_exit = new ButtonWidget();
 		AddWidgetNew(wbtn_exit);
 	}
@@ -36,6 +32,13 @@
 	bool queryStringChecked;
 	bool assetsLoaded;
 	bool cursorLoaded;
+
+	public override void LoadTranslations()
+	{
+		wbtn_singleplayer.SetText(menu.lang.Get("MainMenu_Singleplayer"));
+		wbtn_multiplayer.SetText(menu.lang.Get("MainMenu_Multiplayer"));
+		wbtn_exit.SetText(menu.lang.Get("MainMenu_Quit"));
+	}
 
 	public override void Render(float dt)
 	{
@@ -68,8 +71,6 @@
 			queryStringChecked = true;
 		}
 
-		menu.DrawBackground();
-
 		float scale = menu.GetScale();
 		float buttonheight = 64 * scale;
 		float buttonwidth = 256 * scale;
@@ -81,25 +82,23 @@
 		wimg_logo.x = windowX / 2 - wimg_logo.sizex / 2;
 		wimg_logo.y = 50 * scale;
 
-		wbtn_singleplayer.SetText(menu.lang.Get("MainMenu_Singleplayer"));
 		wbtn_singleplayer.x = windowX / 2 - (buttonwidth / 2);
 		wbtn_singleplayer.y = windowY - (3 * (buttonheight + spacebetween)) - offsetfromborder;
 		wbtn_singleplayer.sizex = buttonwidth;
 		wbtn_singleplayer.sizey = buttonheight;
 
-		wbtn_multiplayer.SetText(menu.lang.Get("MainMenu_Multiplayer"));
 		wbtn_multiplayer.x = windowX / 2 - (buttonwidth / 2);
 		wbtn_multiplayer.y = windowY - (2 * (buttonheight + spacebetween)) - offsetfromborder;
 		wbtn_multiplayer.sizex = buttonwidth;
 		wbtn_multiplayer.sizey = buttonheight;
 
 		wbtn_exit.visible = menu.p.ExitAvailable();
-		wbtn_exit.SetText(menu.lang.Get("MainMenu_Quit"));
 		wbtn_exit.x = windowX / 2 - (buttonwidth / 2);
 		wbtn_exit.y = windowY - (1 * (buttonheight + spacebetween)) - offsetfromborder;
 		wbtn_exit.sizex = buttonwidth;
 		wbtn_exit.sizey = buttonheight;
 
+		menu.DrawBackground();
 		DrawWidgets();
 	}
 
