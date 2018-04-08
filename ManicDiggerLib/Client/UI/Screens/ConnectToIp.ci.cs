@@ -3,15 +3,12 @@
 	public ScreenConnectToIp()
 	{
 		wbtn_back = new ButtonWidget();
-		wbtn_back.SetText("Back");
 		AddWidgetNew(wbtn_back);
 		wbtn_connect = new ButtonWidget();
-		wbtn_connect.SetText("Connect");
 		AddWidgetNew(wbtn_connect);
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
 		wtxt_title.SetAlignment(TextAlign.Center);
-		wtxt_title.SetText("Connect to IP");
 		AddWidgetNew(wtxt_title);
 		wtxt_statusMessage = new TextWidget();
 		wtxt_statusMessage.SetFont(fontMessage);
@@ -20,13 +17,11 @@
 		wtxt_ip.SetFont(fontDefault);
 		wtxt_ip.SetAlignment(TextAlign.Right);
 		wtxt_ip.SetBaseline(TextBaseline.Middle);
-		wtxt_ip.SetText("IP");
 		AddWidgetNew(wtxt_ip);
 		wtxt_port = new TextWidget();
 		wtxt_port.SetFont(fontDefault);
 		wtxt_port.SetAlignment(TextAlign.Right);
 		wtxt_port.SetBaseline(TextBaseline.Middle);
-		wtxt_port.SetText("Port");
 		AddWidgetNew(wtxt_port);
 		wtbx_ip = new TextBoxWidget();
 		AddWidgetNew(wtbx_ip);
@@ -47,6 +42,7 @@
 
 	public override void LoadTranslations()
 	{
+		wbtn_back.SetText(menu.lang.Get("MainMenu_ButtonBack"));
 		wbtn_connect.SetText(menu.lang.Get("MainMenu_ConnectToIpConnect"));
 		wtxt_ip.SetText(menu.lang.Get("MainMenu_ConnectToIpIp"));
 		wtxt_port.SetText(menu.lang.Get("MainMenu_ConnectToIpPort"));
