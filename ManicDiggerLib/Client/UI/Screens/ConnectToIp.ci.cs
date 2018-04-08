@@ -110,11 +110,11 @@
 			preferences.SetString("ConnectToIpPort", wtbx_port.GetContent());
 			menu.p.SetPreferences(preferences);
 
-			FloatRef ret = new FloatRef();
+			IntRef ret = new IntRef();
 			if (!Game.StringEquals(wtbx_ip.GetContent(), "")
-				&& menu.p.FloatTryParse(wtbx_port.GetContent(), ret))
+				&& menu.p.IntTryParse(wtbx_port.GetContent(), ret))
 			{
-				menu.StartLogin(null, wtbx_ip.GetContent(), menu.p.IntParse(wtbx_port.GetContent()));
+				menu.StartLogin(null, wtbx_ip.GetContent(), ret.value);
 			}
 		}
 		if (w == wbtn_back)
