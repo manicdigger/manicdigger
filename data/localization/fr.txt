@@ -9,6 +9,7 @@ MainMenu_Login=S'identifier
 MainMenu_LoginUsername=Nom d'utilisateur
 MainMenu_LoginPassword=Mot de passe
 MainMenu_LoginRemember=Se souvenir de moi
+#MainMenu_LoginCreateAccount=Create Account
 MainMenu_ChoiceYes=Oui
 MainMenu_ChoiceNo=Non
 MainMenu_LoginInvalid=&4Nom d'usager ou mot de passe invalide

@@ -9,6 +9,7 @@ MainMenu_Login=Login
 MainMenu_LoginUsername=Username
 MainMenu_LoginPassword=Password
 MainMenu_LoginRemember=Remember me
+MainMenu_LoginCreateAccount=Create Account
 MainMenu_ChoiceYes=Yes
 MainMenu_ChoiceNo=No
 MainMenu_LoginInvalid=&4Invalid username or password

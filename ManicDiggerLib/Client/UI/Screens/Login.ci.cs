@@ -3,13 +3,10 @@
 	public ScreenLogin()
 	{
 		wbtn_back = new ButtonWidget();
-		wbtn_back.SetText("Back");
 		AddWidgetNew(wbtn_back);
 		wbtn_login = new ButtonWidget();
-		wbtn_login.SetText("Login");
 		AddWidgetNew(wbtn_login);
 		wbtn_createAccount = new ButtonWidget();
-		wbtn_createAccount.SetText("Create Account");
 		wbtn_createAccount.SetVisible(false);
 		AddWidgetNew(wbtn_createAccount);
 		wtbx_username = new TextBoxWidget();
@@ -18,12 +15,10 @@
 		wtbx_password.SetInputHidden(true);
 		AddWidgetNew(wtbx_password);
 		wcbx_rememberPassword = new CheckBoxWidget();
-		wcbx_rememberPassword.SetDescription("Remember me");
 		AddWidgetNew(wcbx_rememberPassword);
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
 		wtxt_title.SetAlignment(TextAlign.Center);
-		wtxt_title.SetText("Login");
 		AddWidgetNew(wtxt_title);
 		wtxt_statusMessage = new TextWidget();
 		wtxt_statusMessage.SetFont(fontMessage);
@@ -32,13 +27,11 @@
 		wtxt_username.SetFont(fontDefault);
 		wtxt_username.SetAlignment(TextAlign.Right);
 		wtxt_username.SetBaseline(TextBaseline.Middle);
-		wtxt_username.SetText("Username");
 		AddWidgetNew(wtxt_username);
 		wtxt_password = new TextWidget();
 		wtxt_password.SetFont(fontDefault);
 		wtxt_password.SetAlignment(TextAlign.Right);
 		wtxt_password.SetBaseline(TextBaseline.Middle);
-		wtxt_password.SetText("Password");
 		AddWidgetNew(wtxt_password);
 
 		triedSavedLogin = false;
@@ -66,7 +59,7 @@
 		wcbx_rememberPassword.SetDescription(menu.lang.Get("MainMenu_LoginRemember"));
 		wbtn_login.SetText(menu.lang.Get("MainMenu_Login"));
 		wbtn_back.SetText(menu.lang.Get("MainMenu_ButtonBack"));
-		//wbtn_createAccount.SetText(menu.lang.Get("MainMenu_ButtonCreate")); // TODO: Add translation
+		wbtn_createAccount.SetText(menu.lang.Get("MainMenu_LoginCreateAccount"));
 	}
 
 	public override void Render(float dt)
@@ -113,9 +106,6 @@
 				break;
 			case LoginResult.Failed:
 				loginResultText = menu.lang.Get("MainMenu_LoginInvalid");
-				break;
-			case LoginResult.Ok:
-				loginResultText = "Login successful!";
 				break;
 			default:
 				break;

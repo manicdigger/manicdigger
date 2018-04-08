@@ -146,6 +146,7 @@
 		Add("en", "MainMenu_LoginUsername", "Username");
 		Add("en", "MainMenu_LoginPassword", "Password");
 		Add("en", "MainMenu_LoginRemember", "Remember me");
+		Add("en", "MainMenu_LoginCreateAccount", "Create Account");
 		Add("en", "MainMenu_ChoiceYes", "Yes");
 		Add("en", "MainMenu_ChoiceNo", "No");
 		Add("en", "MainMenu_LoginInvalid", "&4Invalid username or password");
