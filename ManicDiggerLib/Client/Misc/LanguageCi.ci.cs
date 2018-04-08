@@ -32,6 +32,11 @@
 					//Skip line if empty
 					continue;
 				}
+				if (platform.StringStartsWithIgnoreCase(lineList[j], "#"))
+				{
+					// skip lines starting with '#' as comments
+					continue;
+				}
 				IntRef splitCount = IntRef.Create(0);
 				string[] splitList = platform.StringSplit(lineList[j], "=", splitCount);
 				if (splitCount.value >= 2)

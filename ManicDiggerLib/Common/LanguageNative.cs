@@ -41,6 +41,11 @@ namespace ManicDigger.Common
 							//Skip line if empty
 							continue;
 						}
+						if (lineList[j].StartsWith("#", StringComparison.InvariantCultureIgnoreCase))
+						{
+							// skip lines starting with '#' as comments
+							continue;
+						}
 						string[] splitList = lineList[j].Split('=');
 						if (splitList.Length >= 2)
 						{
