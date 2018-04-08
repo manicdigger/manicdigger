@@ -2,107 +2,96 @@
 {
 	public ScreenConnectToIp()
 	{
-		buttonConnect = new MenuWidget();
-		buttonConnect.text = "Connect";
-		buttonConnect.type = WidgetType.Button;
-		buttonConnect.nextWidget = 3;
-		textboxIp = new MenuWidget();
-		textboxIp.type = WidgetType.Textbox;
-		textboxIp.text = "";
-		textboxIp.description = "Ip";
-		textboxIp.nextWidget = 2;
-		textboxPort = new MenuWidget();
-		textboxPort.type = WidgetType.Textbox;
-		textboxPort.text = "";
-		textboxPort.description = "Port";
-		textboxPort.nextWidget = 0;
-
-		back = new MenuWidget();
-		back.text = "Back";
-		back.type = WidgetType.Button;
-		back.nextWidget = 1;
-
-		title = "Connect to IP";
-
-		AddWidget(buttonConnect);
-		AddWidget(textboxIp);
-		AddWidget(textboxPort);
-		AddWidget(back);
-
-		textboxIp.GetFocus();
+		wbtn_back = new ButtonWidget();
+		wbtn_back.SetText("Back");
+		AddWidgetNew(wbtn_back);
+		wbtn_connect = new ButtonWidget();
+		wbtn_connect.SetText("Connect");
+		AddWidgetNew(wbtn_connect);
+		wtxt_title = new TextWidget();
+		wtxt_title.SetFont(fontTitle);
+		wtxt_title.SetText("Connect to IP");
+		AddWidgetNew(wtxt_title);
+		wtxt_ip = new TextWidget();
+		wtxt_ip.SetFont(fontDefault);
+		wtxt_ip.SetAlignment(TextAlign.Right);
+		wtxt_ip.SetBaseline(TextBaseline.Middle);
+		wtxt_ip.SetText("IP");
+		AddWidgetNew(wtxt_ip);
+		wtxt_port = new TextWidget();
+		wtxt_port.SetFont(fontDefault);
+		wtxt_port.SetAlignment(TextAlign.Right);
+		wtxt_port.SetBaseline(TextBaseline.Middle);
+		wtxt_port.SetText("Port");
+		AddWidgetNew(wtxt_port);
+		wtbx_ip = new TextBoxWidget();
+		AddWidgetNew(wtbx_ip);
+		wtbx_port = new TextBoxWidget();
+		AddWidgetNew(wtbx_port);
 	}
 
-	MenuWidget buttonConnect;
-	MenuWidget textboxIp;
-	MenuWidget textboxPort;
-
-	MenuWidget back;
+	ButtonWidget wbtn_back;
+	ButtonWidget wbtn_connect;
+	TextWidget wtxt_title;
+	TextWidget wtxt_ip;
+	TextWidget wtxt_port;
+	TextBoxWidget wtbx_ip;
+	TextBoxWidget wtbx_port;
 
 	bool loaded;
-	string title;
 
 	public override void LoadTranslations()
 	{
-		buttonConnect.text = menu.lang.Get("MainMenu_ConnectToIpConnect");
-		textboxIp.description = menu.lang.Get("MainMenu_ConnectToIpIp");
-		textboxPort.description = menu.lang.Get("MainMenu_ConnectToIpPort");
-		title = menu.lang.Get("MainMenu_MultiplayerConnectIP");
+		wbtn_connect.SetText(menu.lang.Get("MainMenu_ConnectToIpConnect"));
+		wtxt_ip.SetText(menu.lang.Get("MainMenu_ConnectToIpIp"));
+		wtxt_port.SetText(menu.lang.Get("MainMenu_ConnectToIpPort"));
+		wtxt_title.SetText(menu.lang.Get("MainMenu_MultiplayerConnectIP"));
 	}
 
-	string preferences_ip;
-	string preferences_port;
 	public override void Render(float dt)
 	{
+		GamePlatform p = menu.p;
+
+		// load stored values or defaults
 		if (!loaded)
 		{
-			preferences_ip = menu.p.GetPreferences().GetString("ConnectToIpIp", "127.0.0.1");
-			preferences_port = menu.p.GetPreferences().GetString("ConnectToIpPort", "25565");
-			textboxIp.text = preferences_ip;
-			textboxPort.text = preferences_port;
+			wtbx_ip.SetContent(p, p.GetPreferences().GetString("ConnectToIpIp", "127.0.0.1"));
+			wtbx_port.SetContent(p, p.GetPreferences().GetString("ConnectToIpPort", "25565"));
 			loaded = true;
 		}
 
-		if (textboxIp.text != preferences_ip
-			|| textboxPort.text != preferences_port)
-		{
-			preferences_ip = textboxIp.text;
-			preferences_port = textboxPort.text;
-			Preferences preferences = menu.p.GetPreferences();
-			preferences.SetString("ConnectToIpIp", preferences_ip);
-			preferences.SetString("ConnectToIpPort", preferences_port);
-			menu.p.SetPreferences(preferences);
-		}
-
-		GamePlatform p = menu.p;
 		float scale = menu.GetScale();
-		menu.DrawBackground();
-
-
 		float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
 		float y = p.GetCanvasHeight() / 2 - 250 * scale;
 
-		menu.DrawText(title, menu.fontMenuHeading, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+		wtxt_title.x = leftx;
+		wtxt_title.y = y + 50 * scale;
 
-		textboxIp.x = leftx;
-		textboxIp.y = y + 100 * scale;
-		textboxIp.sizex = 256 * scale;
-		textboxIp.sizey = 64 * scale;
+		wtxt_ip.x = leftx;
+		wtxt_ip.y = y + 100 * scale;
+		wtbx_ip.x = leftx;
+		wtbx_ip.y = y + 100 * scale;
+		wtbx_ip.sizex = 256 * scale;
+		wtbx_ip.sizey = 64 * scale;
 
-		textboxPort.x = leftx;
-		textboxPort.y = y + 200 * scale;
-		textboxPort.sizex = 256 * scale;
-		textboxPort.sizey = 64 * scale;
+		wtxt_port.x = leftx;
+		wtxt_port.y = y + 200 * scale;
+		wtbx_port.x = leftx;
+		wtbx_port.y = y + 200 * scale;
+		wtbx_port.sizex = 256 * scale;
+		wtbx_port.sizey = 64 * scale;
 
-		buttonConnect.x = leftx;
-		buttonConnect.y = y + 400 * scale;
-		buttonConnect.sizex = 256 * scale;
-		buttonConnect.sizey = 64 * scale;
+		wbtn_connect.x = leftx;
+		wbtn_connect.y = y + 400 * scale;
+		wbtn_connect.sizex = 256 * scale;
+		wbtn_connect.sizey = 64 * scale;
 
-		back.x = 40 * scale;
-		back.y = p.GetCanvasHeight() - 104 * scale;
-		back.sizex = 256 * scale;
-		back.sizey = 64 * scale;
+		wbtn_back.x = 40 * scale;
+		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.sizex = 256 * scale;
+		wbtn_back.sizey = 64 * scale;
 
+		menu.DrawBackground();
 		DrawWidgets();
 	}
 
@@ -111,18 +100,24 @@
 		menu.StartMultiplayer();
 	}
 
-	public override void OnButton(MenuWidget w)
+	public override void OnButtonA(AbstractMenuWidget w)
 	{
-		if (w == buttonConnect)
+		if (w == wbtn_connect)
 		{
+			// save user input
+			Preferences preferences = menu.p.GetPreferences();
+			preferences.SetString("ConnectToIpIp", wtbx_ip.GetContent());
+			preferences.SetString("ConnectToIpPort", wtbx_port.GetContent());
+			menu.p.SetPreferences(preferences);
+
 			FloatRef ret = new FloatRef();
-			if (!Game.StringEquals(textboxIp.text, "")
-				&& menu.p.FloatTryParse(textboxPort.text, ret))
+			if (!Game.StringEquals(wtbx_ip.GetContent(), "")
+				&& menu.p.FloatTryParse(wtbx_port.GetContent(), ret))
 			{
-				menu.StartLogin(null, textboxIp.text, menu.p.IntParse(textboxPort.text));
+				menu.StartLogin(null, wtbx_ip.GetContent(), menu.p.IntParse(wtbx_port.GetContent()));
 			}
 		}
-		if (w == back)
+		if (w == wbtn_back)
 		{
 			OnBackPressed();
 		}
