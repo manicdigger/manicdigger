@@ -118,7 +118,6 @@
 				loginResultText = "Login successful!";
 				break;
 			default:
-				loginResultText = "Idle.";
 				break;
 		}
 		wtxt_statusMessage.SetText(loginResultText);

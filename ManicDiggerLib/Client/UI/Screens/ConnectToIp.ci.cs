@@ -63,7 +63,6 @@
 			wtbx_ip.SetContent(p, p.GetPreferences().GetString("ConnectToIpIp", "127.0.0.1"));
 			wtbx_port.SetContent(p, p.GetPreferences().GetString("ConnectToIpPort", "25565"));
 			loaded = true;
-			wtxt_statusMessage.SetText("Loaded.");
 		}
 
 		float connectAreaWidth = 600;
