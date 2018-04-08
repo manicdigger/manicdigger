@@ -10,6 +10,7 @@
     public abstract float FloatModulo(float a, int b);
 
     public abstract int IntParse(string value);
+    public abstract bool IntTryParse(string s, IntRef ret);
     public abstract float FloatParse(string value);
     public abstract string IntToString(int value);
     public abstract string FloatToString(float value);

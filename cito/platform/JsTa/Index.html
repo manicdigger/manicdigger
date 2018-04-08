@@ -1753,6 +1753,15 @@ PlatformJs.prototype.intParse = function(value) {
 	return parseInt(value);
 }
 
+PlatformJs.prototype.intTryParse = function(s, ret) {
+	if (!isNaN(s))
+	{
+		ret.value = parseInt(s);
+		return true;
+	}
+	return false;
+}
+
 PlatformJs.prototype.intToString = function(value) {
 	return value.toString();
 }

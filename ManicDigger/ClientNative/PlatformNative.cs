@@ -67,6 +67,20 @@ namespace ManicDigger.ClientNative
 			return System.Int32.Parse(value);
 		}
 
+		public override bool IntTryParse(string s, IntRef ret)
+		{
+			int i;
+			if (int.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out i))
+			{
+				ret.SetValue(i);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 		public override float FloatParse(string value)
 		{
 			return System.Single.Parse(value);
