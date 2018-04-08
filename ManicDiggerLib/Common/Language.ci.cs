@@ -154,6 +154,7 @@
 		Add("en", "MainMenu_MultiplayerConnectIP", "Connect to IP");
 		Add("en", "MainMenu_MultiplayerRefresh", "Refresh");
 		Add("en", "MainMenu_MultiplayerLoading", "Loading...");
+		Add("en", "MainMenu_MultiplayerLogout", "Logout");
 		Add("en", "MainMenu_ConnectToIpConnect", "Connect");
 		Add("en", "MainMenu_ConnectToIpIp", "IP");
 		Add("en", "MainMenu_ConnectToIpPort", "Port");

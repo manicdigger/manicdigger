@@ -17,6 +17,7 @@ MainMenu_MultiplayerConnect=Connect
 MainMenu_MultiplayerConnectIP=Connect to IP
 MainMenu_MultiplayerRefresh=Refresh
 MainMenu_MultiplayerLoading=Loading...
+MainMenu_MultiplayerLogout=Logout
 MainMenu_ConnectToIpConnect=Connect
 MainMenu_ConnectToIpIp=IP
 MainMenu_ConnectToIpPort=Port

@@ -4,31 +4,24 @@
 	{
 		// Button Widgets
 		wbtn_back = new ButtonWidget();
-		wbtn_back.SetText("Back");
 		AddWidgetNew(wbtn_back);
 		wbtn_connect = new ButtonWidget();
-		wbtn_connect.SetText("Connect");
 		AddWidgetNew(wbtn_connect);
 		wbtn_connectToIp = new ButtonWidget();
-		wbtn_connectToIp.SetText("Connect to IP");
 		AddWidgetNew(wbtn_connectToIp);
 		wbtn_refresh = new ButtonWidget();
-		wbtn_refresh.SetText("Refresh");
 		AddWidgetNew(wbtn_refresh);
 		wbtn_logout = new ButtonWidget();
-		wbtn_logout.SetText("Logout");
 		wbtn_logout.SetVisible(false);
 		AddWidgetNew(wbtn_logout);
 
 		// Text Widgets
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
-		wtxt_title.SetText("Multiplayer");
 		AddWidgetNew(wtxt_title);
 		wtxt_loadingText = new TextWidget();
 		wtxt_loadingText.SetFont(fontMessage);
 		wtxt_loadingText.SetBaseline(TextBaseline.Middle);
-		wtxt_loadingText.SetText("Loading...");
 		wtxt_loadingText.SetVisible(false);
 		AddWidgetNew(wtxt_loadingText);
 		wtxt_userName = new TextWidget();
@@ -81,6 +74,7 @@
 		wbtn_refresh.SetText(menu.lang.Get("MainMenu_MultiplayerRefresh"));
 		wtxt_title.SetText(menu.lang.Get("MainMenu_Multiplayer"));
 		wtxt_loadingText.SetText(menu.lang.Get("MainMenu_MultiplayerLoading"));
+		wbtn_logout.SetText(menu.lang.Get("MainMenu_MultiplayerLogout"));
 	}
 	public override void Render(float dt)
 	{

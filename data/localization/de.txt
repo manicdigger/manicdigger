@@ -17,6 +17,7 @@ MainMenu_MultiplayerConnect=Verbinden
 MainMenu_MultiplayerConnectIP=Verbinden zu IP
 MainMenu_MultiplayerRefresh=Neu laden
 MainMenu_MultiplayerLoading=Lade...
+MainMenu_MultiplayerLogout=Abmelden
 MainMenu_ConnectToIpConnect=Verbinden
 MainMenu_ConnectToIpIp=IP
 MainMenu_ConnectToIpPort=Port
