@@ -26,12 +26,15 @@
 		wtxt_title.SetText("Multiplayer");
 		AddWidgetNew(wtxt_title);
 		wtxt_loadingText = new TextWidget();
-		wtxt_loadingText.SetFont(fontDefault);
+		wtxt_loadingText.SetFont(fontMessage);
+		wtxt_loadingText.SetBaseline(TextBaseline.Middle);
 		wtxt_loadingText.SetText("Loading...");
 		wtxt_loadingText.SetVisible(false);
 		AddWidgetNew(wtxt_loadingText);
 		wtxt_userName = new TextWidget();
-		wtxt_userName.SetFont(fontDefault);
+		wtxt_userName.SetFont(fontMessage);
+		wtxt_userName.SetAlignment(TextAlign.Right);
+		wtxt_userName.SetBaseline(TextBaseline.Middle);
 		wtxt_userName.SetVisible(false);
 		AddWidgetNew(wtxt_userName);
 
@@ -77,6 +80,7 @@
 		wbtn_connectToIp.SetText(menu.lang.Get("MainMenu_MultiplayerConnectIP"));
 		wbtn_refresh.SetText(menu.lang.Get("MainMenu_MultiplayerRefresh"));
 		wtxt_title.SetText(menu.lang.Get("MainMenu_Multiplayer"));
+		wtxt_loadingText.SetText(menu.lang.Get("MainMenu_MultiplayerLoading"));
 	}
 	public override void Render(float dt)
 	{
@@ -84,30 +88,22 @@
 		float scale = menu.GetScale();
 
 		// setup widgets
+		wtxt_title.x = p.GetCanvasWidth() / 2;
+		wtxt_title.y = 10 * scale;
+		wtxt_title.SetAlignment(TextAlign.Center);
+
 		wbtn_back.x = 40 * scale;
 		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
 		wbtn_back.sizex = 256 * scale;
 		wbtn_back.sizey = 64 * scale;
 
-		wbtn_connect.x = p.GetCanvasWidth() / 2 - 300 * scale;
-		wbtn_connect.y = p.GetCanvasHeight() - 104 * scale;
-		wbtn_connect.sizex = 256 * scale;
-		wbtn_connect.sizey = 64 * scale;
+		wbtn_logout.x = p.GetCanvasWidth() - 298 * scale;
+		wbtn_logout.y = 62 * scale;
+		wbtn_logout.sizex = 128 * scale;
+		wbtn_logout.sizey = 32 * scale;
 
-		wbtn_connectToIp.x = p.GetCanvasWidth() / 2 - 0 * scale;
-		wbtn_connectToIp.y = p.GetCanvasHeight() - 104 * scale;
-		wbtn_connectToIp.sizex = 256 * scale;
-		wbtn_connectToIp.sizey = 64 * scale;
-
-		wbtn_refresh.x = p.GetCanvasWidth() / 2 + 350 * scale;
-		wbtn_refresh.y = p.GetCanvasHeight() - 104 * scale;
-		wbtn_refresh.sizex = 256 * scale;
-		wbtn_refresh.sizey = 64 * scale;
-
-		wtxt_userName.x = p.GetCanvasWidth() - 228 * scale;
-		wtxt_userName.y = 32 * scale;
-		wtxt_userName.sizex = 128 * scale;
-		wtxt_userName.sizey = 32 * scale;
+		wtxt_userName.x = wbtn_logout.x - 6 * scale;
+		wtxt_userName.y = 78 * scale;
 		if (p.GetPreferences().GetString("Password", "") != "")
 		{
 			wtxt_userName.SetText(p.GetPreferences().GetString("Username", "Invalid"));
@@ -115,24 +111,29 @@
 			wbtn_logout.SetVisible(true);
 		}
 
-		wbtn_logout.x = p.GetCanvasWidth() - 228 * scale;
-		wbtn_logout.y = 62 * scale;
-		wbtn_logout.sizex = 128 * scale;
-		wbtn_logout.sizey = 32 * scale;
-
-		wtxt_title.x = p.GetCanvasWidth() / 2;
-		wtxt_title.y = 10 * scale;
-		wtxt_title.SetAlignment(TextAlign.Center);
+		wbtn_refresh.x = 138 * scale;
+		wbtn_refresh.y = 62 * scale;
+		wbtn_refresh.sizex = 128 * scale;
+		wbtn_refresh.sizey = 32 * scale;
 
 		wtxt_loadingText.SetVisible(serverListDownloadInProgress);
-		wtxt_loadingText.SetText(menu.lang.Get("MainMenu_MultiplayerLoading"));
-		wtxt_loadingText.x = 100 * scale;
-		wtxt_loadingText.y = 50 * scale;
+		wtxt_loadingText.x = wbtn_refresh.x + 134 * scale;
+		wtxt_loadingText.y = 78 * scale;
 
 		wlst_serverList.x = 100 * scale;
 		wlst_serverList.y = 100 * scale;
 		wlst_serverList.sizex = p.GetCanvasWidth() - 200 * scale;
 		wlst_serverList.sizey = p.GetCanvasHeight() - 200 * scale;
+
+		wbtn_connect.x = wlst_serverList.x + wlst_serverList.sizex - 326 * scale;
+		wbtn_connect.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_connect.sizex = 256 * scale;
+		wbtn_connect.sizey = 64 * scale;
+
+		wbtn_connectToIp.x = wbtn_connect.x - wbtn_connect.sizex - 6 * scale;
+		wbtn_connectToIp.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_connectToIp.sizex = 256 * scale;
+		wbtn_connectToIp.sizey = 64 * scale;
 
 		// update logic
 		UpdateServerList();

@@ -26,7 +26,7 @@
 		wtxt_title.SetText("Login");
 		AddWidgetNew(wtxt_title);
 		wtxt_statusMessage = new TextWidget();
-		wtxt_statusMessage.SetFont(fontDefault);
+		wtxt_statusMessage.SetFont(fontMessage);
 		AddWidgetNew(wtxt_statusMessage);
 		wtxt_username = new TextWidget();
 		wtxt_username.SetFont(fontDefault);
@@ -135,9 +135,9 @@
 		float topy = p.GetCanvasHeight() / 2 - (loginAreaHeight / 2) * scale;
 
 		wtxt_title.x = p.GetCanvasWidth() / 2;
-		wtxt_title.y = topy - 50 * scale;
+		wtxt_title.y = topy;
 		wtxt_statusMessage.x = leftx;
-		wtxt_statusMessage.y = topy;
+		wtxt_statusMessage.y = topy + 258;
 
 		float originy = topy + 50;
 		wtxt_username.x = leftx - 6 * scale;

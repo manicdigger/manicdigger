@@ -10,8 +10,12 @@
 		AddWidgetNew(wbtn_connect);
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
+		wtxt_title.SetAlignment(TextAlign.Center);
 		wtxt_title.SetText("Connect to IP");
 		AddWidgetNew(wtxt_title);
+		wtxt_statusMessage = new TextWidget();
+		wtxt_statusMessage.SetFont(fontMessage);
+		AddWidgetNew(wtxt_statusMessage);
 		wtxt_ip = new TextWidget();
 		wtxt_ip.SetFont(fontDefault);
 		wtxt_ip.SetAlignment(TextAlign.Right);
@@ -33,6 +37,7 @@
 	ButtonWidget wbtn_back;
 	ButtonWidget wbtn_connect;
 	TextWidget wtxt_title;
+	TextWidget wtxt_statusMessage;
 	TextWidget wtxt_ip;
 	TextWidget wtxt_port;
 	TextBoxWidget wtbx_ip;
@@ -58,31 +63,36 @@
 			wtbx_ip.SetContent(p, p.GetPreferences().GetString("ConnectToIpIp", "127.0.0.1"));
 			wtbx_port.SetContent(p, p.GetPreferences().GetString("ConnectToIpPort", "25565"));
 			loaded = true;
+			wtxt_statusMessage.SetText("Loaded.");
 		}
 
+		float connectAreaWidth = 600;
+		float connectAreaHeight = 400;
 		float scale = menu.GetScale();
-		float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
-		float y = p.GetCanvasHeight() / 2 - 250 * scale;
+		float leftx = p.GetCanvasWidth() / 2 - (connectAreaWidth / 2) * scale;
+		float topy = p.GetCanvasHeight() / 2 - (connectAreaHeight / 2) * scale;
 
-		wtxt_title.x = leftx;
-		wtxt_title.y = y + 50 * scale;
+		wtxt_title.x = p.GetCanvasWidth() / 2;
+		wtxt_title.y = topy;
+		wtxt_statusMessage.x = leftx;
+		wtxt_statusMessage.y = topy + 258;
 
-		wtxt_ip.x = leftx;
-		wtxt_ip.y = y + 100 * scale;
+		wtxt_ip.x = leftx - 6 * scale;
+		wtxt_ip.y = topy + 82 * scale;
 		wtbx_ip.x = leftx;
-		wtbx_ip.y = y + 100 * scale;
-		wtbx_ip.sizex = 256 * scale;
+		wtbx_ip.y = topy + 50 * scale;
+		wtbx_ip.sizex = connectAreaWidth * scale;
 		wtbx_ip.sizey = 64 * scale;
 
-		wtxt_port.x = leftx;
-		wtxt_port.y = y + 200 * scale;
+		wtxt_port.x = leftx - 6 * scale;
+		wtxt_port.y = topy + 162 * scale;
 		wtbx_port.x = leftx;
-		wtbx_port.y = y + 200 * scale;
-		wtbx_port.sizex = 256 * scale;
+		wtbx_port.y = topy + 130 * scale;
+		wtbx_port.sizex = connectAreaWidth * scale;
 		wtbx_port.sizey = 64 * scale;
 
 		wbtn_connect.x = leftx;
-		wbtn_connect.y = y + 400 * scale;
+		wbtn_connect.y = topy + 336 * scale;
 		wbtn_connect.sizex = 256 * scale;
 		wbtn_connect.sizey = 64 * scale;
 
@@ -104,16 +114,25 @@
 	{
 		if (w == wbtn_connect)
 		{
-			// save user input
-			Preferences preferences = menu.p.GetPreferences();
-			preferences.SetString("ConnectToIpIp", wtbx_ip.GetContent());
-			preferences.SetString("ConnectToIpPort", wtbx_port.GetContent());
-			menu.p.SetPreferences(preferences);
-
+			// check input
 			IntRef ret = new IntRef();
-			if (!Game.StringEquals(wtbx_ip.GetContent(), "")
-				&& menu.p.IntTryParse(wtbx_port.GetContent(), ret))
+			if (Game.StringEquals(wtbx_ip.GetContent(), ""))
 			{
+				wtxt_statusMessage.SetText("&4Please enter a valid address!");
+			}
+			else if (!menu.p.IntTryParse(wtbx_port.GetContent(), ret))
+			{
+				wtxt_statusMessage.SetText("&4Please enter a valid port!");
+			}
+			else
+			{
+				// save user input
+				Preferences preferences = menu.p.GetPreferences();
+				preferences.SetString("ConnectToIpIp", wtbx_ip.GetContent());
+				preferences.SetString("ConnectToIpPort", wtbx_port.GetContent());
+				menu.p.SetPreferences(preferences);
+
+				// perform login
 				menu.StartLogin(null, wtbx_ip.GetContent(), ret.value);
 			}
 		}

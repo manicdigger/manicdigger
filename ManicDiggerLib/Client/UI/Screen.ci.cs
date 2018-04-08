@@ -11,10 +11,13 @@
 		fontTitle.size = 20;
 		fontTitle.style = 1;
 		fontDefault = new FontCi();
+		fontMessage = new FontCi();
+		fontMessage.style = 3;
 	}
 	internal MainMenu menu;
 	internal FontCi fontTitle;
 	internal FontCi fontDefault;
+	internal FontCi fontMessage;
 	public virtual void Render(float dt) { }
 	public virtual void OnKeyDown(KeyEventArgs e)
 	{
