@@ -2,29 +2,36 @@
 {
 	public ScreenModifyWorld()
 	{
-		back = new MenuWidget();
-		back.text = "Back";
-		back.type = WidgetType.Button;
-
-		AddWidget(back);
+		wbtn_back = new ButtonWidget();
+		AddWidgetNew(wbtn_back);
+		wtxt_title = new TextWidget();
+		wtxt_title.SetAlignment(TextAlign.Center);
+		AddWidgetNew(wtxt_title);
 	}
 
-	MenuWidget back;
+	ButtonWidget wbtn_back;
+	TextWidget wtxt_title;
+
+	public override void LoadTranslations()
+	{
+		wbtn_back.SetText(menu.lang.Get("MainMenu_ButtonBack"));
+		wtxt_title.SetText("Modify World");
+	}
 
 	public override void Render(float dt)
 	{
 		GamePlatform p = menu.p;
-
 		float scale = menu.GetScale();
 
+		wbtn_back.x = 40 * scale;
+		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.sizex = 256 * scale;
+		wbtn_back.sizey = 64 * scale;
+
+		wtxt_title.x = menu.p.GetCanvasWidth() / 2;
+		wtxt_title.y = 10 * scale;
+
 		menu.DrawBackground();
-		menu.DrawText("Modify World", menu.fontMenuHeading, menu.p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
-
-		back.x = 40 * scale;
-		back.y = p.GetCanvasHeight() - 104 * scale;
-		back.sizex = 256 * scale;
-		back.sizey = 64 * scale;
-
 		DrawWidgets();
 	}
 
@@ -33,9 +40,9 @@
 		menu.StartSingleplayer();
 	}
 
-	public override void OnButton(MenuWidget w)
+	public override void OnButtonA(AbstractMenuWidget w)
 	{
-		if (w == back)
+		if (w == wbtn_back)
 		{
 			OnBackPressed();
 		}
