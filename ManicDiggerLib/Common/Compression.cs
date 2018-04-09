@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.IO.Compression;
 
 namespace ManicDigger.Common
@@ -12,7 +11,7 @@ namespace ManicDigger.Common
 		byte[] Compress(byte[] data);
 		byte[] Decompress(byte[] data);
 	}
-	
+
 	/// <summary>
 	/// Provides GZip compression/decompression for bytestreams
 	/// </summary>
@@ -22,10 +21,12 @@ namespace ManicDigger.Common
 		{
 			MemoryStream input = new MemoryStream(data);
 			MemoryStream output = new MemoryStream();
-			using (GZipStream compress = new GZipStream(output, CompressionMode.Compress)) {
+			using (GZipStream compress = new GZipStream(output, CompressionMode.Compress))
+			{
 				byte[] buffer = new byte[4096];
 				int numRead;
-				while ((numRead = input.Read(buffer, 0, buffer.Length)) != 0) {
+				while ((numRead = input.Read(buffer, 0, buffer.Length)) != 0)
+				{
 					compress.Write(buffer, 0, numRead);
 				}
 			}
@@ -35,13 +36,16 @@ namespace ManicDigger.Common
 		{
 			MemoryStream ms = new MemoryStream();
 			// Get the stream of the source file.
-			using (MemoryStream inFile = new MemoryStream(fi)) {
+			using (MemoryStream inFile = new MemoryStream(fi))
+			{
 				using (GZipStream Decompress = new GZipStream(inFile,
-				                                              CompressionMode.Decompress)) {
+															  CompressionMode.Decompress))
+				{
 					//Copy the decompression stream into the output file.
 					byte[] buffer = new byte[4096];
 					int numRead;
-					while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0) {
+					while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0)
+					{
 						ms.Write(buffer, 0, numRead);
 					}
 				}
@@ -52,7 +56,8 @@ namespace ManicDigger.Common
 		{
 			MemoryStream ms = new MemoryStream();
 			// Get the stream of the source file.
-			using (FileStream inFile = fi.OpenRead()) {
+			using (FileStream inFile = fi.OpenRead())
+			{
 				// Get original file extension, for example "doc" from report.doc.gz.
 				string curFile = fi.FullName;
 				string origName = curFile.Remove(curFile.Length - fi.Extension.Length);
@@ -61,11 +66,13 @@ namespace ManicDigger.Common
 				//using (FileStream outFile = File.Create(origName))
 				{
 					using (GZipStream Decompress = new GZipStream(inFile,
-					                                              CompressionMode.Decompress)) {
+																  CompressionMode.Decompress))
+					{
 						//Copy the decompression stream into the output file.
 						byte[] buffer = new byte[4096];
 						int numRead;
-						while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0) {
+						while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0)
+						{
 							ms.Write(buffer, 0, numRead);
 						}
 						//Console.WriteLine("Decompressed: {0}", fi.Name);

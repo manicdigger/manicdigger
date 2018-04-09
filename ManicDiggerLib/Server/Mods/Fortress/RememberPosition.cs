@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Serialization;
 
 namespace ManicDigger.Mods
 {
 	public class RememberPosition : IMod
 	{
 		public void PreStart(ModManager m) { }
-		
+
 		public void Start(ModManager manager)
 		{
 			m = manager;
@@ -17,15 +16,15 @@ namespace ManicDigger.Mods
 			m.RegisterOnPlayerJoin(OnJoin);
 			m.RegisterOnPlayerLeave(OnLeave);
 		}
-		
+
 		ModManager m;
 		string filename = "UserData" + Path.DirectorySeparatorChar + "StoredPositions.txt";
 		public PositionStorage positions;
-		
+
 		public void LoadData()
 		{
 			positions = new PositionStorage();
-			
+
 			if (!File.Exists(filename))
 			{
 				//Nothing to load if file does not exist
@@ -54,7 +53,7 @@ namespace ManicDigger.Mods
 				Console.WriteLine("[ERROR] StoredPositions.txt could not be read!");
 			}
 		}
-		
+
 		public void SaveData()
 		{
 			try
@@ -71,7 +70,7 @@ namespace ManicDigger.Mods
 				Console.WriteLine("[ERROR] Could not save last player positions");
 			}
 		}
-		
+
 		public void OnJoin(int player)
 		{
 			string name = m.GetPlayerName(player);
@@ -85,7 +84,7 @@ namespace ManicDigger.Mods
 				}
 			}
 		}
-		
+
 		public void OnLeave(int player)
 		{
 			if (m.IsBot(player))
@@ -93,7 +92,7 @@ namespace ManicDigger.Mods
 				//Don't store bot positions
 				return;
 			}
-			
+
 			//Do not save position if it is outside the map
 			int x = (int)m.GetPlayerPositionX(player);
 			int y = (int)m.GetPlayerPositionY(player);
@@ -107,16 +106,16 @@ namespace ManicDigger.Mods
 			}
 		}
 	}
-	
+
 	public class PositionStorage
 	{
 		public List<UserEntry> PlayerPositions { get; set; }
-		
+
 		public PositionStorage()
 		{
 			this.PlayerPositions = new List<UserEntry>();
 		}
-		
+
 		public int IsStoredAt(string player)
 		{
 			for (int i = 0; i < PlayerPositions.Count; i++)
@@ -128,7 +127,7 @@ namespace ManicDigger.Mods
 			}
 			return -1;
 		}
-		
+
 		public void Store(string player, int x, int y, int z)
 		{
 			if (IsStoredAt(player) != -1)
@@ -141,7 +140,7 @@ namespace ManicDigger.Mods
 			PlayerPositions.Add(entry);
 			//Console.WriteLine("[INFO] Position saved: {0}({1})", entry.Name, entry.Position);
 		}
-		
+
 		public void Delete(string player)
 		{
 			for (int i = 0; i < PlayerPositions.Count; i++)
@@ -153,7 +152,7 @@ namespace ManicDigger.Mods
 				}
 			}
 		}
-		
+
 		public int[] Get(string player)
 		{
 			int index = IsStoredAt(player);
@@ -163,12 +162,12 @@ namespace ManicDigger.Mods
 			}
 			return null;
 		}
-		
+
 		public string PosToString(int x, int y, int z)
 		{
 			return string.Format("{0},{1},{2}", x, y, z);
 		}
-		
+
 		public int[] StringToPos(string position)
 		{
 			try
@@ -187,7 +186,7 @@ namespace ManicDigger.Mods
 			}
 		}
 	}
-	
+
 	public class UserEntry
 	{
 		public string Name { get; set; }

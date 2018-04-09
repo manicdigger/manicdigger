@@ -17,10 +17,10 @@ namespace ManicDigger.Mods
 		public void Start(ModManager manager)
 		{
 			m = manager;
-			
+
 			//Register Commands
 			m.RegisterOnCommand(OnCommandSetModel);
-			
+
 			//Register special events
 			m.RegisterOnSpecialKey(OnRespawnKey);
 			m.RegisterOnSpecialKey(OnSetSpawnKey);

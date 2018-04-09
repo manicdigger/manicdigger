@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using ManicDigger.Common;
+using System;
 using System.IO;
-using ManicDigger.Common;
-using System.Xml.Serialization;
 using System.Xml;
+using System.Xml.Serialization;
 
 namespace ManicDigger.Server
 {
@@ -85,7 +83,7 @@ namespace ManicDigger.Server
 			}
 
 			server.defaultGroupGuest = server.serverClient.Groups.Find(
-				delegate(ManicDigger.Group grp)
+				delegate (ManicDigger.Group grp)
 				{
 					return grp.Name.Equals(server.serverClient.DefaultGroupGuests);
 				}
@@ -95,7 +93,7 @@ namespace ManicDigger.Server
 				throw new Exception(server.language.ServerClientConfigGuestGroupNotFound());
 			}
 			server.defaultGroupRegistered = server.serverClient.Groups.Find(
-				delegate(ManicDigger.Group grp)
+				delegate (ManicDigger.Group grp)
 				{
 					return grp.Name.Equals(server.serverClient.DefaultGroupRegistered);
 				}

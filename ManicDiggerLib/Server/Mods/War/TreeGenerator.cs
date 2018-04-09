@@ -1,5 +1,5 @@
-﻿using System;
-using LibNoise;
+﻿using LibNoise;
+using System;
 
 namespace ManicDigger.Mods.War
 {
@@ -54,7 +54,7 @@ namespace ManicDigger.Mods.War
 			y *= m.GetChunkSize();
 			z *= m.GetChunkSize();
 			//forests
-			double count = treenoise.GetValue(x/512.0, 0, y/512.0) * 1000;
+			double count = treenoise.GetValue(x / 512.0, 0, y / 512.0) * 1000;
 			{
 				count = System.Math.Min(count, 300);
 				MakeSmallTrees(x, y, z, m.GetChunkSize(), _rnd, (int)count);
@@ -78,9 +78,9 @@ namespace ManicDigger.Mods.War
 				chooseTreeType = rnd.Next(0, 3);
 				switch (chooseTreeType)
 				{
-						case 0: MakeTreeType1(x, y, z, rnd); break; //Spruce
-						case 1: MakeTreeType2(x, y, z, rnd); break; //Oak
-						case 2: MakeTreeType3(x, y, z, rnd); break; //Birch
+					case 0: MakeTreeType1(x, y, z, rnd); break; //Spruce
+					case 1: MakeTreeType2(x, y, z, rnd); break; //Oak
+					case 2: MakeTreeType3(x, y, z, rnd); break; //Birch
 				};
 			}
 		}
@@ -102,7 +102,7 @@ namespace ManicDigger.Mods.War
 					SetBlock(x, y + 1, z + i, BLOCK_SPRUCETRUNK);
 					SetBlock(x, y - 1, z + i, BLOCK_SPRUCETRUNK);
 				}
-				
+
 				if (i == treeHeight - 3)
 				{
 					for (int j = 1; j < 9; j++)
@@ -113,10 +113,10 @@ namespace ManicDigger.Mods.War
 							int length = dir % 90 == 0 ? k : (int)(k / 2);
 							xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
 							yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
-							
+
 							SetBlock(x + xx, y + yy, z + i, BLOCK_SPRUCETRUNK);
 							SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_SPRUCELEAVES);
-							
+
 							SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_SPRUCELEAVES);
 							SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_SPRUCELEAVES);
 							SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_SPRUCELEAVES);
@@ -134,10 +134,10 @@ namespace ManicDigger.Mods.War
 							int length = dir % 90 == 0 ? k : (int)(k / 2);
 							xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
 							yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
-							
+
 							SetBlock(x + xx, y + yy, z + i, BLOCK_SPRUCETRUNK);
 							SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_SPRUCELEAVES);
-							
+
 							SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_SPRUCELEAVES);
 							SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_SPRUCELEAVES);
 							SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_SPRUCELEAVES);
@@ -168,7 +168,7 @@ namespace ManicDigger.Mods.War
 							int length = dir % 90 == 0 ? k : (int)(k / 2);
 							xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
 							yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
-							
+
 							SetBlock(x + xx, y + yy, z + i, BLOCK_OAKTRUNK);
 							if (chanceToAppleTree < rnd.NextDouble())
 							{
@@ -213,10 +213,10 @@ namespace ManicDigger.Mods.War
 							int length = dir % 90 == 0 ? k : (int)(k / 2);
 							xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
 							yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
-							
+
 							SetBlock(x + xx, y + yy, z + i, BLOCK_BIRCHTRUNK);
 							SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_BIRCHLEAVES);
-							
+
 							SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_BIRCHLEAVES);
 							SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_BIRCHLEAVES);
 							SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_BIRCHLEAVES);
@@ -235,10 +235,10 @@ namespace ManicDigger.Mods.War
 							int length = dir % 90 == 0 ? k : (int)(k / 2);
 							xx = length * (int)System.Math.Round(System.Math.Cos(dir * System.Math.PI / 180));
 							yy = length * (int)System.Math.Round(System.Math.Sin(dir * System.Math.PI / 180));
-							
+
 							SetBlock(x + xx, y + yy, z + i, BLOCK_BIRCHTRUNK);
 							SetBlockIfEmpty(x + xx, y + yy, z + i + 1, BLOCK_BIRCHLEAVES);
-							
+
 							SetBlockIfEmpty(x + xx + 1, y + yy, z + i, BLOCK_BIRCHLEAVES);
 							SetBlockIfEmpty(x + xx - 1, y + yy, z + i, BLOCK_BIRCHLEAVES);
 							SetBlockIfEmpty(x + xx, y + yy + 1, z + i, BLOCK_BIRCHLEAVES);

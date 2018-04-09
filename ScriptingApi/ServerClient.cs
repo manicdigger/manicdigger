@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace ManicDigger
@@ -97,7 +96,7 @@ namespace ManicDigger
 		public string Name { get; set; }
 		public string Group { get; set; }
 		[XmlElement(IsNullable = true)]
-		public Spawn Spawn{ get; set; }
+		public Spawn Spawn { get; set; }
 		[XmlElement(IsNullable = true)]
 		public int? FillLimit { get; set; }
 
@@ -158,7 +157,7 @@ namespace ManicDigger
 				{
 					throw new FormatException("Invalid spawn position.", e);
 				}
-				catch(IndexOutOfRangeException ex)
+				catch (IndexOutOfRangeException ex)
 				{
 					throw new IndexOutOfRangeException("Invalid spawn position.", ex);
 				}
@@ -167,7 +166,7 @@ namespace ManicDigger
 				{
 					this.z = Convert.ToInt32(ss[2]);
 				}
-				catch(IndexOutOfRangeException)
+				catch (IndexOutOfRangeException)
 				{
 					this.z = null;
 				}
@@ -198,22 +197,22 @@ namespace ManicDigger
 
 		public enum ClientColor
 		{
-			Black,		// &0
-			Blue,		// &1
-			Green,		// &2
-			Cyan,		// &3
-			Red,		// &4
-			Purple,		// &5
-			Yellow,		// &6
-			Grey,		// &7
-			DarkGrey,	// &8
-			LightBlue,	// &9
-			LightGreen,	// &a
-			LightCyan,	// &b
-			LightRed,	// &c
-			LightPink,	// &d
+			Black,      // &0
+			Blue,       // &1
+			Green,      // &2
+			Cyan,       // &3
+			Red,        // &4
+			Purple,     // &5
+			Yellow,     // &6
+			Grey,       // &7
+			DarkGrey,   // &8
+			LightBlue,  // &9
+			LightGreen, // &a
+			LightCyan,  // &b
+			LightRed,   // &c
+			LightPink,  // &d
 			LightYellow,// &e
-			White		// &f
+			White       // &f
 		};
 
 		public class Privilege
@@ -323,7 +322,7 @@ namespace ManicDigger
 
 		public static List<Group> getDefaultGroups()
 		{
-			List<Group > defaultGroups = new List<Group>();
+			List<Group> defaultGroups = new List<Group>();
 			// default guest group
 			ManicDigger.Group guest = new ManicDigger.Group();
 			guest.Name = "Guest";
@@ -436,7 +435,7 @@ namespace ManicDigger
 
 		public static List<Client> getDefaultClients()
 		{
-			List<Client > defaultClients = new List<Client>();
+			List<Client> defaultClients = new List<Client>();
 			Client defaultClient = new Client();
 			defaultClient.Name = DefaultPlayerName;
 			defaultClient.Group = getDefaultGroups()[0].Name;

@@ -211,7 +211,7 @@ public class TextColorRenderer
 		x |= x >> 2;  // handle  4 bit numbers
 		x |= x >> 4;  // handle  8 bit numbers
 		x |= x >> 8;  // handle 16 bit numbers
-		//x |= x >> 16; // handle 32 bit numbers
+					  //x |= x >> 16; // handle 32 bit numbers
 		x++;
 		return x;
 	}
@@ -225,23 +225,23 @@ public class TextColorRenderer
 	{
 		switch (currentcolor)
 		{
-				case 0: { return Game.ColorFromArgb(255, 0, 0, 0); }
-				case 1: { return Game.ColorFromArgb(255, 0, 0, 191); }
-				case 2: { return Game.ColorFromArgb(255, 0, 191, 0); }
-				case 3: { return Game.ColorFromArgb(255, 0, 191, 191); }
-				case 4: { return Game.ColorFromArgb(255, 191, 0, 0); }
-				case 5: { return Game.ColorFromArgb(255, 191, 0, 191); }
-				case 6: { return Game.ColorFromArgb(255, 191, 191, 0); }
-				case 7: { return Game.ColorFromArgb(255, 191, 191, 191); }
-				case 8: { return Game.ColorFromArgb(255, 40, 40, 40); }
-				case 9: { return Game.ColorFromArgb(255, 64, 64, 255); }
-				case 10: { return Game.ColorFromArgb(255, 64, 255, 64); }
-				case 11: { return Game.ColorFromArgb(255, 64, 255, 255); }
-				case 12: { return Game.ColorFromArgb(255, 255, 64, 64); }
-				case 13: { return Game.ColorFromArgb(255, 255, 64, 255); }
-				case 14: { return Game.ColorFromArgb(255, 255, 255, 64); }
-				case 15: { return Game.ColorFromArgb(255, 255, 255, 255); }
-				default: return Game.ColorFromArgb(255, 255, 255, 255);
+			case 0: { return Game.ColorFromArgb(255, 0, 0, 0); }
+			case 1: { return Game.ColorFromArgb(255, 0, 0, 191); }
+			case 2: { return Game.ColorFromArgb(255, 0, 191, 0); }
+			case 3: { return Game.ColorFromArgb(255, 0, 191, 191); }
+			case 4: { return Game.ColorFromArgb(255, 191, 0, 0); }
+			case 5: { return Game.ColorFromArgb(255, 191, 0, 191); }
+			case 6: { return Game.ColorFromArgb(255, 191, 191, 0); }
+			case 7: { return Game.ColorFromArgb(255, 191, 191, 191); }
+			case 8: { return Game.ColorFromArgb(255, 40, 40, 40); }
+			case 9: { return Game.ColorFromArgb(255, 64, 64, 255); }
+			case 10: { return Game.ColorFromArgb(255, 64, 255, 64); }
+			case 11: { return Game.ColorFromArgb(255, 64, 255, 255); }
+			case 12: { return Game.ColorFromArgb(255, 255, 64, 64); }
+			case 13: { return Game.ColorFromArgb(255, 255, 64, 255); }
+			case 14: { return Game.ColorFromArgb(255, 255, 255, 64); }
+			case 15: { return Game.ColorFromArgb(255, 255, 255, 255); }
+			default: return Game.ColorFromArgb(255, 255, 255, 255);
 		}
 	}
 

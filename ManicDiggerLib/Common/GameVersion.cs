@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace ManicDigger.Common
 {
@@ -9,7 +8,8 @@ namespace ManicDigger.Common
 	public static class GameVersion
 	{
 		static string gameversion;
-		public static string Version {
+		public static string Version
+		{
 			get
 			{
 				if (gameversion == null)

@@ -8,7 +8,7 @@ namespace ManicDigger.Common
 	public class EnetNetConnection : NetConnection
 	{
 		internal EnetPeer peer;
-		
+
 		public override IPEndPointCi RemoteEndPoint()
 		{
 			return IPEndPointCiDefault.Create(peer.GetRemoteAddress().AddressToString());
@@ -23,13 +23,13 @@ namespace ManicDigger.Common
 			}
 			catch
 			{
-				
+
 			}
 		}
 
 		public override void Update()
 		{
-			
+
 		}
 
 		public override bool EqualsConnection(NetConnection connection)
@@ -46,12 +46,12 @@ namespace ManicDigger.Common
 	public class EnetEventNative : EnetEvent
 	{
 		public ENet.Event e;
-		
+
 		public EnetEventNative(ENet.Event evt)
 		{
 			this.e = evt;
 		}
-		
+
 		public override EnetEventType Type()
 		{
 			return (EnetEventType)e.Type;

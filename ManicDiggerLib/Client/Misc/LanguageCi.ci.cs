@@ -73,7 +73,7 @@
 		s.translated = translated;
 		strings[stringsCount++] = s;
 	}
-	
+
 	public override void Override(string language, string id, string translated)
 	{
 		if (IsNewLanguage(language))
@@ -179,7 +179,7 @@
 		// not found
 		return id;
 	}
-	
+
 	public override string GetUsedLanguage()
 	{
 		string currentLanguage = "en";
@@ -193,7 +193,7 @@
 		}
 		return currentLanguage;
 	}
-	
+
 	public override void NextLanguage()
 	{
 		if (OverrideLanguage == null)
@@ -225,7 +225,7 @@
 		}
 		OverrideLanguage = loadedLanguages[languageIndex];
 	}
-	
+
 	bool IsNewLanguage(string language)
 	{
 		//Scan whole array of loaded languages if given already exists
@@ -243,7 +243,7 @@
 		}
 		return true;
 	}
-	
+
 	public override TranslatedString[] AllStrings()
 	{
 		return strings;

@@ -1,34 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FragLabs.HTTP.Modules
+﻿namespace FragLabs.HTTP.Modules
 {
-    /// <summary>
-    /// HTTP module that prints out a Hello World html page when /helloworld is requested.
-    /// </summary>
-    public class HelloWorld : IHttpModule
-    {
-        public void Installed(HttpServer server)
-        {
-            
-        }
+	/// <summary>
+	/// HTTP module that prints out a Hello World html page when /helloworld is requested.
+	/// </summary>
+	public class HelloWorld : IHttpModule
+	{
+		public void Installed(HttpServer server)
+		{
 
-        public void Uninstalled(HttpServer server)
-        {
-            
-        }
+		}
 
-        public bool ResponsibleForRequest(HttpRequest request)
-        {
-            if (request.Uri.AbsolutePath.ToLower() == "/helloworld")
-                return true;
-            return false;
-        }
+		public void Uninstalled(HttpServer server)
+		{
 
-        public bool ProcessAsync(ProcessRequestEventArgs args)
-        {
-            var html = @"<!doctype html>
+		}
+
+		public bool ResponsibleForRequest(HttpRequest request)
+		{
+			if (request.Uri.AbsolutePath.ToLower() == "/helloworld")
+				return true;
+			return false;
+		}
+
+		public bool ProcessAsync(ProcessRequestEventArgs args)
+		{
+			var html = @"<!doctype html>
 <html>
     <head>
         <title>Hello World</title>
@@ -41,9 +37,9 @@ namespace FragLabs.HTTP.Modules
         <p>This is a demo from a simple HttpModule for the lightweight, async focused HTTP library libHTTP.</p>
     </body>
 </html>";
-            args.Response.Headers.Add("Content-Type", "text/html");
-            args.Response.Producer = new BufferedProducer(html);
-            return false;
-        }
-    }
+			args.Response.Headers.Add("Content-Type", "text/html");
+			args.Response.Producer = new BufferedProducer(html);
+			return false;
+		}
+	}
 }

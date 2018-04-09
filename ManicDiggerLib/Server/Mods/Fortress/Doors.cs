@@ -1,5 +1,3 @@
-using System;
-
 namespace ManicDigger.Mods
 {
 	public class Doors : IMod
@@ -30,40 +28,40 @@ namespace ManicDigger.Mods
 			};
 
 			m.SetBlockType(126, "DoorBottomClosed", new BlockType()
-			               {
-			               	AllTextures = "DoorBottom",
-			               	DrawType = DrawType.ClosedDoor,
-			               	WalkableType = WalkableType.Solid,
-			               	Sounds = sounds,
-			               	IsUsable = true,
-			               });
+			{
+				AllTextures = "DoorBottom",
+				DrawType = DrawType.ClosedDoor,
+				WalkableType = WalkableType.Solid,
+				Sounds = sounds,
+				IsUsable = true,
+			});
 			m.SetBlockType(127, "DoorTopClosed", new BlockType()
-			               {
-			               	AllTextures = "DoorTop",
-			               	DrawType = DrawType.ClosedDoor,
-			               	WalkableType = WalkableType.Solid,
-			               	Sounds = sounds,
-			               	IsUsable = true,
-			               	WhenPlayerPlacesGetsConvertedTo = 126,
-			               });
+			{
+				AllTextures = "DoorTop",
+				DrawType = DrawType.ClosedDoor,
+				WalkableType = WalkableType.Solid,
+				Sounds = sounds,
+				IsUsable = true,
+				WhenPlayerPlacesGetsConvertedTo = 126,
+			});
 			m.SetBlockType(128, "DoorBottomOpen", new BlockType()
-			               {
-			               	AllTextures = "DoorBottom",
-			               	DrawType = DrawType.OpenDoorLeft,
-			               	WalkableType = WalkableType.Empty,
-			               	Sounds = sounds,
-			               	IsUsable = true,
-			               	WhenPlayerPlacesGetsConvertedTo = 126,
-			               });
+			{
+				AllTextures = "DoorBottom",
+				DrawType = DrawType.OpenDoorLeft,
+				WalkableType = WalkableType.Empty,
+				Sounds = sounds,
+				IsUsable = true,
+				WhenPlayerPlacesGetsConvertedTo = 126,
+			});
 			m.SetBlockType(129, "DoorTopOpen", new BlockType()
-			               {
-			               	AllTextures = "DoorTop",
-			               	DrawType = DrawType.OpenDoorLeft,
-			               	WalkableType = WalkableType.Empty,
-			               	Sounds = sounds,
-			               	IsUsable = true,
-			               	WhenPlayerPlacesGetsConvertedTo = 126,
-			               });
+			{
+				AllTextures = "DoorTop",
+				DrawType = DrawType.OpenDoorLeft,
+				WalkableType = WalkableType.Empty,
+				Sounds = sounds,
+				IsUsable = true,
+				WhenPlayerPlacesGetsConvertedTo = 126,
+			});
 
 			m.AddToCreativeInventory("DoorBottomClosed");
 			m.AddCraftingRecipe("DoorBottomClosed", 1, "OakWood", 2);

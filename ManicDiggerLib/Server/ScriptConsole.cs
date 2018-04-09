@@ -1,8 +1,6 @@
 ﻿// Copyright (c) 2011 by Henon <meinrad.recheis@gmail.com>
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Jint.Delegates;
 
 namespace ManicDigger.Server
 {
@@ -160,7 +158,8 @@ namespace ManicDigger.Server
 				{
 					for (int z = (int)z1; z < (int)z2; z = z + chunksize)
 					{
-						chunkPositions.Add(new Xyz() {
+						chunkPositions.Add(new Xyz()
+						{
 							X = x / chunksize,
 							Y = y / chunksize,
 							Z = z / chunksize

@@ -1,5 +1,4 @@
-﻿using System;
-using ManicDigger.Common;
+﻿using ManicDigger.Common;
 
 namespace ManicDigger.Server
 {
@@ -13,7 +12,7 @@ namespace ManicDigger.Server
 		QueueNetIncomingMessage messages;
 		int clientid;
 		int Port;
-		
+
 		public EnetNetServer()
 		{
 			messages = new QueueNetIncomingMessage();
@@ -35,7 +34,7 @@ namespace ManicDigger.Server
 			ENet.Event e;
 			bool ret = ((EnetHostNative)host).host.Service(0, out e);
 			event_ = new EnetEventNative(e);
-			
+
 			if (ret)
 			{
 				do
@@ -78,7 +77,7 @@ namespace ManicDigger.Server
 							}
 							break;
 					}
-					
+
 					ret = ((EnetHostNative)host).host.CheckEvents(out e);
 					event_ = new EnetEventNative(e);
 				}

@@ -137,8 +137,8 @@ namespace ManicDigger.Server
 				int py = p.y + yy;
 				int pz = p.z + zz;
 				if ((!MapUtil.IsValidPos(server.d_Map, px, py, pz))
-				    || (!MapUtil.IsValidPos(server.d_Map, px, py, pz + 1))
-				    || (!MapUtil.IsValidPos(server.d_Map, px, py, pz - 1)))
+					|| (!MapUtil.IsValidPos(server.d_Map, px, py, pz + 1))
+					|| (!MapUtil.IsValidPos(server.d_Map, px, py, pz - 1)))
 				{
 					continue;
 				}
@@ -153,11 +153,12 @@ namespace ManicDigger.Server
 					type = MonsterTypesUnderground[server.rnd.Next(MonsterTypesUnderground.Length)];
 				}
 				if (server.d_Map.GetBlock(px, py, pz) == 0
-				    && server.d_Map.GetBlock(px, py, pz + 1) == 0
-				    && server.d_Map.GetBlock(px, py, pz - 1) != 0
-				    && (!server.BlockTypes[server.d_Map.GetBlock(px, py, pz - 1)].IsFluid()))
+					&& server.d_Map.GetBlock(px, py, pz + 1) == 0
+					&& server.d_Map.GetBlock(px, py, pz - 1) != 0
+					&& (!server.BlockTypes[server.d_Map.GetBlock(px, py, pz - 1)].IsFluid()))
 				{
-					chunk.Monsters.Add(new Monster() {
+					chunk.Monsters.Add(new Monster()
+					{
 						X = px,
 						Y = py,
 						Z = pz,

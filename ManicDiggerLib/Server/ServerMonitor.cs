@@ -1,11 +1,10 @@
+using ManicDigger.Common;
 using System;
-using System.IO;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 using System.Xml;
 using System.Xml.Serialization;
-using System.Threading;
-using ManicDigger.Common;
 
 namespace ManicDigger.Server
 {
@@ -77,7 +76,7 @@ namespace ManicDigger.Server
 						monitorClients[clientId].BlocksSet++;
 						return true;
 					}
-                // punish client
+					// punish client
 					return this.ActionSetBlock(clientId);
 				case Packet_ClientIdEnum.Message:
 					if (monitorClients[clientId].MessagePunished())
@@ -90,7 +89,7 @@ namespace ManicDigger.Server
 						monitorClients[clientId].MessagesSent++;
 						return true;
 					}
-                // punish client
+					// punish client
 					return this.ActionMessage(clientId);
 				default:
 					return true;

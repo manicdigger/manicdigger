@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Text;
-using System.Windows.Forms;
-using ManicDigger;
+﻿using ManicDigger;
 using ManicDigger.ClientNative;
 using ManicDigger.Server;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
 
 namespace MdMonsterEditor
 {

@@ -1,5 +1,4 @@
-﻿using System;
-namespace ManicDigger.Mods
+﻿namespace ManicDigger.Mods
 {
 	/// <summary>
 	/// This is a fix for backward compatibility issues of old Mods.
@@ -13,6 +12,6 @@ namespace ManicDigger.Mods
 			m.RequireMod("CoreBlocks");
 			m.RequireMod("CoreCrafting");
 		}
-		public void Start(ModManager manager){ }
+		public void Start(ModManager manager) { }
 	}
 }

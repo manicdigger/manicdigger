@@ -1,6 +1,5 @@
-﻿using System;
+﻿using ManicDigger.Common;
 using System.Collections.Generic;
-using ManicDigger.Common;
 
 namespace ManicDigger.Server
 {

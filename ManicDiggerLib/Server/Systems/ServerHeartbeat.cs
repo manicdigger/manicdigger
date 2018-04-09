@@ -1,9 +1,9 @@
-﻿using System;
+﻿using ManicDigger.Common;
+using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using System.Net;
-using ManicDigger.Common;
+using System.Text;
 
 namespace ManicDigger.Server
 {
@@ -76,10 +76,10 @@ namespace ManicDigger.Server
 			}
 			catch (Exception e)
 			{
-				#if DEBUG
-                // Only display full error message when running in Debug mode
-                Console.WriteLine(e.ToString());
-				#endif
+#if DEBUG
+				// Only display full error message when running in Debug mode
+				Console.WriteLine(e.ToString());
+#endif
 				// Short error output when running normally
 				Console.WriteLine("{0} ({1})", server.language.ServerHeartbeatError(), e.Message);
 			}
@@ -161,14 +161,14 @@ namespace ManicDigger.Server
 			}
 			StringWriter sw = new StringWriter();//&salt={4}
 			string staticData = String.Format("name={0}&max={1}&public={2}&passwordProtected={3}&allowGuests={4}&port={5}&version={6}&fingerprint={7}"
-            , System.Web.HttpUtility.UrlEncode(Name),
-				                    MaxClients, Public, PasswordProtected, AllowGuests, Port, Version, Key.Replace("-", ""));
+			, System.Web.HttpUtility.UrlEncode(Name),
+									MaxClients, Public, PasswordProtected, AllowGuests, Port, Version, Key.Replace("-", ""));
 
 			string requestString = staticData +
-			                       "&users=" + UsersCount +
-			                       "&motd=" + System.Web.HttpUtility.UrlEncode(Motd) +
-			                       "&gamemode=" + System.Web.HttpUtility.UrlEncode(GameMode) +
-			                       "&players=" + string.Join(",", Players.ToArray());
+								   "&users=" + UsersCount +
+								   "&motd=" + System.Web.HttpUtility.UrlEncode(Motd) +
+								   "&gamemode=" + System.Web.HttpUtility.UrlEncode(GameMode) +
+								   "&players=" + string.Join(",", Players.ToArray());
 
 			var request = (HttpWebRequest)WebRequest.Create(fListUrl);
 			request.Method = "POST";

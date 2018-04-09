@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 // http://www.adp-gmbh.ch/csharp/avi/write_avi.html
 
@@ -122,14 +122,14 @@ namespace ManicDigger.ClientNative
 		{
 
 			BitmapData bmpDat = bmp_.LockBits(
-				                    new Rectangle(0, 0, (int)width_, (int)height_), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+									new Rectangle(0, 0, (int)width_, (int)height_), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
 
 			int hr = AVIStreamWrite(psCompressed_, count_, 1,
-				         bmpDat.Scan0, // pointer to data
-				         (Int32)(stride_ * height_),
-				         0, // 16 = AVIIF_KEYFRAMe
-				         0,
-				         0);
+						 bmpDat.Scan0, // pointer to data
+						 (Int32)(stride_ * height_),
+						 0, // 16 = AVIIF_KEYFRAMe
+						 0,
+						 0);
 
 			if (hr != 0)
 			{

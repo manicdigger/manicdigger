@@ -8,7 +8,7 @@ using System.Windows.Forms;
 namespace ManicDigger.Common
 {
 	public delegate void Action();
-	
+
 	/// <summary>
 	/// Description of CrashReporter.
 	/// </summary>
@@ -104,7 +104,7 @@ namespace ManicDigger.Common
 				start();
 			}
 		}
-		
+
 
 		/// <summary>
 		/// Log the exception and exit the application
@@ -223,6 +223,6 @@ namespace ManicDigger.Common
 				//Just swallow this exception, to prevent a exception endless loop (UnhandledException -> CrashReport -> UnhandledException)
 			}
 		}
-		
+
 	}
 }

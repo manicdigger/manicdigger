@@ -9,12 +9,12 @@ public class DummyNetwork
 	internal QueueByteArray ClientReceiveBuffer;
 	internal MonitorObject ServerReceiveBufferLock;
 	internal MonitorObject ClientReceiveBufferLock;
-	
+
 	public DummyNetwork()
 	{
 		Clear();
 	}
-	
+
 	public void Start(MonitorObject lock1, MonitorObject lock2)
 	{
 		ServerReceiveBufferLock = lock1;
@@ -36,14 +36,14 @@ public class ByteArray
 
 public class MonitorObject
 {
-	
+
 }
 
 public class DummyNetConnectionCi : NetConnection
 {
 	internal GamePlatform platform;
 	internal DummyNetwork network;
-	
+
 	public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
 	{
 		platform.MonitorEnter(network.ClientReceiveBufferLock);
@@ -56,15 +56,15 @@ public class DummyNetConnectionCi : NetConnection
 		}
 		platform.MonitorExit(network.ClientReceiveBufferLock);
 	}
-	
+
 	public override IPEndPointCi RemoteEndPoint()
 	{
 		return new DummyIpEndPoint();
 	}
-	
+
 	public override void Update()
 	{
-		
+
 	}
 
 	public override bool EqualsConnection(NetConnection connection)

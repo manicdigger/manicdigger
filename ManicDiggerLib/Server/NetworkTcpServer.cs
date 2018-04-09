@@ -1,9 +1,8 @@
-﻿using System.Net.Sockets;
-using System.Text;
+﻿using ManicDigger.Common;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using ManicDigger.Common;
+using System.Net.Sockets;
 
 namespace ManicDigger.Server
 {

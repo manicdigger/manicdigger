@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ManicDigger.Server
+﻿namespace ManicDigger.Server
 {
 	public struct Xyz
 	{

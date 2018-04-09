@@ -123,7 +123,7 @@ namespace ManicDigger.Common
 			return base.ToString();
 		}
 	}
-	
+
 	/// <summary>
 	/// TCP connection that transparently adds a message length integer to messages on the network.
 	/// Used only by server.
@@ -210,7 +210,8 @@ namespace ManicDigger.Common
 							packet[i] = receivedBytesArray[4 + i];
 						}
 						receivedBytes.RemoveRange(0, 4 + packetLength);
-						ReceivedMessage.Invoke(this, new MessageEventArgs() {
+						ReceivedMessage.Invoke(this, new MessageEventArgs()
+						{
 							ClientId = this,
 							data = packet
 						});

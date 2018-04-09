@@ -7,7 +7,7 @@
 	QueueINetOutgoingMessage tosend;
 	bool connected;
 	bool connected2;
-	
+
 	public override void Start()
 	{
 		host = platform.EnetCreateHost();

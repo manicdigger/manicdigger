@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace ManicDigger.Server
+﻿namespace ManicDigger.Server
 {
 	/// <summary>
 	/// Chunk storage using a plain file structure to store data

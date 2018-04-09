@@ -1,10 +1,10 @@
-﻿using System;
+﻿using ManicDigger.Common;
+using ManicDigger.Server;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using ManicDigger.Common;
-using ManicDigger.Server;
 
 namespace ManicDiggerServer
 {
@@ -65,7 +65,7 @@ namespace ManicDiggerServer
 
 			new Program(args);
 		}
-		
+
 		public Program(string[] args)
 		{
 			ENABLE_REDIRECT_STANDARD_INPUT = IsMono;
@@ -187,7 +187,7 @@ namespace ManicDiggerServer
 		Stopwatch parentCheckStopwatch;
 		Stopwatch stopwatch = new Stopwatch();
 		Process ServerProcess;
-		
+
 		void ConsoleOutput()
 		{
 			for (; ; )

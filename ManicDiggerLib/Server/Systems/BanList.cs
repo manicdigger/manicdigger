@@ -1,7 +1,7 @@
-﻿using System;
+﻿using ManicDigger.Common;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using ManicDigger.Common;
 using System.Xml.Serialization;
 
 namespace ManicDigger.Server
@@ -494,22 +494,22 @@ namespace ManicDigger.Server
 
 			// Get related client from config file
 			ManicDigger.Client targetClient = server.serverClient.Clients.Find(
-				                                       delegate(ManicDigger.Client client)
+													   delegate (ManicDigger.Client client)
 				{
 					return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                                       );
+												   );
 
 			// Entry exists.
 			if (targetClient != null)
 			{
 				// Get target's group.
 				ManicDigger.Group targetGroup = server.serverClient.Groups.Find(
-					                                        delegate(ManicDigger.Group grp)
+															delegate (ManicDigger.Group grp)
 					{
 						return grp.Name.Equals(targetClient.Group);
 					}
-				                                        );
+														);
 				if (targetGroup == null)
 				{
 					server.SendMessage(sourceClientId, string.Format(server.language.Get("Server_CommandInvalidGroup"), server.colorError));
@@ -560,8 +560,8 @@ namespace ManicDigger.Server
 				}
 				return true;
 			}
-        // unban an IP
-        else
+			// unban an IP
+			else
 			if (type.Equals("-ip"))
 			{
 				bool exists = server.banlist.UnbanIP(target);

@@ -46,7 +46,7 @@ namespace ManicDigger.Mods
 				{
 					m.SendMessage(player, m.colorError() + string.Format("Can't revert more than {0} block changes", MaxRevert));
 				}
-				
+
 				int reverted = 0;
 				for (int i = lines.Count - 1; i >= 0; i--)
 				{

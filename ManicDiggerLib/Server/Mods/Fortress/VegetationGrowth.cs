@@ -315,7 +315,7 @@ namespace ManicDigger.Mods
 				{
 					int under = m.GetBlock(x, y, z - 1);
 					if ((under == Dirt
-					     || under == Grass)) return;
+						 || under == Grass)) return;
 					m.SetBlock(x, y, z, 0);
 				}
 			}
@@ -338,12 +338,12 @@ namespace ManicDigger.Mods
 		{
 			for (int i = x - 2; i <= x + 2; i++)
 				for (int j = y - 2; j <= y + 2; j++)
-			{
-				if (!IsShadow(i, j, z))
 				{
-					return true;
+					if (!IsShadow(i, j, z))
+					{
+						return true;
+					}
 				}
-			}
 			return false;
 		}
 

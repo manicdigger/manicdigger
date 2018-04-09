@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ManicDigger.Mods.War
+﻿namespace ManicDigger.Mods.War
 {
 	/// <summary>
 	/// This class contains core settings for the Manic Digger server. Adapted for War Mod (light levels, render hint)
@@ -12,7 +10,7 @@ namespace ManicDigger.Mods.War
 		{
 			//Render hint to send to clients
 			m.RenderHint(RenderHint.Nice);
-			
+
 			//Different serverside view distance if singleplayer
 			if (m.IsSinglePlayer())
 			{
@@ -22,16 +20,16 @@ namespace ManicDigger.Mods.War
 			{
 				m.SetPlayerAreaSize(256);
 			}
-			
+
 			//Set up server time
 			m.SetGameDayRealHours(1);
 			m.SetDaysPerYear(24);
-			
+
 			//Set up day/night cycle
 			m.SetSunLevels(sunLevels);
 			m.SetLightLevels(lightLevels);
 		}
-		
+
 		float[] lightLevels = new float[]
 		{
 			0.0351843721f,

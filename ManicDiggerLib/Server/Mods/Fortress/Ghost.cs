@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ManicDigger.Mods
 {
@@ -51,7 +50,7 @@ namespace ManicDigger.Mods
 				pos.x = m.GetPlayerPositionX(p);
 				pos.y = m.GetPlayerPositionY(p);
 				pos.z = m.GetPlayerPositionZ(p);
-				
+
 				pos.heading = m.GetPlayerHeading(p);
 				pos.pitch = m.GetPlayerPitch(p);
 				history.Add(pos);

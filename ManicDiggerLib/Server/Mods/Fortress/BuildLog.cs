@@ -80,15 +80,15 @@ namespace ManicDigger.Mods
 		void OnBuild(int player, int x, int y, int z)
 		{
 			lines.Add(new object[]
-			          {
-			          	DateTime.UtcNow,//timestamp
+					  {
+						  DateTime.UtcNow,//timestamp
 			          	(short)x, //x
 			          	(short)y, //y
 			          	(short)z, //z
 			          	(short)m.GetBlock(x, y, z), //blocktype
 			          	true, //build
 			          	m.GetPlayerName(player),
-			          	m.GetPlayerIp(player), //ip
+						  m.GetPlayerIp(player), //ip
 			          });
 			if (lines.Count > MaxEntries)
 			{
@@ -99,8 +99,8 @@ namespace ManicDigger.Mods
 		void OnDelete(int player, int x, int y, int z, int oldblock)
 		{
 			lines.Add(new object[]
-			          {
-			          	DateTime.UtcNow, //timestamp
+					  {
+						  DateTime.UtcNow, //timestamp
 			          	(short)x, //x
 			          	(short)y, //y
 			          	(short)z, //z

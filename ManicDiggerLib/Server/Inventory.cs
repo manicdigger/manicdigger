@@ -1,8 +1,7 @@
-﻿using System;
+﻿using ProtoBuf;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
-using ProtoBuf;
-using System.Runtime.Serialization;
 
 namespace ManicDigger.Server
 {
@@ -44,7 +43,7 @@ namespace ManicDigger.Server
 								continue;
 							}
 							if (itemsAtArea[i].X == ItemAtCell(cell).X
-							                     && itemsAtArea[i].Y == ItemAtCell(cell).Y)
+												 && itemsAtArea[i].Y == ItemAtCell(cell).Y)
 							{
 								contains = true;
 							}
@@ -96,7 +95,7 @@ namespace ManicDigger.Server
 		{
 			switch (wearPlace)
 			{
-			//case WearPlace.LeftHand: return d_Inventory.LeftHand[activeMaterial];
+				//case WearPlace.LeftHand: return d_Inventory.LeftHand[activeMaterial];
 				case WearPlace_.RightHand:
 					return d_Inventory.RightHand[activeMaterial];
 				case WearPlace_.MainArmor:
@@ -116,7 +115,7 @@ namespace ManicDigger.Server
 		{
 			switch (wearPlace)
 			{
-			//case WearPlace.LeftHand: d_Inventory.LeftHand[activeMaterial] = item; break;
+				//case WearPlace.LeftHand: d_Inventory.LeftHand[activeMaterial] = item; break;
 				case WearPlace_.RightHand:
 					d_Inventory.RightHand[activeMaterial] = item;
 					break;
@@ -146,7 +145,7 @@ namespace ManicDigger.Server
 					{
 						return true;
 					}
-                //stacking
+					//stacking
 					for (int i = 0; i < 10; i++)
 					{
 						if (d_Inventory.RightHand[i] == null)
@@ -165,14 +164,14 @@ namespace ManicDigger.Server
 						d_Inventory.RightHand[ActiveMaterial] = item;
 						return true;
 					}
-                //current hand
+					//current hand
 					if (d_Inventory.RightHand[ActiveMaterial].ItemClass == ItemClass.Block
-					               && d_Inventory.RightHand[ActiveMaterial].BlockId == item.BlockId)
+								   && d_Inventory.RightHand[ActiveMaterial].BlockId == item.BlockId)
 					{
 						d_Inventory.RightHand[ActiveMaterial].BlockCount++;
 						return true;
 					}
-                //any free hand
+					//any free hand
 					for (int i = 0; i < 10; i++)
 					{
 						if (d_Inventory.RightHand[i] == null)
@@ -181,7 +180,7 @@ namespace ManicDigger.Server
 							return true;
 						}
 					}
-                //grab to main area - stacking
+					//grab to main area - stacking
 					for (int y = 0; y < CellCountY; y++)
 					{
 						for (int x = 0; x < CellCountX; x++)
@@ -199,7 +198,7 @@ namespace ManicDigger.Server
 							}
 						}
 					}
-                //grab to main area - adding
+					//grab to main area - adding
 					for (int y = 0; y < CellCountY; y++)
 					{
 						for (int x = 0; x < CellCountX; x++)
@@ -317,8 +316,8 @@ namespace ManicDigger.Server
 				foreach (var k in d_Inventory.Items)
 				{
 					if (pos.AreaX >= k.Key.X && pos.AreaY >= k.Key.Y
-					               && pos.AreaX < k.Key.X + d_Items.ItemSizeX(k.Value)
-					               && pos.AreaY < k.Key.Y + d_Items.ItemSizeY(k.Value))
+								   && pos.AreaX < k.Key.X + d_Items.ItemSizeX(k.Value)
+								   && pos.AreaY < k.Key.Y + d_Items.ItemSizeY(k.Value))
 					{
 						selected = new Point(k.Key.X, k.Key.Y);
 					}
@@ -330,14 +329,14 @@ namespace ManicDigger.Server
 					d_Inventory.Items.Remove(new ProtoPoint(selected.Value.X, selected.Value.Y));
 					SendInventory();
 				}
-            //drop
-            else
+				//drop
+				else
 				if (d_Inventory.DragDropItem != null)
 				{
 					//make sure there is nothing blocking drop.
 					IntRef itemsAtAreaCount = new IntRef();
 					PointRef[] itemsAtArea = d_InventoryUtil.ItemsAtArea(pos.AreaX, pos.AreaY,
-						                                    d_Items.ItemSizeX(d_Inventory.DragDropItem), d_Items.ItemSizeY(d_Inventory.DragDropItem), itemsAtAreaCount);
+															d_Items.ItemSizeX(d_Inventory.DragDropItem), d_Items.ItemSizeY(d_Inventory.DragDropItem), itemsAtAreaCount);
 					if (itemsAtArea == null || itemsAtAreaCount.value > 1)
 					{
 						//invalid area
@@ -438,10 +437,10 @@ namespace ManicDigger.Server
 			//TODO: what to do here?
 			ProtoPoint originPoint = new ProtoPoint(from.AreaX, from.AreaY);
 			if (from.Type == Packet_InventoryPositionTypeEnum.MainArea
-			         && to.Type == Packet_InventoryPositionTypeEnum.MaterialSelector
-			         && d_Inventory.RightHand[to.MaterialId] == null
-			         && d_Inventory.Items.ContainsKey(originPoint)
-			         && d_Items.CanWear(WearPlace_.RightHand, d_Inventory.Items[originPoint]))
+					 && to.Type == Packet_InventoryPositionTypeEnum.MaterialSelector
+					 && d_Inventory.RightHand[to.MaterialId] == null
+					 && d_Inventory.Items.ContainsKey(originPoint)
+					 && d_Items.CanWear(WearPlace_.RightHand, d_Inventory.Items[originPoint]))
 			{
 				d_Inventory.RightHand[to.MaterialId] = d_Inventory.Items[originPoint];
 				d_Inventory.Items.Remove(originPoint);
@@ -522,7 +521,7 @@ namespace ManicDigger.Server
 		public Item Stack(Item itemA, Item itemB)
 		{
 			if (itemA.ItemClass == ItemClass.Block
-			         && itemB.ItemClass == ItemClass.Block)
+					 && itemB.ItemClass == ItemClass.Block)
 			{
 				int railcountA = DirectionUtils.RailDirectionFlagsCount(d_Data.Rail()[itemA.BlockId]);
 				int railcountB = DirectionUtils.RailDirectionFlagsCount(d_Data.Rail()[itemB.BlockId]);
@@ -555,7 +554,7 @@ namespace ManicDigger.Server
 			}
 			switch (selectedWear)
 			{
-			//case WearPlace.LeftHand: return false;
+				//case WearPlace.LeftHand: return false;
 				case WearPlace_.RightHand:
 					return item.ItemClass == ItemClass.Block;
 				case WearPlace_.MainArmor:

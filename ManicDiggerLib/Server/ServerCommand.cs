@@ -62,7 +62,7 @@ namespace ManicDigger.Server
 					SendMessage(sourceClientId, colorError + language.Get("Server_CommandInvalidArgs"));
 					return;
 				case "login":
-                // enables to change temporary group with a group's password (only if group allows it)
+					// enables to change temporary group with a group's password (only if group allows it)
 					ss = argument.Split(new[] { ' ' });
 					if (ss.Length == 2)
 					{
@@ -200,8 +200,8 @@ namespace ManicDigger.Server
 					return;
 				case "run":
 				case "":
-                // JavaScript
-                // assume script expression or command coming
+					// JavaScript
+					// assume script expression or command coming
 					var script = argument;
 					RunInClientSandbox(script, sourceClientId);
 					return;
@@ -209,8 +209,8 @@ namespace ManicDigger.Server
 					KillPlayer(sourceClientId);
 					return;
 				case "set_spawn":
-                //           0    1      2 3 4
-                // argument: type target x y z
+					//           0    1      2 3 4
+					// argument: type target x y z
 					ss = argument.Split(new[] { ' ' });
 
 					if (ss.Length < 3 || ss.Length > 5)
@@ -219,7 +219,7 @@ namespace ManicDigger.Server
 						return;
 					}
 
-                // Add an empty target argument, when user sets default spawn.
+					// Add an empty target argument, when user sets default spawn.
 					if (ss[0].Equals("-d") || ss[0].Equals("-default"))
 					{
 						string[] ssTemp = new string[ss.Length + 1];
@@ -274,7 +274,7 @@ namespace ManicDigger.Server
 					this.SetSpawnPosition(sourceClientId, ss[0], ss[1], x, y, z);
 					return;
 				case "set_home":
-                // When no coordinates are given, set spawn to players current position.
+					// When no coordinates are given, set spawn to players current position.
 					if (string.IsNullOrEmpty(argument))
 					{
 						this.SetSpawnPosition(sourceClientId,
@@ -283,8 +283,8 @@ namespace ManicDigger.Server
 							(int)GetClient(sourceClientId).PositionMul32GlY / 32);
 						return;
 					}
-                //            0 1 2
-                // agrument:  x y z
+					//            0 1 2
+					// agrument:  x y z
 					ss = argument.Split(new[] { ' ' });
 
 					if (ss.Length < 2 || ss.Length > 3)
@@ -357,7 +357,7 @@ namespace ManicDigger.Server
 				case "shutdown":
 					this.ShutdownServer(sourceClientId);
 					break;
-			//case "crashserver": for (; ; ) ;
+				//case "crashserver": for (; ; ) ;
 				case "stats":
 					double seconds = (DateTime.UtcNow - statsupdate).TotalSeconds;
 					SendMessage(sourceClientId, "Packets/s:" + decimal.Round((decimal)(StatTotalPackets / seconds), 2, MidpointRounding.AwayFromZero));
@@ -503,42 +503,42 @@ namespace ManicDigger.Server
 						ServerEventLog(String.Format("{0} backups database: {1}.", GetClient(sourceClientId).playername, argument));
 					}
 					break;
-			/*
-        case "load":
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.load))
-            {
-                SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
-                break;
-            }
-            if (!GameStorePath.IsValidName(argument))
-            {
-                SendMessage(sourceClientId, string.Format("Invalid load filename: {0}", argument));
-                break;
-            }
-            if (!LoadDatabase(argument))
-            {
-                SendMessage(sourceClientId, string.Format("{0}World could not be loaded. Check filename.", colorError));
-            }
-            else
-            {
-                SendMessage(sourceClientId, string.Format("{0}World loaded.", colorSuccess));
-                ServerEventLog(String.Format("{0} loads world: {1}.", GetClient(sourceClientId).playername, argument));
-            }
-            break;
-            */
+				/*
+			case "load":
+				if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.load))
+				{
+					SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
+					break;
+				}
+				if (!GameStorePath.IsValidName(argument))
+				{
+					SendMessage(sourceClientId, string.Format("Invalid load filename: {0}", argument));
+					break;
+				}
+				if (!LoadDatabase(argument))
+				{
+					SendMessage(sourceClientId, string.Format("{0}World could not be loaded. Check filename.", colorError));
+				}
+				else
+				{
+					SendMessage(sourceClientId, string.Format("{0}World loaded.", colorSuccess));
+					ServerEventLog(String.Format("{0} loads world: {1}.", GetClient(sourceClientId).playername, argument));
+				}
+				break;
+				*/
 				case "reset_inventory":
 					this.ResetInventory(sourceClientId, argument);
 					return;
 				case "fill_limit":
-                //           0    1      2
-                // agrument: type target maxFill
+					//           0    1      2
+					// agrument: type target maxFill
 					ss = argument.Split(new[] { ' ' });
 					if (ss.Length < 2 || ss.Length > 3)
 					{
 						SendMessage(sourceClientId, colorError + language.Get("Server_CommandInvalidArgs"));
 						return;
 					}
-                // Add an empty target argument, when user sets default max-fill.
+					// Add an empty target argument, when user sets default max-fill.
 					if (ss[0].Equals("-d") || ss[0].Equals("-default"))
 					{
 						string[] ssTemp = new string[ss.Length + 1];
@@ -776,11 +776,11 @@ namespace ManicDigger.Server
 
 			// Get related group from config file.
 			ManicDigger.Group newGroup = serverClient.Groups.Find(
-				                             delegate(ManicDigger.Group grp)
+											 delegate (ManicDigger.Group grp)
 				{
 					return grp.Name.Equals(newGroupName, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                             );
+										 );
 			if (newGroup == null)
 			{
 				SendMessage(sourceClientId, string.Format(language.Get("Server_CommandGroupNotFound"), colorError, newGroupName));
@@ -796,11 +796,11 @@ namespace ManicDigger.Server
 
 			// Get related client from config file
 			ManicDigger.Client clientConfig = serverClient.Clients.Find(
-				                                  delegate(ManicDigger.Client client)
+												  delegate (ManicDigger.Client client)
 				{
 					return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                                  );
+											  );
 
 			// Get related client.
 			ClientOnServer targetClient = GetClient(target);
@@ -850,11 +850,11 @@ namespace ManicDigger.Server
 
 			// Get related group from config file.
 			ManicDigger.Group newGroup = serverClient.Groups.Find(
-				                             delegate(ManicDigger.Group grp)
+											 delegate (ManicDigger.Group grp)
 				{
 					return grp.Name.Equals(newGroupName, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                             );
+										 );
 			if (newGroup == null)
 			{
 				SendMessage(sourceClientId, string.Format(language.Get("Server_CommandGroupNotFound"), colorError, newGroupName));
@@ -870,11 +870,11 @@ namespace ManicDigger.Server
 
 			// Get related client from config file.
 			ManicDigger.Client clientConfig = serverClient.Clients.Find(
-				                                  delegate(ManicDigger.Client client)
+												  delegate (ManicDigger.Client client)
 				{
 					return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                                  );
+											  );
 
 			// Get related client.
 			ClientOnServer targetClient = GetClient(target);
@@ -898,11 +898,11 @@ namespace ManicDigger.Server
 			{
 				// Check if target's current group is superior.
 				ManicDigger.Group oldGroup = serverClient.Groups.Find(
-					                             delegate(ManicDigger.Group grp)
+												 delegate (ManicDigger.Group grp)
 					{
 						return grp.Name.Equals(clientConfig.Group);
 					}
-				                             );
+											 );
 				if (oldGroup == null)
 				{
 					SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInvalidGroup"), colorError));
@@ -933,21 +933,21 @@ namespace ManicDigger.Server
 
 			// Get related client from config file
 			ManicDigger.Client targetClient = serverClient.Clients.Find(
-				                                  delegate(ManicDigger.Client client)
+												  delegate (ManicDigger.Client client)
 				{
 					return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                                  );
+											  );
 			// Entry exists.
 			if (targetClient != null)
 			{
 				// Get target's group.
 				ManicDigger.Group targetGroup = serverClient.Groups.Find(
-					                                delegate(ManicDigger.Group grp)
+													delegate (ManicDigger.Group grp)
 					{
 						return grp.Name.Equals(targetClient.Group);
 					}
-				                                );
+												);
 				if (targetGroup == null)
 				{
 					SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInvalidGroup"), colorError));
@@ -984,11 +984,11 @@ namespace ManicDigger.Server
 				return false;
 			}
 			ManicDigger.Group targetGroup = serverClient.Groups.Find(
-				                                delegate(ManicDigger.Group grp)
+												delegate (ManicDigger.Group grp)
 				{
 					return grp.Name.Equals(targetGroupString, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                                );
+											);
 			if (targetGroup == null)
 			{
 				SendMessage(sourceClientId, string.Format(language.Get("Server_CommandGroupNotFound"), colorError, targetGroupString));
@@ -1036,7 +1036,7 @@ namespace ManicDigger.Server
 			}
 			switch (type)
 			{
-			// all logging state
+				// all logging state
 				case "-s":
 					SendMessage(sourceClientId, "Build: " + config.BuildLogging);
 					SendMessage(sourceClientId, "Server events: " + config.ServerEventLogging);
@@ -1303,8 +1303,8 @@ namespace ManicDigger.Server
 							}
 							Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
 							if (currentItem != null
-							    && currentItem.ItemClass == ItemClass.Block
-							    && currentItem.BlockId == i)
+								&& currentItem.ItemClass == ItemClass.Block
+								&& currentItem.BlockId == i)
 							{
 								currentItem.BlockCount = maxStack;
 								goto nextblock;
@@ -1384,8 +1384,8 @@ namespace ManicDigger.Server
 							}
 							Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
 							if (currentItem != null
-							    && currentItem.ItemClass == ItemClass.Block
-							    && currentItem.BlockId == i)
+								&& currentItem.ItemClass == ItemClass.Block
+								&& currentItem.BlockId == i)
 							{
 								if (amount == 0)
 								{
@@ -1476,7 +1476,8 @@ namespace ManicDigger.Server
 			{
 				foreach (var k in clients)
 				{
-					SendPacket(k.Key, Serialize(new Packet_Server() {
+					SendPacket(k.Key, Serialize(new Packet_Server()
+					{
 						Id = Packet_ServerIdEnum.RemoveMonsters
 					}));
 				}
@@ -1604,13 +1605,14 @@ namespace ManicDigger.Server
 			{
 				case "-default":
 				case "-d":
-					serverClient.DefaultSpawn = new ManicDigger.Spawn() {
+					serverClient.DefaultSpawn = new ManicDigger.Spawn()
+					{
 						x = x,
 						y = y,
 						z = z
 					};
 					serverClientNeedsSaving = true;
-                // Inform related players.
+					// Inform related players.
 					bool hasEntry = false;
 					foreach (var k in clients)
 					{
@@ -1643,25 +1645,26 @@ namespace ManicDigger.Server
 					return true;
 				case "-group":
 				case "-g":
-                // Check if group even exists.
+					// Check if group even exists.
 					ManicDigger.Group targetGroup = serverClient.Groups.Find(
-						                                delegate(ManicDigger.Group grp)
+														delegate (ManicDigger.Group grp)
 						{
 							return grp.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
 						}
-					                                );
+													);
 					if (targetGroup == null)
 					{
 						SendMessage(sourceClientId, string.Format(language.Get("Server_CommandGroupNotFound"), colorError, target));
 						return false;
 					}
-					targetGroup.Spawn = new ManicDigger.Spawn() {
+					targetGroup.Spawn = new ManicDigger.Spawn()
+					{
 						x = x,
 						y = y,
 						z = z,
 					};
 					serverClientNeedsSaving = true;
-                // Inform related players.
+					// Inform related players.
 					hasEntry = false;
 					foreach (var k in clients)
 					{
@@ -1690,7 +1693,7 @@ namespace ManicDigger.Server
 					return true;
 				case "-player":
 				case "-p":
-                // Get related client.
+					// Get related client.
 					ClientOnServer targetClient = this.GetClient(target);
 					int? targetClientId = null;
 					if (targetClient != null)
@@ -1700,24 +1703,25 @@ namespace ManicDigger.Server
 					string targetClientPlayername = targetClient == null ? target : targetClient.playername;
 
 					ManicDigger.Client clientEntry = serverClient.Clients.Find(
-						                                 delegate(ManicDigger.Client client)
+														 delegate (ManicDigger.Client client)
 						{
 							return client.Name.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase);
 						}
-					                                 );
+													 );
 					if (clientEntry == null)
 					{
 						SendMessage(sourceClientId, string.Format(language.Get("Server_CommandPlayerNotFound"), colorError, target));
 						return false;
 					}
-                // Change or add spawn entry of client.
-					clientEntry.Spawn = new ManicDigger.Spawn() {
+					// Change or add spawn entry of client.
+					clientEntry.Spawn = new ManicDigger.Spawn()
+					{
 						x = x,
 						y = y,
 						z = z,
 					};
 					serverClientNeedsSaving = true;
-                // Inform player if he's online.
+					// Inform player if he's online.
 					if (targetClientId != null)
 					{
 						this.SendPlayerSpawnPosition(targetClientId.Value, x, y, rZ);
@@ -1763,11 +1767,11 @@ namespace ManicDigger.Server
 
 			// Get related client entry.
 			ManicDigger.Client clientEntry = serverClient.Clients.Find(
-				                                 delegate(ManicDigger.Client client)
+												 delegate (ManicDigger.Client client)
 				{
 					return client.Name.Equals(GetClient(sourceClientId).playername, StringComparison.InvariantCultureIgnoreCase);
 				}
-			                                 );
+											 );
 			// TODO: When guests have "set_home" privilege, count of client entries can quickly grow.
 			if (clientEntry == null)
 			{
@@ -1777,7 +1781,8 @@ namespace ManicDigger.Server
 				serverClient.Clients.Add(clientEntry);
 			}
 			// Change or add spawn entry of client.
-			clientEntry.Spawn = new ManicDigger.Spawn() {
+			clientEntry.Spawn = new ManicDigger.Spawn()
+			{
 				x = x,
 				y = y,
 				z = z,
@@ -1986,7 +1991,7 @@ namespace ManicDigger.Server
 				case "-d":
 					serverClient.DefaultFillLimit = maxFill;
 					serverClientNeedsSaving = true;
-                // Inform related players.
+					// Inform related players.
 					bool hasEntry = false;
 					foreach (var k in clients)
 					{
@@ -2019,13 +2024,13 @@ namespace ManicDigger.Server
 					return true;
 				case "-group":
 				case "-g":
-                // Check if group even exists.
+					// Check if group even exists.
 					ManicDigger.Group targetGroup = serverClient.Groups.Find(
-						                                delegate(ManicDigger.Group grp)
+														delegate (ManicDigger.Group grp)
 						{
 							return grp.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
 						}
-					                                );
+													);
 					if (targetGroup == null)
 					{
 						SendMessage(sourceClientId, string.Format(language.Get("Server_CommandGroupNotFound"), colorError, target));
@@ -2033,7 +2038,7 @@ namespace ManicDigger.Server
 					}
 					targetGroup.FillLimit = maxFill;
 					serverClientNeedsSaving = true;
-                // Inform related players.
+					// Inform related players.
 					hasEntry = false;
 					foreach (var k in clients)
 					{
@@ -2062,7 +2067,7 @@ namespace ManicDigger.Server
 					return true;
 				case "-player":
 				case "-p":
-                // Get related client.
+					// Get related client.
 					ClientOnServer targetClient = this.GetClient(target);
 					int? targetClientId = null;
 					if (targetClient != null)
@@ -2072,20 +2077,20 @@ namespace ManicDigger.Server
 					string targetClientPlayername = targetClient == null ? target : targetClient.playername;
 
 					ManicDigger.Client clientEntry = serverClient.Clients.Find(
-						                                 delegate(ManicDigger.Client client)
+														 delegate (ManicDigger.Client client)
 						{
 							return client.Name.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase);
 						}
-					                                 );
+													 );
 					if (clientEntry == null)
 					{
 						SendMessage(sourceClientId, string.Format(language.Get("Server_CommandPlayerNotFound"), colorError, target));
 						return false;
 					}
-                // Change or add spawn entry of client.
+					// Change or add spawn entry of client.
 					clientEntry.FillLimit = maxFill;
 					serverClientNeedsSaving = true;
-                // Inform player if he's online.
+					// Inform player if he's online.
 					if (targetClientId != null)
 					{
 						this.SetFillAreaLimit(targetClientId.Value);

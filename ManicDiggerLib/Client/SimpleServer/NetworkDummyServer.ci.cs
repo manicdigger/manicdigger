@@ -11,7 +11,7 @@ public class DummyNetServer : NetServer
 	internal DummyNetwork network;
 	public override void Start()
 	{
-			
+
 	}
 
 	DummyNetConnectionCi connectedClient;
@@ -61,6 +61,6 @@ public class DummyNetServer : NetServer
 
 	public override void SetPort(int port)
 	{
-			
+
 	}
 }

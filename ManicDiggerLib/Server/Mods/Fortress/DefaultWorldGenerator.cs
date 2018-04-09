@@ -1,5 +1,4 @@
-﻿using System;
-using LibNoise;
+﻿using LibNoise;
 using LibNoise.Modifiers;
 
 namespace ManicDigger.Mods
@@ -17,21 +16,21 @@ namespace ManicDigger.Mods
 			m.RegisterOptionBool("DefaultGenCaves", false);
 			m.RegisterOptionBool("DefaultGenLavaCaves", false);
 
-			BLOCK_STONE = m.GetBlockId ("Stone");
-			BLOCK_DIRT = m.GetBlockId ("Dirt");
-			BLOCK_SAND = m.GetBlockId ("Sand");
-			BLOCK_CLAY = m.GetBlockId ("Stone");
-			BLOCK_BEDROCK = m.GetBlockId ("Adminium");
-			BLOCK_AIR = m.GetBlockId ("Empty");
-			BLOCK_SNOW = m.GetBlockId ("Grass");
-			BLOCK_ICE = m.GetBlockId ("Water");
-			BLOCK_GRASS = m.GetBlockId ("Grass");
-			BLOCK_WATER = m.GetBlockId ("Water");
-			BLOCK_GRAVEL = m.GetBlockId ("Gravel");
-			BLOCK_PUMPKIN = m.GetBlockId ("Hay");
-			BLOCK_RED_ROSE = m.GetBlockId ("RedRoseDecorations");
-			BLOCK_YELLOW_FLOWER = m.GetBlockId ("YellowFlowerDecorations");
-			BLOCK_LAVA = m.GetBlockId ("Lava");
+			BLOCK_STONE = m.GetBlockId("Stone");
+			BLOCK_DIRT = m.GetBlockId("Dirt");
+			BLOCK_SAND = m.GetBlockId("Sand");
+			BLOCK_CLAY = m.GetBlockId("Stone");
+			BLOCK_BEDROCK = m.GetBlockId("Adminium");
+			BLOCK_AIR = m.GetBlockId("Empty");
+			BLOCK_SNOW = m.GetBlockId("Grass");
+			BLOCK_ICE = m.GetBlockId("Water");
+			BLOCK_GRASS = m.GetBlockId("Grass");
+			BLOCK_WATER = m.GetBlockId("Water");
+			BLOCK_GRAVEL = m.GetBlockId("Gravel");
+			BLOCK_PUMPKIN = m.GetBlockId("Hay");
+			BLOCK_RED_ROSE = m.GetBlockId("RedRoseDecorations");
+			BLOCK_YELLOW_FLOWER = m.GetBlockId("YellowFlowerDecorations");
+			BLOCK_LAVA = m.GetBlockId("Lava");
 		}
 
 		ModManager m;
@@ -46,7 +45,7 @@ namespace ManicDigger.Mods
 			}
 			bool addCaves = (bool)m.GetOption("DefaultGenCaves");
 			bool addCaveLava = (bool)m.GetOption("DefaultGenLavaCaves");
-			int ChunkSize=m.GetChunkSize();
+			int ChunkSize = m.GetChunkSize();
 			x *= ChunkSize;
 			y *= ChunkSize;
 			z *= ChunkSize;
@@ -60,7 +59,7 @@ namespace ManicDigger.Mods
 				{
 					int currentHeight = (byte)((finalTerrain.GetValue((xx + x) / 100.0, 0, (yy + y) / 100.0) * 60) + 64);
 					int ymax = currentHeight;
-					
+
 					int biome = (int)(BiomeSelect.GetValue((x + xx) / 100.0, 0, (y + yy) / 100.0) * 2); //MD * 2
 					int toplayer = BLOCK_DIRT;
 					if (biome == 0)
@@ -87,9 +86,9 @@ namespace ManicDigger.Mods
 					{
 						toplayer = BLOCK_CLAY;
 					}
-					
+
 					int stoneHeight = (int)currentHeight - ((64 - (currentHeight % 64)) / 8) + 1;
-					
+
 					if (ymax < seaLevel)
 					{
 						ymax = seaLevel;

@@ -1,10 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
-using PointG = System.Drawing.Point;
-using System.Diagnostics;
+﻿using ManicDigger.Common;
 using ProtoBuf;
-using ManicDigger.Common;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using PointG = System.Drawing.Point;
 
 namespace ManicDigger.Server
 {
@@ -371,8 +370,10 @@ namespace ManicDigger.Server
 				ServerChunk cc = new ServerChunk() { data = this.GetChunk(pos.x, pos.y, pos.z) };
 				MemoryStream ms = new MemoryStream();
 				Serializer.Serialize(ms, cc);
-				dbchunks.Add(new DbChunk() {
-					Position = new Xyz() {
+				dbchunks.Add(new DbChunk()
+				{
+					Position = new Xyz()
+					{
 						X = dx,
 						Y = dy,
 						Z = dz
@@ -382,7 +383,8 @@ namespace ManicDigger.Server
 			}
 			if (dbchunks.Count != 0)
 			{
-				IChunkDb d_ChunkDb = new ChunkDbCompressed() {
+				IChunkDb d_ChunkDb = new ChunkDbCompressed()
+				{
 					d_ChunkDb = new ChunkDbSqlite(),
 					d_Compression = new CompressionGzip()
 				};

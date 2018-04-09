@@ -24,7 +24,7 @@ namespace ManicDigger.Mods
 		}
 		ModManager m;
 		Random _rnd = new Random();
-		
+
 		int TileIdStone;
 		int TileIdGravel;
 		int TileIdDirt;
@@ -34,16 +34,16 @@ namespace ManicDigger.Mods
 		int TileIdSilverOre;
 		int TileIdSand;
 		int TileIdCoalOre;
-		
+
 		void PopulateChunk(int x, int y, int z)
 		{
 			x *= m.GetChunkSize();
 			y *= m.GetChunkSize();
 			z *= m.GetChunkSize();
-			
+
 			MakeCaves(x, y, z, m.GetChunkSize(), _rnd, this.EnableCaves, gravellength, goldorelength, ironorelength, coalorelength, dirtlength, silverlength);
 		}
-		
+
 		public bool EnableCaves = false;
 		public int goldorelength = 50;
 		public int ironorelength = 50;
@@ -51,15 +51,15 @@ namespace ManicDigger.Mods
 		public int gravellength = 50;
 		public int silverlength = 50;
 		public int dirtlength = 40;
-		
+
 		void MakeCaves(int x, int y, int z, int chunksize, Random rnd,
-		               bool enableCaves,
-		               int gravelLength,
-		               int goldOreLength,
-		               int ironOreLength,
-		               int coalOreLength,
-		               int dirtOreLength,
-		               int silverOreLength)
+					   bool enableCaves,
+					   int gravelLength,
+					   int goldOreLength,
+					   int ironOreLength,
+					   int coalOreLength,
+					   int dirtOreLength,
+					   int silverOreLength)
 		{
 			//find cave start
 			double curx = x;
@@ -76,7 +76,7 @@ namespace ManicDigger.Mods
 				}
 			}
 			return;
-		ok:
+			ok:
 			int blocktype = 0;
 			int length = 200;
 			if (rnd.NextDouble() < 0.85)
@@ -88,7 +88,7 @@ namespace ManicDigger.Mods
 				if (oretype == 3) { length = coalOreLength; }
 				if (oretype == 4) { length = dirtOreLength; }
 				if (oretype == 5) { length = silverOreLength; }
-				
+
 				length = rnd.Next(length);
 				blocktype = oretype < 4 ? TileIdGravel + oretype : (oretype > 4 ? TileIdGravel + oretype + 115 : TileIdDirt);
 			}
@@ -130,7 +130,7 @@ namespace ManicDigger.Mods
 					int dx = rnd.Next(-sizex / 2, sizex / 2);
 					int dy = rnd.Next(-sizey / 2, sizey / 2);
 					int dz = rnd.Next(-sizez / 1, sizez / 1);
-					
+
 					int[] allowin = new int[] { TileIdStone };
 					double density = blocktype == 0 ? 1 : rnd.NextDouble() * 0.90;
 					if (blocktype == 0)
@@ -158,7 +158,7 @@ namespace ManicDigger.Mods
 							TileIdSilverOre
 						};
 					}
-					
+
 					MakeCuboid((int)curx - sizex / 2 + dx, (int)cury - sizey / 2 + dy, (int)curz - sizez / 2 + dz, sizex, sizey, sizez, blocktype, allowin, density, rnd);
 				}
 			}
@@ -185,7 +185,7 @@ namespace ManicDigger.Mods
 								if (tt == t) { goto ok; }
 							}
 							continue;
-						ok:
+							ok:
 							if (rnd.NextDouble() < chance)
 							{
 								m.SetBlock(x + xx, y + yy, z + zz, blocktype);

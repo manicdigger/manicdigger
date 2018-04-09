@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
+﻿using OpenTK;
 using OpenTK.Audio;
-using System.Threading;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using OpenTK;
+using System.IO;
+using System.Threading;
 
 namespace ManicDigger.ClientNative
 {
@@ -132,7 +131,7 @@ namespace ManicDigger.ClientNative
 					Console.WriteLine(e.ToString());
 				}
 			}
-            
+
 			private void DoPlay()
 			{
 				int source = OpenTK.Audio.OpenAL.AL.GenSource();
@@ -154,7 +153,7 @@ namespace ManicDigger.ClientNative
 					OpenTK.Audio.OpenAL.AL.SourcePlay(source);
 
 					// Query the source to find out when it stops playing.
-					for (; ;)
+					for (; ; )
 					{
 						OpenTK.Audio.OpenAL.AL.GetSource(source, OpenTK.Audio.OpenAL.ALGetSourcei.SourceState, out state);
 						if ((!loop) && (OpenTK.Audio.OpenAL.ALSourceState)state != OpenTK.Audio.OpenAL.ALSourceState.Playing)
@@ -185,9 +184,9 @@ namespace ManicDigger.ClientNative
 								OpenTK.Audio.OpenAL.AL.SourcePlay(source);
 							}
 						}
-                        
+
 						OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSource3f.Position, position.X, position.Y, position.Z);
-         
+
 						/*
                         if (stop)
                         {
@@ -234,14 +233,15 @@ namespace ManicDigger.ClientNative
 		{
 			Stream stream = new MemoryStream(data);
 			if (stream.ReadByte() == 'R'
-			    && stream.ReadByte() == 'I'
-			    && stream.ReadByte() == 'F'
-			    && stream.ReadByte() == 'F')
+				&& stream.ReadByte() == 'I'
+				&& stream.ReadByte() == 'F'
+				&& stream.ReadByte() == 'F')
 			{
 				stream.Position = 0;
 				int channels, bits_per_sample, sample_rate;
 				byte[] sound_data = LoadWave(stream, out channels, out bits_per_sample, out sample_rate);
-				AudioDataCs sample = new AudioDataCs() {
+				AudioDataCs sample = new AudioDataCs()
+				{
 					Pcm = sound_data,
 					BitsPerSample = bits_per_sample,
 					Channels = channels,

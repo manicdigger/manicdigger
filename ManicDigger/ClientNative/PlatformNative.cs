@@ -1,4 +1,8 @@
-﻿using System;
+﻿using ManicDigger.Common;
+using OpenTK;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Input;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -7,17 +11,10 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using System.Xml.Serialization;
-using ManicDigger.Common;
-using OpenTK;
-using OpenTK.Audio;
-using OpenTK.Graphics.OpenGL;
-using OpenTK.Input;
 
 namespace ManicDigger.ClientNative
 {

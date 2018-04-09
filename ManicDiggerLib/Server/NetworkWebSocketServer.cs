@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using WebSocketSharp;
 using WebSocketSharp.Server;
-using System.Collections.Generic;
 
 namespace ManicDigger.Server
 {

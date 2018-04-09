@@ -1,8 +1,7 @@
 ﻿using csogg;
-using System.IO;
-using System;
 using csvorbis;
-using ManicDigger.Server;
+using System;
+using System.IO;
 
 namespace ManicDigger.ClientNative
 {
@@ -140,14 +139,14 @@ namespace ManicDigger.ClientNative
 						int result = oy.pageout(og);
 						if (result == 0)
 							break; // Need more data
-						// Don't complain about missing or corrupt data yet.  We'll
-						// catch it at the packet output phase
+								   // Don't complain about missing or corrupt data yet.  We'll
+								   // catch it at the packet output phase
 
 						if (result == 1)
 						{
 							os.pagein(og); // we can ignore any errors here
-							// as they'll also become apparent
-							// at packetout
+										   // as they'll also become apparent
+										   // at packetout
 							while (i < 2)
 							{
 								result = os.packetout(op);
@@ -228,7 +227,7 @@ namespace ManicDigger.ClientNative
 						else
 						{
 							os.pagein(og); // can safely ignore errors at
-							// this point
+										   // this point
 							while (true)
 							{
 								result = os.packetout(op);
@@ -237,7 +236,7 @@ namespace ManicDigger.ClientNative
 									break; // need more data
 								if (result == -1)
 								{ // missing or corrupt data at this page position
-									// no reason to complain; already complained above
+								  // no reason to complain; already complained above
 								}
 								else
 								{
@@ -298,8 +297,8 @@ namespace ManicDigger.ClientNative
 										output.Write(convbuffer, 0, 2 * vi.channels * bout);
 
 										vd.synthesis_read(bout); // tell libvorbis how
-										// many samples we
-										// actually consumed
+																 // many samples we
+																 // actually consumed
 									}
 								}
 							}

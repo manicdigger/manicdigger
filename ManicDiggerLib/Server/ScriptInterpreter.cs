@@ -1,11 +1,7 @@
 ﻿// Copyright (c) 2011 by Henon <meinrad.recheis@gmail.com>
+using Jint;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using Jint;
-using Jint.Native;
 
 namespace ManicDigger.Server
 {

@@ -1,13 +1,13 @@
 ﻿#region Using Statements
+using ManicDigger.ClientNative;
+using ManicDigger.Common;
+using ManicDigger.Server;
+using OpenTK.Graphics;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-using ManicDigger.ClientNative;
-using ManicDigger.Common;
-using ManicDigger.Server;
-using OpenTK.Graphics;
 #endregion
 
 public class ManicDiggerProgram
@@ -15,11 +15,11 @@ public class ManicDiggerProgram
 	[STAThread]
 	public static void Main(string[] args)
 	{
-		#if !DEBUG
+#if !DEBUG
 		//Catch unhandled exceptions
 		CrashReporter.DefaultFileName = "ManicDiggerClientCrash.txt";
 		CrashReporter.EnableGlobalExceptionHandling(false);
-		#endif
+#endif
 
 		new ManicDiggerProgram(args);
 	}
@@ -29,12 +29,12 @@ public class ManicDiggerProgram
 		dummyNetwork = new DummyNetwork();
 		dummyNetwork.Start(new MonitorObject(), new MonitorObject());
 
-		#if !DEBUG
+#if !DEBUG
 		crashreporter = new CrashReporter();
 		crashreporter.Start(delegate { Start(args); });
-		#else
+#else
 		Start(args);
-		#endif
+#endif
 	}
 
 	CrashReporter crashreporter;

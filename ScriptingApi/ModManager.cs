@@ -1,7 +1,6 @@
-﻿using System;
+﻿using ProtoBuf;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using ProtoBuf;
 using System.Runtime.Serialization;
 
 namespace ManicDigger

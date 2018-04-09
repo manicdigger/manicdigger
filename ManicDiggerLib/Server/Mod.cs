@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using ProtoBuf;
-using Jint.Delegates;
-using System.Net;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ManicDigger.Server
 {
@@ -117,7 +114,7 @@ namespace ManicDigger.Server
 		{
 			server.SetLightLevels(lightLevels);
 		}
-		
+
 		const string recipeError = "Recipe error:";
 
 		public void AddCraftingRecipe(string output, int outputAmount, string Input0, int Input0Amount)
@@ -778,8 +775,8 @@ namespace ManicDigger.Server
 						for (int i = 0; i < 8192 - 3; i++)
 						{
 							if (Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 0)) == 'a'
-							    && Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 1)) == 'r'
-							    && Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 2)) == 'm')
+								&& Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 1)) == 'r'
+								&& Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 2)) == 'm')
 							{
 								isArm = true;
 							}
@@ -876,7 +873,7 @@ namespace ManicDigger.Server
 			c.socket = new DummyNetConnection() { network = network };
 			c.Ping.SetTimeoutValue(int.MaxValue);
 			c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
-			                        * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
+									* server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
 			c.AssignGroup(server.defaultGroupRegistered);
 			server.PlayerEntitySetDirty(id);
 			return id;
@@ -1046,9 +1043,9 @@ namespace ManicDigger.Server
 		public void SetPlayerNameColor(int player, string color)
 		{
 			if (color.Equals("&0") || color.Equals("&1") || color.Equals("&2") || color.Equals("&3") ||
-			    color.Equals("&4") || color.Equals("&5") || color.Equals("&6") || color.Equals("&7") ||
-			    color.Equals("&8") || color.Equals("&9") || color.Equals("&a") || color.Equals("&b") ||
-			    color.Equals("&c") || color.Equals("&d") || color.Equals("&e") || color.Equals("&f"))
+				color.Equals("&4") || color.Equals("&5") || color.Equals("&6") || color.Equals("&7") ||
+				color.Equals("&8") || color.Equals("&9") || color.Equals("&a") || color.Equals("&b") ||
+				color.Equals("&c") || color.Equals("&d") || color.Equals("&e") || color.Equals("&f"))
 			{
 				server.clients[player].displayColor = color;
 				server.PlayerEntitySetDirty(player);

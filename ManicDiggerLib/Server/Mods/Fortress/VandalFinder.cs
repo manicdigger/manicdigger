@@ -14,21 +14,21 @@ namespace ManicDigger.Mods
 		{
 			m = manager;
 			m.SetBlockType("VandalFinder", new BlockType()
-			               {
-			               	AllTextures = "VandalFinder",
-			               	DrawType = DrawType.Solid,
-			               	WalkableType = WalkableType.Solid,
-			               	IsUsable = true,
-			               	IsTool = true,
-			               });
+			{
+				AllTextures = "VandalFinder",
+				DrawType = DrawType.Solid,
+				WalkableType = WalkableType.Solid,
+				IsUsable = true,
+				IsTool = true,
+			});
 			m.AddToCreativeInventory("VandalFinder");
 			m.RegisterOnBlockUseWithTool(OnUseWithTool);
 			lines = (List<object[]>)m.GetGlobalDataNotSaved("LogLines");
 		}
-		
+
 		ModManager m;
 		List<object[]> lines = new List<object[]>();
-		
+
 		void OnUseWithTool(int player, int x, int y, int z, int tool)
 		{
 			if (m.GetBlockName(tool) == "VandalFinder")
@@ -36,7 +36,7 @@ namespace ManicDigger.Mods
 				ShowBlockLog(player, x, y, z);
 			}
 		}
-		
+
 		void ShowBlockLog(int player, int x, int y, int z)
 		{
 			List<string> messages = new List<string>();

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace ManicDigger.Server
 {
@@ -109,7 +107,7 @@ namespace ManicDigger.Server
 				return;
 			}
 			c.notifyEntitiesAccum = 0;
-        
+
 			// find nearest entities
 			int max = SpawnMaxEntities;
 			ServerEntityId[] nearestEntities = new ServerEntityId[max];
@@ -201,9 +199,9 @@ namespace ManicDigger.Server
 					continue;
 				}
 				if (s.chunkx == value.chunkx
-				            && s.chunky == value.chunky
-				            && s.chunkz == value.chunkz
-				            && s.id == value.id)
+							&& s.chunky == value.chunky
+							&& s.chunkz == value.chunkz
+							&& s.id == value.id)
 				{
 					return true;
 				}

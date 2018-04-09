@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace ManicDigger.Common
@@ -82,7 +81,7 @@ namespace ManicDigger.Common
 			s.translated = translated;
 			strings[stringsCount++] = s;
 		}
-	
+
 		public override void Override(string language, string id, string translated)
 		{
 			if (IsNewLanguage(language))
@@ -185,7 +184,7 @@ namespace ManicDigger.Common
 			// not found
 			return id;
 		}
-	
+
 		public override string GetUsedLanguage()
 		{
 			// English as default language
@@ -196,7 +195,7 @@ namespace ManicDigger.Common
 			}
 			return currentLanguage;
 		}
-	
+
 		public override void NextLanguage()
 		{
 			if (OverrideLanguage == null)
@@ -228,7 +227,7 @@ namespace ManicDigger.Common
 			}
 			OverrideLanguage = loadedLanguages[languageIndex];
 		}
-	
+
 		bool IsNewLanguage(string language)
 		{
 			//Scan whole array of loaded languages if given already exists
@@ -246,7 +245,7 @@ namespace ManicDigger.Common
 			}
 			return true;
 		}
-	
+
 		public override TranslatedString[] AllStrings()
 		{
 			return strings;

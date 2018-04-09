@@ -9,7 +9,7 @@ namespace ManicDigger.Mods.War
 		{
 			m.RequireMod("CoreBlocks");
 		}
-		
+
 		public void Start(ModManager manager)
 		{
 			m = manager;
@@ -21,9 +21,9 @@ namespace ManicDigger.Mods.War
 		}
 		int Water;
 		int Sponge;
-		
+
 		ModManager m;
-		
+
 		void BlockBuild(int player, int x, int y, int z)
 		{
 			BlockChange(player, x, y, z);
@@ -32,7 +32,7 @@ namespace ManicDigger.Mods.War
 		{
 			BlockChange(player, x, y, z);
 		}
-		
+
 		void Update()
 		{
 			object enablewater = m.GetGlobalDataNotSaved("enablewater");
@@ -51,7 +51,7 @@ namespace ManicDigger.Mods.War
 				}
 			}
 		}
-		
+
 		int spongerange = 2;
 		bool IsSpongeNear(int x, int y, int z)
 		{
@@ -70,10 +70,10 @@ namespace ManicDigger.Mods.War
 			}
 			return false;
 		}
-		
+
 		public void BlockChange(int player, int x, int y, int z)
 		{
-			object enablewater=m.GetGlobalDataNotSaved("enablewater");
+			object enablewater = m.GetGlobalDataNotSaved("enablewater");
 			if (enablewater == null || (bool)enablewater == false)
 			{
 				return;
@@ -115,7 +115,7 @@ namespace ManicDigger.Mods.War
 			//var v = new Vector3i(x, y, z);
 			//tosetwater.Sort((a, b) => Distance(v, a).CompareTo(Distance(v, b)));
 		}
-		
+
 		float Distance(Vector3i a, Vector3i b)
 		{
 			float dx = a.X - b.X;
@@ -123,17 +123,17 @@ namespace ManicDigger.Mods.War
 			float dz = a.Z - b.Z;
 			return (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
 		}
-		
+
 		private bool IsWater(int block)
 		{
 			return block == Water;
 		}
-		
+
 		void BlockChangeFlood(int x, int y, int z)
 		{
 			//water here
 			if (m.IsValidPos(x, y, z)
-			    && IsWater(m.GetBlock(x, y, z)))
+				&& IsWater(m.GetBlock(x, y, z)))
 			{
 				Flood(new Vector3i(x, y, z));
 				return;
@@ -142,20 +142,20 @@ namespace ManicDigger.Mods.War
 			foreach (var vv in BlocksAround(new Vector3i(x, y, z)))
 			{
 				if (m.IsValidPos((int)vv.X, (int)vv.Y, (int)vv.Z) &&
-				    IsWater(m.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z)))
+					IsWater(m.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z)))
 				{
 					Flood(vv);
 					return;
 				}
 			}
 		}
-		
+
 		Dictionary<Vector3i, Vector3i> flooded = new Dictionary<Vector3i, Vector3i>();
 		//public List<Vector3i> tosetwater = new List<Vector3i>();
 		//public List<Vector3i> tosetempty = new List<Vector3i>();
 		Dictionary<Vector3i, Vector3i> toflood = new Dictionary<Vector3i, Vector3i>();
 		DateTime lastflood;
-		
+
 		private void Flood(Vector3i v)
 		{
 			if (!m.IsValidPos((int)v.X, (int)v.Y, (int)v.Z))
@@ -182,7 +182,7 @@ namespace ManicDigger.Mods.War
 				}
 			}
 		}
-		
+
 		IEnumerable<Vector3i> BlocksAround(Vector3i pos)
 		{
 			yield return new Vector3i(pos.X - 1, pos.Y, pos.Z);
@@ -192,7 +192,7 @@ namespace ManicDigger.Mods.War
 			yield return new Vector3i(pos.X, pos.Y, pos.Z - 1);
 			//yield return new Vector3i(pos.X, pos.Y, pos.Z + 1); //water does not flow up.
 		}
-		
+
 		public struct Vector3i
 		{
 			public Vector3i(int x, int y, int z)

@@ -1,7 +1,7 @@
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using ProtoBuf;
 
 namespace ManicDigger.Mods
 {
@@ -9,7 +9,7 @@ namespace ManicDigger.Mods
 	{
 		private ModManager m;
 		public static bool DEBUG = true;
-		
+
 		public void PreStart(ModManager m)
 		{
 			// Add all modfiles here which contain block definitions.
@@ -18,30 +18,30 @@ namespace ManicDigger.Mods
 			m.RequireMod("Tnt");
 			m.RequireMod("PermissionBlock");
 			m.RequireMod("VandalFinder");
-			
+
 		}
 		public void Start(ModManager manager)
 		{
 			m = manager;
 			m.RegisterOnLoad(OnLoad);
 		}
-		
+
 		public void OnLoad()
 		{
 			if (DEBUG) Console.WriteLine("############# BlockID Mod #############");
-			
-			
+
+
 			// Assigned blocks (in Default.cs and other mod files).
 			Dictionary<int, Block> assignedBlocks = new Dictionary<int, Block>();
 			if (DEBUG)
 				Console.WriteLine("## Current assigned IDs:");
-			
+
 			for (int i = 0; i < m.GetMaxBlockTypes(); i++)
 			{
 				string s = m.GetBlockName(i);
 				if (s != null)
 				{
-					assignedBlocks.Add(i, new Block {Name = s, Type = m.GetBlockType(i) });
+					assignedBlocks.Add(i, new Block { Name = s, Type = m.GetBlockType(i) });
 					if (DEBUG)
 						Console.WriteLine(i + ": " + s);
 				}
@@ -51,7 +51,7 @@ namespace ManicDigger.Mods
 						Console.WriteLine(i + ": not set");
 				}
 			}
-			
+
 			// Expected blocks (blocks which were used before with the savegame).
 			Dictionary<int, string> expectedBlocks = LoadBlockIdsFromDatabase();
 			if (DEBUG)
@@ -61,29 +61,29 @@ namespace ManicDigger.Mods
 				{
 					Console.WriteLine("No expected IDs!");
 				}
-				
+
 				foreach (var b in expectedBlocks)
 				{
 					Console.WriteLine(b.Key + ": " + b.Value);
 				}
 			}
-			
+
 			// Reassign IDs.
 			Dictionary<int, Block> reassignedBlocks = this.ReassignBlockIds(assignedBlocks, expectedBlocks);
-			
+
 			// Set blocktypes again to game with new reassigned IDs.
 			for (int i = 0; i < m.GetMaxBlockTypes(); i++)
 			{
 				if (reassignedBlocks.ContainsKey(i))
 				{
-					m.SetBlockType(i, reassignedBlocks [i].Name, reassignedBlocks [i].Type);
+					m.SetBlockType(i, reassignedBlocks[i].Name, reassignedBlocks[i].Type);
 				}
 				else
 				{
 					m.SetBlockType(i, "", new BlockType() { });
 				}
 			}
-			
+
 			// Finally save new block order to savegame.
 			Dictionary<int, string> newBlockIDs = new Dictionary<int, string>();
 			if (DEBUG) Console.WriteLine("## New Block IDs (storing to savegame):");
@@ -94,7 +94,7 @@ namespace ManicDigger.Mods
 			}
 			SaveBlockIdsToDatabase(newBlockIDs);
 		}
-		
+
 		public Dictionary<int, string> LoadBlockIdsFromDatabase()
 		{
 			Dictionary<int, string> blocks = new Dictionary<int, string>();
@@ -118,7 +118,7 @@ namespace ManicDigger.Mods
 			}
 			return blocks;
 		}
-		
+
 		public void SaveBlockIdsToDatabase(Dictionary<int, string> blocks)
 		{
 			if (blocks != null)
@@ -133,14 +133,14 @@ namespace ManicDigger.Mods
 				if (DEBUG) Console.WriteLine("Block IDs not set");
 			}
 		}
-		
+
 		public Dictionary<int, Block> ReassignBlockIds(Dictionary<int, Block> assignedBlocks, Dictionary<int, string> expectedBlocks)
 		{
 			Dictionary<int, Block> reassignedBlocks = new Dictionary<int, Block>();
-			
-			
+
+
 			List<int> keysToRemove = new List<int>();
-			
+
 			// Assign block IDs which exist in assigned blocks and expected blocks (apply expected IDs).
 			foreach (var k in assignedBlocks)
 			{
@@ -191,7 +191,7 @@ namespace ManicDigger.Mods
 			}
 			return reassignedBlocks;
 		}
-		
+
 		public class Block
 		{
 			public string Name;

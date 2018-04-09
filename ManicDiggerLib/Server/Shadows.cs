@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Drawing;
-using System.Runtime.InteropServices;
-
-namespace ManicDigger.Server
+﻿namespace ManicDigger.Server
 {
 	public class InfiniteMapChunked2dServer
 	{

@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using ManicDigger.Common;
+﻿using ManicDigger.Common;
+using System.Diagnostics;
 
 namespace ManicDigger.Server
 {
@@ -153,14 +153,16 @@ namespace ManicDigger.Server
 				{
 					byte[] heightmapchunk = Misc.UshortArrayToByteArray(server.d_Map.GetHeightmapChunk(globalpos.x, globalpos.y));
 					byte[] compressedHeightmapChunk = server.d_NetworkCompression.Compress(heightmapchunk);
-					Packet_ServerHeightmapChunk p1 = new Packet_ServerHeightmapChunk() {
+					Packet_ServerHeightmapChunk p1 = new Packet_ServerHeightmapChunk()
+					{
 						X = globalpos.x,
 						Y = globalpos.y,
 						SizeX = Server.chunksize,
 						SizeY = Server.chunksize,
 						CompressedHeightmap = compressedHeightmapChunk,
 					};
-					server.SendPacket(clientid, server.Serialize(new Packet_Server() {
+					server.SendPacket(clientid, server.Serialize(new Packet_Server()
+					{
 						Id = Packet_ServerIdEnum.HeightmapChunk,
 						HeightmapChunk = p1
 					}));
@@ -171,16 +173,19 @@ namespace ManicDigger.Server
 			{
 				foreach (byte[] part in Server.Parts(compressedchunk, 1024))
 				{
-					Packet_ServerChunkPart p1 = new Packet_ServerChunkPart() {
+					Packet_ServerChunkPart p1 = new Packet_ServerChunkPart()
+					{
 						CompressedChunkPart = part,
 					};
-					server.SendPacket(clientid, server.Serialize(new Packet_Server() {
+					server.SendPacket(clientid, server.Serialize(new Packet_Server()
+					{
 						Id = Packet_ServerIdEnum.ChunkPart,
 						ChunkPart = p1
 					}));
 				}
 			}
-			Packet_ServerChunk p = new Packet_ServerChunk() {
+			Packet_ServerChunk p = new Packet_ServerChunk()
+			{
 				X = globalpos.x,
 				Y = globalpos.y,
 				Z = globalpos.z,
@@ -188,7 +193,8 @@ namespace ManicDigger.Server
 				SizeY = Server.chunksize,
 				SizeZ = Server.chunksize,
 			};
-			server.SendPacket(clientid, server.Serialize(new Packet_Server() {
+			server.SendPacket(clientid, server.Serialize(new Packet_Server()
+			{
 				Id = Packet_ServerIdEnum.Chunk_,
 				Chunk_ = p
 			}));

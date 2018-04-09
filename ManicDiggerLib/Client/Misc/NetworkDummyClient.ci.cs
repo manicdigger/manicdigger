@@ -2,7 +2,7 @@
 {
 	internal GamePlatform platform;
 	internal DummyNetwork network;
-	
+
 	public override NetConnection Connect(string ip, int port)
 	{
 		return new DummyNetConnectionCi();
@@ -40,7 +40,7 @@
 
 	public override void Start()
 	{
-		
+
 	}
 
 	public void SetNetwork(DummyNetwork network_)

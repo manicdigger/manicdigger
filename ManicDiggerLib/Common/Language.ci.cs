@@ -1,7 +1,7 @@
 ﻿public abstract class Language
 {
 	internal string OverrideLanguage;
-	
+
 	public string CannotWriteChatLog() { return Get("CannotWriteChatLog"); }
 	public string Connecting() { return Get("Connecting"); }
 	public string ConnectingProgressKilobytes() { return Get("ConnectingProgressKilobytes"); }
@@ -68,7 +68,7 @@
 	public string OptionFramerate() { return Get("OptionFramerate"); }
 	public string OptionResolution() { return Get("OptionResolution"); }
 	public string OptionFullscreen() { return Get("OptionFullscreen"); }
-	
+
 	public string ServerCannotWriteLog() { return Get("Server_CannotWriteLogFile"); }
 	public string ServerLoadingSavegame() { return Get("Server_LoadingSavegame"); }
 	public string ServerCreatingSavegame() { return Get("Server_CreatingSavegame"); }

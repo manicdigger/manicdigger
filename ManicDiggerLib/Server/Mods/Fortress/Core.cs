@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ManicDigger.Mods
+﻿namespace ManicDigger.Mods
 {
 	/// <summary>
 	/// This class contains core settings for the Manic Digger server

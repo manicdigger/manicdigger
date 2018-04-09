@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ManicDigger.Mods
+﻿namespace ManicDigger.Mods
 {
 	public class Food : IMod
 	{
@@ -11,9 +9,9 @@ namespace ManicDigger.Mods
 		public void Start(ModManager manager)
 		{
 			m = manager;
-			
+
 			m.RegisterOnBlockUse(OnUse);
-			
+
 			Cake = m.GetBlockId("Cake");
 			Apples = m.GetBlockId("Apples");
 		}
@@ -27,20 +25,20 @@ namespace ManicDigger.Mods
 				Cake,
 				Apples
 			};
-			for(int i = 0; i < food.Length; i++)
+			for (int i = 0; i < food.Length; i++)
 			{
-			    if (m.GetBlock(x, y, z) == food[i])
+				if (m.GetBlock(x, y, z) == food[i])
 				{
 					int health = m.GetPlayerHealth(player);
 					int maxhealth = m.GetPlayerMaxHealth(player);
-	
+
 					health += 30;
-	
+
 					if (health > maxhealth)
 					{
 						health = maxhealth;
 					}
-	
+
 					m.SetPlayerHealth(player, health, maxhealth);
 					m.SetBlock(x, y, z, 0);
 				}
