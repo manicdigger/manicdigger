@@ -105,7 +105,7 @@
 		menu.StartMultiplayer();
 	}
 
-	public override void OnButtonA(AbstractMenuWidget w)
+	public override void OnButton(AbstractMenuWidget w)
 	{
 		if (w == wbtn_connect)
 		{

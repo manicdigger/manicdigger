@@ -176,7 +176,7 @@
 	LoginResultRef loginResult;
 	LoginData loginResultData;
 
-	public override void OnButtonA(AbstractMenuWidget w)
+	public override void OnButton(AbstractMenuWidget w)
 	{
 		if (w == wbtn_login)
 		{
