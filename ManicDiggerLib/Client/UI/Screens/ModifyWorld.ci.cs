@@ -31,8 +31,7 @@
 		wtxt_title.x = menu.p.GetCanvasWidth() / 2;
 		wtxt_title.y = 10 * scale;
 
-		menu.DrawBackground();
-		DrawWidgets();
+		DrawWidgets(dt);
 	}
 
 	public override void OnBackPressed()

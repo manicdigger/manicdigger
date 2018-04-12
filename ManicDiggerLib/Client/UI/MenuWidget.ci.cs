@@ -98,7 +98,7 @@ public abstract class AbstractMenuWidget
 		return (args.GetX() >= x && args.GetX() <= x + sizex &&
 			args.GetY() >= y && args.GetY() <= y + sizey);
 	}
-	public abstract void Draw(UiRenderer renderer);
+	public abstract void Draw(float dt, UiRenderer renderer);
 
 	public virtual void SetFocused(bool hasFocus)
 	{

@@ -9,10 +9,10 @@
 	public override void OnNewFrameDraw2d(Game game, float deltaTime)
 	{
 		game.packetHandlers[Packet_ServerIdEnum.Dialog] = packetHandler;
-		DrawDialogs(game);
+		DrawDialogs(game, deltaTime);
 	}
 
-	internal void DrawDialogs(Game game)
+	internal void DrawDialogs(Game game, float deltaTime)
 	{
 		for (int i = 0; i < game.dialogsCount; i++)
 		{
@@ -21,7 +21,7 @@
 				continue;
 			}
 			VisibleDialog d = game.dialogs[i];
-			d.screen.DrawWidgets();
+			d.screen.DrawWidgets(deltaTime);
 		}
 	}
 

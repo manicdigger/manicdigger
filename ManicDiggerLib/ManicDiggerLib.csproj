@@ -196,6 +196,7 @@
     <Compile Include="Client\SimpleServer\NetworkDummyServer.ci.cs" />
     <Compile Include="Client\SimpleServer\ServerSimple.ci.cs" />
     <Compile Include="Client\UI\UiRenderer.ci.cs" />
+    <Compile Include="Client\UI\Widgets\AnimatedBackgroundWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ButtonWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\CheckBoxWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ImageWidget.ci.cs" />

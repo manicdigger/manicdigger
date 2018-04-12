@@ -161,8 +161,7 @@
 		}
 
 		// draw everything
-		menu.DrawBackground();
-		DrawWidgets();
+		DrawWidgets(dt);
 	}
 	public override void OnButton(AbstractMenuWidget w)
 	{

@@ -98,8 +98,7 @@
 		wbtn_exit.sizex = buttonwidth;
 		wbtn_exit.sizey = buttonheight;
 
-		menu.DrawBackground();
-		DrawWidgets();
+		DrawWidgets(dt);
 	}
 
 	public override void OnButton(AbstractMenuWidget w)

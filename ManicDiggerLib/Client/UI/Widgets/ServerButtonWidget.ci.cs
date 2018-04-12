@@ -62,7 +62,7 @@
 	//	_textDescription = new TextWidget(x + 70, y + sizey - 5, _motd, _fontServerDescription, TextAlign.Left, TextBaseline.Bottom);
 	//}
 
-	public override void Draw(UiRenderer renderer)
+	public override void Draw(float dt, UiRenderer renderer)
 	{
 		if (!visible) { return; }
 		if (sizex <= 0 || sizey <= 0) { return; }
@@ -98,16 +98,16 @@
 
 		_textHeading.x = x + 70;
 		_textHeading.y = y + 5;
-		_textHeading.Draw(renderer);
+		_textHeading.Draw(dt, renderer);
 		_textGamemode.x = x + sizex - 10;
 		_textGamemode.y = y + sizey - 5;
-		_textGamemode.Draw(renderer);
+		_textGamemode.Draw(dt, renderer);
 		_textPlayercount.x = x + sizex - 10;
 		_textPlayercount.y = y + 5;
-		_textPlayercount.Draw(renderer);
+		_textPlayercount.Draw(dt, renderer);
 		_textDescription.x = x + 70;
 		_textDescription.y = y + sizey - 5;
-		_textDescription.Draw(renderer);
+		_textDescription.Draw(dt, renderer);
 	}
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{

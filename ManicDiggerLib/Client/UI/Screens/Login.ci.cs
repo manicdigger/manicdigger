@@ -164,8 +164,7 @@
 		wbtn_back.sizex = 256 * scale;
 		wbtn_back.sizey = 64 * scale;
 
-		menu.DrawBackground();
-		DrawWidgets();
+		DrawWidgets(dt);
 	}
 
 	public override void OnBackPressed()

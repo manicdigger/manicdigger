@@ -87,11 +87,11 @@
 		widgets[WidgetCount] = widget;
 		WidgetCount++;
 	}
-	public void DrawWidgets()
+	public void DrawWidgets(float dt)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].Draw(uiRenderer);
+			widgets[i].Draw(dt, uiRenderer);
 		}
 	}
 }

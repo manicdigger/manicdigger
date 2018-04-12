@@ -59,7 +59,7 @@
 		}
 	}
 
-	public override void Draw(UiRenderer renderer)
+	public override void Draw(float dt, UiRenderer renderer)
 	{
 		if (!visible) { return; }
 		if (sizex <= 0 || sizey <= 0) { return; }
@@ -81,7 +81,7 @@
 		{
 			_text.SetX(x + sizex / 2);
 			_text.SetY(y + sizey / 2);
-			_text.Draw(renderer);
+			_text.Draw(dt, renderer);
 		}
 	}
 

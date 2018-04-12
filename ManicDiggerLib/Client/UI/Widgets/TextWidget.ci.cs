@@ -29,7 +29,7 @@
 	//	_baseline = baseline;
 	//}
 
-	public override void Draw(UiRenderer renderer)
+	public override void Draw(float dt, UiRenderer renderer)
 	{
 		if (!visible) { return; }
 		if (_text == null || _font == null) { return; }

@@ -32,7 +32,7 @@
 		wtxt_pageNr.SetVisible(false);
 	}
 
-	public override void Draw(UiRenderer renderer)
+	public override void Draw(float dt, UiRenderer renderer)
 	{
 		if (!visible) { return; }
 		if (sizex <= 0 || sizey <= 0) { return; }
@@ -113,11 +113,11 @@
 		// draw child elements
 		for (int i = 0; i < entriesPerPage; i++)
 		{
-			listButtons[i].Draw(renderer);
+			listButtons[i].Draw(dt, renderer);
 		}
-		wbtn_pageUp.Draw(renderer);
-		wbtn_pageDown.Draw(renderer);
-		wtxt_pageNr.Draw(renderer);
+		wbtn_pageUp.Draw(dt, renderer);
+		wbtn_pageDown.Draw(dt, renderer);
+		wtxt_pageNr.Draw(dt, renderer);
 	}
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{

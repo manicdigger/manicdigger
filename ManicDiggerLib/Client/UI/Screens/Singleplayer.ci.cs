@@ -94,8 +94,7 @@
 		// TODO: Implement savegame handling in game menu
 		//LoadSavegameList(p);
 
-		menu.DrawBackground();
-		DrawWidgets();
+		DrawWidgets(dt);
 
 		if (!menu.p.SinglePlayerServerAvailable())
 		{

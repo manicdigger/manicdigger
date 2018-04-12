@@ -23,7 +23,7 @@
 		_textDescription.SetBaseline(TextBaseline.Middle);
 	}
 
-	public override void Draw(UiRenderer renderer)
+	public override void Draw(float dt, UiRenderer renderer)
 	{
 		if (!visible) { return; }
 		if (sizex <= 0 || sizey <= 0) { return; }
@@ -35,8 +35,8 @@
 
 		// TODO: use atlas texture
 		renderer.Draw2dTexture(renderer.GetTexture(_stateChecked ? _textureNameChecked : _textureNameUnchecked), x, y, sizey, sizey, null, 0, color);
-		_textState.Draw(renderer);
-		_textDescription.Draw(renderer);
+		_textState.Draw(dt, renderer);
+		_textDescription.Draw(dt, renderer);
 	}
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{

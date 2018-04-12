@@ -65,11 +65,11 @@
 	public virtual void OnBackPressed() { }
 	public virtual void OnButton(AbstractMenuWidget w) { }
 
-	public void DrawWidgets()
+	public void DrawWidgets(float dt)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].Draw(game.uiRenderer);
+			widgets[i].Draw(dt, game.uiRenderer);
 		}
 	}
 }
