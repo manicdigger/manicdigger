@@ -8,8 +8,8 @@
     <ProjectGuid>{DE9E0B36-6171-4DA3-9495-0A82445B6D74}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MdMonsterEditor</RootNamespace>
-    <AssemblyName>MdMonsterEditor</AssemblyName>
+    <RootNamespace>ManicDigger.MonsterEditor</RootNamespace>
+    <AssemblyName>ManicDigger.MonsterEditor</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkSubset>
@@ -92,13 +92,13 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ManicDiggerLib\ManicDiggerLib.csproj">
+    <ProjectReference Include="..\ManicDigger.Common\ManicDigger.Common.csproj">
       <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
-      <Name>ManicDiggerLib</Name>
+      <Name>ManicDigger.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
+    <ProjectReference Include="..\ManicDigger\ManicDigger.Client.csproj">
       <Project>{650bc108-c744-4da1-aefd-cd8f011483b3}</Project>
-      <Name>ManicDigger</Name>
+      <Name>ManicDigger.Client</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

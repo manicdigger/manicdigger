@@ -1,4 +1,4 @@
-﻿namespace MdMonsterEditor
+﻿namespace ManicDigger.MonsterEditor
 {
 	partial class Form1
 	{
@@ -201,7 +201,7 @@
 			this.MainMenuStrip = this.menuStrip1;
 			this.Name = "Form1";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-			this.Text = "MdMonsterEditor";
+			this.Text = "ManicDigger MonsterEditor";
 			this.Load += new System.EventHandler(this.Form1_Load);
 			((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.trackBar2)).EndInit();

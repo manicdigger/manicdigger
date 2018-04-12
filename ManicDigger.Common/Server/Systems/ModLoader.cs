@@ -68,7 +68,7 @@ namespace ManicDigger.Server
 
 		Dictionary<string, string> GetScriptSources(Server server)
 		{
-			string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Server"), "Mods"), "Mods" };
+			string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDigger.Common"), "Server"), "Mods"), "Mods" };
 
 			for (int i = 0; i < modpaths.Length; i++)
 			{
@@ -170,7 +170,7 @@ namespace ManicDigger.Server
 
 			parms.ReferencedAssemblies.Add("System.dll");
 			parms.ReferencedAssemblies.Add("System.Drawing.dll");
-			parms.ReferencedAssemblies.Add("ScriptingApi.dll");
+			parms.ReferencedAssemblies.Add("ManicDigger.ScriptingApi.dll");
 			parms.ReferencedAssemblies.Add("LibNoise.dll");
 			parms.ReferencedAssemblies.Add("protobuf-net.dll");
 			parms.ReferencedAssemblies.Add("System.Xml.dll");

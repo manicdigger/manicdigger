@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ManicDigger</RootNamespace>
-    <AssemblyName>ManicDiggerLib</AssemblyName>
+    <AssemblyName>ManicDigger.Common</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkSubset>
     </TargetFrameworkSubset>
@@ -200,6 +200,7 @@
     <Compile Include="Client\UI\Widgets\ButtonWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\CheckBoxWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ImageWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\KeyListenerWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ListWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ProgressBarWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\ServerButtonWidget.ci.cs" />
@@ -310,9 +311,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ScriptingApi\ScriptingApi.csproj">
+    <ProjectReference Include="..\ManicDigger.ScriptingApi\ManicDigger.ScriptingApi.csproj">
       <Project>{A3582245-A1D1-4135-BA90-8EFD7830DA83}</Project>
-      <Name>ScriptingApi</Name>
+      <Name>ManicDigger.ScriptingApi</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

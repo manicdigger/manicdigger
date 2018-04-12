@@ -9,7 +9,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
-namespace MdMonsterEditor
+namespace ManicDigger.MonsterEditor
 {
 	public partial class Form1 : Form
 	{

@@ -7,22 +7,22 @@ mkdir output
 cp -R data output
 
 # Dll
-cp ManicDiggerLib/bin/Release/ManicDiggerLib.dll output
+cp ManicDigger.Common/bin/Release/ManicDigger.Common.dll output
 
 # Scripting API
-cp ScriptingApi/bin/Release/ScriptingApi.dll output
+cp ManicDigger.ScriptingApi/bin/Release/ManicDigger.ScriptingApi.dll output
 
 # Game Client
 cp ManicDigger/bin/Release/*.exe output
 
 # Server
-cp ManicDiggerServer/bin/Release/*.exe output
+cp ManicDigger.Server/bin/Release/*.exe output
 
 # Monster editor
-cp MdMonsterEditor/bin/Release/*.exe output
+cp ManicDigger.MonsterEditor/bin/Release/*.exe output
 
 # Server Mods
-cp -R ManicDiggerLib/Server/Mods output
+cp -R ManicDigger.Common/Server/Mods output
 
 # Third-party libraries
 cp Lib/* output

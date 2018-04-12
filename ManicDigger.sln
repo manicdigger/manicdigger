@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger", "ManicDigger\ManicDigger.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger.Client", "ManicDigger\ManicDigger.Client.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDiggerServer", "ManicDiggerServer\ManicDiggerServer.csproj", "{46D2CD51-9603-48B4-87D1-7377B5F1E51E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger.Server", "ManicDigger.Server\ManicDigger.Server.csproj", "{46D2CD51-9603-48B4-87D1-7377B5F1E51E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDiggerLib", "ManicDiggerLib\ManicDiggerLib.csproj", "{08056549-3BE8-454C-A09A-67EDCDC81261}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger.Common", "ManicDigger.Common\ManicDigger.Common.csproj", "{08056549-3BE8-454C-A09A-67EDCDC81261}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdMonsterEditor", "MdMonsterEditor\MdMonsterEditor.csproj", "{DE9E0B36-6171-4DA3-9495-0A82445B6D74}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger.MonsterEditor", "ManicDigger.MonsterEditor\ManicDigger.MonsterEditor.csproj", "{DE9E0B36-6171-4DA3-9495-0A82445B6D74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptingApi", "ScriptingApi\ScriptingApi.csproj", "{A3582245-A1D1-4135-BA90-8EFD7830DA83}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger.ScriptingApi", "ManicDigger.ScriptingApi\ManicDigger.ScriptingApi.csproj", "{A3582245-A1D1-4135-BA90-8EFD7830DA83}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger.Tests", "ManicDigger.Tests\ManicDigger.Tests.csproj", "{8EDF4429-251A-416D-BB68-93F227191BCF}"
 EndProject

@@ -11,15 +11,15 @@ mkdir cito\output\JsTa
 REM Create list of input files
 setlocal enabledelayedexpansion enableextensions
 set LIST=
-for %%x in (ManicDiggerLib\Client\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Client\MainMenu\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Client\Mods\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Client\Misc\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Client\SimpleServer\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Client\UI\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Client\UI\Screens\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Client\UI\Widgets\*.ci.cs) do set LIST=!LIST! %%x
-for %%x in (ManicDiggerLib\Common\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\MainMenu\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\Mods\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\Misc\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\SimpleServer\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\UI\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\UI\Screens\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Client\UI\Widgets\*.ci.cs) do set LIST=!LIST! %%x
+for %%x in (ManicDigger.Common\Common\*.ci.cs) do set LIST=!LIST! %%x
 set LIST=%LIST:~1%
 echo %LIST%
 

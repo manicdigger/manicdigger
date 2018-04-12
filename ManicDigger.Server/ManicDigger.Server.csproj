@@ -5,16 +5,33 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{A3582245-A1D1-4135-BA90-8EFD7830DA83}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{46D2CD51-9603-48B4-87D1-7377B5F1E51E}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ScriptingApi</RootNamespace>
-    <AssemblyName>ScriptingApi</AssemblyName>
+    <RootNamespace>ManicDigger.Server</RootNamespace>
+    <AssemblyName>ManicDigger.Server</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkSubset>
+    </TargetFrameworkSubset>
+    <PlatformTarget>x86</PlatformTarget>
     <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>a.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkProfile />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -24,6 +41,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,56 +50,52 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'FastBuild|AnyCPU' ">
     <OutputPath>bin\FastBuild\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LibNoise, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ac5ddaf0378201b7, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\LibNoise.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="protobuf-net, Version=2.1.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
-      <HintPath>..\packages\protobuf-net.2.1.0\lib\net45\protobuf-net.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="libHTTP\HttpMethod.cs" />
-    <Compile Include="libHTTP\HttpRequest.cs" />
-    <Compile Include="libHTTP\HttpRequestReader.cs" />
-    <Compile Include="libHTTP\HttpResponse.cs" />
-    <Compile Include="libHTTP\HttpResponseWriter.cs" />
-    <Compile Include="libHTTP\HttpServer.cs" />
-    <Compile Include="libHTTP\HttpStatusCode.cs" />
-    <Compile Include="libHTTP\IHttpModule.cs" />
-    <Compile Include="libHTTP\Modules\HelloWorld.cs" />
-    <Compile Include="libHTTP\Modules\TestPost.cs" />
-    <Compile Include="libHTTP\ResponseProducer.cs" />
-    <Compile Include="ModManager.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServerClient.cs" />
-    <Compile Include="ServerEntity.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="libHTTP\libHTTP.csproj" />
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\ManicDigger.Common\ManicDigger.Common.csproj">
+      <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
+      <Name>ManicDigger.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ManicDigger\ManicDigger.Client.csproj">
+      <Project>{650BC108-C744-4DA1-AEFD-CD8F011483B3}</Project>
+      <Name>ManicDigger.Client</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
