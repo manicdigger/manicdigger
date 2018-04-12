@@ -21,10 +21,6 @@
 				continue;
 			}
 			VisibleDialog d = game.dialogs[i];
-			int x = game.Width() / 2 - d.value.Width / 2;
-			int y = game.Height() / 2 - d.value.Height_ / 2;
-			d.screen.screenx = x;
-			d.screen.screeny = y;
 			d.screen.DrawWidgets();
 		}
 	}
@@ -210,65 +206,62 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 	GameScreen ConvertDialog(Game game, Packet_Dialog p)
 	{
 		DialogScreen s = new DialogScreen();
-		s.widgets = new MenuWidget[p.WidgetsCount];
+		s.widgets = new AbstractMenuWidget[p.WidgetsCount];
 		s.WidgetCount = p.WidgetsCount;
 		for (int i = 0; i < p.WidgetsCount; i++)
 		{
 			Packet_Widget a = p.Widgets[i];
-			MenuWidget b = new MenuWidget();
-			if (a.Type == Packet_WidgetTypeEnum.Text)
+			AbstractMenuWidget b = null;
+			switch (a.Type)
 			{
-				b.type = WidgetType.Label;
-			}
-			if (a.Type == Packet_WidgetTypeEnum.Image)
-			{
-				b.type = WidgetType.Button;
-			}
-			if (a.Type == Packet_WidgetTypeEnum.TextBox)
-			{
-				b.type = WidgetType.Textbox;
+				case Packet_WidgetTypeEnum.Image:
+					ImageWidget newImg = new ImageWidget();
+					if (a.Image == "Solid")
+					{
+						newImg.SetTextureName(a.Image);
+					}
+					else if (a.Image != null)
+					{
+						newImg.SetTextureName(StringTools.StringAppend(game.platform, a.Image, ".png"));
+					}
+					b = newImg;
+					break;
+				case Packet_WidgetTypeEnum.Text:
+					TextWidget newTxt = new TextWidget();
+					FontCi newFont = new FontCi();
+					if (a.Font != null)
+					{
+						newFont.family = game.ValidFont(a.Font.FamilyName);
+						newFont.size = game.DeserializeFloat(a.Font.SizeFloat);
+						newFont.style = a.Font.FontStyle;
+					}
+					newTxt.SetFont(newFont);
+					string tmp = a.Text;
+					if (tmp != null)
+					{
+						// dynamic string replacement
+						tmp = game.platform.StringReplace(tmp, "!SERVER_IP!", game.ServerInfo.connectdata.Ip);
+						tmp = game.platform.StringReplace(tmp, "!SERVER_PORT!", game.platform.IntToString(game.ServerInfo.connectdata.Port));
+					}
+					newTxt.SetText(tmp);
+					b = newTxt;
+					break;
+				case Packet_WidgetTypeEnum.TextBox:
+					TextBoxWidget newTbx = new TextBoxWidget();
+					b = newTbx;
+					break;
 			}
 			b.x = a.X;
 			b.y = a.Y;
 			b.sizex = a.Width;
 			b.sizey = a.Height_;
-			b.text = a.Text;
-			if (b.text != null)
-			{
-				b.text = game.platform.StringReplace(b.text, "!SERVER_IP!", game.ServerInfo.connectdata.Ip);
-			}
-			if (b.text != null)
-			{
-				b.text = game.platform.StringReplace(b.text, "!SERVER_PORT!", game.platform.IntToString(game.ServerInfo.connectdata.Port));
-			}
 			b.color = a.Color;
-			if (a.Font != null)
-			{
-				b.font = new FontCi();
-				b.font.family = game.ValidFont(a.Font.FamilyName);
-				b.font.size = game.DeserializeFloat(a.Font.SizeFloat);
-				b.font.style = a.Font.FontStyle;
-			}
 			b.id = a.Id;
-			b.isbutton = a.ClickKey != 0;
-			if (a.Image == "Solid")
-			{
-				b.image = null;
-			}
-			else if (a.Image != null)
-			{
-				b.image = StringTools.StringAppend(game.platform, a.Image, ".png");
-			}
+
+			// TODO: support interactivity
+			//b.isbutton = a.ClickKey != 0;
+
 			s.widgets[i] = b;
-		}
-		for (int i = 0; i < s.WidgetCount; i++)
-		{
-			if (s.widgets[i] == null) { continue; }
-			if (s.widgets[i].type == WidgetType.Textbox)
-			{
-				s.widgets[i].editing = true;
-				break;
-			}
 		}
 		return s;
 	}
@@ -276,21 +269,22 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 
 public class DialogScreen : GameScreen
 {
-	public override void OnButton(MenuWidget w)
+	public override void OnButton(AbstractMenuWidget w)
 	{
-		if (w.isbutton)
-		{
-			string[] textValues = new string[WidgetCount];
-			for (int i = 0; i < WidgetCount; i++)
-			{
-				string s = widgets[i].text;
-				if (s == null)
-				{
-					s = "";
-				}
-				textValues[i] = s;
-			}
-			game.SendPacketClient(ClientPackets.DialogClick(w.id, textValues, WidgetCount));
-		}
+		// TODO: button handling
+		//if (w.isbutton)
+		//{
+		//	string[] textValues = new string[WidgetCount];
+		//	for (int i = 0; i < WidgetCount; i++)
+		//	{
+		//		string s = widgets[i].text;
+		//		if (s == null)
+		//		{
+		//			s = "";
+		//		}
+		//		textValues[i] = s;
+		//	}
+		//	game.SendPacketClient(ClientPackets.DialogClick(w.id, textValues, WidgetCount));
+		//}
 	}
 }

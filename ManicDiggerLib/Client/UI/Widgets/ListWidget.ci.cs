@@ -32,19 +32,19 @@
 		wtxt_pageNr.SetVisible(false);
 	}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
 		if (!visible) { return; }
-		if (sizex < 0 || sizey < 0) { return; }
+		if (sizex <= 0 || sizey <= 0) { return; }
 
 		const int padding = 6;
 		const int elementSizeY = 64;
-		float scale = m.GetScale();
+		float scale = renderer.GetScale();
 
 		// calculation only needed if height changed
 		if (lastSizeY != sizey)
 		{
-			entriesPerPage = m.p.FloatToInt(sizey / ((elementSizeY + padding) * scale));
+			entriesPerPage = renderer.GetPlatform().FloatToInt(sizey / ((elementSizeY + padding) * scale));
 			listButtons = new ServerButtonWidget[entriesPerPage];
 			for (int i = 0; i < entriesPerPage; i++)
 			{
@@ -104,7 +104,7 @@
 		texName = "serverlist_nav_up.png";
 		wbtn_pageDown.SetTextureNames(texName, texName, texName);
 
-		wtxt_pageNr.SetText(m.p.IntToString(currentPage + 1));
+		wtxt_pageNr.SetText(renderer.GetPlatform().IntToString(currentPage + 1));
 		wtxt_pageNr.x = x + sizex - (elementSizeY / 2) * scale;
 		wtxt_pageNr.y = y + (sizey / 2);
 		wtxt_pageNr.SetAlignment(TextAlign.Center);
@@ -113,11 +113,11 @@
 		// draw child elements
 		for (int i = 0; i < entriesPerPage; i++)
 		{
-			listButtons[i].Draw(m);
+			listButtons[i].Draw(renderer);
 		}
-		wbtn_pageUp.Draw(m);
-		wbtn_pageDown.Draw(m);
-		wtxt_pageNr.Draw(m);
+		wbtn_pageUp.Draw(renderer);
+		wbtn_pageDown.Draw(renderer);
+		wtxt_pageNr.Draw(renderer);
 	}
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{

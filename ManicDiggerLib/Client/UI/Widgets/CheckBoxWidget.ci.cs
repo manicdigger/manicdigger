@@ -23,16 +23,20 @@
 		_textDescription.SetBaseline(TextBaseline.Middle);
 	}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
+		if (!visible) { return; }
+		if (sizex <= 0 || sizey <= 0) { return; }
+
 		_textState.x = x + sizey / 2;
 		_textState.y = y + sizey / 2;
 		_textDescription.x = x + sizey + 6;
 		_textDescription.y = y + sizey / 2;
 
-		m.Draw2dQuad(m.GetTexture(_stateChecked ? _textureNameChecked : _textureNameUnchecked), x, y, sizey, sizey);
-		_textState.Draw(m);
-		_textDescription.Draw(m);
+		// TODO: use atlas texture
+		renderer.Draw2dTexture(renderer.GetTexture(_stateChecked ? _textureNameChecked : _textureNameUnchecked), x, y, sizey, sizey, null, 0, color);
+		_textState.Draw(renderer);
+		_textDescription.Draw(renderer);
 	}
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{

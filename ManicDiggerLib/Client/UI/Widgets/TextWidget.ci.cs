@@ -29,7 +29,7 @@
 	//	_baseline = baseline;
 	//}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
 		if (!visible) { return; }
 		if (_text == null || _font == null) { return; }
@@ -37,7 +37,7 @@
 		if (_texture == null)
 		{
 			// Create new text texture
-			_texture = m.GetTextTexture(_text, _font);
+			_texture = renderer.GetTextTexture(_text, _font);
 
 			// Calculate baseline and alignment offset
 			UpdateOffset_Alignment();
@@ -48,7 +48,7 @@
 			sizey = _texture.textheight;
 		}
 
-		m.Draw2dQuad(_texture.texture, x + _offsetX, y + _offsetY, _texture.texturewidth, _texture.textureheight);
+		renderer.Draw2dTexture(_texture.texture, x + _offsetX, y + _offsetY, _texture.texturewidth, _texture.textureheight, null, 0, color);
 	}
 
 	public void SetAlignment(TextAlign align)

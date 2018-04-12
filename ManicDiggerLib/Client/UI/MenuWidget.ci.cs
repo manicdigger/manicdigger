@@ -71,13 +71,21 @@ public abstract class AbstractMenuWidget
 	internal bool clickable;
 	internal bool focusable;
 	internal bool hasKeyboardFocus;
+	internal string id;
+	internal int color;
 
 	public AbstractMenuWidget()
 	{
+		x = 0;
+		y = 0;
+		sizex = 0;
+		sizey = 0;
 		visible = true;
 		clickable = false;
 		focusable = false;
 		hasKeyboardFocus = false;
+		id = null;
+		color = Game.ColorFromArgb(255, 255, 255, 255);
 	}
 	public virtual void OnKeyPress(GamePlatform p, KeyPressEventArgs args) { }
 	public virtual void OnKeyDown(GamePlatform p, KeyEventArgs args) { }
@@ -90,7 +98,7 @@ public abstract class AbstractMenuWidget
 		return (args.GetX() >= x && args.GetX() <= x + sizex &&
 			args.GetY() >= y && args.GetY() <= y + sizey);
 	}
-	public abstract void Draw(MainMenu m);
+	public abstract void Draw(UiRenderer renderer);
 
 	public virtual void SetFocused(bool hasFocus)
 	{

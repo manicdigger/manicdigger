@@ -148,6 +148,7 @@
 	internal AssetList assets;
 	internal FloatRef assetsLoadProgress;
 	internal TextColorRenderer textColorRenderer;
+	internal UiRenderer uiRenderer;
 	internal AudioControl audio;
 
 	public void Start()
@@ -271,7 +272,7 @@
 		AddMod(new ModCamera());
 		AddMod(new ModNetworkEntity());
 		AddMod(new ModGuiInventory());
-		AddMod(new ModGuiTouchButtons());
+		//AddMod(new ModGuiTouchButtons());
 		AddMod(new ModGuiEscapeMenu());
 		AddMod(new ModGuiMapLoading());
 		AddMod(new ModDraw2dMisc());
@@ -524,7 +525,6 @@
 	Model quadModel;
 	void Draw2dTextureSimple(int textureid, float x1, float y1, float width, float height, bool enabledepthtest)
 	{
-		RectFRef rect = RectFRef.Create(0, 0, 1, 1);
 		platform.GlDisableCullFace();
 		platform.GlEnableTexture2d();
 		platform.BindTexture2d(textureid);

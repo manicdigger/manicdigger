@@ -63,7 +63,7 @@
 
 		float connectAreaWidth = 600;
 		float connectAreaHeight = 400;
-		float scale = menu.GetScale();
+		float scale = menu.uiRenderer.GetScale();
 		float leftx = p.GetCanvasWidth() / 2 - (connectAreaWidth / 2) * scale;
 		float topy = p.GetCanvasHeight() / 2 - (connectAreaHeight / 2) * scale;
 

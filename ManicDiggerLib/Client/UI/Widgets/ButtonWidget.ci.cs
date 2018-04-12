@@ -59,20 +59,21 @@
 		}
 	}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
 		if (!visible) { return; }
+		if (sizex <= 0 || sizey <= 0) { return; }
 		switch (_state)
 		{
 			// TODO: Use atlas textures
 			case ButtonState.Normal:
-				m.Draw2dQuad(m.GetTexture(_textureNameIdle), x, y, sizex, sizey);
+				renderer.Draw2dTexture(renderer.GetTexture(_textureNameIdle), x, y, sizex, sizey, null, 0, color);
 				break;
 			case ButtonState.Hover:
-				m.Draw2dQuad(m.GetTexture(_textureNameHover), x, y, sizex, sizey);
+				renderer.Draw2dTexture(renderer.GetTexture(_textureNameHover), x, y, sizex, sizey, null, 0, color);
 				break;
 			case ButtonState.Pressed:
-				m.Draw2dQuad(m.GetTexture(_textureNamePressed), x, y, sizex, sizey);
+				renderer.Draw2dTexture(renderer.GetTexture(_textureNamePressed), x, y, sizex, sizey, null, 0, color);
 				break;
 		}
 
@@ -80,7 +81,7 @@
 		{
 			_text.SetX(x + sizex / 2);
 			_text.SetY(y + sizey / 2);
-			_text.Draw(m);
+			_text.Draw(renderer);
 		}
 	}
 

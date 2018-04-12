@@ -53,7 +53,7 @@
 	public override void Render(float dt)
 	{
 		GamePlatform p = menu.p;
-		float scale = menu.GetScale();
+		float scale = menu.uiRenderer.GetScale();
 		float leftx = p.GetCanvasWidth() / 2 - 128 * scale;
 		float y = p.GetCanvasHeight() / 2 + 0 * scale;
 

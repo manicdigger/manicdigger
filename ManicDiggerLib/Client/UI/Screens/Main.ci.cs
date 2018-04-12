@@ -47,9 +47,9 @@
 
 		if (!assetsLoaded)
 		{
-			if (menu.assetsLoadProgress.value != 1)
+			if (menu.uiRenderer.GetAssetLoadProgress().value != 1)
 			{
-				string s = menu.p.StringFormat(menu.lang.Get("MainMenu_AssetsLoadProgress"), menu.p.FloatToString(menu.p.FloatToInt(menu.assetsLoadProgress.value * 100)));
+				string s = menu.p.StringFormat(menu.lang.Get("MainMenu_AssetsLoadProgress"), menu.p.FloatToString(menu.p.FloatToInt(menu.uiRenderer.GetAssetLoadProgress().value * 100)));
 				wtxt_loading.SetX(windowX / 2);
 				wtxt_loading.SetY(windowY / 2);
 				wtxt_loading.SetText(s);
@@ -61,7 +61,7 @@
 
 		if (!cursorLoaded)
 		{
-			menu.p.SetWindowCursor(0, 0, 32, 32, menu.GetFile("mousecursor.png"), menu.GetFileLength("mousecursor.png"));
+			menu.p.SetWindowCursor(0, 0, 32, 32, menu.uiRenderer.GetFile("mousecursor.png"), menu.uiRenderer.GetFileLength("mousecursor.png"));
 			cursorLoaded = true;
 		}
 
@@ -71,7 +71,7 @@
 			queryStringChecked = true;
 		}
 
-		float scale = menu.GetScale();
+		float scale = menu.uiRenderer.GetScale();
 		float buttonheight = 64 * scale;
 		float buttonwidth = 256 * scale;
 		float spacebetween = 5 * scale;

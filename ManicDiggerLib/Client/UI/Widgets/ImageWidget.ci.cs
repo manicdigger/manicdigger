@@ -18,11 +18,19 @@
 	//	_textureName = texture;
 	//}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
 		if (!visible) { return; }
+		if (sizex == 0 || sizey == 0) { return; }
 		if (_textureName == null || _textureName == "") { return; }
-		m.Draw2dQuad(m.GetTexture(_textureName), x, y, sizex, sizey);
+		if (_textureName == "Solid")
+		{
+			renderer.Draw2dTexture(renderer.GetWhiteTextureId(), x, y, sizex, sizey, null, 0, color);
+		}
+		else
+		{
+			renderer.Draw2dTexture(renderer.GetTexture(_textureName), x, y, sizex, sizey, null, 0, color);
+		}
 	}
 
 	public void SetTextureName(string name)

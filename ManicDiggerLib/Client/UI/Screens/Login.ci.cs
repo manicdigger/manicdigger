@@ -113,7 +113,7 @@
 		wtxt_statusMessage.SetText(loginResultText);
 
 		GamePlatform p = menu.p;
-		float scale = menu.GetScale();
+		float scale = menu.uiRenderer.GetScale();
 
 		float loginAreaWidth = 600;
 		float loginAreaHeight = 400;

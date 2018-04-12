@@ -87,10 +87,12 @@
 		}
 	}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
 		if (!visible) { return; }
-		m.Draw2dQuad(m.GetTexture(hasKeyboardFocus ? _textureNameActive : _textureNameInactive), x, y, sizex, sizey);
+		if (sizex <= 0 || sizey <= 0) { return; }
+
+		renderer.Draw2dTexture(renderer.GetTexture(hasKeyboardFocus ? _textureNameActive : _textureNameInactive), x, y, sizex, sizey, null, 0, color);
 
 		if (_text != null)
 		{
@@ -98,13 +100,13 @@
 			_text.y = y + sizey / 2;
 			if (hasKeyboardFocus)
 			{
-				_text.SetText(StringTools.StringAppend(m.p, _textDisplay, "_"));
+				_text.SetText(StringTools.StringAppend(renderer.GetPlatform(), _textDisplay, "_"));
 			}
 			else
 			{
 				_text.SetText(_textDisplay);
 			}
-			_text.Draw(m);
+			_text.Draw(renderer);
 		}
 	}
 

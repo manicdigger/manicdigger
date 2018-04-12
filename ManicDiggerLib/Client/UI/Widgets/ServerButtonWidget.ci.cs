@@ -62,29 +62,31 @@
 	//	_textDescription = new TextWidget(x + 70, y + sizey - 5, _motd, _fontServerDescription, TextAlign.Left, TextBaseline.Bottom);
 	//}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
 		if (!visible) { return; }
-		m.Draw2dQuad(m.GetTexture("serverlist_entry_background.png"), x, y, sizex, sizey);
-		m.Draw2dQuad(m.GetTexture(_imagename), x, y, sizey, sizey);
+		if (sizex <= 0 || sizey <= 0) { return; }
+
+		renderer.Draw2dTexture(renderer.GetTexture("serverlist_entry_background.png"), x, y, sizex, sizey, null, 0, color);
+		renderer.Draw2dTexture(renderer.GetTexture(_imagename), x, y, sizey, sizey, null, 0, color);
 
 		// display warnings if server is unreachable or uses a different version
 		if (_errorConnect)
 		{
-			m.Draw2dQuad(m.GetTexture("serverlist_entry_noresponse.png"), x - 38 * m.GetScale(), y, sizey / 2, sizey / 2);
+			renderer.Draw2dTexture(renderer.GetTexture("serverlist_entry_noresponse.png"), x - 38 * renderer.GetScale(), y, sizey / 2, sizey / 2, null, 0, color);
 		}
 		if (_errorVersion)
 		{
-			m.Draw2dQuad(m.GetTexture("serverlist_entry_differentversion.png"), x - 38 * m.GetScale(), y + sizey / 2, sizey / 2, sizey / 2);
+			renderer.Draw2dTexture(renderer.GetTexture("serverlist_entry_differentversion.png"), x - 38 * renderer.GetScale(), y + sizey / 2, sizey / 2, sizey / 2, null, 0, color);
 		}
 
 		// highlight text if button is selected
 		if (hasKeyboardFocus)
 		{
-			_textHeading.SetText(StringTools.StringAppend(m.p, "&2", _name));
-			_textGamemode.SetText(StringTools.StringAppend(m.p, "&2", _gamemode));
-			_textPlayercount.SetText(StringTools.StringAppend(m.p, "&2", _playercount));
-			_textDescription.SetText(StringTools.StringAppend(m.p, "&2", _motd));
+			_textHeading.SetText(StringTools.StringAppend(renderer.GetPlatform(), "&2", _name));
+			_textGamemode.SetText(StringTools.StringAppend(renderer.GetPlatform(), "&2", _gamemode));
+			_textPlayercount.SetText(StringTools.StringAppend(renderer.GetPlatform(), "&2", _playercount));
+			_textDescription.SetText(StringTools.StringAppend(renderer.GetPlatform(), "&2", _motd));
 		}
 		else
 		{
@@ -96,16 +98,16 @@
 
 		_textHeading.x = x + 70;
 		_textHeading.y = y + 5;
-		_textHeading.Draw(m);
+		_textHeading.Draw(renderer);
 		_textGamemode.x = x + sizex - 10;
 		_textGamemode.y = y + sizey - 5;
-		_textGamemode.Draw(m);
+		_textGamemode.Draw(renderer);
 		_textPlayercount.x = x + sizex - 10;
 		_textPlayercount.y = y + 5;
-		_textPlayercount.Draw(m);
+		_textPlayercount.Draw(renderer);
 		_textDescription.x = x + 70;
 		_textDescription.y = y + sizey - 5;
-		_textDescription.Draw(m);
+		_textDescription.Draw(renderer);
 	}
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{

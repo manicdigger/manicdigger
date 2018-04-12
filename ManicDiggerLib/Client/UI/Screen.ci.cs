@@ -18,9 +18,10 @@
 	internal FontCi fontTitle;
 	internal FontCi fontDefault;
 	internal FontCi fontMessage;
-	internal int WidgetMaxCount;
+	int WidgetMaxCount;
 	internal int WidgetCount;
 	AbstractMenuWidget[] widgets;
+	internal UiRenderer uiRenderer;
 
 	public virtual void Render(float dt) { }
 	public virtual void OnKeyDown(KeyEventArgs e)
@@ -90,7 +91,7 @@
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].Draw(menu);
+			widgets[i].Draw(uiRenderer);
 		}
 	}
 }

@@ -842,7 +842,7 @@ namespace ManicDigger.Mods.War
 		private int page = 0; // current displayed page
 
 		// fonts
-		public readonly Color TEXT_COLOR = Color.Black;
+		public readonly Color TEXT_COLOR = Color.White;
 		public DialogFont HeadingFont = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
 		public DialogFont NormalFont = new DialogFont("Verdana", 10f, DialogFontStyle.Regular);
 		public DialogFont NormalFontBold = new DialogFont("Verdana", 10f, DialogFontStyle.Bold);

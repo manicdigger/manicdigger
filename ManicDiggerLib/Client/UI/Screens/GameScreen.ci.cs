@@ -15,8 +15,9 @@
 
 		game.platform = platform;
 		game.issingleplayer = singleplayer;
-		game.assets = menu.assets;
-		game.assetsLoadProgress = menu.assetsLoadProgress;
+		game.assets = uiRenderer.GetAssetList();
+		game.assetsLoadProgress = menu.uiRenderer.GetAssetLoadProgress();
+		game.uiRenderer = uiRenderer;
 
 		game.Start();
 		Connect(platform);

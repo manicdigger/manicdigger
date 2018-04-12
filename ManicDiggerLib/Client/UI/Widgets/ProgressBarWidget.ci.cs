@@ -7,8 +7,9 @@
 		_text = new TextWidget();
 	}
 
-	public override void Draw(MainMenu m)
+	public override void Draw(UiRenderer renderer)
 	{
-
+		if (!visible) { return; }
+		if (sizex <= 0 || sizey <= 0) { return; }
 	}
 }

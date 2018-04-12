@@ -21,7 +21,7 @@
 	public override void Render(float dt)
 	{
 		GamePlatform p = menu.p;
-		float scale = menu.GetScale();
+		float scale = menu.uiRenderer.GetScale();
 
 		wbtn_back.x = 40 * scale;
 		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;

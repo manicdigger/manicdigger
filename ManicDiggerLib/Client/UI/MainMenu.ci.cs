@@ -3,29 +3,29 @@
 	public MainMenu()
 	{
 		one = 1;
-		textures = new DictionaryStringInt1024();
-		textTextures = new TextTexture[256];
-		textTexturesCount = 0;
+		uiRenderer = new UiRenderer();
 		loginClient = new LoginClientCi();
-		assets = new AssetList();
-		assetsLoadProgress = new FloatRef();
 		fontMenuHeading = new FontCi();
 		fontMenuHeading.size = 20;
+		pMatrix = Mat4.Create();
 	}
 
 	internal GamePlatform p;
 	internal LanguageCi lang;
 	internal FontCi fontMenuHeading;
+	internal UiRenderer uiRenderer;
 
 	internal float one;
-
-	internal AssetList assets;
-	internal FloatRef assetsLoadProgress;
-	internal TextColorRenderer textColorRenderer;
+	float[] pMatrix;
 
 	public void Start(GamePlatform p_)
 	{
 		this.p = p_;
+
+		// initialize ui renderer
+		Mat4.Identity_(pMatrix);
+		Mat4.Ortho(pMatrix, 0, p.GetCanvasWidth(), p.GetCanvasHeight(), 0, 0, 10);
+		uiRenderer.Init(p);
 
 		//Initialize translations
 		lang = new LanguageCi();
@@ -34,10 +34,6 @@
 		p.SetTitle(lang.GameName());
 
 		StartMainMenu();
-
-		textColorRenderer = new TextColorRenderer();
-		textColorRenderer.platform = p_;
-		p_.LoadAssetsAsyc(assets, assetsLoadProgress);
 
 		overlap = 200;
 		minspeed = 20;
@@ -55,9 +51,6 @@
 
 		filter = 0;
 
-		mvMatrix = Mat4.Create();
-		pMatrix = Mat4.Create();
-
 		currentlyPressedKeys = new bool[256];
 		p.AddOnNewFrame(MainMenuNewFrameHandler.Create(this));
 		p.AddOnKeyEvent(MainMenuKeyEventHandler.Create(this));
@@ -67,9 +60,6 @@
 
 	int viewportWidth;
 	int viewportHeight;
-
-	float[] mvMatrix;
-	float[] pMatrix;
 
 	bool[] currentlyPressedKeys;
 
@@ -114,158 +104,14 @@
 			//Mat4.Translate(mvMatrix, mvMatrix, Vec3.FromValues(0, 0, z));
 		}
 		{
-			Mat4.Identity_(pMatrix);
-			Mat4.Ortho(pMatrix, 0, p.GetCanvasWidth(), p.GetCanvasHeight(), 0, 0, 10);
+			//Mat4.Identity_(pMatrix);
+			//Mat4.Ortho(pMatrix, 0, p.GetCanvasWidth(), p.GetCanvasHeight(), 0, 0, 10);
 		}
 
 		screen.Render(dt);
 	}
 
 	Screen screen;
-
-	internal void DrawButton(string text, FontCi font, float dx, float dy, float dw, float dh, bool pressed)
-	{
-		Draw2dQuad(pressed ? GetTexture("button_sel.png") : GetTexture("button.png"), dx, dy, dw, dh);
-
-		if ((text != null) && (text != ""))
-		{
-			DrawText(text, font, dx + dw / 2, dy + dh / 2, TextAlign.Center, TextBaseline.Middle);
-		}
-	}
-
-	internal void DrawText(string text, FontCi font, float x, float y, TextAlign align, TextBaseline baseline)
-	{
-		TextTexture t = GetTextTexture(text, font);
-		int dx = 0;
-		int dy = 0;
-		if (align == TextAlign.Center)
-		{
-			dx -= t.textwidth / 2;
-		}
-		if (align == TextAlign.Right)
-		{
-			dx -= t.textwidth;
-		}
-		if (baseline == TextBaseline.Middle)
-		{
-			dy -= t.textheight / 2;
-		}
-		if (baseline == TextBaseline.Bottom)
-		{
-			dy -= t.textheight;
-		}
-		Draw2dQuad(t.texture, x + dx, y + dy, t.texturewidth, t.textureheight);
-	}
-
-	internal TextTexture GetTextTexture(string text, FontCi font)
-	{
-		for (int i = 0; i < textTexturesCount; i++)
-		{
-			TextTexture t = textTextures[i];
-			if (t == null)
-			{
-				continue;
-			}
-			if (t.text == text
-				&& t.font.size == font.size
-				&& t.font.family == font.family
-				&& t.font.style == font.style)
-			{
-				return t;
-			}
-		}
-		TextTexture textTexture = new TextTexture();
-
-		Text_ text_ = new Text_();
-		text_.text = text;
-		text_.font = font;
-		text_.color = Game.ColorFromArgb(255, 255, 255, 255);
-		BitmapCi textBitmap = textColorRenderer.CreateTextTexture(text_);
-
-		int texture = p.LoadTextureFromBitmap(textBitmap);
-
-		IntRef textWidth = new IntRef();
-		IntRef textHeight = new IntRef();
-		p.TextSize(text, font, textWidth, textHeight);
-
-		textTexture.texture = texture;
-		textTexture.texturewidth = p.FloatToInt(p.BitmapGetWidth(textBitmap));
-		textTexture.textureheight = p.FloatToInt(p.BitmapGetHeight(textBitmap));
-		textTexture.text = text;
-		textTexture.font = font;
-		textTexture.textwidth = textWidth.value;
-		textTexture.textheight = textHeight.value;
-
-		p.BitmapDelete(textBitmap);
-
-		textTextures[textTexturesCount++] = textTexture;
-		return textTexture;
-	}
-
-	internal DictionaryStringInt1024 textures;
-	internal int GetTexture(string name)
-	{
-		if (!textures.Contains(name))
-		{
-			BoolRef found = new BoolRef();
-			BitmapCi bmp = p.BitmapCreateFromPng(GetFile(name), GetFileLength(name));
-			int texture = p.LoadTextureFromBitmap(bmp);
-			textures.Set(name, texture);
-			p.BitmapDelete(bmp);
-		}
-		return textures.Get(name);
-	}
-
-	internal byte[] GetFile(string name)
-	{
-		string pLowercase = p.StringToLower(name);
-		for (int i = 0; i < assets.count; i++)
-		{
-			if (assets.items[i].name == pLowercase)
-			{
-				return assets.items[i].data;
-			}
-		}
-		return null;
-	}
-
-	internal int GetFileLength(string name)
-	{
-		string pLowercase = p.StringToLower(name);
-		for (int i = 0; i < assets.count; i++)
-		{
-			if (assets.items[i].name == pLowercase)
-			{
-				return assets.items[i].dataLength;
-			}
-		}
-		return 0;
-	}
-
-	Model cubeModel;
-	public void Draw2dQuad(int textureid, float dx, float dy, float dw, float dh)
-	{
-		Mat4.Identity_(mvMatrix);
-		Mat4.Translate(mvMatrix, mvMatrix, Vec3.FromValues(dx, dy, 0));
-		Mat4.Scale(mvMatrix, mvMatrix, Vec3.FromValues(dw, dh, 0));
-		Mat4.Scale(mvMatrix, mvMatrix, Vec3.FromValues(one / 2, one / 2, 0));
-		Mat4.Translate(mvMatrix, mvMatrix, Vec3.FromValues(one, one, 0));
-		SetMatrixUniforms();
-		if (cubeModel == null)
-		{
-			cubeModel = p.CreateModel(QuadModelData.GetQuadModelData());
-		}
-		p.BindTexture2d(textureid);
-		p.GLDisableAlphaTest();
-		p.DrawModel(cubeModel);
-		p.GLEnableAlphaTest();
-	}
-
-	void SetMatrixUniforms()
-	{
-		p.SetMatrixUniformProjection(pMatrix);
-		p.SetMatrixUniformModelView(mvMatrix);
-	}
 
 	float degToRad(float degrees)
 	{
@@ -424,13 +270,11 @@
 		screen.OnTouchEnd(e);
 	}
 
-	TextTexture[] textTextures;
-	int textTexturesCount;
-
 	internal void StartSingleplayer()
 	{
 		screen = new ScreenSingleplayer();
 		screen.menu = this;
+		screen.uiRenderer = uiRenderer;
 		screen.LoadTranslations();
 	}
 
@@ -442,6 +286,7 @@
 		screenLogin.serverPort = port;
 		screen = screenLogin;
 		screen.menu = this;
+		screen.uiRenderer = uiRenderer;
 		screen.LoadTranslations();
 	}
 
@@ -450,6 +295,7 @@
 		ScreenConnectToIp screenConnectToIp = new ScreenConnectToIp();
 		screen = screenConnectToIp;
 		screen.menu = this;
+		screen.uiRenderer = uiRenderer;
 		screen.LoadTranslations();
 	}
 
@@ -462,9 +308,11 @@
 	{
 		screen = new ScreenMain();
 		screen.menu = this;
+		screen.uiRenderer = uiRenderer;
 		screen.LoadTranslations();
 		p.ExitMousePointerLock();
 		p.SetVSync(true);
+		p.SetMatrixUniformProjection(pMatrix);
 	}
 
 	internal int backgroundW;
@@ -484,7 +332,7 @@
 		{
 			for (int y = 0; y < countY; y++)
 			{
-				Draw2dQuad(GetTexture("background.png"), x * backgroundW + xRot - overlap, y * backgroundH + yRot - overlap, backgroundW, backgroundH);
+				uiRenderer.Draw2dTexture(uiRenderer.GetTexture("background.png"), x * backgroundW + xRot - overlap, y * backgroundH + yRot - overlap, backgroundW, backgroundH, null, 0, Game.ColorFromArgb(255, 255, 255, 255));
 			}
 		}
 	}
@@ -493,6 +341,7 @@
 	{
 		screen = new ScreenMultiplayer();
 		screen.menu = this;
+		screen.uiRenderer = uiRenderer;
 		screen.LoadTranslations();
 	}
 
@@ -549,23 +398,6 @@
 		return length.value;
 	}
 
-	public string CharToString(int a)
-	{
-		int[] arr = new int[1];
-		arr[0] = a;
-		return p.CharArrayToString(arr, 1);
-	}
-
-	public string CharRepeat(int c, int length)
-	{
-		int[] charArray = new int[length];
-		for (int i = 0; i < length; i++)
-		{
-			charArray[i] = c;
-		}
-		return p.CharArrayToString(charArray, length);
-	}
-
 	internal void StartNewWorld()
 	{
 	}
@@ -578,6 +410,7 @@
 	{
 		ScreenGame screenGame = new ScreenGame();
 		screenGame.menu = this;
+		screenGame.uiRenderer = uiRenderer;
 		screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
 		screen = screenGame;
 	}
@@ -596,19 +429,5 @@
 	public void ConnectToSingleplayer(string filename)
 	{
 		StartGame(true, filename, null);
-	}
-
-	public float GetScale()
-	{
-		float scale;
-		if (p.IsSmallScreen())
-		{
-			scale = one * p.GetCanvasWidth() / 1280;
-		}
-		else
-		{
-			scale = one;
-		}
-		return scale;
 	}
 }

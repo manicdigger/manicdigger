@@ -79,7 +79,7 @@
 	public override void Render(float dt)
 	{
 		GamePlatform p = menu.p;
-		float scale = menu.GetScale();
+		float scale = menu.uiRenderer.GetScale();
 
 		// setup widgets
 		wtxt_title.x = p.GetCanvasWidth() / 2;
@@ -290,8 +290,7 @@
 						BitmapCi bmp = menu.p.BitmapCreateFromPng(thumbResponses[i].data, thumbResponses[i].dataLength);
 						if (bmp != null)
 						{
-							int texture = menu.p.LoadTextureFromBitmap(bmp);
-							menu.textures.Set(menu.p.StringFormat("serverlist_entry_{0}.png", server.hash), texture);
+							menu.uiRenderer.LoadBitmap(bmp, menu.p.StringFormat("serverlist_entry_{0}.png", server.hash));
 							menu.p.BitmapDelete(bmp);
 						}
 						server.thumbnailDownloading = false;
