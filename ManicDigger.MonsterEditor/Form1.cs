@@ -35,7 +35,7 @@ namespace ManicDigger.MonsterEditor
 			UpdateLabels();
 
 			// init 3D rendering
-			the3d = new ManicDigger.TextureLoader() { d_Config3d = config3d };
+			the3d = new TextureLoader() { d_Config3d = config3d };
 			glControl1.Paint += new PaintEventHandler(glControl1_Paint);
 			glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
 			loaded = true;
