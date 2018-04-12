@@ -110,6 +110,11 @@
 		}
 	}
 
+	public override string GetEventResponse()
+	{
+		return _textContent;
+	}
+
 	public void SetInputHidden(bool hideInput)
 	{
 		_hideInput = hideInput;

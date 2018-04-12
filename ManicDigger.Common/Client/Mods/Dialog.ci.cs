@@ -251,15 +251,17 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 					b = newTbx;
 					break;
 			}
-			b.x = a.X;
-			b.y = a.Y;
-			b.sizex = a.Width;
-			b.sizey = a.Height_;
-			b.color = a.Color;
-			b.id = a.Id;
+			b.SetX(a.X);
+			b.SetY(a.Y);
+			b.SetSizeX(a.Width);
+			b.SetSizeY(a.Height_);
+			b.SetColor(a.Color);
 
-			// TODO: support interactivity
-			//b.isbutton = a.ClickKey != 0;
+			if (a.ClickKey != 0)
+			{
+				b.SetEventName(a.Id);
+				b.SetEventKeyChar(a.ClickKey);
+			}
 
 			s.widgets[i] = b;
 		}

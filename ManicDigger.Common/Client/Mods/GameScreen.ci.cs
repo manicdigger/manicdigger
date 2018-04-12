@@ -15,6 +15,23 @@
 		for (int i = 0; i < WidgetCount; i++)
 		{
 			widgets[i].OnKeyPress(game.platform, e);
+
+			// send dialog response if necessary
+			if (widgets[i].GetEventKeyPressed())
+			{
+				widgets[i].ResetEventKeyPressed();
+				string[] textValues = new string[WidgetCount];
+				for (int j = 0; j < WidgetCount; j++)
+				{
+					string s = widgets[j].GetEventResponse();
+					if (s == null)
+					{
+						s = "";
+					}
+					textValues[j] = s;
+				}
+				game.SendPacketClient(ClientPackets.DialogClick(widgets[i].GetEventName(), textValues, WidgetCount));
+			}
 		}
 	}
 	public override void OnKeyDown(Game game_, KeyEventArgs e)

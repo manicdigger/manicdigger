@@ -71,8 +71,10 @@ public abstract class AbstractMenuWidget
 	internal bool clickable;
 	internal bool focusable;
 	internal bool hasKeyboardFocus;
-	internal string id;
 	internal int color;
+	int eventKeyChar;
+	string eventName;
+	bool eventKeyPressed;
 
 	public AbstractMenuWidget()
 	{
@@ -84,10 +86,18 @@ public abstract class AbstractMenuWidget
 		clickable = false;
 		focusable = false;
 		hasKeyboardFocus = false;
-		id = null;
 		color = Game.ColorFromArgb(255, 255, 255, 255);
+		eventKeyChar = -1;
+		eventName = null;
+		eventKeyPressed = false;
 	}
-	public virtual void OnKeyPress(GamePlatform p, KeyPressEventArgs args) { }
+	public virtual void OnKeyPress(GamePlatform p, KeyPressEventArgs args)
+	{
+		if (eventKeyChar == args.GetKeyChar())
+		{
+			eventKeyPressed = true;
+		}
+	}
 	public virtual void OnKeyDown(GamePlatform p, KeyEventArgs args) { }
 	public virtual void OnMouseDown(GamePlatform p, MouseEventArgs args) { }
 	public virtual void OnMouseUp(GamePlatform p, MouseEventArgs args) { }
@@ -130,6 +140,67 @@ public abstract class AbstractMenuWidget
 	{
 		return (visible && clickable && IsCursorInside(args));
 	}
+	public void SetX(float newX)
+	{
+		x = newX;
+	}
+	public float GetX()
+	{
+		return x;
+	}
+	public void SetY(float newY)
+	{
+		y = newY;
+	}
+	public float GetY()
+	{
+		return y;
+	}
+	public void SetSizeX(float newSizeX)
+	{
+		sizex = newSizeX;
+	}
+	public float GetSizeX()
+	{
+		return sizex;
+	}
+	public void SetSizeY(float newSizeY)
+	{
+		sizey = newSizeY;
+	}
+	public float GetSizeY()
+	{
+		return sizey;
+	}
+	public void SetColor(int newColor)
+	{
+		color = newColor;
+	}
+	public int GetColor()
+	{
+		return color;
+	}
+	public void SetEventKeyChar(int listenChar)
+	{
+		eventKeyChar = listenChar;
+	}
+	public void SetEventName(string clickKey)
+	{
+		eventName = clickKey;
+	}
+	public string GetEventName()
+	{
+		return eventName;
+	}
+	public bool GetEventKeyPressed()
+	{
+		return eventKeyPressed;
+	}
+	public void ResetEventKeyPressed()
+	{
+		eventKeyPressed = false;
+	}
+	public virtual string GetEventResponse() { return null; }
 }
 
 public enum WidgetType
