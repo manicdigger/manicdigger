@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="TestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="GlMatrixTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
