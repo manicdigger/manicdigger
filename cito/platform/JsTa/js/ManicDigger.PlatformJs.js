@@ -4,29 +4,29 @@ function PlatformJs() {}
 
 PlatformJs.prototype = new GamePlatform();
 
-PlatformJs.prototype.addOnCrash = function(handler) {}
+PlatformJs.prototype.addOnCrash = function(handler) {};
 
 var keyEventHandler;
 PlatformJs.prototype.addOnKeyEvent = function(handler) {
 	keyEventHandler = handler;
-}
+};
 
 var mouseEventHandler;
 PlatformJs.prototype.addOnMouseEvent = function(handler) {
 	mouseEventHandler = handler;
-}
+};
 
 var newFrameHandler;
 PlatformJs.prototype.addOnNewFrame = function(handler) {
 	newFrameHandler = handler;
-}
+};
 
 var touchEventHandler;
 PlatformJs.prototype.addOnTouchEvent = function(handler) {
 	touchEventHandler = handler;
-}
+};
 
-PlatformJs.prototype.applicationDoEvents = function() {}
+PlatformJs.prototype.applicationDoEvents = function() {};
 
 // Audio
 var audioContext;
@@ -44,18 +44,18 @@ PlatformJs.prototype.audioDataCreate = function(data, dataLength) {
 		sound.loaded = true;
 	});
 	return sound;
-}
+};
 
 PlatformJs.prototype.audioDataLoaded = function(data) {
 	return data.loaded;
-}
+};
 
 PlatformJs.prototype.audioCreate = function(data) {
 	var audio = {};
 	audio.data = data;
 	audio.pausedAt = null;
 	return audio;
-}
+};
 
 PlatformJs.prototype.audioPlay = function(audio) {
 	audio.src = audioContext.createBufferSource();
@@ -69,28 +69,28 @@ PlatformJs.prototype.audioPlay = function(audio) {
 		audio.startedAt = Date.now();
 		audio.src.start(0);
 	}
-}
+};
 
 PlatformJs.prototype.audioPause = function(audio) {
 	audio.src.stop();
 	audio.pausedAt = Date.now() - audio.startedAt;
-}
+};
 
 PlatformJs.prototype.audioDelete = function(audio) {
 	audio.src.stop();
-}
+};
 
 PlatformJs.prototype.audioFinished = function(audio) {
 	return (Date.now() - audio.startedAt) > audio.data.buffer.duration * 1000;
-}
+};
 
-PlatformJs.prototype.audioSetPosition = function(audio, x, y, z) {}
+PlatformJs.prototype.audioSetPosition = function(audio, x, y, z) {};
 
-PlatformJs.prototype.audioUpdateListener = function(posX, posY, posZ, orientX, orientY, orientZ) {}
+PlatformJs.prototype.audioUpdateListener = function(posX, posY, posZ, orientX, orientY, orientZ) {};
 
 PlatformJs.prototype.aviWriterCreate = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.bindTexture2d = function(texture) {
 	try {
@@ -98,7 +98,7 @@ PlatformJs.prototype.bindTexture2d = function(texture) {
 	} catch (ex) {
 		console.log(ex);
 	}
-}
+};
 
 var textureCanvas;
 var textureCanvasContext;
@@ -109,7 +109,7 @@ PlatformJs.prototype.bitmapCreate = function(width, height) {
 	c.height = height;
 	c.loaded = true;
 	return c;
-}
+};
 
 var BASE64_CHUNK_SIZE = 100;
 var toBase64 = function(data) {
@@ -135,41 +135,41 @@ PlatformJs.prototype.bitmapCreateFromPng = function(data, dataLength) {
 	}
 	c.loaded = true;
 	return c;
-}
+};
 
-PlatformJs.prototype.bitmapDelete = function(bmp) {}
+PlatformJs.prototype.bitmapDelete = function(bmp) {};
 
 PlatformJs.prototype.bitmapGetHeight = function(bmp) {
 	if (bmp == null) {
 		return 100;
 	}
 	return bmp.height;
-}
+};
 
 var colorA = function(color) {
 	var a = Game.intToByte(color >> 24);
 	return a;
-}
+};
 
 var colorB = function(color) {
 	var b = Game.intToByte(color);
 	return b;
-}
+};
 
 var colorG = function(color) {
 	var g = Game.intToByte(color >> 8);
 	return g;
-}
+};
 
 var colorR = function(color) {
 	var r = Game.intToByte(color >> 16);
 	return r;
-}
+};
 
 var colorFromArgb = function(a, r, g, b) {
 	var iCol = a << 24 | r << 16 | g << 8 | b;
 	return iCol;
-}
+};
 
 PlatformJs.prototype.bitmapGetPixelsArgb = function(bitmap, bmpPixels) {
 	var imageData = bitmap.getContext("2d").getImageData(0, 0, bitmap.width, bitmap.height);
@@ -187,14 +187,14 @@ PlatformJs.prototype.bitmapGetPixelsArgb = function(bitmap, bmpPixels) {
 		}
 	}
 	bitmap.getContext("2d").putImageData(imageData, 0, 0);
-}
+};
 
 PlatformJs.prototype.bitmapGetWidth = function(bmp) {
 	if (bmp == null) {
 		return 100;
 	}
 	return bmp.width;
-}
+};
 
 PlatformJs.prototype.bitmapSetPixelsArgb = function(bmp, pixels) {
 	var imageData = bmp.getContext("2d").createImageData(bmp.width, bmp.height);
@@ -216,17 +216,17 @@ PlatformJs.prototype.bitmapSetPixelsArgb = function(bmp, pixels) {
 		}
 	}
 	bmp.getContext("2d").putImageData(imageData, 0, 0);
-}
+};
 
 PlatformJs.prototype.byteArrayLength = function(arr) {
 	return arr.length;
-}
+};
 
 PlatformJs.prototype.castToPlayerInterpolationState = function(a) {
 	return a;
-}
+};
 
-PlatformJs.prototype.changeResolution = function(width, height, bitsPerPixel, refreshRate) {}
+PlatformJs.prototype.changeResolution = function(width, height, bitsPerPixel, refreshRate) {};
 
 PlatformJs.prototype.charArrayToString = function(charArray, length) {
 	var arr = [];
@@ -234,23 +234,23 @@ PlatformJs.prototype.charArrayToString = function(charArray, length) {
 		arr[i] = String.fromCharCode(charArray[i]);
 	}
 	return arr.join("");
-}
+};
 
 PlatformJs.prototype.chatLog = function(servername, p) {
 	return false;
-}
+};
 
 PlatformJs.prototype.clipboardContainsText = function() {
 	return false;
-}
+};
 
 PlatformJs.prototype.clipboardGetText = function() {
 	return null;
-}
+};
 
-PlatformJs.prototype.clipboardSetText = function(s) {}
+PlatformJs.prototype.clipboardSetText = function(s) {};
 
-PlatformJs.prototype.consoleWriteLine = function(p) {}
+PlatformJs.prototype.consoleWriteLine = function(p) {};
 
 PlatformJs.prototype.createModel = function(modelData) {
 	model = {};
@@ -300,7 +300,7 @@ PlatformJs.prototype.createModel = function(modelData) {
 	}
 
 	return model;
-}
+};
 
 
 function getPowerOfTwo(value, pow) {
@@ -345,13 +345,13 @@ PlatformJs.prototype.createTextTexture = function(t) {
 	textureCanvasContext.fillText(t.text, 0, 0);
 
 	return cloneCanvas(textureCanvas);
-}
+};
 
-PlatformJs.prototype.deleteModel = function(model) {}
+PlatformJs.prototype.deleteModel = function(model) {};
 
 PlatformJs.prototype.directoryGetFiles = function(path, length) {
 	return null;
-}
+};
 
 PlatformJs.prototype.drawModel = function(model) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, model.cubeVertexPositionBuffer);
@@ -371,84 +371,84 @@ PlatformJs.prototype.drawModel = function(model) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.cubeVertexIndexBuffer);
 	//setMatrixUniforms();
 	gl.drawElements(model.mode, model.cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-}
+};
 
 PlatformJs.prototype.drawModelData = function(data) {
 	var model = this.createModel(data);
 	this.drawModel(model);
 	this.deleteModel(model);
-}
+};
 
 PlatformJs.prototype.drawModels = function(model, count) {
 	for (var i = 0; i < count; i++) {
 		this.drawModel(model[i]);
 	}
-}
+};
 
 PlatformJs.prototype.enetAvailable = function() {
 	return false;
-}
+};
 
 PlatformJs.prototype.enetCreateHost = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.enetHostCheckEvents = function(host, event_) {
 	return false;
-}
+};
 
 PlatformJs.prototype.enetHostConnect = function(host, hostName, port, data, channelLimit) {
 	return null;
-}
+};
 
-PlatformJs.prototype.enetHostInitialize = function(host, address, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth) {}
+PlatformJs.prototype.enetHostInitialize = function(host, address, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth) {};
 
 PlatformJs.prototype.enetHostService = function(host, timeout, enetEvent) {
 	return false;
-}
+};
 
-PlatformJs.prototype.enetPeerSend = function(peer, channelID, data, dataLength, flags) {}
+PlatformJs.prototype.enetPeerSend = function(peer, channelID, data, dataLength, flags) {};
 
-PlatformJs.prototype.exit = function() {}
+PlatformJs.prototype.exit = function() {};
 
 PlatformJs.prototype.exitAvailable = function() {
 	return false;
-}
+};
 
 document.exitPointerLock = document.exitPointerLock ||
 	document.mozExitPointerLock ||
 	document.webkitExitPointerLock;
 PlatformJs.prototype.exitMousePointerLock = function() {
 	document.exitPointerLock();
-}
+};
 
 PlatformJs.prototype.fileName = function(fullpath) {
 	return null;
-}
+};
 
 PlatformJs.prototype.fileOpenDialog = function(extension, extensionName, initialDirectory) {
 	return null;
-}
+};
 
 PlatformJs.prototype.fileReadAllLines = function(path, length) {
 	return null;
-}
+};
 
 PlatformJs.prototype.floatModulo = function(a, b) {
 	return a % b;
-}
+};
 
 PlatformJs.prototype.floatParse = function(value) {
 	return parseFloat(value);
-}
+};
 
 PlatformJs.prototype.floatToInt = function(value) {
 	return value | 0;
-}
+};
 
 PlatformJs.prototype.floatToString = function(value) {
 	return value.toString();
-}
+};
 
 PlatformJs.prototype.floatTryParse = function(s, ret) {
 	if (!isNaN(s)) {
@@ -456,43 +456,43 @@ PlatformJs.prototype.floatTryParse = function(s, ret) {
 		return true;
 	}
 	return false;
-}
+};
 
 PlatformJs.prototype.focused = function() {
 	return true;
-}
+};
 
-PlatformJs.prototype.gLDeleteTexture = function(id) {}
+PlatformJs.prototype.gLDeleteTexture = function(id) {};
 
-PlatformJs.prototype.gLDisableAlphaTest = function() {}
+PlatformJs.prototype.gLDisableAlphaTest = function() {};
 
-PlatformJs.prototype.gLEnableAlphaTest = function() {}
+PlatformJs.prototype.gLEnableAlphaTest = function() {};
 
-PlatformJs.prototype.gLLineWidth = function(width) {}
+PlatformJs.prototype.gLLineWidth = function(width) {};
 
 PlatformJs.prototype.getCanvasHeight = function() {
 	return canvas.height;
-}
+};
 
 PlatformJs.prototype.getCanvasWidth = function() {
 	return canvas.width;
-}
+};
 
 PlatformJs.prototype.getDisplayResolutionDefault = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.getDisplayResolutions = function(resolutionsCount) {
 	return null;
-}
+};
 
 PlatformJs.prototype.getGameVersion = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.getLanguageIso6391 = function() {
 	return "en";
-}
+};
 
 PlatformJs.prototype.getPreferences = function() {
 	var p = new Preferences();
@@ -502,81 +502,81 @@ PlatformJs.prototype.getPreferences = function() {
 		p.items.count = pp.count;
 	}
 	return p;
-}
+};
 
 PlatformJs.prototype.getWindowState = function() {
 	return WindowState.MAXIMIZED;
-}
+};
 
 PlatformJs.prototype.glClearColorBufferAndDepthBuffer = function() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-}
+};
 
 PlatformJs.prototype.glClearColorRgbaf = function(r, g, b, a) {
 	gl.clearColor(r, g, b, a);
-}
+};
 
 PlatformJs.prototype.glClearDepthBuffer = function() {
 	gl.clear(gl.DEPTH_BUFFER_BIT);
-}
+};
 
-PlatformJs.prototype.glColorMaterialFrontAndBackAmbientAndDiffuse = function() {}
+PlatformJs.prototype.glColorMaterialFrontAndBackAmbientAndDiffuse = function() {};
 
-PlatformJs.prototype.glCullFaceBack = function() {}
+PlatformJs.prototype.glCullFaceBack = function() {};
 
 PlatformJs.prototype.glDepthMask = function(flag) {
 	gl.depthMask(flag);
-}
+};
 
-PlatformJs.prototype.glDisableCullFace = function() {}
+PlatformJs.prototype.glDisableCullFace = function() {};
 
 PlatformJs.prototype.glDisableDepthTest = function() {
 	gl.disable(gl.DEPTH_TEST);
-}
+};
 
-PlatformJs.prototype.glDisableFog = function() {}
+PlatformJs.prototype.glDisableFog = function() {};
 
-PlatformJs.prototype.glEnableColorMaterial = function() {}
+PlatformJs.prototype.glEnableColorMaterial = function() {};
 
-PlatformJs.prototype.glEnableCullFace = function() {}
+PlatformJs.prototype.glEnableCullFace = function() {};
 
 PlatformJs.prototype.glEnableDepthTest = function() {
 	gl.enable(gl.DEPTH_TEST);
-}
+};
 
-PlatformJs.prototype.glEnableFog = function() {}
+PlatformJs.prototype.glEnableFog = function() {};
 
-PlatformJs.prototype.glEnableLighting = function() {}
+PlatformJs.prototype.glEnableLighting = function() {};
 
-PlatformJs.prototype.glEnableTexture2d = function() {}
+PlatformJs.prototype.glEnableTexture2d = function() {};
 
-PlatformJs.prototype.glFogFogColor = function(r, g, b, a) {}
+PlatformJs.prototype.glFogFogColor = function(r, g, b, a) {};
 
-PlatformJs.prototype.glFogFogDensity = function(density) {}
+PlatformJs.prototype.glFogFogDensity = function(density) {};
 
-PlatformJs.prototype.glFogFogModeExp2 = function() {}
+PlatformJs.prototype.glFogFogModeExp2 = function() {};
 
 PlatformJs.prototype.glGetMaxTextureSize = function() {
 	return 0;
-}
+};
 
-PlatformJs.prototype.glHintFogHintNicest = function() {}
+PlatformJs.prototype.glHintFogHintNicest = function() {};
 
-PlatformJs.prototype.glLightModelAmbient = function(r, g, b) {}
+PlatformJs.prototype.glLightModelAmbient = function(r, g, b) {};
 
-PlatformJs.prototype.glShadeModelSmooth = function() {}
+PlatformJs.prototype.glShadeModelSmooth = function() {};
 
 PlatformJs.prototype.glViewport = function(x, y, width, height) {
 	gl.viewport(x, y, width, height);
-}
+};
 
 PlatformJs.prototype.grabScreenshot = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.gzipCompress = function(data, dataLength, retLength) {
 	return null;
-}
+};
 
 PlatformJs.prototype.gzipDecompress = function(compressed, compressedLength, ret) {
 	var compressed2 = [];
@@ -590,13 +590,13 @@ PlatformJs.prototype.gzipDecompress = function(compressed, compressedLength, ret
 	for (var i = 0; i < decompressed.length; i++) {
 		ret[i] = decompressed[i];
 	}
-}
+};
 
-PlatformJs.prototype.initShaders = function() {}
+PlatformJs.prototype.initShaders = function() {};
 
 PlatformJs.prototype.intParse = function(value) {
 	return parseInt(value);
-}
+};
 
 PlatformJs.prototype.intTryParse = function(s, ret) {
 	if (!isNaN(s)) {
@@ -604,33 +604,33 @@ PlatformJs.prototype.intTryParse = function(s, ret) {
 		return true;
 	}
 	return false;
-}
+};
 
 PlatformJs.prototype.intToString = function(value) {
 	return value.toString();
-}
+};
 
 PlatformJs.prototype.isCached = function(md5) {
 	return false;
-}
+};
 
 PlatformJs.prototype.isChecksum = function(checksum) {
 	return false;
-}
+};
 
 PlatformJs.prototype.decodeHTMLEntities = function(htmlencodedstring) {
 	var parser = new DOMParser();
 	var dom = parser.parseFromString('<body>' + htmlencodedstring, 'text/html');
 	return dom.body.textContent;
-}
+};
 
 PlatformJs.prototype.isDebuggerAttached = function() {
 	return false;
-}
+};
 
 PlatformJs.prototype.isFastSystem = function() {
 	return false;
-}
+};
 
 function _isMousePointerLocked() {
 	return document.pointerLockElement != null || document.mozPointerLockElement != null;
@@ -638,23 +638,23 @@ function _isMousePointerLocked() {
 
 PlatformJs.prototype.isMousePointerLocked = function() {
 	return _isMousePointerLocked();
-}
+};
 
 PlatformJs.prototype.isSmallScreen = function() {
 	return true;
-}
+};
 
 PlatformJs.prototype.isValidTypingChar = function(c) {
 	return c != 13 && c != 8;
-}
+};
 
 PlatformJs.prototype.keyName = function(key) {
 	return null;
-}
+};
 
 PlatformJs.prototype.loadAssetFromCache = function(md5) {
 	return null;
-}
+};
 
 //this function will work cross-browser for loading scripts asynchronously
 function loadScript(src, callback) {
@@ -693,7 +693,7 @@ PlatformJs.prototype.loadAssetsAsyc = function(list, progress) {
 		}
 		progress.value = 1;
 	});
-}
+};
 
 var loadedTextures = [];
 loadedTextures[0] = null;
@@ -711,67 +711,67 @@ PlatformJs.prototype.loadTextureFromBitmap = function(bmp) {
 
 	loadedTextures.push(texture);
 	return loadedTextures.length - 1;
-}
+};
 
 PlatformJs.prototype.mathAcos = function(p) {
 	return Math.acos(p);
-}
+};
 
 PlatformJs.prototype.mathCos = function(a) {
 	return Math.cos(a);
-}
+};
 
 PlatformJs.prototype.mathSin = function(a) {
 	return Math.sin(a);
-}
+};
 
 PlatformJs.prototype.mathSqrt = function(value) {
 	return Math.sqrt(value);
-}
+};
 
 PlatformJs.prototype.mathTan = function(p) {
 	return Math.tan(p);
-}
+};
 
 PlatformJs.prototype.messageBoxShowError = function(text, caption) {
 	alert(caption + "\n" + text);
-}
+};
 
 PlatformJs.prototype.monitorCreate = function() {
 	return null;
-}
+};
 
-PlatformJs.prototype.monitorEnter = function(monitorObject) {}
+PlatformJs.prototype.monitorEnter = function(monitorObject) {};
 
-PlatformJs.prototype.monitorExit = function(monitorObject) {}
+PlatformJs.prototype.monitorExit = function(monitorObject) {};
 
 PlatformJs.prototype.mouseCursorIsVisible = function() {
 	return true;
-}
+};
 
-PlatformJs.prototype.mouseCursorSetVisible = function(value) {}
+PlatformJs.prototype.mouseCursorSetVisible = function(value) {};
 
 PlatformJs.prototype.multithreadingAvailable = function() {
 	return false;
-}
+};
 
-PlatformJs.prototype.openLinkInBrowser = function(url) {}
+PlatformJs.prototype.openLinkInBrowser = function(url) {};
 
 PlatformJs.prototype.parseUri = function(uri) {
 	return null;
-}
+};
 
 PlatformJs.prototype.pathCombine = function(part1, part2) {
 	return null;
-}
+};
 
 PlatformJs.prototype.pathSavegames = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.pathStorage = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.queryStringValue = function(key) {
 	// http://stackoverflow.com/a/3855394
@@ -788,9 +788,9 @@ PlatformJs.prototype.queryStringValue = function(key) {
 		return b;
 	})(window.location.search.substr(1).split('&'));
 	return qs[key];
-}
+};
 
-PlatformJs.prototype.queueUserWorkItem = function(action) {}
+PlatformJs.prototype.queueUserWorkItem = function(action) {};
 
 PlatformJs.prototype.randomCreate = function() {
 	var random = {};
@@ -804,30 +804,30 @@ PlatformJs.prototype.randomCreate = function() {
 		return Math.random();
 	};
 	return random;
-}
+};
 
 PlatformJs.prototype.readAllLines = function(p, retCount) {
 	var lines = p.split("\n");
 	retCount.value = lines.length;
 	return lines;
-}
+};
 
 PlatformJs.prototype.requestMousePointerLock = function() {
 	canvas.requestPointerLock = canvas.requestPointerLock ||
 		canvas.mozRequestPointerLock ||
 		canvas.webkitRequestPointerLock;
 	canvas.requestPointerLock();
-}
+};
 
 PlatformJs.prototype.restoreWindowCursor = function() {
 	document.getElementById("main").style.cursor = "auto";
-}
+};
 
 PlatformJs.prototype.setWindowCursor = function(hotx, hoty, sizex, sizey, imgdata, imgdatalength) {
 	document.getElementById("main").style.cursor = "url(data:image/png;base64," + toBase64(imgdata) + "), auto";
-}
+};
 
-PlatformJs.prototype.saveAssetToCache = function(tosave) {}
+PlatformJs.prototype.saveAssetToCache = function(tosave) {};
 
 // http://stackoverflow.com/a/18480879
 function download(canvas, filename) {
@@ -864,7 +864,7 @@ function download(canvas, filename) {
 Number.prototype.padLeft = function(base, chr) {
 	var len = (String(base || 10).length - String(this).length) + 1;
 	return len > 0 ? new Array(len).join(chr || '0') + this : this;
-}
+};
 PlatformJs.prototype.saveScreenshot = function() {
 	var d = new Date,
 		dformat = [d.getFullYear(),
@@ -875,69 +875,69 @@ PlatformJs.prototype.saveScreenshot = function() {
 			d.getSeconds().padLeft()
 		].join('-');
 	download(canvas, "Screenshot" + dformat + ".png");
-}
+};
 
 PlatformJs.prototype.setMatrixUniformModelView = function(mvMatrix) {
 	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-}
+};
 
 PlatformJs.prototype.setMatrixUniformProjection = function(pMatrix) {
 	gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-}
+};
 
 PlatformJs.prototype.setPreferences = function(preferences) {
 	localStorage.setItem("Preferences", JSON.stringify(preferences.items));
-}
+};
 
-PlatformJs.prototype.setTextRendererFont = function(fontID) {}
+PlatformJs.prototype.setTextRendererFont = function(fontID) {};
 
-PlatformJs.prototype.setTitle = function(applicationname) {}
+PlatformJs.prototype.setTitle = function(applicationname) {};
 
-PlatformJs.prototype.setVSync = function(enabled) {}
+PlatformJs.prototype.setVSync = function(enabled) {};
 
-PlatformJs.prototype.setWindowState = function(value) {}
+PlatformJs.prototype.setWindowState = function(value) {};
 
-PlatformJs.prototype.showKeyboard = function(show) {}
+PlatformJs.prototype.showKeyboard = function(show) {};
 
 PlatformJs.prototype.singlePlayerServerAvailable = function() {
 	return false;
-}
+};
 
-PlatformJs.prototype.singlePlayerServerDisable = function() {}
+PlatformJs.prototype.singlePlayerServerDisable = function() {};
 
-PlatformJs.prototype.singlePlayerServerExit = function() {}
+PlatformJs.prototype.singlePlayerServerExit = function() {};
 
 PlatformJs.prototype.singlePlayerServerGetNetwork = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.singlePlayerServerLoaded = function() {
 	return false;
-}
+};
 
-PlatformJs.prototype.singlePlayerServerStart = function(saveFilename) {}
+PlatformJs.prototype.singlePlayerServerStart = function(saveFilename) {};
 
 PlatformJs.prototype.languageNativeAvailable = function() {
 	return false;
-}
+};
 
 PlatformJs.prototype.getLanguageHandler = function() {
 	return new LanguageCi();
-}
+};
 
 PlatformJs.prototype.stringContains = function(a, b) {
 	return a.indexOf(b) != -1;
-}
+};
 
 PlatformJs.prototype.stringEmpty = function(data) {
 	return data == "";
-}
+};
 
-var stringFormat = function(s, arguments) {
-	var i = arguments.length;
+var stringFormat = function(s, args) {
+	var i = args.length;
 
 	while (i--) {
-		s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), arguments[i]);
+		s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), args[i]);
 	}
 	return s;
 };
@@ -945,19 +945,19 @@ var stringFormat = function(s, arguments) {
 
 PlatformJs.prototype.stringFormat = function(format, arg0) {
 	return stringFormat(format, [arg0]);
-}
+};
 
 PlatformJs.prototype.stringFormat2 = function(format, arg0, arg1) {
 	return stringFormat(format, [arg0, arg1]);
-}
+};
 
 PlatformJs.prototype.stringFormat3 = function(format, arg0, arg1, arg2) {
 	return stringFormat(format, [arg0, arg1, arg2]);
-}
+};
 
 PlatformJs.prototype.stringFormat4 = function(format, arg0, arg1, arg2, arg3) {
 	return stringFormat(format, [arg0, arg1, arg2, arg3]);
-}
+};
 
 PlatformJs.prototype.stringFromUtf8ByteArray = function(value, valueLength) {
 	var arr = new Uint8Array(valueLength);
@@ -967,29 +967,29 @@ PlatformJs.prototype.stringFromUtf8ByteArray = function(value, valueLength) {
 	var encodedString = String.fromCharCode.apply(null, arr),
 		decodedString = decodeURIComponent(escape(encodedString));
 	return decodedString;
-}
+};
 
 PlatformJs.prototype.stringIndexOf = function(s, p) {
 	return s.indexOf(p);
-}
+};
 
 PlatformJs.prototype.stringReplace = function(s, from, to) {
 	return s.replace(from, to);
-}
+};
 
 PlatformJs.prototype.stringSplit = function(value, separator, returnLength) {
 	var ret = value.split(separator);
 	returnLength.value = ret.length;
 	return ret;
-}
+};
 
 PlatformJs.prototype.stringJoin = function(value, separator) {
 	return value.join(separator);
-}
+};
 
 PlatformJs.prototype.stringStartsWithIgnoreCase = function(a, b) {
 	return a.toLowerCase().indexOf(b.toLowerCase()) == 0;
-}
+};
 
 PlatformJs.prototype.stringToCharArray = function(s, length) {
 	var ret = {};
@@ -1001,11 +1001,11 @@ PlatformJs.prototype.stringToCharArray = function(s, length) {
 	}
 	length.value = s.length;
 	return ret;
-}
+};
 
 PlatformJs.prototype.stringToLower = function(p) {
 	return p.toLowerCase();
-}
+};
 
 // http://stackoverflow.com/a/18729931
 PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
@@ -1038,23 +1038,23 @@ PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
 	}
 	retLength.value = utf8.length;
 	return utf8;
-}
+};
 
 PlatformJs.prototype.stringTrim = function(value) {
 	return value.trim();
-}
+};
 
 PlatformJs.prototype.tcpAvailable = function() {
 	return false;
-}
+};
 
-PlatformJs.prototype.tcpConnect = function(ip, port, connected) {}
+PlatformJs.prototype.tcpConnect = function(ip, port, connected) {};
 
 PlatformJs.prototype.tcpReceive = function(data, dataLength) {
 	return 0;
-}
+};
 
-PlatformJs.prototype.tcpSend = function(data, length) {}
+PlatformJs.prototype.tcpSend = function(data, length) {};
 
 PlatformJs.prototype.textSize = function(text, font, outWidth, outHeight) {
 	var canvas1 = document.getElementById('textureCanvas');
@@ -1062,13 +1062,13 @@ PlatformJs.prototype.textSize = function(text, font, outWidth, outHeight) {
 	setFont(ctx, text, font.size, 0);
 	outWidth.value = ctx.measureText(text).width;
 	outHeight.value = 2 * font.size;
-}
+};
 
-PlatformJs.prototype.threadSpinWait = function(iterations) {}
+PlatformJs.prototype.threadSpinWait = function(iterations) {};
 
-PlatformJs.prototype.throwException = function(message) {}
+PlatformJs.prototype.throwException = function(message) {};
 
-PlatformJs.prototype.thumbnailDownloadAsync = function(ip, port, response) {}
+PlatformJs.prototype.thumbnailDownloadAsync = function(ip, port, response) {};
 
 if (window.performance.now) {
 	console.log("Using high performance timer");
@@ -1093,11 +1093,11 @@ var startTime = getTimestamp();
 
 PlatformJs.prototype.timeMillisecondsFromStart = function() {
 	return getTimestamp() - startTime;
-}
+};
 
 PlatformJs.prototype.timestamp = function() {
 	return null;
-}
+};
 
 PlatformJs.prototype.webClientDownloadDataAsync = function(url, response) {
 	var xhr = new XMLHttpRequest();
@@ -1118,7 +1118,7 @@ PlatformJs.prototype.webClientDownloadDataAsync = function(url, response) {
 		response.error = true;
 	}
 	xhr.send();
-}
+};
 
 PlatformJs.prototype.webClientUploadDataAsync = function(url, data, dataLength, response) {
 	var xhr = new XMLHttpRequest();
@@ -1142,11 +1142,11 @@ PlatformJs.prototype.webClientUploadDataAsync = function(url, data, dataLength, 
 	}
 	xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	xhr.send(data2);
-}
+};
 
 PlatformJs.prototype.webSocketAvailable = function() {
 	return true;
-}
+};
 
 var websocket;
 PlatformJs.prototype.webSocketConnect = function(ip, port) {
@@ -1164,7 +1164,7 @@ PlatformJs.prototype.webSocketConnect = function(ip, port) {
 	websocket.onerror = function(evt) {
 		onError(evt)
 	};
-}
+};
 
 var incoming = [];
 
@@ -1194,7 +1194,7 @@ PlatformJs.prototype.webSocketSend = function(data, dataLength) {
 	} else {
 		outgoing.push(data2);
 	}
-}
+};
 
 PlatformJs.prototype.webSocketReceive = function(data, dataLength) {
 	if (connected) {
@@ -1211,12 +1211,12 @@ PlatformJs.prototype.webSocketReceive = function(data, dataLength) {
 	} else {
 		return -1;
 	}
-}
+};
 
-PlatformJs.prototype.windowExit = function() {}
+PlatformJs.prototype.windowExit = function() {};
 
 
-PlatformJs.prototype.start = function() {}
+PlatformJs.prototype.start = function() {};
 
 
 
@@ -1602,10 +1602,10 @@ var newFrameArgs = {};
 newFrameArgs.dt = 0;
 newFrameArgs.getDt = function() {
 	return this.dt;
-}
+};
 newFrameArgs.setDt = function(dt_) {
 	this.dt = dt_;
-}
+};
 
 var oldCanvasWidth = 0;
 var oldCanvasHeight = 0;
