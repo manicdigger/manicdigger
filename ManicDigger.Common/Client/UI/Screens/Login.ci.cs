@@ -3,36 +3,36 @@
 	public ScreenLogin()
 	{
 		wbtn_back = new ButtonWidget();
-		AddWidgetNew(wbtn_back);
+		AddWidget(wbtn_back);
 		wbtn_login = new ButtonWidget();
-		AddWidgetNew(wbtn_login);
+		AddWidget(wbtn_login);
 		wbtn_createAccount = new ButtonWidget();
 		wbtn_createAccount.SetVisible(false);
-		AddWidgetNew(wbtn_createAccount);
+		AddWidget(wbtn_createAccount);
 		wtbx_username = new TextBoxWidget();
-		AddWidgetNew(wtbx_username);
+		AddWidget(wtbx_username);
 		wtbx_password = new TextBoxWidget();
 		wtbx_password.SetInputHidden(true);
-		AddWidgetNew(wtbx_password);
+		AddWidget(wtbx_password);
 		wcbx_rememberPassword = new CheckBoxWidget();
-		AddWidgetNew(wcbx_rememberPassword);
+		AddWidget(wcbx_rememberPassword);
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
 		wtxt_title.SetAlignment(TextAlign.Center);
-		AddWidgetNew(wtxt_title);
+		AddWidget(wtxt_title);
 		wtxt_statusMessage = new TextWidget();
 		wtxt_statusMessage.SetFont(fontMessage);
-		AddWidgetNew(wtxt_statusMessage);
+		AddWidget(wtxt_statusMessage);
 		wtxt_username = new TextWidget();
 		wtxt_username.SetFont(fontDefault);
 		wtxt_username.SetAlignment(TextAlign.Right);
 		wtxt_username.SetBaseline(TextBaseline.Middle);
-		AddWidgetNew(wtxt_username);
+		AddWidget(wtxt_username);
 		wtxt_password = new TextWidget();
 		wtxt_password.SetFont(fontDefault);
 		wtxt_password.SetAlignment(TextAlign.Right);
 		wtxt_password.SetBaseline(TextBaseline.Middle);
-		AddWidgetNew(wtxt_password);
+		AddWidget(wtxt_password);
 
 		triedSavedLogin = false;
 		loginResult = new LoginResultRef();

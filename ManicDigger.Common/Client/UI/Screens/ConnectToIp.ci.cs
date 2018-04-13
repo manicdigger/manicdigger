@@ -3,30 +3,30 @@
 	public ScreenConnectToIp()
 	{
 		wbtn_back = new ButtonWidget();
-		AddWidgetNew(wbtn_back);
+		AddWidget(wbtn_back);
 		wbtn_connect = new ButtonWidget();
-		AddWidgetNew(wbtn_connect);
+		AddWidget(wbtn_connect);
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
 		wtxt_title.SetAlignment(TextAlign.Center);
-		AddWidgetNew(wtxt_title);
+		AddWidget(wtxt_title);
 		wtxt_statusMessage = new TextWidget();
 		wtxt_statusMessage.SetFont(fontMessage);
-		AddWidgetNew(wtxt_statusMessage);
+		AddWidget(wtxt_statusMessage);
 		wtxt_ip = new TextWidget();
 		wtxt_ip.SetFont(fontDefault);
 		wtxt_ip.SetAlignment(TextAlign.Right);
 		wtxt_ip.SetBaseline(TextBaseline.Middle);
-		AddWidgetNew(wtxt_ip);
+		AddWidget(wtxt_ip);
 		wtxt_port = new TextWidget();
 		wtxt_port.SetFont(fontDefault);
 		wtxt_port.SetAlignment(TextAlign.Right);
 		wtxt_port.SetBaseline(TextBaseline.Middle);
-		AddWidgetNew(wtxt_port);
+		AddWidget(wtxt_port);
 		wtbx_ip = new TextBoxWidget();
-		AddWidgetNew(wtbx_ip);
+		AddWidget(wtbx_ip);
 		wtbx_port = new TextBoxWidget();
-		AddWidgetNew(wtbx_port);
+		AddWidget(wtbx_port);
 	}
 
 	ButtonWidget wbtn_back;

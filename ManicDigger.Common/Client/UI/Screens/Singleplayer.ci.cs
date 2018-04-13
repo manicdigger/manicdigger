@@ -6,29 +6,29 @@
 		wbtn_newWorld = new ButtonWidget();
 		wbtn_newWorld.SetText("New World");
 		wbtn_newWorld.SetVisible(false);
-		AddWidgetNew(wbtn_newWorld);
+		AddWidget(wbtn_newWorld);
 		wbtn_playWorld = new ButtonWidget();
 		wbtn_playWorld.SetText("Play");
 		wbtn_playWorld.SetVisible(false);
-		AddWidgetNew(wbtn_playWorld);
+		AddWidget(wbtn_playWorld);
 		wbtn_modifyWorld = new ButtonWidget();
 		wbtn_modifyWorld.SetText("Modify");
 		wbtn_modifyWorld.SetVisible(false);
-		AddWidgetNew(wbtn_modifyWorld);
+		AddWidget(wbtn_modifyWorld);
 		wbtn_back = new ButtonWidget();
-		AddWidgetNew(wbtn_back);
+		AddWidget(wbtn_back);
 		wbtn_openFile = new ButtonWidget();
-		AddWidgetNew(wbtn_openFile);
+		AddWidget(wbtn_openFile);
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
-		AddWidgetNew(wtxt_title);
+		AddWidget(wtxt_title);
 		wtxt_singleplayerUnavailable = new TextWidget();
 		wtxt_singleplayerUnavailable.SetFont(fontDefault);
 		wtxt_singleplayerUnavailable.SetText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.");
 		wtxt_singleplayerUnavailable.SetVisible(false);
-		AddWidgetNew(wtxt_singleplayerUnavailable);
+		AddWidget(wtxt_singleplayerUnavailable);
 		wlst_worldList = new ListWidget();
-		AddWidgetNew(wlst_worldList);
+		AddWidget(wlst_worldList);
 	}
 
 	ButtonWidget wbtn_newWorld;

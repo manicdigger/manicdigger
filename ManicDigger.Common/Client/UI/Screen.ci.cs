@@ -19,7 +19,7 @@
 	internal FontCi fontDefault;
 	internal FontCi fontMessage;
 	int WidgetMaxCount;
-	internal int WidgetCount;
+	int WidgetCount;
 	AbstractMenuWidget[] widgets;
 	internal UiRenderer uiRenderer;
 
@@ -81,7 +81,7 @@
 			widgets[i].OnMouseWheel(menu.p, e);
 		}
 	}
-	public void AddWidgetNew(AbstractMenuWidget widget)
+	public void AddWidget(AbstractMenuWidget widget)
 	{
 		if (WidgetCount >= WidgetMaxCount) { return; }
 		widgets[WidgetCount] = widget;

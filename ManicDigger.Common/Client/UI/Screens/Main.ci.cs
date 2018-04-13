@@ -10,16 +10,16 @@
 		wtxt_loading.SetFont(fontDefault);
 		wtxt_loading.SetAlignment(TextAlign.Center);
 		wtxt_loading.SetBaseline(TextBaseline.Middle);
-		AddWidgetNew(wtxt_loading);
+		AddWidget(wtxt_loading);
 		wimg_logo = new ImageWidget();
 		wimg_logo.SetTextureName("logo.png");
-		AddWidgetNew(wimg_logo);
+		AddWidget(wimg_logo);
 		wbtn_singleplayer = new ButtonWidget();
-		AddWidgetNew(wbtn_singleplayer);
+		AddWidget(wbtn_singleplayer);
 		wbtn_multiplayer = new ButtonWidget();
-		AddWidgetNew(wbtn_multiplayer);
+		AddWidget(wbtn_multiplayer);
 		wbtn_exit = new ButtonWidget();
-		AddWidgetNew(wbtn_exit);
+		AddWidget(wbtn_exit);
 	}
 
 	TextWidget wtxt_loading;

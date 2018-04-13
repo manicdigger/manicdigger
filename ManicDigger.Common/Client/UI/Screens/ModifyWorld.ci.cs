@@ -3,10 +3,10 @@
 	public ScreenModifyWorld()
 	{
 		wbtn_back = new ButtonWidget();
-		AddWidgetNew(wbtn_back);
+		AddWidget(wbtn_back);
 		wtxt_title = new TextWidget();
 		wtxt_title.SetAlignment(TextAlign.Center);
-		AddWidgetNew(wtxt_title);
+		AddWidget(wtxt_title);
 	}
 
 	ButtonWidget wbtn_back;

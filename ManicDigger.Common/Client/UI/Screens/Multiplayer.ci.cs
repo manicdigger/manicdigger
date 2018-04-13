@@ -4,36 +4,36 @@
 	{
 		// Button Widgets
 		wbtn_back = new ButtonWidget();
-		AddWidgetNew(wbtn_back);
+		AddWidget(wbtn_back);
 		wbtn_connect = new ButtonWidget();
-		AddWidgetNew(wbtn_connect);
+		AddWidget(wbtn_connect);
 		wbtn_connectToIp = new ButtonWidget();
-		AddWidgetNew(wbtn_connectToIp);
+		AddWidget(wbtn_connectToIp);
 		wbtn_refresh = new ButtonWidget();
-		AddWidgetNew(wbtn_refresh);
+		AddWidget(wbtn_refresh);
 		wbtn_logout = new ButtonWidget();
 		wbtn_logout.SetVisible(false);
-		AddWidgetNew(wbtn_logout);
+		AddWidget(wbtn_logout);
 
 		// Text Widgets
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
-		AddWidgetNew(wtxt_title);
+		AddWidget(wtxt_title);
 		wtxt_loadingText = new TextWidget();
 		wtxt_loadingText.SetFont(fontMessage);
 		wtxt_loadingText.SetBaseline(TextBaseline.Middle);
 		wtxt_loadingText.SetVisible(false);
-		AddWidgetNew(wtxt_loadingText);
+		AddWidget(wtxt_loadingText);
 		wtxt_userName = new TextWidget();
 		wtxt_userName.SetFont(fontMessage);
 		wtxt_userName.SetAlignment(TextAlign.Right);
 		wtxt_userName.SetBaseline(TextBaseline.Middle);
 		wtxt_userName.SetVisible(false);
-		AddWidgetNew(wtxt_userName);
+		AddWidget(wtxt_userName);
 
 		// list widget
 		wlst_serverList = new ListWidget();
-		AddWidgetNew(wlst_serverList);
+		AddWidget(wlst_serverList);
 
 		currentPage = 0;
 
