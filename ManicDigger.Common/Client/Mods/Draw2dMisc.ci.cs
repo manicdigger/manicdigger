@@ -104,8 +104,8 @@
 	internal void DrawEnemyHealthUseInfo(Game game, string name, float progress, bool useInfo)
 	{
 		int y = useInfo ? 55 : 35;
-		game.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300, y, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-		game.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+		game.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300, y, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+		game.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
 		FontCi font = new FontCi();
 		font.size = 14;
 		IntRef w = new IntRef();
@@ -152,13 +152,13 @@
 				FontCi font = new FontCi();
 				font.size = 18;
 				game.Draw2dText(s, font, game.Width() - game.TextSizeWidth(s, font) - 50,
-					game.Height() - game.TextSizeHeight(s, font) - 50, loaded == 0 ? IntRef.Create(Game.ColorFromArgb(255, 255, 0, 0)) : IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), false);
+					game.Height() - game.TextSizeHeight(s, font) - 50, loaded == 0 ? IntRef.Create(ColorCi.FromArgb(255, 255, 0, 0)) : IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), false);
 				if (loaded == 0)
 				{
 					font.size = 14;
 					string pressR = "Press R to reload";
 					game.Draw2dText(pressR, font, game.Width() - game.TextSizeWidth(pressR, font) - 50,
-						game.Height() - game.TextSizeHeight(s, font) - 80, IntRef.Create(Game.ColorFromArgb(255, 255, 0, 0)), false);
+						game.Height() - game.TextSizeHeight(s, font) - 80, IntRef.Create(ColorCi.FromArgb(255, 255, 0, 0)), false);
 				}
 			}
 		}

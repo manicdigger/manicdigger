@@ -382,7 +382,7 @@ class NotifyMapAction : Action_
 			server.mods[i].GenerateChunk(x, y, z, chunk);
 		}
 
-		byte[] chunkBytes = MiscCi.UshortArrayToByteArray(chunk, 32 * 32 * 32);
+		byte[] chunkBytes = ConvertCi.UshortArrayToByteArray(chunk, 32 * 32 * 32);
 		IntRef compressedLength = new IntRef();
 		byte[] chunkCompressed = server.platform.GzipCompress(chunkBytes, 32 * 32 * 32 * 2, compressedLength);
 

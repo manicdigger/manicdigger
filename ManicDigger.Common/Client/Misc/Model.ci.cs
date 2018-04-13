@@ -71,10 +71,10 @@ public class ModelDataTool
 		model.xyz[model.GetXyzCount() + 2] = z;
 		model.uv[model.GetUvCount() + 0] = u;
 		model.uv[model.GetUvCount() + 1] = v;
-		model.rgba[model.GetRgbaCount() + 0] = Game.IntToByte(Game.ColorR(color));
-		model.rgba[model.GetRgbaCount() + 1] = Game.IntToByte(Game.ColorG(color));
-		model.rgba[model.GetRgbaCount() + 2] = Game.IntToByte(Game.ColorB(color));
-		model.rgba[model.GetRgbaCount() + 3] = Game.IntToByte(Game.ColorA(color));
+		model.rgba[model.GetRgbaCount() + 0] = ConvertCi.IntToByte(ColorCi.ExtractR(color));
+		model.rgba[model.GetRgbaCount() + 1] = ConvertCi.IntToByte(ColorCi.ExtractG(color));
+		model.rgba[model.GetRgbaCount() + 2] = ConvertCi.IntToByte(ColorCi.ExtractB(color));
+		model.rgba[model.GetRgbaCount() + 3] = ConvertCi.IntToByte(ColorCi.ExtractA(color));
 		model.verticesCount++;
 	}
 

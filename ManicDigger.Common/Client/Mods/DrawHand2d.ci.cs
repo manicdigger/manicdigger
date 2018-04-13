@@ -20,7 +20,7 @@
 						game.platform.BitmapDelete(bmp);
 					}
 				}
-				game.Draw2dTexture(game.handTexture, game.Width() / 2, game.Height() - 512, 512, 512, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+				game.Draw2dTexture(game.handTexture, game.Width() / 2, game.Height() - 512, 512, 512, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 				game.PerspectiveMode();
 			}
 		}

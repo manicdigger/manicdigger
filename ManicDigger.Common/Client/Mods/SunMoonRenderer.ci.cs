@@ -61,7 +61,7 @@
 		ModDrawSprites.Billboard(game);
 		game.GLScale(one * 2 / 100, one * 2 / 100, one * 2 / 100);
 		//GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
-		game.Draw2dTexture(game.isNight ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+		game.Draw2dTexture(game.isNight ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 		game.GLPopMatrix();
 	}
 

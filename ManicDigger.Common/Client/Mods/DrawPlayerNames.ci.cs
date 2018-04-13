@@ -59,12 +59,12 @@
 					//TODO: Can't change text color because text has outline anyway.
 					if (p.DrawHealth)
 					{
-						game.Draw2dTexture(game.WhiteTexture(), -26, -11, 52, 12, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-						game.Draw2dTexture(game.WhiteTexture(), -25, -10, 50 * (game.one * p.Health), 10, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+						game.Draw2dTexture(game.WhiteTexture(), -26, -11, 52, 12, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+						game.Draw2dTexture(game.WhiteTexture(), -25, -10, 50 * (game.one * p.Health), 10, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
 					}
 					FontCi font = new FontCi();
 					font.size = 14;
-					game.Draw2dText(name, font, -game.TextSizeWidth(name, font) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
+					game.Draw2dText(name, font, -game.TextSizeWidth(name, font) / 2, 0, IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), true);
 					//                        GL.Translate(0, 1, 0);
 					game.GLPopMatrix();
 				}

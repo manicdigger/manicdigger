@@ -155,8 +155,8 @@ public class PlayerInterpolate : IInterpolation
 		cc.positionX = aa.positionX + (bb.positionX - aa.positionX) * progress;
 		cc.positionY = aa.positionY + (bb.positionY - aa.positionY) * progress;
 		cc.positionZ = aa.positionZ + (bb.positionZ - aa.positionZ) * progress;
-		//cc.heading = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress));
-		//cc.pitch = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress));
+		//cc.heading = ConvertCi.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress));
+		//cc.pitch = ConvertCi.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress));
 		cc.rotx = DegToRad(AngleInterpolation.InterpolateAngle360(platform, RadToDeg(aa.rotx), RadToDeg(bb.rotx), progress));
 		cc.roty = DegToRad(AngleInterpolation.InterpolateAngle360(platform, RadToDeg(aa.roty), RadToDeg(bb.roty), progress));
 		cc.rotz = DegToRad(AngleInterpolation.InterpolateAngle360(platform, RadToDeg(aa.rotz), RadToDeg(bb.rotz), progress));

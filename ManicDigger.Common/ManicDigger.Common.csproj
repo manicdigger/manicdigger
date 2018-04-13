@@ -87,6 +87,10 @@
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
     <Compile Include="Client\Misc\AnimatedModel.ci.cs" />
+    <Compile Include="Client\Misc\Color.ci.cs" />
+    <Compile Include="Client\Misc\ConnectData.ci.cs" />
+    <Compile Include="Client\Misc\Convert.ci.cs" />
+    <Compile Include="Client\Misc\Math.ci.cs" />
     <Compile Include="Client\UI\MenuWidget.ci.cs" />
     <Compile Include="Client\UI\Misc.ci.cs" />
     <Compile Include="Client\Misc\Model.ci.cs" />

@@ -25,6 +25,10 @@
 		output.Y = y;
 		output.Z = z;
 	}
+	public static float Vec3Length(float x, float y, float z)
+	{
+		return Platform.Sqrt(x * x + y * y + z * z);
+	}
 }
 
 public class Unproject
@@ -139,11 +143,11 @@ public class InterpolationCi
 		int a = colors[colora];
 		int b = colors[colorb];
 		float p = (progress - (one * colora) / (colorsLength - 1)) * (colorsLength - 1);
-		int A = platform.FloatToInt(Game.ColorA(a) + (Game.ColorA(b) - Game.ColorA(a)) * p);
-		int R = platform.FloatToInt(Game.ColorR(a) + (Game.ColorR(b) - Game.ColorR(a)) * p);
-		int G = platform.FloatToInt(Game.ColorG(a) + (Game.ColorG(b) - Game.ColorG(a)) * p);
-		int B = platform.FloatToInt(Game.ColorB(a) + (Game.ColorB(b) - Game.ColorB(a)) * p);
-		return Game.ColorFromArgb(A, R, G, B);
+		int A = platform.FloatToInt(ColorCi.ExtractA(a) + (ColorCi.ExtractA(b) - ColorCi.ExtractA(a)) * p);
+		int R = platform.FloatToInt(ColorCi.ExtractR(a) + (ColorCi.ExtractR(b) - ColorCi.ExtractR(a)) * p);
+		int G = platform.FloatToInt(ColorCi.ExtractG(a) + (ColorCi.ExtractG(b) - ColorCi.ExtractG(a)) * p);
+		int B = platform.FloatToInt(ColorCi.ExtractB(a) + (ColorCi.ExtractB(b) - ColorCi.ExtractB(a)) * p);
+		return ColorCi.FromArgb(A, R, G, B);
 	}
 }
 
@@ -226,105 +230,6 @@ public class StringTools
 	public static bool StringStartsWith(GamePlatform p, string s, string b)
 	{
 		return StringSubstring(p, s, 0, StringLength(p, b)) == b;
-	}
-}
-
-public class MiscCi
-{
-	public static bool ReadBool(string str)
-	{
-		if (str == null)
-		{
-			return false;
-		}
-		else
-		{
-			return (str != "0"
-				&& (str != "false")
-				&& (str != "False")
-				&& (str != "FALSE"));
-		}
-	}
-	public static byte[] UshortArrayToByteArray(int[] input, int inputLength)
-	{
-		int outputLength = inputLength * 2;
-		byte[] output = new byte[outputLength];
-		for (int i = 0; i < inputLength; i++)
-		{
-			output[i * 2] = Game.IntToByte(input[i] & 255);
-			output[i * 2 + 1] = Game.IntToByte((input[i] >> 8) & 255);
-		}
-		return output;
-	}
-
-	public static float Vec3Length(float x, float y, float z)
-	{
-		return Platform.Sqrt(x * x + y * y + z * z);
-	}
-}
-
-public class ConnectData
-{
-	internal string Username;
-	internal string Ip;
-	internal int Port;
-	internal string Auth;
-	internal string ServerPassword;
-	internal bool IsServePasswordProtected;
-	public static ConnectData FromUri(UriCi uri)
-	{
-		ConnectData c = new ConnectData();
-		c = new ConnectData();
-		c.Ip = uri.GetIp();
-		c.Port = 25565;
-		c.Username = "gamer";
-		if (uri.GetPort() != -1)
-		{
-			c.Port = uri.GetPort();
-		}
-		if (uri.GetGet().ContainsKey("user"))
-		{
-			c.Username = uri.GetGet().Get("user");
-		}
-		if (uri.GetGet().ContainsKey("auth"))
-		{
-			c.Auth = uri.GetGet().Get("auth");
-		}
-		if (uri.GetGet().ContainsKey("serverPassword"))
-		{
-			c.IsServePasswordProtected = MiscCi.ReadBool(uri.GetGet().Get("serverPassword"));
-		}
-		return c;
-	}
-
-	public void SetIp(string value)
-	{
-		Ip = value;
-	}
-
-	public void SetPort(int value)
-	{
-		Port = value;
-	}
-
-	public void SetUsername(string value)
-	{
-		Username = value;
-	}
-
-	public void SetIsServePasswordProtected(bool value)
-	{
-		IsServePasswordProtected = value;
-	}
-
-	public bool GetIsServePasswordProtected()
-	{
-		return IsServePasswordProtected;
-	}
-
-	public void SetServerPassword(string value)
-	{
-		ServerPassword = value;
 	}
 }
 
@@ -517,113 +422,6 @@ public class GameVersionHelper
 	static int DateToInt(int year, int month, int day)
 	{
 		return year * 10000 + month * 100 + day;
-	}
-}
-
-public class MathCi
-{
-	public static float MinFloat(float a, float b)
-	{
-		if (a <= b)
-		{
-			return a;
-		}
-		else
-		{
-			return b;
-		}
-	}
-
-	public static float MaxFloat(float a, float b)
-	{
-		if (a >= b)
-		{
-			return a;
-		}
-		else
-		{
-			return b;
-		}
-	}
-
-	public static float AbsFloat(float b)
-	{
-		if (b >= 0)
-		{
-			return b;
-		}
-		else
-		{
-			return 0 - b;
-		}
-	}
-
-	public static int Sign(float q)
-	{
-		if (q < 0)
-		{
-			return -1;
-		}
-		else if (q == 0)
-		{
-			return 0;
-		}
-		else
-		{
-			return 1;
-		}
-	}
-
-	public static int MaxInt(int a, int b)
-	{
-		if (a >= b)
-		{
-			return a;
-		}
-		else
-		{
-			return b;
-		}
-	}
-
-	public static int MinInt(int a, int b)
-	{
-		if (a <= b)
-		{
-			return a;
-		}
-		else
-		{
-			return b;
-		}
-	}
-
-	public static float ClampFloat(float value, float min, float max)
-	{
-		float result = value;
-		if (value > max)
-		{
-			result = max;
-		}
-		if (value < min)
-		{
-			result = min;
-		}
-		return result;
-	}
-
-	public static int ClampInt(int value, int min, int max)
-	{
-		int result = value;
-		if (value > max)
-		{
-			result = max;
-		}
-		if (value < min)
-		{
-			result = min;
-		}
-		return result;
 	}
 }
 

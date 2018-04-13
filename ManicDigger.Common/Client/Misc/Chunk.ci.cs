@@ -29,7 +29,7 @@
 		{
 			if (block < 255)
 			{
-				data[pos] = Game.IntToByte(block);
+				data[pos] = ConvertCi.IntToByte(block);
 			}
 			else
 			{

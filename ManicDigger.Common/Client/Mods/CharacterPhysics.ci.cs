@@ -109,7 +109,7 @@
 		diff1.X = diff1ref.X;
 		diff1.Y = diff1ref.Y;
 		diff1.Z = diff1ref.Z;
-		if (MiscCi.Vec3Length(push.X, push.Y, push.Z) > 0.01f)
+		if (VectorTool.Vec3Length(push.X, push.Y, push.Z) > 0.01f)
 		{
 			push.Normalize();
 			push.X *= 5;
@@ -172,7 +172,7 @@
 		}
 		else
 		{
-			if (MiscCi.Vec3Length(diff1.X, diff1.Y, diff1.Z) > 0)
+			if (VectorTool.Vec3Length(diff1.X, diff1.Y, diff1.Z) > 0)
 			{
 				diff1.Normalize();
 			}
@@ -194,7 +194,7 @@
 			float diffx = newposition.X - stateplayerposition.x;
 			float diffy = newposition.Y - stateplayerposition.y;
 			float diffz = newposition.Z - stateplayerposition.z;
-			float difflength = MiscCi.Vec3Length(diffx, diffy, diffz);
+			float difflength = VectorTool.Vec3Length(diffx, diffy, diffz);
 			if (difflength > 0)
 			{
 				diffx /= difflength;

@@ -68,7 +68,7 @@ public class TerrainChunkTesselatorCi
 		EnableSmoothLight = true;
 		ENABLE_TEXTURE_TILING = true;
 		//option_HardWaterTesselation = true;
-		_colorWhite = Game.ColorFromArgb(255, 255, 255, 255);
+		_colorWhite = ColorCi.FromArgb(255, 255, 255, 255);
 		BlockShadow = 0.6f;
 		option_DarkenBlockSides = true;
 		option_DoNotDrawEdges = true;
@@ -346,7 +346,7 @@ public class TerrainChunkTesselatorCi
 					}
 
 					//Store drawing flags
-					currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
+					currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = ConvertCi.IntToByte(draw);
 				}
 			}
 		}
@@ -527,7 +527,7 @@ public class TerrainChunkTesselatorCi
 				if (shadowratio != shadowratio2) { break; }
 				if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
 				currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
-				currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
+				currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= ConvertCi.IntToByte(~dirflags);
 				newxx++;
 			}
 			return newxx - xx;
@@ -544,7 +544,7 @@ public class TerrainChunkTesselatorCi
 				if (shadowratio != shadowratio2) { break; }
 				if ((currentChunkDraw16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
 				currentChunkDrawCount16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
-				currentChunkDraw16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
+				currentChunkDraw16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] &= ConvertCi.IntToByte(~dirflags);
 				newyy++;
 			}
 			return newyy - yy;
@@ -561,7 +561,7 @@ public class TerrainChunkTesselatorCi
 				if (shadowratio != shadowratio2) { break; }
 				if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
 				currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
-				currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
+				currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= ConvertCi.IntToByte(~dirflags);
 				newxx++;
 			}
 			return newxx - xx;
@@ -617,10 +617,10 @@ public class TerrainChunkTesselatorCi
 
 	int ColorMultiply(int color, float fValue)
 	{
-		return Game.ColorFromArgb(Game.ColorA(color),
-			game.platform.FloatToInt(Game.ColorR(color) * fValue),
-			game.platform.FloatToInt(Game.ColorG(color) * fValue),
-			game.platform.FloatToInt(Game.ColorB(color) * fValue));
+		return ColorCi.FromArgb(ColorCi.ExtractA(color),
+			game.platform.FloatToInt(ColorCi.ExtractR(color) * fValue),
+			game.platform.FloatToInt(ColorCi.ExtractG(color) * fValue),
+			game.platform.FloatToInt(ColorCi.ExtractB(color) * fValue));
 	}
 
 	internal float occ;
@@ -1111,10 +1111,10 @@ public class TerrainChunkTesselatorCi
 		model.xyz[model.GetXyzCount() + 2] = z;
 		model.uv[model.GetUvCount() + 0] = u;
 		model.uv[model.GetUvCount() + 1] = v;
-		model.rgba[model.GetRgbaCount() + 0] = Game.IntToByte(Game.ColorR(color));
-		model.rgba[model.GetRgbaCount() + 1] = Game.IntToByte(Game.ColorG(color));
-		model.rgba[model.GetRgbaCount() + 2] = Game.IntToByte(Game.ColorB(color));
-		model.rgba[model.GetRgbaCount() + 3] = Game.IntToByte(Game.ColorA(color));
+		model.rgba[model.GetRgbaCount() + 0] = ConvertCi.IntToByte(ColorCi.ExtractR(color));
+		model.rgba[model.GetRgbaCount() + 1] = ConvertCi.IntToByte(ColorCi.ExtractG(color));
+		model.rgba[model.GetRgbaCount() + 2] = ConvertCi.IntToByte(ColorCi.ExtractB(color));
+		model.rgba[model.GetRgbaCount() + 3] = ConvertCi.IntToByte(ColorCi.ExtractA(color));
 		model.verticesCount++;
 	}
 

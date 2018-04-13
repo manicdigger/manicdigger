@@ -235,9 +235,9 @@
 		const int historyheight = 80;
 
 		// color settings
-		int color_graph = Game.ColorFromArgb(128, 220, 20, 20);
-		int color_outofrange = Game.ColorFromArgb(128, 255, 255, 0);
-		int color_lines = Game.ColorFromArgb(255, 255, 255, 255);
+		int color_graph = ColorCi.FromArgb(128, 220, 20, 20);
+		int color_outofrange = ColorCi.FromArgb(128, 255, 255, 0);
+		int color_lines = ColorCi.FromArgb(255, 255, 255, 255);
 
 		posy += historyheight;
 
@@ -258,9 +258,9 @@
 		const int historyheight = 80;
 
 		// color settings
-		int color_graph = Game.ColorFromArgb(128, 20, 20, 220);
-		int color_outofrange = Game.ColorFromArgb(128, 60, 60, 220);
-		int color_lines = Game.ColorFromArgb(255, 255, 255, 255);
+		int color_graph = ColorCi.FromArgb(128, 20, 20, 220);
+		int color_outofrange = ColorCi.FromArgb(128, 60, 60, 220);
+		int color_lines = ColorCi.FromArgb(255, 255, 255, 255);
 
 		posy += historyheight;
 
@@ -281,9 +281,9 @@
 		const int historyheight = 80;
 
 		// color settings
-		int color_graph = Game.ColorFromArgb(128, 20, 220, 20);
-		int color_outofrange = Game.ColorFromArgb(128, 120, 220, 20);
-		int color_lines = Game.ColorFromArgb(255, 255, 255, 255);
+		int color_graph = ColorCi.FromArgb(128, 20, 220, 20);
+		int color_outofrange = ColorCi.FromArgb(128, 120, 220, 20);
+		int color_lines = ColorCi.FromArgb(255, 255, 255, 255);
 
 		posy += historyheight;
 
@@ -311,7 +311,7 @@
 	/// <param name="color_outlier">Color used to highlight outliers.</param>
 	void DrawGraph(float posX, float posY, int sizeX, int sizeY, float[] data, int color_graph, int color_outlier)
 	{
-		int color_background = Game.ColorFromArgb(80, 0, 0, 0);
+		int color_background = ColorCi.FromArgb(80, 0, 0, 0);
 
 		// draw background
 		const int margin = 4;
@@ -353,8 +353,8 @@
 			PositionLines[0] = p.StringFormat("X: {0}", p.IntToString(game.MathFloor(m.GetLocalPositionX())));
 			PositionLines[1] = p.StringFormat("Y: {0}", p.IntToString(game.MathFloor(m.GetLocalPositionZ())));
 			PositionLines[2] = p.StringFormat("Z: {0}", p.IntToString(game.MathFloor(m.GetLocalPositionY())));
-			PositionLines[3] = p.StringFormat("Heading: {0}", p.IntToString(Game.IntToByte(p.FloatToInt(heading))));
-			PositionLines[4] = p.StringFormat("Pitch: {0}", p.IntToString(Game.IntToByte(p.FloatToInt(pitch))));
+			PositionLines[3] = p.StringFormat("Heading: {0}", p.IntToString(ConvertCi.IntToByte(p.FloatToInt(heading))));
+			PositionLines[4] = p.StringFormat("Pitch: {0}", p.IntToString(ConvertCi.IntToByte(p.FloatToInt(pitch))));
 
 			m.OrthoMode();
 			for (int i = 0; i < PositionLinesCount; i++)

@@ -135,16 +135,16 @@ public class ModSkySphereAnimated : ClientMod
 
 				int skyColor = Texture2d(platform, skyPixels_, (sunYNormalized + 2) / 4, 1 - ((vertexYNormalized + 1) / 2));
 
-				float skyColorA = one * Game.ColorA(skyColor) / 255;
-				float skyColorR = one * Game.ColorR(skyColor) / 255;
-				float skyColorG = one * Game.ColorG(skyColor) / 255;
-				float skyColorB = one * Game.ColorB(skyColor) / 255;
+				float skyColorA = one * ColorCi.ExtractA(skyColor) / 255;
+				float skyColorR = one * ColorCi.ExtractR(skyColor) / 255;
+				float skyColorG = one * ColorCi.ExtractG(skyColor) / 255;
+				float skyColorB = one * ColorCi.ExtractB(skyColor) / 255;
 
 				int glowColor = Texture2d(platform, glowPixels_, (sunYNormalized + one) / 2, 1 - proximityToSun);
-				float glowColorA = one * Game.ColorA(glowColor) / 255;
-				float glowColorR = one * Game.ColorR(glowColor) / 255;
-				float glowColorG = one * Game.ColorG(glowColor) / 255;
-				float glowColorB = one * Game.ColorB(glowColor) / 255;
+				float glowColorA = one * ColorCi.ExtractA(glowColor) / 255;
+				float glowColorR = one * ColorCi.ExtractR(glowColor) / 255;
+				float glowColorG = one * ColorCi.ExtractG(glowColor) / 255;
+				float glowColorB = one * ColorCi.ExtractB(glowColor) / 255;
 
 				// Combine the color and glow giving the pixel value.
 				float colorR = skyColorR + glowColorR * glowColorA;
@@ -157,10 +157,10 @@ public class ModSkySphereAnimated : ClientMod
 				if (colorB > 1) { colorB = 1; }
 				if (colorA > 1) { colorA = 1; }
 
-				data.rgba[i * 4 + 0] = Game.IntToByte(platform.FloatToInt(colorR * 255));
-				data.rgba[i * 4 + 1] = Game.IntToByte(platform.FloatToInt(colorG * 255));
-				data.rgba[i * 4 + 2] = Game.IntToByte(platform.FloatToInt(colorB * 255));
-				data.rgba[i * 4 + 3] = Game.IntToByte(platform.FloatToInt(colorA * 255));
+				data.rgba[i * 4 + 0] = ConvertCi.IntToByte(platform.FloatToInt(colorR * 255));
+				data.rgba[i * 4 + 1] = ConvertCi.IntToByte(platform.FloatToInt(colorG * 255));
+				data.rgba[i * 4 + 2] = ConvertCi.IntToByte(platform.FloatToInt(colorB * 255));
+				data.rgba[i * 4 + 3] = ConvertCi.IntToByte(platform.FloatToInt(colorA * 255));
 				i++;
 			}
 		}

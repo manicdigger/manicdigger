@@ -153,22 +153,22 @@ namespace ManicDigger.Server
 			d.Widgets = new ManicDigger.Widget[4 + server.serverClient.Groups.Count * 2];
 			int widgetCount = 0;
 			var font = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
-			d.Widgets[widgetCount++] = Widget.MakeSolid(0, 0, 400, 400, Game.ColorFromArgb(255, 50, 50, 50));
-			d.Widgets[widgetCount++] = Widget.MakeTextBox(e.permissionSign.name, font, 50, 50, 200, 50, Game.ColorFromArgb(255, 0, 0, 0));
+			d.Widgets[widgetCount++] = Widget.MakeSolid(0, 0, 400, 400, ColorCi.FromArgb(255, 50, 50, 50));
+			d.Widgets[widgetCount++] = Widget.MakeTextBox(e.permissionSign.name, font, 50, 50, 200, 50, ColorCi.FromArgb(255, 0, 0, 0));
 			for (int i = 0; i < server.serverClient.Groups.Count; i++)
 			{
 				Group g = server.serverClient.Groups[i];
-				Widget button = Widget.MakeSolid(50, 150 + i * 50, 100, 40, Game.ColorFromArgb(255, 100, 100, 100));
+				Widget button = Widget.MakeSolid(50, 150 + i * 50, 100, 40, ColorCi.FromArgb(255, 100, 100, 100));
 				button.ClickKey = (char)13;
 				button.Id = "PermissionSignGroup" + g.Name;
 				d.Widgets[widgetCount++] = button;
-				d.Widgets[widgetCount++] = Widget.MakeText(g.Name, font, 50, 150 + i * 50, Game.ColorFromArgb(255, 0, 0, 0));
+				d.Widgets[widgetCount++] = Widget.MakeText(g.Name, font, 50, 150 + i * 50, ColorCi.FromArgb(255, 0, 0, 0));
 			}
-			Widget okHandler = Widget.MakeSolid(200, 50, 100, 50, Game.ColorFromArgb(255, 100, 100, 100));
+			Widget okHandler = Widget.MakeSolid(200, 50, 100, 50, ColorCi.FromArgb(255, 100, 100, 100));
 			okHandler.ClickKey = (char)13;
 			okHandler.Id = "UsePermissionSign_OK";
 			d.Widgets[widgetCount++] = okHandler;
-			d.Widgets[widgetCount++] = Widget.MakeText("Set player", font, 200, 50, Game.ColorFromArgb(255, 0, 0, 0));
+			d.Widgets[widgetCount++] = Widget.MakeText("Set player", font, 200, 50, ColorCi.FromArgb(255, 0, 0, 0));
 			editingSign[player] = id;
 			server.SendDialog(player, "UseSign", d);
 		}

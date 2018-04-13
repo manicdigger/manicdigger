@@ -157,13 +157,13 @@ public class ClientModManager1 : ClientModManager
 
 	public override void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color)
 	{
-		int a = Game.ColorA(color);
-		int r = Game.ColorR(color);
-		int g = Game.ColorG(color);
-		int b = Game.ColorB(color);
+		int a = ColorCi.ExtractA(color);
+		int r = ColorCi.ExtractR(color);
+		int g = ColorCi.ExtractG(color);
+		int b = ColorCi.ExtractB(color);
 		game.Draw2dTexture(textureid, game.platform.FloatToInt(x1), game.platform.FloatToInt(y1),
 			game.platform.FloatToInt(width), game.platform.FloatToInt(height),
-			inAtlasId, 0, Game.ColorFromArgb(a, r, g, b), false);
+			inAtlasId, 0, ColorCi.FromArgb(a, r, g, b), false);
 	}
 
 	public override void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureId)

@@ -23,7 +23,7 @@
 		clickable = false;
 		focusable = false;
 		hasKeyboardFocus = false;
-		color = Game.ColorFromArgb(255, 255, 255, 255);
+		color = ColorCi.FromArgb(255, 255, 255, 255);
 		eventKeyChar = -1;
 		eventName = null;
 		eventKeyPressed = false;

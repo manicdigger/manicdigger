@@ -669,7 +669,7 @@ public class CuboidRenderer
 		data.uv = new float[4 * 6 * 2];
 		data.rgba = new byte[4 * 6 * 4];
 		int light255 = game.platform.FloatToInt(light * 255);
-		int color = Game.ColorFromArgb(255, light255, light255, light255);
+		int color = ColorCi.FromArgb(255, light255, light255, light255);
 
 		RectangleFloat rect;
 
@@ -740,10 +740,10 @@ public class CuboidRenderer
 		model.xyz[model.GetXyzCount() + 2] = z;
 		model.uv[model.GetUvCount() + 0] = u;
 		model.uv[model.GetUvCount() + 1] = v;
-		model.rgba[model.GetRgbaCount() + 0] = Game.IntToByte(Game.ColorR(color));
-		model.rgba[model.GetRgbaCount() + 1] = Game.IntToByte(Game.ColorG(color));
-		model.rgba[model.GetRgbaCount() + 2] = Game.IntToByte(Game.ColorB(color));
-		model.rgba[model.GetRgbaCount() + 3] = Game.IntToByte(Game.ColorA(color));
+		model.rgba[model.GetRgbaCount() + 0] = ConvertCi.IntToByte(ColorCi.ExtractR(color));
+		model.rgba[model.GetRgbaCount() + 1] = ConvertCi.IntToByte(ColorCi.ExtractG(color));
+		model.rgba[model.GetRgbaCount() + 2] = ConvertCi.IntToByte(ColorCi.ExtractB(color));
+		model.rgba[model.GetRgbaCount() + 3] = ConvertCi.IntToByte(ColorCi.ExtractA(color));
 		model.verticesCount++;
 	}
 
@@ -756,7 +756,7 @@ public class CuboidRenderer
 		data.uv = new float[4 * 6 * 2];
 		data.rgba = new byte[4 * 6 * 4];
 		int light255 = game.platform.FloatToInt(light * 255);
-		int color = Game.ColorFromArgb(255, light255, light255, light255);
+		int color = ColorCi.FromArgb(255, light255, light255, light255);
 
 		RectangleFloat rect;
 

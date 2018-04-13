@@ -440,45 +440,6 @@
 		return 0;
 	}
 
-	public static byte IntToByte(int a)
-	{
-#if CITO
-        return a.LowByte;
-#else
-		return (byte)a;
-#endif
-	}
-
-	public static int ColorFromArgb(int a, int r, int g, int b)
-	{
-		int iCol = (a << 24) | (r << 16) | (g << 8) | b;
-		return iCol;
-	}
-
-	public static int ColorA(int color)
-	{
-		byte a = IntToByte(color >> 24);
-		return a;
-	}
-
-	public static int ColorR(int color)
-	{
-		byte r = IntToByte(color >> 16);
-		return r;
-	}
-
-	public static int ColorG(int color)
-	{
-		byte g = IntToByte(color >> 8);
-		return g;
-	}
-
-	public static int ColorB(int color)
-	{
-		byte b = IntToByte(color);
-		return b;
-	}
-
 	public static float GetPi()
 	{
 		float a = 3141592;
@@ -511,7 +472,7 @@
 	public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
 	{
 		platform.GLDisableAlphaTest();
-		if (color == ColorFromArgb(255, 255, 255, 255) && inAtlasId == null)
+		if (color == ColorCi.FromArgb(255, 255, 255, 255) && inAtlasId == null)
 		{
 			Draw2dTextureSimple(textureid, x1, y1, width, height, enabledepthtest);
 		}
@@ -570,7 +531,7 @@
 			platform.GlDisableDepthTest();
 		}
 		ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-			x1, y1, width, height, Game.IntToByte(Game.ColorR(color)), Game.IntToByte(Game.ColorG(color)), Game.IntToByte(Game.ColorB(color)), Game.IntToByte(Game.ColorA(color)));
+			x1, y1, width, height, ConvertCi.IntToByte(ColorCi.ExtractR(color)), ConvertCi.IntToByte(ColorCi.ExtractG(color)), ConvertCi.IntToByte(ColorCi.ExtractB(color)), ConvertCi.IntToByte(ColorCi.ExtractA(color)));
 		DrawModelData(data);
 		if (!enabledepthtest)
 		{
@@ -592,7 +553,7 @@
 			platform.GlDisableDepthTest();
 		}
 		ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-			dstx, dsty, dstwidth, dstheight, Game.IntToByte(Game.ColorR(color)), Game.IntToByte(Game.ColorG(color)), Game.IntToByte(Game.ColorB(color)), Game.IntToByte(Game.ColorA(color)));
+			dstx, dsty, dstwidth, dstheight, ConvertCi.IntToByte(ColorCi.ExtractR(color)), ConvertCi.IntToByte(ColorCi.ExtractG(color)), ConvertCi.IntToByte(ColorCi.ExtractB(color)), ConvertCi.IntToByte(ColorCi.ExtractA(color)));
 		DrawModelData(data);
 		if (!enabledepthtest)
 		{
@@ -667,7 +628,7 @@
 
 			ModelData modelData =
 				QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-				x1, y1, width, height, Game.IntToByte(ColorR(color)), Game.IntToByte(ColorG(color)), Game.IntToByte(ColorB(color)), Game.IntToByte(ColorA(color)));
+				x1, y1, width, height, ConvertCi.IntToByte(ColorCi.ExtractR(color)), ConvertCi.IntToByte(ColorCi.ExtractG(color)), ConvertCi.IntToByte(ColorCi.ExtractB(color)), ConvertCi.IntToByte(ColorCi.ExtractA(color)));
 			modelDatas[modelDatasCount++] = modelData;
 		}
 
@@ -888,7 +849,7 @@
 		{
 			BitmapCi bmp = platform.BitmapCreate(1, 1);
 			int[] pixels = new int[1];
-			pixels[0] = ColorFromArgb(255, 255, 255, 255);
+			pixels[0] = ColorCi.FromArgb(255, 255, 255, 255);
 			platform.BitmapSetPixelsArgb(bmp, pixels);
 			this.whitetexture = platform.LoadTextureFromBitmap(bmp);
 		}
@@ -967,7 +928,7 @@
 		{
 			return;
 		}
-		if (color == null) { color = IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)); }
+		if (color == null) { color = IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)); }
 		Text_ t = new Text_();
 		t.text = text;
 		t.color = color.value;
@@ -996,7 +957,7 @@
 
 		ct = GetCachedTextTexture(t);
 		ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
-		Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, Game.ColorFromArgb(255, 255, 255, 255), enabledepthtest);
+		Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), enabledepthtest);
 		DeleteUnusedCachedTextTextures();
 	}
 
@@ -1526,7 +1487,7 @@
 
 	public void Draw2dBitmapFile(string filename, float x, float y, float w, float h)
 	{
-		Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorFromArgb(255, 255, 255, 255), false);
+		Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 	}
 	internal int maxdrawdistance;
 	public void ToggleFog()
@@ -2321,23 +2282,23 @@
 	{
 		if (WaterSwimmingCamera())
 		{
-			return Game.ColorFromArgb(255, 78, 95, 140);
+			return ColorCi.FromArgb(255, 78, 95, 140);
 		}
 		else if (LavaSwimmingCamera())
 		{
-			return Game.ColorFromArgb(255, 222, 101, 46);
+			return ColorCi.FromArgb(255, 222, 101, 46);
 		}
 		else
 		{
-			return Game.ColorFromArgb(255, 255, 255, 255);
+			return ColorCi.FromArgb(255, 255, 255, 255);
 		}
 	}
 
 	internal void SetAmbientLight(int color)
 	{
-		int r = Game.ColorR(color);
-		int g = Game.ColorG(color);
-		int b = Game.ColorB(color);
+		int r = ColorCi.ExtractR(color);
+		int g = ColorCi.ExtractG(color);
+		int b = ColorCi.ExtractB(color);
 		platform.GlLightModelAmbient(r, g, b);
 	}
 
@@ -3825,7 +3786,7 @@
 	bool startedconnecting;
 	internal void GotoDraw2d(float dt)
 	{
-		SetAmbientLight(Game.ColorFromArgb(255, 255, 255, 255));
+		SetAmbientLight(ColorCi.FromArgb(255, 255, 255, 255));
 		Draw2d(dt);
 
 		NewFrameEventArgs args_ = new NewFrameEventArgs();

@@ -89,10 +89,10 @@
 		int b = (n >> 16) & 0xFF;
 		int c = (n >> 8) & 0xFF;
 		int d = n & 0xFF;
-		writeBuf[writePos] = Game.IntToByte(a);
-		writeBuf[writePos + 1] = Game.IntToByte(b);
-		writeBuf[writePos + 2] = Game.IntToByte(c);
-		writeBuf[writePos + 3] = Game.IntToByte(d);
+		writeBuf[writePos] = ConvertCi.IntToByte(a);
+		writeBuf[writePos + 1] = ConvertCi.IntToByte(b);
+		writeBuf[writePos + 2] = ConvertCi.IntToByte(c);
+		writeBuf[writePos + 3] = ConvertCi.IntToByte(d);
 	}
 
 	int ReadInt(byte[] readBuf, int readPos)

@@ -71,7 +71,7 @@ public class TextColorRenderer
 					if (x + currentwidth >= size2X) { continue; }
 					if (y >= size2Y) { continue; }
 					int c = partBmpPixels[MapUtilCi.Index2d(x, y, partWidth)];
-					if (Game.ColorA(c) > 0)
+					if (ColorCi.ExtractA(c) > 0)
 					{
 						bmp2Pixels[MapUtilCi.Index2d(platform.FloatToInt(currentwidth) + x, y, size2X)] = c;
 					}
@@ -225,23 +225,23 @@ public class TextColorRenderer
 	{
 		switch (currentcolor)
 		{
-			case 0: { return Game.ColorFromArgb(255, 0, 0, 0); }
-			case 1: { return Game.ColorFromArgb(255, 0, 0, 191); }
-			case 2: { return Game.ColorFromArgb(255, 0, 191, 0); }
-			case 3: { return Game.ColorFromArgb(255, 0, 191, 191); }
-			case 4: { return Game.ColorFromArgb(255, 191, 0, 0); }
-			case 5: { return Game.ColorFromArgb(255, 191, 0, 191); }
-			case 6: { return Game.ColorFromArgb(255, 191, 191, 0); }
-			case 7: { return Game.ColorFromArgb(255, 191, 191, 191); }
-			case 8: { return Game.ColorFromArgb(255, 40, 40, 40); }
-			case 9: { return Game.ColorFromArgb(255, 64, 64, 255); }
-			case 10: { return Game.ColorFromArgb(255, 64, 255, 64); }
-			case 11: { return Game.ColorFromArgb(255, 64, 255, 255); }
-			case 12: { return Game.ColorFromArgb(255, 255, 64, 64); }
-			case 13: { return Game.ColorFromArgb(255, 255, 64, 255); }
-			case 14: { return Game.ColorFromArgb(255, 255, 255, 64); }
-			case 15: { return Game.ColorFromArgb(255, 255, 255, 255); }
-			default: return Game.ColorFromArgb(255, 255, 255, 255);
+			case 0: { return ColorCi.FromArgb(255, 0, 0, 0); }
+			case 1: { return ColorCi.FromArgb(255, 0, 0, 191); }
+			case 2: { return ColorCi.FromArgb(255, 0, 191, 0); }
+			case 3: { return ColorCi.FromArgb(255, 0, 191, 191); }
+			case 4: { return ColorCi.FromArgb(255, 191, 0, 0); }
+			case 5: { return ColorCi.FromArgb(255, 191, 0, 191); }
+			case 6: { return ColorCi.FromArgb(255, 191, 191, 0); }
+			case 7: { return ColorCi.FromArgb(255, 191, 191, 191); }
+			case 8: { return ColorCi.FromArgb(255, 40, 40, 40); }
+			case 9: { return ColorCi.FromArgb(255, 64, 64, 255); }
+			case 10: { return ColorCi.FromArgb(255, 64, 255, 64); }
+			case 11: { return ColorCi.FromArgb(255, 64, 255, 255); }
+			case 12: { return ColorCi.FromArgb(255, 255, 64, 64); }
+			case 13: { return ColorCi.FromArgb(255, 255, 64, 255); }
+			case 14: { return ColorCi.FromArgb(255, 255, 255, 64); }
+			case 15: { return ColorCi.FromArgb(255, 255, 255, 255); }
+			default: return ColorCi.FromArgb(255, 255, 255, 255);
 		}
 	}
 

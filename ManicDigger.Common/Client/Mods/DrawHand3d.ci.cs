@@ -170,7 +170,7 @@
 			}
 			else
 			{
-				DrawCube(modelData, x, y, z, Game.ColorFromArgb(255, light, light, light));
+				DrawCube(modelData, x, y, z, ColorCi.FromArgb(255, light, light, light));
 			}
 		}
 		oldMaterial = curmaterial;
@@ -380,10 +380,10 @@
 		model.xyz[model.GetXyzCount() + 2] = z;
 		model.uv[model.GetUvCount() + 0] = u;
 		model.uv[model.GetUvCount() + 1] = v;
-		model.rgba[model.GetRgbaCount() + 0] = Game.IntToByte(Game.ColorR(color));
-		model.rgba[model.GetRgbaCount() + 1] = Game.IntToByte(Game.ColorG(color));
-		model.rgba[model.GetRgbaCount() + 2] = Game.IntToByte(Game.ColorB(color));
-		model.rgba[model.GetRgbaCount() + 3] = Game.IntToByte(Game.ColorA(color));
+		model.rgba[model.GetRgbaCount() + 0] = ConvertCi.IntToByte(ColorCi.ExtractR(color));
+		model.rgba[model.GetRgbaCount() + 1] = ConvertCi.IntToByte(ColorCi.ExtractG(color));
+		model.rgba[model.GetRgbaCount() + 2] = ConvertCi.IntToByte(ColorCi.ExtractB(color));
+		model.rgba[model.GetRgbaCount() + 3] = ConvertCi.IntToByte(ColorCi.ExtractA(color));
 		model.verticesCount++;
 	}
 	float zzzx;
@@ -406,7 +406,7 @@ public class BlockRendererTorch
 	public void AddTorch(GameData d_Data, Game d_TerainRenderer, ModelData m, int x, int y, int z, TorchType type)
 	{
 		float one = 1;
-		int curcolor = Game.ColorFromArgb(255, 255, 255, 255);
+		int curcolor = ColorCi.FromArgb(255, 255, 255, 255);
 		float torchsizexy = one * 16 / 100;
 		float topx = one / 2 - torchsizexy / 2;
 		float topy = one / 2 - torchsizexy / 2;
@@ -565,10 +565,10 @@ public class BlockRendererTorch
 		model.xyz[model.GetXyzCount() + 2] = z;
 		model.uv[model.GetUvCount() + 0] = u;
 		model.uv[model.GetUvCount() + 1] = v;
-		model.rgba[model.GetRgbaCount() + 0] = Game.IntToByte(Game.ColorR(color));
-		model.rgba[model.GetRgbaCount() + 1] = Game.IntToByte(Game.ColorG(color));
-		model.rgba[model.GetRgbaCount() + 2] = Game.IntToByte(Game.ColorB(color));
-		model.rgba[model.GetRgbaCount() + 3] = Game.IntToByte(Game.ColorA(color));
+		model.rgba[model.GetRgbaCount() + 0] = ConvertCi.IntToByte(ColorCi.ExtractR(color));
+		model.rgba[model.GetRgbaCount() + 1] = ConvertCi.IntToByte(ColorCi.ExtractG(color));
+		model.rgba[model.GetRgbaCount() + 2] = ConvertCi.IntToByte(ColorCi.ExtractB(color));
+		model.rgba[model.GetRgbaCount() + 3] = ConvertCi.IntToByte(ColorCi.ExtractA(color));
 		model.verticesCount++;
 	}
 }

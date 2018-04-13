@@ -51,7 +51,7 @@
 		Text_ text_ = new Text_();
 		text_.text = text;
 		text_.font = font;
-		text_.color = Game.ColorFromArgb(255, 255, 255, 255);
+		text_.color = ColorCi.FromArgb(255, 255, 255, 255);
 		BitmapCi textBitmap = _textRenderer.CreateTextTexture(text_);
 
 		int texture = _p.LoadTextureFromBitmap(textBitmap);
@@ -136,7 +136,7 @@
 		_p.GlDisableCullFace();
 		_p.GLDisableAlphaTest();
 		_p.GlDisableDepthTest();
-		if (color == Game.ColorFromArgb(255, 255, 255, 255) && atlasId == null)
+		if (color == ColorCi.FromArgb(255, 255, 255, 255) && atlasId == null)
 		{
 			Draw2dTextureSimple(textureId, dx, dy, dw, dh);
 		}
@@ -201,7 +201,7 @@
 		ModelData data =
 			QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
 			dx, dy, dw, dh,
-			Game.IntToByte(Game.ColorR(color)), Game.IntToByte(Game.ColorG(color)), Game.IntToByte(Game.ColorB(color)), Game.IntToByte(Game.ColorA(color)));
+			ConvertCi.IntToByte(ColorCi.ExtractR(color)), ConvertCi.IntToByte(ColorCi.ExtractG(color)), ConvertCi.IntToByte(ColorCi.ExtractB(color)), ConvertCi.IntToByte(ColorCi.ExtractA(color)));
 		_p.DrawModelData(data);
 	}
 
@@ -211,7 +211,7 @@
 		{
 			BitmapCi bmp = _p.BitmapCreate(1, 1);
 			int[] pixels = new int[1];
-			pixels[0] = Game.ColorFromArgb(255, 255, 255, 255);
+			pixels[0] = ColorCi.FromArgb(255, 255, 255, 255);
 			_p.BitmapSetPixelsArgb(bmp, pixels);
 			whitetexture = _p.LoadTextureFromBitmap(bmp);
 			_p.BitmapDelete(bmp);

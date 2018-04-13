@@ -71,7 +71,7 @@ public class LightFlood
 	{
 		if (light[newPos] < vLight - 1)
 		{
-			light[newPos] = Game.IntToByte(vLight - 1);
+			light[newPos] = ConvertCi.IntToByte(vLight - 1);
 			q_.Push(newPos);
 		}
 	}
@@ -144,7 +144,7 @@ public class LightBase
 
 				for (int zz = h; zz < 16; zz++)
 				{
-					worklight[pos] = Game.IntToByte(sunlight);
+					worklight[pos] = ConvertCi.IntToByte(sunlight);
 					pos += LightFlood.ZPlus;
 				}
 			}
@@ -212,7 +212,7 @@ public class LightBase
 						int yy = MapUtilCi.PosY(pos, portionsize, portionsize);
 						int zz = MapUtilCi.PosZ(pos, portionsize, portionsize);
 						int l = dataLightRadius[workportion[pos]];
-						worklight[pos] = Game.IntToByte(MathCi.MaxInt(l, worklight[pos]));
+						worklight[pos] = ConvertCi.IntToByte(MathCi.MaxInt(l, worklight[pos]));
 						flood.FloodLight(workportion, worklight, xx, yy, zz, dataLightRadius, dataTransparent);
 					}
 				}
@@ -414,7 +414,7 @@ public class LightBetweenChunks
 		int targetLight = dcLight[Index3d(dxx, dyy, dzz, 16, 16)];
 		if (targetLight < sourceLight - 1)
 		{
-			dcLight[Index3d(dxx, dyy, dzz, 16, 16)] = Game.IntToByte(sourceLight - 1);
+			dcLight[Index3d(dxx, dyy, dzz, 16, 16)] = ConvertCi.IntToByte(sourceLight - 1);
 			flood.FloodLight(chunksData[Index3d(dcx, dcy, dcz, 3, 3)], dcLight, dxx, dyy, dzz, dataLightRadius, dataTransparent);
 		}
 	}

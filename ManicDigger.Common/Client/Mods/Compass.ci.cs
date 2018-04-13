@@ -54,14 +54,14 @@
 		compassangle += compassvertex;
 
 		// compass
-		game.Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+		game.Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 
 		// compass needle
 		game.GLPushMatrix();
 		game.GLTranslate(posX, posY, 0);
 		game.GLRotate(compassangle, 0, 0, 90);
 		game.GLTranslate(-size / 2, -size / 2, 0);
-		game.Draw2dTexture(needleid, 0, 0, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+		game.Draw2dTexture(needleid, 0, 0, size, size, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 		game.GLPopMatrix();
 	}
 }

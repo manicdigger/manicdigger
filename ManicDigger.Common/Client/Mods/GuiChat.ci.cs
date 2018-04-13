@@ -10,7 +10,7 @@
 		font.family = "Arial";
 		font.size = ChatFontSize;
 		chatlines2 = new Chatline[1024];
-		color_background = Game.ColorFromArgb(80, 0, 0, 0);
+		color_background = ColorCi.FromArgb(80, 0, 0, 0);
 	}
 
 	internal Game game;

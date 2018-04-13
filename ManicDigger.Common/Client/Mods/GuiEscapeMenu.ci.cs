@@ -526,8 +526,8 @@
 			widgets[i].font = font;
 			if (i == keyselectid)
 			{
-				widgets[i].fontcolor = Game.ColorFromArgb(255, 0, 255, 0);
-				widgets[i].fontcolorselected = Game.ColorFromArgb(255, 0, 255, 0);
+				widgets[i].fontcolor = ColorCi.FromArgb(255, 0, 255, 0);
+				widgets[i].fontcolorselected = ColorCi.FromArgb(255, 0, 255, 0);
 			}
 		}
 	}
@@ -778,8 +778,8 @@ public class Button
 {
 	public Button()
 	{
-		fontcolor = Game.ColorFromArgb(255, 255, 255, 255);
-		fontcolorselected = Game.ColorFromArgb(255, 255, 0, 0);
+		fontcolor = ColorCi.FromArgb(255, 255, 255, 255);
+		fontcolorselected = ColorCi.FromArgb(255, 255, 0, 0);
 		font = new FontCi();
 	}
 	internal int x;

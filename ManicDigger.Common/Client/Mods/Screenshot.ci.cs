@@ -27,7 +27,7 @@
 
 	internal void DrawScreenshotFlash(Game game)
 	{
-		game.Draw2dTexture(game.WhiteTexture(), 0, 0, game.platform.GetCanvasWidth(), game.platform.GetCanvasHeight(), null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+		game.Draw2dTexture(game.WhiteTexture(), 0, 0, game.platform.GetCanvasWidth(), game.platform.GetCanvasHeight(), null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 		string screenshottext = "&0Screenshot";
 		IntRef textWidth = new IntRef();
 		IntRef textHeight = new IntRef();

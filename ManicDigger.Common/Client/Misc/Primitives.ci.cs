@@ -371,10 +371,10 @@ public class WireframeCube
 	static void DrawLineLoop(ModelData m, Vector3Ref p0, Vector3Ref p1, Vector3Ref p2, Vector3Ref p3)
 	{
 		int startVertex = m.GetVerticesCount();
-		AddVertex(m, p0.X, p0.Y, p0.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
-		AddVertex(m, p1.X, p1.Y, p1.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
-		AddVertex(m, p2.X, p2.Y, p2.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
-		AddVertex(m, p3.X, p3.Y, p3.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
+		AddVertex(m, p0.X, p0.Y, p0.Z, 0, 0, ColorCi.FromArgb(255, 255, 255, 255));
+		AddVertex(m, p1.X, p1.Y, p1.Z, 0, 0, ColorCi.FromArgb(255, 255, 255, 255));
+		AddVertex(m, p2.X, p2.Y, p2.Z, 0, 0, ColorCi.FromArgb(255, 255, 255, 255));
+		AddVertex(m, p3.X, p3.Y, p3.Z, 0, 0, ColorCi.FromArgb(255, 255, 255, 255));
 		m.indices[m.indicesCount++] = startVertex + 0;
 		m.indices[m.indicesCount++] = startVertex + 1;
 		m.indices[m.indicesCount++] = startVertex + 1;
@@ -392,10 +392,10 @@ public class WireframeCube
 		model.xyz[model.GetXyzCount() + 2] = z;
 		model.uv[model.GetUvCount() + 0] = u;
 		model.uv[model.GetUvCount() + 1] = v;
-		model.rgba[model.GetRgbaCount() + 0] = Game.IntToByte(Game.ColorR(color));
-		model.rgba[model.GetRgbaCount() + 1] = Game.IntToByte(Game.ColorG(color));
-		model.rgba[model.GetRgbaCount() + 2] = Game.IntToByte(Game.ColorB(color));
-		model.rgba[model.GetRgbaCount() + 3] = Game.IntToByte(Game.ColorA(color));
+		model.rgba[model.GetRgbaCount() + 0] = ConvertCi.IntToByte(ColorCi.ExtractR(color));
+		model.rgba[model.GetRgbaCount() + 1] = ConvertCi.IntToByte(ColorCi.ExtractG(color));
+		model.rgba[model.GetRgbaCount() + 2] = ConvertCi.IntToByte(ColorCi.ExtractB(color));
+		model.rgba[model.GetRgbaCount() + 3] = ConvertCi.IntToByte(ColorCi.ExtractA(color));
 		model.verticesCount++;
 	}
 }

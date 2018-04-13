@@ -79,7 +79,7 @@
 		{
 			for (int y = 0; y < countY; y++)
 			{
-				renderer.Draw2dTexture(textureId, x * sizex + xRot - overlap, y * sizey + yRot - overlap, sizex, sizey, null, 0, Game.ColorFromArgb(255, 255, 255, 255));
+				renderer.Draw2dTexture(textureId, x * sizex + xRot - overlap, y * sizey + yRot - overlap, sizex, sizey, null, 0, ColorCi.FromArgb(255, 255, 255, 255));
 			}
 		}
 	}
