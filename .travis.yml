@@ -15,7 +15,8 @@ addons:
     - innoextract
 
 script:
- - xbuild /p:Configuration=Release ManicDigger.sln
+ - msbuild /p:Configuration=Release ManicDigger.sln
+ - mono ./packages/NUnit.ConsoleRunner.*/tools/nunit3-console.exe ./ManicDigger.Tests/bin/Release/ManicDigger.Tests.dll
  - ./build.sh
  - echo `date +%Y-%m-%d` > output/version.txt
 # binary zip file
