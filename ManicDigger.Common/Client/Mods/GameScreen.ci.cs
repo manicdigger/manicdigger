@@ -2,19 +2,22 @@
 {
 	public GameScreen()
 	{
-		WidgetCount = 64;
-		widgets = new AbstractMenuWidget[WidgetCount];
+		Initialize(64);
+
+		fontDefault = new FontCi();
 	}
 
 	internal Game game;
-	internal int WidgetCount;
-	internal AbstractMenuWidget[] widgets;
+	int WidgetCount;
+	int WidgetMaxCount;
+	AbstractMenuWidget[] widgets;
+	internal FontCi fontDefault;
 
 	public override void OnKeyPress(Game game_, KeyPressEventArgs e)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnKeyPress(game.platform, e);
+			widgets[i].OnKeyPress(game_.platform, e);
 
 			// send dialog response if necessary
 			if (widgets[i].GetEventKeyPressed())
@@ -30,7 +33,7 @@
 					}
 					textValues[j] = s;
 				}
-				game.SendPacketClient(ClientPackets.DialogClick(widgets[i].GetEventName(), textValues, WidgetCount));
+				game_.SendPacketClient(ClientPackets.DialogClick(widgets[i].GetEventName(), textValues, WidgetCount));
 			}
 		}
 	}
@@ -38,7 +41,7 @@
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnKeyDown(game.platform, e);
+			widgets[i].OnKeyDown(game_.platform, e);
 		}
 	}
 	public override void OnTouchStart(Game game_, TouchEventArgs e) { }
@@ -47,7 +50,7 @@
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseDown(game.platform, e);
+			widgets[i].OnMouseDown(game_.platform, e);
 			if (widgets[i].HasBeenClicked(e))
 			{
 				OnButton(widgets[i]);
@@ -58,14 +61,14 @@
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseUp(game.platform, e);
+			widgets[i].OnMouseUp(game_.platform, e);
 		}
 	}
-	public virtual void OnMouseWheel(MouseWheelEventArgs e)
+	public override void OnMouseWheelChanged(Game game_, MouseWheelEventArgs e)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseWheel(game.platform, e);
+			widgets[i].OnMouseWheel(game_.platform, e);
 		}
 	}
 	public override void OnMouseMove(Game game_, MouseEventArgs e)
@@ -76,17 +79,28 @@
 		}
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseMove(game.platform, e);
+			widgets[i].OnMouseMove(game_.platform, e);
 		}
 	}
-	public virtual void OnBackPressed() { }
 	public virtual void OnButton(AbstractMenuWidget w) { }
 
+	public void AddWidget(AbstractMenuWidget widget)
+	{
+		if (WidgetCount >= WidgetMaxCount) { return; }
+		widgets[WidgetCount] = widget;
+		WidgetCount++;
+	}
 	public void DrawWidgets(float dt)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
 			widgets[i].Draw(dt, game.uiRenderer);
 		}
+	}
+	public void Initialize(int maxWidgetCount)
+	{
+		WidgetCount = 0;
+		WidgetMaxCount = maxWidgetCount;
+		widgets = new AbstractMenuWidget[WidgetMaxCount];
 	}
 }

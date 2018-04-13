@@ -272,7 +272,7 @@
 		AddMod(new ModCamera());
 		AddMod(new ModNetworkEntity());
 		AddMod(new ModGuiInventory());
-		//AddMod(new ModGuiTouchButtons());
+		AddMod(new ModGuiTouchButtons());
 		AddMod(new ModGuiEscapeMenu());
 		AddMod(new ModGuiMapLoading());
 		AddMod(new ModDraw2dMisc());

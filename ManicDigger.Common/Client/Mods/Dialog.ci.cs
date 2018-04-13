@@ -205,9 +205,8 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 
 	GameScreen ConvertDialog(Game game, Packet_Dialog p)
 	{
-		DialogScreen s = new DialogScreen();
-		s.widgets = new AbstractMenuWidget[p.WidgetsCount];
-		s.WidgetCount = p.WidgetsCount;
+		GameScreen s = new GameScreen();
+		s.Initialize(p.WidgetsCount);
 		for (int i = 0; i < p.WidgetsCount; i++)
 		{
 			Packet_Widget a = p.Widgets[i];
@@ -263,30 +262,8 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 				b.SetEventKeyChar(a.ClickKey);
 			}
 
-			s.widgets[i] = b;
+			s.AddWidget(b);
 		}
 		return s;
-	}
-}
-
-public class DialogScreen : GameScreen
-{
-	public override void OnButton(AbstractMenuWidget w)
-	{
-		// TODO: button handling
-		//if (w.isbutton)
-		//{
-		//	string[] textValues = new string[WidgetCount];
-		//	for (int i = 0; i < WidgetCount; i++)
-		//	{
-		//		string s = widgets[i].text;
-		//		if (s == null)
-		//		{
-		//			s = "";
-		//		}
-		//		textValues[i] = s;
-		//	}
-		//	game.SendPacketClient(ClientPackets.DialogClick(w.id, textValues, WidgetCount));
-		//}
 	}
 }
