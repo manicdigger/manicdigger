@@ -1,3 +1,4 @@
+#! /bin/bash
 # Generate ProtoBuf files
 mono CodeGenerator.exe Packet.proto
 
