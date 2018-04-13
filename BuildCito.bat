@@ -7,6 +7,7 @@ del /q /s cito\output
 REM Create output directories
 mkdir cito\output
 mkdir cito\output\JsTa
+mkdir cito\output\JsTa\js
 
 REM Create list of input files
 setlocal enabledelayedexpansion enableextensions
@@ -25,11 +26,11 @@ echo %LIST%
 
 REM Compile JavaScript files
 IF NOT "%1"=="fast" CitoAssets data Assets.ci.cs
-IF NOT "%1"=="fast" cito -D CITO -D JS -D JSTA -l js-ta -o cito\output\JsTa\Assets.js Assets.ci.cs
-IF NOT "%1"=="fast" cito -D CITO -D JS -D JSTA -l js-ta -o cito\output\JsTa\ManicDigger.js %LIST% Packet.Serializer.ci.cs
+IF NOT "%1"=="fast" cito -D CITO -D JS -D JSTA -l js-ta -o cito\output\JsTa\js\Assets.js Assets.ci.cs
+IF NOT "%1"=="fast" cito -D CITO -D JS -D JSTA -l js-ta -o cito\output\JsTa\js\ManicDigger.js %LIST% Packet.Serializer.ci.cs
 
 REM Copy skeleton files
-copy cito\platform\JsTa\* cito\output\JsTa\*
+xcopy cito\platform\JsTa cito\output\JsTa /E
 
 REM mkdir cito\output\C
 REM mkdir cito\output\Java
