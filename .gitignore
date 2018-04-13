@@ -21,6 +21,7 @@ _ReSharper.*
 local.properties
 packages/
 .vs/
+TestResult*
 
 # OS generated files #
 ######################
