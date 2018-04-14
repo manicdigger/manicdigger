@@ -219,7 +219,7 @@
 	}
 }
 
-class ListEntry
+public class ListEntry
 {
 	internal string textTopLeft;
 	internal string textTopRight;
