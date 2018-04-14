@@ -1,5 +1,4 @@
-﻿
-public class MathCi
+﻿public class MathCi
 {
 	public static float MinFloat(float a, float b)
 	{

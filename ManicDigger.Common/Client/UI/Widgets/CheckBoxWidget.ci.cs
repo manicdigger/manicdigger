@@ -1,4 +1,4 @@
-﻿class CheckBoxWidget : AbstractMenuWidget
+﻿public class CheckBoxWidget : AbstractMenuWidget
 {
 	TextWidget _textDescription;
 	TextWidget _textState;

@@ -1,4 +1,4 @@
-﻿class ColorCi
+﻿public class ColorCi
 {
 	public static int FromArgb(int a, int r, int g, int b)
 	{

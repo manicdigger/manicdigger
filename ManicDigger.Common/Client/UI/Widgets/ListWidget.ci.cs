@@ -1,4 +1,4 @@
-﻿class ListWidget : AbstractMenuWidget
+﻿public class ListWidget : AbstractMenuWidget
 {
 	ServerButtonWidget[] listButtons;
 	ButtonWidget wbtn_pageUp;

@@ -1,4 +1,4 @@
-﻿class AnimatedBackgroundWidget : AbstractMenuWidget
+﻿public class AnimatedBackgroundWidget : AbstractMenuWidget
 {
 	string textureName;
 	int textureId;

@@ -1,4 +1,4 @@
-﻿class ConvertCi
+﻿public class ConvertCi
 {
 	public static byte IntToByte(int a)
 	{
