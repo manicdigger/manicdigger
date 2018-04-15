@@ -39,6 +39,7 @@
   <ItemGroup>
     <Compile Include="Client\UI\AbstractMenuWidgetTests.cs" />
     <Compile Include="Client\UI\Widgets\AnimatedBackgroundWidgetTests.cs" />
+    <Compile Include="Client\UI\Widgets\ButtonWidgetTests.cs" />
     <Compile Include="TestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GlMatrixTests.cs" />

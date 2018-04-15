@@ -33,14 +33,26 @@
 
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)
 	{
-		if (_state != ButtonState.Hover) { return; }
-		SetState(ButtonState.Pressed);
+		if (IsCursorInside(args))
+		{
+			SetState(ButtonState.Pressed);
+		}
+		else
+		{
+			SetState(ButtonState.Normal);
+		}
 	}
 
 	public override void OnMouseUp(GamePlatform p, MouseEventArgs args)
 	{
-		if (_state != ButtonState.Pressed) { return; }
-		SetState(ButtonState.Hover);
+		if (IsCursorInside(args))
+		{
+			SetState(ButtonState.Hover);
+		}
+		else
+		{
+			SetState(ButtonState.Normal);
+		}
 	}
 
 	public override void OnMouseMove(GamePlatform p, MouseEventArgs args)
@@ -85,6 +97,10 @@
 		}
 	}
 
+	public ButtonState GetState()
+	{
+		return _state;
+	}
 	public void SetState(ButtonState state)
 	{
 		_state = state;
