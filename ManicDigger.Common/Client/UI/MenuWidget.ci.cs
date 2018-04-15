@@ -30,10 +30,7 @@
 	}
 	public virtual void OnKeyPress(GamePlatform p, KeyPressEventArgs args)
 	{
-		if (eventKeyChar == args.GetKeyChar())
-		{
-			eventKeyPressed = true;
-		}
+		eventKeyPressed = (eventKeyChar == args.GetKeyChar()) ? true : false;
 	}
 	public virtual void OnKeyDown(GamePlatform p, KeyEventArgs args) { }
 	public virtual void OnMouseDown(GamePlatform p, MouseEventArgs args) { }
@@ -47,22 +44,38 @@
 	}
 	public abstract void Draw(float dt, UiRenderer renderer);
 
+	public virtual bool GetFocused()
+	{
+		return hasKeyboardFocus;
+	}
 	public virtual void SetFocused(bool hasFocus)
 	{
 		if (!focusable) { return; }
 		hasKeyboardFocus = hasFocus;
 	}
 
+	public virtual bool GetVisible()
+	{
+		return visible;
+	}
 	public virtual void SetVisible(bool isVisible)
 	{
 		visible = isVisible;
 	}
 
+	public virtual bool GetClickable()
+	{
+		return clickable;
+	}
 	public virtual void SetClickable(bool isClickable)
 	{
 		clickable = isClickable;
 	}
 
+	public virtual bool GetFocusable()
+	{
+		return focusable;
+	}
 	public virtual void SetFocusable(bool isFocusable)
 	{
 		focusable = isFocusable;
@@ -119,6 +132,7 @@
 	}
 	public void SetEventKeyChar(int listenChar)
 	{
+		eventKeyPressed = false;
 		eventKeyChar = listenChar;
 	}
 	public void SetEventName(string clickKey)
@@ -132,10 +146,6 @@
 	public bool GetEventKeyPressed()
 	{
 		return eventKeyPressed;
-	}
-	public void ResetEventKeyPressed()
-	{
-		eventKeyPressed = false;
 	}
 	public virtual string GetEventResponse() { return null; }
 }

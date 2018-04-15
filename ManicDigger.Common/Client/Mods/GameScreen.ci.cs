@@ -22,7 +22,6 @@
 			// send dialog response if necessary
 			if (widgets[i].GetEventKeyPressed())
 			{
-				widgets[i].ResetEventKeyPressed();
 				string[] textValues = new string[WidgetCount];
 				for (int j = 0; j < WidgetCount; j++)
 				{
