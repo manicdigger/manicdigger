@@ -45,7 +45,7 @@
 		UpdateCheckboxText();
 	}
 
-	public bool IsChecked()
+	public bool GetChecked()
 	{
 		return _stateChecked;
 	}

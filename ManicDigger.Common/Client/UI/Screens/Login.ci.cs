@@ -84,7 +84,7 @@
 			&& loginResultData.ServerCorrect
 			&& loginResultData.PasswordCorrect)
 		{
-			if (wcbx_rememberPassword.IsChecked())
+			if (wcbx_rememberPassword.GetChecked())
 			{
 				Preferences preferences = menu.p.GetPreferences();
 				preferences.SetString("Username", wtbx_username.GetContent());
@@ -190,7 +190,7 @@
 				// Connect to IP. Don't login
 
 				// Save username
-				if (wcbx_rememberPassword.IsChecked())
+				if (wcbx_rememberPassword.GetChecked())
 				{
 					Preferences preferences = menu.p.GetPreferences();
 					preferences.SetString("Username", wtbx_username.GetContent());
