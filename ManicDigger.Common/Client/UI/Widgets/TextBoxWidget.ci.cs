@@ -59,6 +59,10 @@
 				SetContent(p, StringTools.StringAppend(p, _textContent, CharToString(p, args.GetKeyChar())));
 			}
 		}
+		else
+		{
+			eventKeyPressed = (eventKeyChar == args.GetKeyChar()) ? true : false;
+		}
 	}
 
 	public override void OnKeyDown(GamePlatform p, KeyEventArgs args)

@@ -1,5 +1,6 @@
 ﻿public abstract class AbstractMenuWidget
 {
+	// using "internal" keyword as CiTo does not support "protected"
 	internal float x;
 	internal float y;
 	internal float sizex;
@@ -9,9 +10,9 @@
 	internal bool focusable;
 	internal bool hasKeyboardFocus;
 	internal int color;
-	int eventKeyChar;
-	string eventName;
-	bool eventKeyPressed;
+	internal int eventKeyChar;
+	internal string eventName;
+	internal bool eventKeyPressed;
 
 	public AbstractMenuWidget()
 	{

@@ -34,7 +34,7 @@ namespace Tests
 			Assert.That(w.GetColor(), Is.EqualTo(-1));
 			Assert.That(w.GetEventKeyPressed(), Is.EqualTo(false));
 			Assert.That(w.GetEventName(), Is.EqualTo(null));
-			Assert.That(w.GetEventResponse(), Is.EqualTo(null));
+			Assert.That(w.GetEventResponse(), Is.AnyOf(null, ""));
 			Assert.That(w.GetFocused(), Is.EqualTo(false));
 			Assert.That(w.GetVisible(), Is.EqualTo(true));
 		}
@@ -302,7 +302,7 @@ namespace Tests
 		[Test()]
 		public void GetEventResponseTest()
 		{
-			Assert.That(w.GetEventResponse(), Is.EqualTo(null));
+			Assert.That(w.GetEventResponse(), Is.AnyOf(null, ""));
 		}
 	}
 }
