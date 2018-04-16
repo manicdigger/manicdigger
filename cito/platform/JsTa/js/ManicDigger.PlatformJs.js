@@ -147,22 +147,22 @@ PlatformJs.prototype.bitmapGetHeight = function(bmp) {
 };
 
 var colorA = function(color) {
-	var a = Game.intToByte(color >> 24);
+	var a = ConvertCi.intToByte(color >> 24);
 	return a;
 };
 
 var colorB = function(color) {
-	var b = Game.intToByte(color);
+	var b = ConvertCi.intToByte(color);
 	return b;
 };
 
 var colorG = function(color) {
-	var g = Game.intToByte(color >> 8);
+	var g = ConvertCi.intToByte(color >> 8);
 	return g;
 };
 
 var colorR = function(color) {
-	var r = Game.intToByte(color >> 16);
+	var r = ConvertCi.intToByte(color >> 16);
 	return r;
 };
 
