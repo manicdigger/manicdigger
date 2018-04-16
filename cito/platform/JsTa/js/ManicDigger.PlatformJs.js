@@ -679,7 +679,7 @@ function loadScript(src, callback) {
 var assets;
 PlatformJs.prototype.loadAssetsAsyc = function(list, progress) {
 
-	loadScript("Assets.js", function() {
+	loadScript("js/Assets.js", function() {
 		assets = new Assets();
 		list.count = assets.count;
 		list.items = {};
