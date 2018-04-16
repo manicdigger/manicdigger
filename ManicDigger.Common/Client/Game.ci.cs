@@ -2929,10 +2929,10 @@
 			SendChat(chatline);
 		}
 	}
-	public bool BoolCommandArgument(string arguments)
+	public bool BoolCommandArgument(string args)
 	{
-		arguments = platform.StringTrim(arguments);
-		return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
+		args = platform.StringTrim(args);
+		return (args == "" || args == "1" || args == "on" || args == "yes");
 	}
 	internal string[] typinglog;
 	internal int typinglogCount;
