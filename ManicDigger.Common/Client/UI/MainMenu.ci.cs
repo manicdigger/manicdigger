@@ -64,6 +64,12 @@
 
 	void DrawScene(float dt)
 	{
+		if (uiRenderer.GetAssetLoadProgress().value != 1)
+		{
+			// skip rendering while assets have not been loaded completely
+			// prevents texture loading issues in WebGL
+			return;
+		}
 		p.GlViewport(0, 0, viewportWidth, viewportHeight);
 		p.GlClearColorBufferAndDepthBuffer();
 		p.GlDisableCullFace();
