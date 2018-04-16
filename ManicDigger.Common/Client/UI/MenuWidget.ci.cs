@@ -24,7 +24,7 @@
 		clickable = false;
 		focusable = false;
 		hasKeyboardFocus = false;
-		color = ColorCi.FromArgb(255, 255, 255, 255);
+		color = -1; // ColorCi.FromArgb(255, 255, 255, 255);
 		eventKeyChar = -1;
 		eventName = null;
 		eventKeyPressed = false;
