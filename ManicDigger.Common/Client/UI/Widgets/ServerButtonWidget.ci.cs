@@ -103,17 +103,18 @@
 			_textDescription.SetText(_motd);
 		}
 
-		_textHeading.x = x + 70;
-		_textHeading.y = y + 5;
+		float scale = renderer.GetScale();
+		_textHeading.x = x + 70 * scale;
+		_textHeading.y = y + 5 * scale;
 		_textHeading.Draw(dt, renderer);
-		_textGamemode.x = x + sizex - 10;
-		_textGamemode.y = y + sizey - 5;
+		_textGamemode.x = x + sizex - 10 * scale;
+		_textGamemode.y = y + sizey - 5 * scale;
 		_textGamemode.Draw(dt, renderer);
-		_textPlayercount.x = x + sizex - 10;
-		_textPlayercount.y = y + 5;
+		_textPlayercount.x = x + sizex - 10 * scale;
+		_textPlayercount.y = y + 5 * scale;
 		_textPlayercount.Draw(dt, renderer);
-		_textDescription.x = x + 70;
-		_textDescription.y = y + sizey - 5;
+		_textDescription.x = x + 70 * scale;
+		_textDescription.y = y + sizey - 5 * scale;
 		_textDescription.Draw(dt, renderer);
 	}
 	public override void OnMouseDown(GamePlatform p, MouseEventArgs args)

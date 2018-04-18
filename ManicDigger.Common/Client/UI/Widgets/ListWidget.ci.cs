@@ -19,6 +19,7 @@
 		entriesCount = 0;
 		entriesPerPage = 0;
 		currentPage = 0;
+		lastSizeY = 0;
 
 		wbtn_pageUp = new ButtonWidget();
 		wbtn_pageUp.SetVisible(false);
@@ -76,8 +77,8 @@
 
 			listButtons[i].x = x + (elementSizeY / 2 + padding) * scale;
 			listButtons[i].y = y + i * (elementSizeY + padding) * scale;
-			listButtons[i].sizex = sizex - (1.5f * elementSizeY) - (2 * padding);
-			listButtons[i].sizey = elementSizeY;
+			listButtons[i].sizex = sizex - (1.5f * elementSizeY * scale) - (2 * padding * scale);
+			listButtons[i].sizey = elementSizeY * scale;
 
 			listButtons[i].SetTextHeading(e.textTopLeft);
 			listButtons[i].SetTextDescription(e.textBottomLeft);
