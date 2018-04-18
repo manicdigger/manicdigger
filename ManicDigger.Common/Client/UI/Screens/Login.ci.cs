@@ -126,21 +126,21 @@
 		wtxt_title.x = p.GetCanvasWidth() / 2;
 		wtxt_title.y = topy;
 		wtxt_statusMessage.x = leftx;
-		wtxt_statusMessage.y = topy + 258;
+		wtxt_statusMessage.y = topy + 258 * scale;
 
-		float originy = topy + 50;
+		float originy = topy + 50 * scale;
 		wtxt_username.x = leftx - 6 * scale;
-		wtxt_username.y = (originy + textboxHeight / 2) * scale;
+		wtxt_username.y = originy + (textboxHeight / 2) * scale;
 		wtbx_username.x = leftx;
-		wtbx_username.y = originy * scale;
+		wtbx_username.y = originy;
 		wtbx_username.sizex = loginAreaWidth * scale;
 		wtbx_username.sizey = textboxHeight * scale;
 
-		originy = topy + 130;
+		originy = topy + 130 * scale;
 		wtxt_password.x = leftx - 6 * scale;
-		wtxt_password.y = (originy + textboxHeight / 2) * scale;
+		wtxt_password.y = originy + (textboxHeight / 2) * scale;
 		wtbx_password.x = leftx;
-		wtbx_password.y = originy * scale;
+		wtbx_password.y = originy;
 		wtbx_password.sizex = loginAreaWidth * scale;
 		wtbx_password.sizey = textboxHeight * scale;
 

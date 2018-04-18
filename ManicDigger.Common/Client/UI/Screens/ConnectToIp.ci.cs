@@ -70,7 +70,7 @@
 		wtxt_title.x = p.GetCanvasWidth() / 2;
 		wtxt_title.y = topy;
 		wtxt_statusMessage.x = leftx;
-		wtxt_statusMessage.y = topy + 258;
+		wtxt_statusMessage.y = topy + 258 * scale;
 
 		wtxt_ip.x = leftx - 6 * scale;
 		wtxt_ip.y = topy + 82 * scale;
