@@ -24,7 +24,14 @@
 		sizey = 0;
 		clickable = true;
 		focusable = true;
+
+		_name = null;
+		_motd = null;
+		_gamemode = null;
+		_playercount = null;
 		_imagename = "serverlist_entry_noimage.png";
+		_errorVersion = false;
+		_errorConnect = false;
 
 		_fontServerHeading = new FontCi();
 		_fontServerHeading.style = 1;
@@ -121,23 +128,47 @@
 		}
 	}
 
+	public string GetTextHeading()
+	{
+		return _name;
+	}
 	public void SetTextHeading(string text)
 	{
 		_name = text;
+	}
+
+	public string GetTextGamemode()
+	{
+		return _gamemode;
 	}
 	public void SetTextGamemode(string text)
 	{
 		_gamemode = text;
 	}
+
+	public string GetTextPlayercount()
+	{
+		return _playercount;
+	}
 	public void SetTextPlayercount(string text)
 	{
 		_playercount = text;
+	}
+
+	public string GetTextDescription()
+	{
+		return _motd;
 	}
 	public void SetTextDescription(string text)
 	{
 		_motd = text;
 	}
-	public void SetServerImage(string image)
+
+	public string GetThumbnail()
+	{
+		return _imagename;
+	}
+	public void SetThumbnail(string image)
 	{
 		if (image == null || image == "")
 		{
@@ -148,9 +179,19 @@
 			_imagename = image;
 		}
 	}
+
+	public bool GetErrorConnect()
+	{
+		return _errorConnect;
+	}
 	public void SetErrorConnect(bool error)
 	{
 		_errorConnect = error;
+	}
+
+	public bool GetErrorVersion()
+	{
+		return _errorVersion;
 	}
 	public void SetErrorVersion(bool error)
 	{

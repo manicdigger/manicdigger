@@ -85,7 +85,7 @@
 			listButtons[i].SetTextPlayercount(e.textTopRight);
 			listButtons[i].SetErrorConnect(e.imageStatusTop != null);
 			listButtons[i].SetErrorVersion(e.imageStatusBottom != null);
-			listButtons[i].SetServerImage(e.imageMain);
+			listButtons[i].SetThumbnail(e.imageMain);
 
 			listButtons[i].SetVisible(true);
 		}
