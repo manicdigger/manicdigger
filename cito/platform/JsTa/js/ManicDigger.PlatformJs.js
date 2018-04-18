@@ -1061,7 +1061,8 @@ PlatformJs.prototype.textSize = function(text, font, outWidth, outHeight) {
 	var ctx = canvas1.getContext('2d');
 	setFont(ctx, text, font.size, 0);
 	outWidth.value = ctx.measureText(text).width;
-	outHeight.value = 2 * font.size;
+	// workaround for height measurement as found on https://stackoverflow.com/a/13318387
+	outHeight.value = ctx.measureText('M').width;
 };
 
 PlatformJs.prototype.threadSpinWait = function(iterations) {};
