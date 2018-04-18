@@ -25,8 +25,6 @@
 		this.p = p_;
 
 		// initialize ui renderer
-		Mat4.Identity_(pMatrix);
-		Mat4.Ortho(pMatrix, 0, p.GetCanvasWidth(), p.GetCanvasHeight(), 0, 0, 10);
 		uiRenderer.Init(p);
 
 		// initialize background
@@ -70,6 +68,10 @@
 			// prevents texture loading issues in WebGL
 			return;
 		}
+		// update projection matrix and viewport
+		Mat4.Identity_(pMatrix);
+		Mat4.Ortho(pMatrix, 0, viewportWidth, viewportHeight, 0, 0, 10);
+		p.SetMatrixUniformProjection(pMatrix);
 		p.GlViewport(0, 0, viewportWidth, viewportHeight);
 		p.GlClearColorBufferAndDepthBuffer();
 		p.GlDisableCullFace();
@@ -169,7 +171,6 @@
 		screen.LoadTranslations();
 		p.ExitMousePointerLock();
 		p.SetVSync(true);
-		p.SetMatrixUniformProjection(pMatrix);
 		drawBackground = true;
 	}
 
