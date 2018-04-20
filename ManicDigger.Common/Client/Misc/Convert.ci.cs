@@ -33,4 +33,32 @@
 		}
 		return output;
 	}
+	public static TextAlign IntToTextAlign(int align)
+	{
+		switch (align)
+		{
+			case 0:
+				return TextAlign.Left;
+			case 1:
+				return TextAlign.Center;
+			case 2:
+				return TextAlign.Right;
+			default:
+				return TextAlign.Left;
+		}
+	}
+	public static TextBaseline IntToTextBaseline(int baseline)
+	{
+		switch (baseline)
+		{
+			case 0:
+				return TextBaseline.Top;
+			case 1:
+				return TextBaseline.Middle;
+			case 2:
+				return TextBaseline.Bottom;
+			default:
+				return TextBaseline.Top;
+		}
+	}
 }

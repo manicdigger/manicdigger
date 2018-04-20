@@ -3202,6 +3202,8 @@ namespace ManicDigger.Server
 			f.FamilyName = dialogFont.FamilyName;
 			f.FontStyle = (int)dialogFont.FontStyle;
 			f.SizeFloat = SerializeFloat(dialogFont.Size);
+			f.Alignment = (int)dialogFont.Alignment;
+			f.Baseline = (int)dialogFont.Baseline;
 			return f;
 		}
 

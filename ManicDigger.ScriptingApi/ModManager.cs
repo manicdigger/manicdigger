@@ -985,6 +985,10 @@ namespace ManicDigger
 		public float Size = 11f;
 		[ProtoMember(3, IsRequired = false)]
 		public DialogFontStyle FontStyle;
+		[ProtoMember(3, IsRequired = false)]
+		public DialogFontAlign Alignment;
+		[ProtoMember(3, IsRequired = false)]
+		public DialogFontBaseline Baseline;
 	}
 	[Flags]
 	public enum DialogFontStyle
@@ -994,6 +998,20 @@ namespace ManicDigger
 		Italic = 2,
 		Underline = 4,
 		Strikeout = 8,
+	}
+	[Flags]
+	public enum DialogFontAlign
+	{
+		Left = 0,
+		Center = 1,
+		Right = 2
+	}
+	[Flags]
+	public enum DialogFontBaseline
+	{
+		Top = 0,
+		Middle = 1,
+		Bottom = 2
 	}
 
 	[ProtoContract]

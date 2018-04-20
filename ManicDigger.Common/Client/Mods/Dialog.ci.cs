@@ -235,6 +235,8 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 						newFont.style = a.Font.FontStyle;
 					}
 					newTxt.SetFont(newFont);
+					newTxt.SetAlignment(ConvertCi.IntToTextAlign(a.Font.GetAlignment()));
+					newTxt.SetBaseline(ConvertCi.IntToTextBaseline(a.Font.GetBaseline()));
 					string tmp = a.Text;
 					if (tmp != null)
 					{
