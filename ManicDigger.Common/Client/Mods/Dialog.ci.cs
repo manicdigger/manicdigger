@@ -253,7 +253,7 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 			b.SetX(a.X);
 			b.SetY(a.Y);
 			b.SetSizeX(a.Width);
-			b.SetSizeY(a.Height_);
+			b.SetSizeY(a.Height);
 			b.SetColor(a.Color);
 
 			if (a.ClickKey != 0)

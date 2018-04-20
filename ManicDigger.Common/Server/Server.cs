@@ -3155,7 +3155,7 @@ namespace ManicDigger.Server
 				return null;
 			}
 			Packet_Dialog p = new Packet_Dialog();
-			p.Height_ = dialog.Height;
+			p.Height = dialog.Height;
 			p.IsModal = dialog.IsModal ? 1 : 0;
 			if (dialog.Widgets != null)
 			{
@@ -3181,7 +3181,7 @@ namespace ManicDigger.Server
 			w.ClickKey = widget.ClickKey;
 			w.Color = widget.Color;
 			w.Font = ConvertFont(widget.Font);
-			w.Height_ = widget.Height;
+			w.Height = widget.Height;
 			w.Id = widget.Id;
 			w.Image = widget.Image;
 			w.Text = widget.Text;

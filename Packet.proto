@@ -911,7 +911,7 @@ package Packet;
     {
 		repeated Widget widgets = 1;
 		optional int32 width = 2;
-		optional int32 height_ = 3;
+		optional int32 height = 3;
 		optional int32 isModal = 4;
     }
     
@@ -922,11 +922,11 @@ package Packet;
         optional int32 x = 3;
         optional int32 y = 4;
         optional int32 width = 5;
-        optional int32 height_ = 6;
+        optional int32 height = 6;
         optional string text = 7;
         optional int32 clickKey = 8;
         optional string image = 9;
-        optional int32 color = 10; //white
+        optional int32 color = 10; // should mostly be white
         optional DialogFont font = 11;
         optional WidgetType type = 12 [default=Image];
     }
@@ -943,6 +943,8 @@ package Packet;
         optional string familyName = 1;
         optional int32 sizeFloat = 2;
         optional DialogFontStyle fontStyle = 3 [default=Regular];
+        optional DialogFontAlign alignment = 4 [default=Left];
+        optional DialogFontBaseline baseline = 5 [default=Top];
     }
     
     enum DialogFontStyle
@@ -952,4 +954,18 @@ package Packet;
         Italic = 2;
         Underline = 4;
         Strikeout = 8;
+    }
+
+    enum DialogFontAlign
+    {
+        Left = 0;
+        Center = 1;
+        Right = 2;
+    }
+
+    enum DialogFontBaseline
+    {
+        Top = 0;
+        Middle = 1;
+        Bottom = 2;
     }
