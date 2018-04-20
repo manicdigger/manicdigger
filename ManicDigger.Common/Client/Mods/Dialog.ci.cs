@@ -250,8 +250,8 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 					b = newTbx;
 					break;
 			}
-			b.SetX(a.X);
-			b.SetY(a.Y);
+			b.SetX(game.xcenter(p.GetWidth()) + a.X);
+			b.SetY(game.ycenter(p.GetHeight()) + a.Y);
 			b.SetSizeX(a.Width);
 			b.SetSizeY(a.Height);
 			b.SetColor(a.Color);
