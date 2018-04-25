@@ -243,7 +243,9 @@
 		AddMod(new ModPush());
 		if (platform.IsFastSystem())
 		{
-			AddMod(new ModSkySphereAnimated());
+			// TODO: implement fallback in case shaders are unavailable
+			AddMod(new ModSkySphereShader());
+			//AddMod(new ModSkySphereAnimated());
 		}
 		else
 		{
