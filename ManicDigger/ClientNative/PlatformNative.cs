@@ -1633,6 +1633,11 @@ namespace ManicDigger.ClientNative
 			GL.Enable(EnableCap.Texture2D);
 		}
 
+		public override void GlDisableTexture2d()
+		{
+			GL.Disable(EnableCap.Texture2D);
+		}
+
 		public override void GLLineWidth(int width)
 		{
 			GL.LineWidth(width);
@@ -1747,6 +1752,142 @@ namespace ManicDigger.ClientNative
 		public override void GlDisableFog()
 		{
 			GL.Disable(EnableCap.Fog);
+		}
+
+		public override void GlActiveTexture(int textureUnit)
+		{
+			switch (textureUnit)
+			{
+				case 0:
+					GL.ActiveTexture(TextureUnit.Texture0);
+					break;
+				case 1:
+					GL.ActiveTexture(TextureUnit.Texture1);
+					break;
+				case 2:
+					GL.ActiveTexture(TextureUnit.Texture2);
+					break;
+				case 3:
+					GL.ActiveTexture(TextureUnit.Texture3);
+					break;
+				default:
+					throw new NotImplementedException("Only four texture units are supported currently.");
+			}
+		}
+
+		public override int GlCreateProgram()
+		{
+			return GL.CreateProgram();
+		}
+
+		public override void GlDeleteProgram(int program)
+		{
+			GL.DeleteProgram(program);
+		}
+
+		public override int GlCreateShader(ShaderType shaderType)
+		{
+			OpenTK.Graphics.OpenGL.ShaderType glShaderType;
+			switch (shaderType)
+			{
+				case ShaderType.VertexShader:
+					glShaderType = OpenTK.Graphics.OpenGL.ShaderType.VertexShader;
+					break;
+				case ShaderType.FragmentShader:
+				default:
+					glShaderType = OpenTK.Graphics.OpenGL.ShaderType.FragmentShader;
+					break;
+			}
+			return GL.CreateShader(glShaderType);
+		}
+
+		public override void GlShaderSource(int shader, string source)
+		{
+			GL.ShaderSource(shader, source);
+		}
+
+		public override void GlCompileShader(int shader)
+		{
+			GL.CompileShader(shader);
+		}
+
+		public override int GlGetShaderCompileStatus(int shader)
+		{
+			int status_code;
+			GL.GetShader(shader, ShaderParameter.CompileStatus, out status_code);
+			return status_code;
+		}
+
+		public override string GlGetShaderInfoLog(int shader)
+		{
+			return GL.GetShaderInfoLog(shader);
+		}
+
+		public override void GlAttachShader(int program, int shader)
+		{
+			GL.AttachShader(program, shader);
+		}
+
+		public override void GlUseProgram(int program)
+		{
+			GL.UseProgram(program);
+		}
+
+		public override int GlGetUniformLocation(int program, string name)
+		{
+			return GL.GetUniformLocation(program, name);
+		}
+
+		public override void GlLinkProgram(int program)
+		{
+			GL.LinkProgram(program);
+		}
+
+		public override int GlGetProgramLinkStatus(int program)
+		{
+			int status_code;
+			GL.GetProgram(program, GetProgramParameterName.LinkStatus, out status_code);
+			return status_code;
+		}
+
+		public override string GlGetProgramInfoLog(int program)
+		{
+			return GL.GetProgramInfoLog(program);
+		}
+
+		public override string GlGetStringSupportedShadingLanguage()
+		{
+			return GL.GetString(StringName.ShadingLanguageVersion);
+		}
+
+		public override void GlUniform1i(int location, int v0)
+		{
+			GL.Uniform1(location, v0);
+		}
+
+		public override void GlUniform1f(int location, float v0)
+		{
+			GL.Uniform1(location, v0);
+		}
+
+		public override void GlUniform2f(int location, float v0, float v1)
+		{
+			GL.Uniform2(location, v0, v1);
+		}
+
+		public override void GlUniform3f(int location, float v0, float v1, float v2)
+		{
+			GL.Uniform3(location, v0, v1, v2);
+		}
+
+		public override void GlUniform4f(int location, float v0, float v1, float v2, float v3)
+		{
+			GL.Uniform4(location, v0, v1, v2, v3);
+		}
+
+		public override void GlUniformArray1f(int location, int count, float[] values)
+		{
+			GL.Uniform2(location, count, values);
 		}
 
 		#endregion

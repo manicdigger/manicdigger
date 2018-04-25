@@ -550,6 +550,8 @@ PlatformJs.prototype.glEnableLighting = function() {};
 
 PlatformJs.prototype.glEnableTexture2d = function() {};
 
+PlatformJs.prototype.glDisableTexture2d = function() {};
+
 PlatformJs.prototype.glFogFogColor = function(r, g, b, a) {};
 
 PlatformJs.prototype.glFogFogDensity = function(density) {};
@@ -568,6 +570,113 @@ PlatformJs.prototype.glShadeModelSmooth = function() {};
 
 PlatformJs.prototype.glViewport = function(x, y, width, height) {
 	gl.viewport(x, y, width, height);
+};
+
+PlatformJs.prototype.glActiveTexture = function(textureUnit) {
+	switch (textureUnit) {
+		case 0:
+			gl.activeTexture(gl.TEXTURE0);
+			break;
+		case 1:
+			gl.activeTexture(gl.TEXTURE1);
+			break;
+		case 2:
+			gl.activeTexture(gl.TEXTURE2);
+			break;
+		case 3:
+			gl.activeTexture(gl.TEXTURE3);
+			break;
+	}
+};
+
+PlatformJs.prototype.glCreateProgram = function() {
+	return gl.createProgram();
+};
+
+PlatformJs.prototype.glDeleteProgram = function(program) {
+	gl.deleteProgram(program);
+};
+
+PlatformJs.prototype.glCreateShader = function(shaderType) {
+	var glShaderType;
+	switch (shaderType) {
+		case 0:
+			glShaderType = gl.VERTEX_SHADER;
+			break;
+		case 1:
+		default:
+			glShaderType = gl.FRAGMENT_SHADER;
+			break;
+	}
+	return gl.createShader(glShaderType);
+};
+
+PlatformJs.prototype.glShaderSource = function(shader, source) {
+	gl.shaderSource(shader, source);
+};
+
+PlatformJs.prototype.glCompileShader = function(shader) {
+	gl.compileShader(shader);
+};
+
+PlatformJs.prototype.glGetShaderCompileStatus = function(shader) {
+	return gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+};
+
+PlatformJs.prototype.glGetShaderInfoLog = function(shader) {
+	return gl.getShaderInfoLog(shader);
+};
+
+PlatformJs.prototype.glAttachShader = function(program, shader) {
+	gl.attachShader(program, shader);
+};
+
+PlatformJs.prototype.glUseProgram = function(program) {
+	gl.useProgram(program);
+};
+
+PlatformJs.prototype.glGetUniformLocation = function(program, name) {
+	return gl.getUniformLocation(program, name);
+};
+
+PlatformJs.prototype.glLinkProgram = function(program) {
+	gl.linkProgram(program);
+};
+
+PlatformJs.prototype.glGetProgramLinkStatus = function(program) {
+	return gl.getProgramParameter(program, gl.LINK_STATUS);
+};
+
+PlatformJs.prototype.glGetProgramInfoLog = function(program) {
+	return gl.getProgramInfoLog(program);
+};
+
+PlatformJs.prototype.glGetStringSupportedShadingLanguage = function() {
+	return gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+};
+
+PlatformJs.prototype.glUniform1i = function(location, v0) {
+	gl.uniform1i(location, v0);
+};
+
+PlatformJs.prototype.glUniform1f = function(location, v0) {
+	gl.uniform1f(location, v0);
+};
+
+PlatformJs.prototype.glUniform2f = function(location, v0, v1) {
+	gl.uniform2f(location, v0, v1);
+};
+
+PlatformJs.prototype.glUniform3f = function(location, v0, v1, v2) {
+	gl.uniform3f(location, v0, v1, v2);
+};
+
+PlatformJs.prototype.glUniform4f = function(location, v0, v1, v2, v3) {
+	gl.uniform4f(location, v0, v1, v2, v3);
+};
+
+PlatformJs.prototype.glUniformArray1f = function(location, count, values) {
+	gl.uniform2fv(location, values);
 };
 
 PlatformJs.prototype.grabScreenshot = function() {
@@ -1029,7 +1138,7 @@ PlatformJs.prototype.stringToUtf8ByteArray = function(s, retLength) {
 			// subtracting 0x10000 and splitting the
 			// 20 bits of 0x0-0xFFFFF into two halves
 			charcode = 0x10000 + (((charcode & 0x3ff) << 10) |
-				(str.charCodeAt(i) & 0x3ff))
+				(str.charCodeAt(i) & 0x3ff));
 			utf8.push(0xf0 | (charcode >> 18),
 				0x80 | ((charcode >> 12) & 0x3f),
 				0x80 | ((charcode >> 6) & 0x3f),
@@ -1108,16 +1217,16 @@ PlatformJs.prototype.webClientDownloadDataAsync = function(url, response) {
 		if (this.status == 200) {
 			var ret = {};
 			for (var i = 0; i < xhr.response.length; i++) {
-				ret[i] = xhr.response.charCodeAt(i) & 0xff;;
+				ret[i] = xhr.response.charCodeAt(i) & 0xff;
 			}
 			response.value = ret;
 			response.valueLength = xhr.response.length;
 			response.done = true;
 		}
-	}
+	};
 	xhr.onerror = function() {
 		response.error = true;
-	}
+	};
 	xhr.send();
 };
 
@@ -1130,13 +1239,13 @@ PlatformJs.prototype.webClientUploadDataAsync = function(url, data, dataLength, 
 		if (this.status == 200) {
 			var ret = {};
 			for (var i = 0; i < xhr.response.length; i++) {
-				ret[i] = xhr.response.charCodeAt(i) & 0xff;;
+				ret[i] = xhr.response.charCodeAt(i) & 0xff;
 			}
 			response.value = ret;
 			response.valueLength = xhr.response.length;
 			response.done = true;
 		}
-	}
+	};
 	var data2 = new Uint8Array(dataLength);
 	for (var i = 0; i < dataLength; i++) {
 		data2[i] = data[i];
@@ -1154,16 +1263,16 @@ PlatformJs.prototype.webSocketConnect = function(ip, port) {
 	websocket = new WebSocket("ws://" + ip + ":" + port + "/Game");
 	websocket.binaryType = "arraybuffer";
 	websocket.onopen = function(evt) {
-		onOpen(evt)
+		onOpen(evt);
 	};
 	websocket.onclose = function(evt) {
-		onClose(evt)
+		onClose(evt);
 	};
 	websocket.onmessage = function(evt) {
-		onMessage(evt)
+		onMessage(evt);
 	};
 	websocket.onerror = function(evt) {
-		onError(evt)
+		onError(evt);
 	};
 };
 

@@ -164,6 +164,7 @@
 	public abstract void GlDisableCullFace();
 	public abstract void GlEnableCullFace();
 	public abstract void GlEnableTexture2d();
+	public abstract void GlDisableTexture2d();
 	public abstract void GLLineWidth(int width);
 	public abstract void GLDisableAlphaTest();
 	public abstract void GLEnableAlphaTest();
@@ -193,6 +194,27 @@
 	public abstract void DrawModelData(ModelData data);
 	public abstract void DeleteModel(Model model);
 	public abstract int LoadTextureFromBitmap(BitmapCi bmp);
+	public abstract void GlActiveTexture(int textureUnit);
+	public abstract int GlCreateProgram();
+	public abstract void GlDeleteProgram(int program);
+	public abstract int GlCreateShader(ShaderType shaderType);
+	public abstract void GlShaderSource(int shader, string source);
+	public abstract void GlCompileShader(int shader);
+	public abstract int GlGetShaderCompileStatus(int shader);
+	public abstract string GlGetShaderInfoLog(int shader);
+	public abstract void GlAttachShader(int program, int shader);
+	public abstract void GlUseProgram(int program);
+	public abstract int GlGetUniformLocation(int program, string name);
+	public abstract void GlLinkProgram(int program);
+	public abstract int GlGetProgramLinkStatus(int program);
+	public abstract string GlGetProgramInfoLog(int program);
+	public abstract string GlGetStringSupportedShadingLanguage();
+	public abstract void GlUniform1i(int location, int v0);
+	public abstract void GlUniform1f(int location, float v0);
+	public abstract void GlUniform2f(int location, float v0, float v1);
+	public abstract void GlUniform3f(int location, float v0, float v1, float v2);
+	public abstract void GlUniform4f(int location, float v0, float v1, float v2, float v3);
+	public abstract void GlUniformArray1f(int location, int count, float[] values);
 
 	// Game
 	public abstract bool SinglePlayerServerAvailable();
