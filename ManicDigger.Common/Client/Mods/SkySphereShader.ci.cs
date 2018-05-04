@@ -31,9 +31,9 @@ public class ModSkySphereShader : ClientMod
 
 	void SetShaderUniforms(Game game)
 	{
-		game.platform.GlUniform3f(game.platform.GlGetUniformLocation(shader.GetProgramId(), "sunPos"), game.sunPositionX, game.sunPositionY, game.sunPositionZ);
-		game.platform.GlUniform1i(game.platform.GlGetUniformLocation(shader.GetProgramId(), "glow"), 1);
-		game.platform.GlUniform1i(game.platform.GlGetUniformLocation(shader.GetProgramId(), "color"), 2);
+		game.platform.GlUniform3f(shader.GetUniformLocation("sunPos"), game.sunPositionX, game.sunPositionY, game.sunPositionZ);
+		game.platform.GlUniform1i(shader.GetUniformLocation("glow"), 1);
+		game.platform.GlUniform1i(shader.GetUniformLocation("color"), 2);
 		//game.pMatrix.Peek();
 		//game.mvMatrix.Peek();
 	}
