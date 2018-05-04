@@ -32,8 +32,9 @@ public class ModSkySphereShader : ClientMod
 	void SetShaderUniforms(Game game)
 	{
 		game.platform.GlUniform3f(shader.GetUniformLocation("sunPos"), game.sunPositionX, game.sunPositionY, game.sunPositionZ);
-		game.platform.GlUniform1i(shader.GetUniformLocation("glow"), 1);
+		game.platform.GlUniform1i(shader.GetUniformLocation("stars"), 1);
 		game.platform.GlUniform1i(shader.GetUniformLocation("color"), 2);
+		game.platform.GlUniform1i(shader.GetUniformLocation("glow"), 3);
 		//game.pMatrix.Peek();
 		//game.mvMatrix.Peek();
 	}
@@ -49,11 +50,14 @@ public class ModSkySphereShader : ClientMod
 			//skymodel.setMode(DrawModeEnum.Lines);
 
 			// load necessary textures
+			BitmapCi starsBmp = game.platform.BitmapCreateFromPng(game.GetFile("skyspherenight.png"), game.GetFileLength("skyspherenight.png"));
+			textureStars.Init(game.platform, starsBmp);
+			game.platform.BitmapDelete(starsBmp);
 			BitmapCi skyBmp = game.platform.BitmapCreateFromPng(game.GetFile("sky.png"), game.GetFileLength("sky.png"));
-			BitmapCi glowBmp = game.platform.BitmapCreateFromPng(game.GetFile("glow.png"), game.GetFileLength("glow.png"));
 			textureSky.Init(game.platform, skyBmp);
-			textureGlow.Init(game.platform, glowBmp);
 			game.platform.BitmapDelete(skyBmp);
+			BitmapCi glowBmp = game.platform.BitmapCreateFromPng(game.GetFile("glow.png"), game.GetFileLength("glow.png"));
+			textureGlow.Init(game.platform, glowBmp);
 			game.platform.BitmapDelete(glowBmp);
 
 			// initialize shader
@@ -63,15 +67,17 @@ public class ModSkySphereShader : ClientMod
 			shader.Link();
 		}
 
-		// bind required textures to texture units
-		game.platform.GlActiveTexture(1);
-		textureGlow.BeginUse();
-		game.platform.GlActiveTexture(2);
-		textureSky.BeginUse();
-
 		// set up shader and its uniform variables
 		shader.BeginUse();
 		SetShaderUniforms(game);
+
+		// bind required textures to texture units
+		game.platform.GlActiveTexture(1);
+		textureStars.BeginUse();
+		game.platform.GlActiveTexture(2);
+		textureSky.BeginUse();
+		game.platform.GlActiveTexture(3);
+		textureGlow.BeginUse();
 
 		// draw graphics using the shader
 		game.platform.GLDisableAlphaTest();
@@ -79,10 +85,12 @@ public class ModSkySphereShader : ClientMod
 		game.platform.GLEnableAlphaTest();
 
 		// unbind used textures
+		game.platform.GlActiveTexture(3);
+		textureGlow.EndUse();
 		game.platform.GlActiveTexture(2);
 		textureSky.EndUse();
 		game.platform.GlActiveTexture(1);
-		textureGlow.EndUse();
+		textureStars.EndUse();
 
 		// reset shader program and active texture unit
 		shader.EndUse();

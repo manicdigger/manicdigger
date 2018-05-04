@@ -145,8 +145,9 @@ public class ShaderSources
 
 	public const string FragmentSkysphere =
 		"#version 110\n" +
-		"uniform sampler2D glow;" +
+		"uniform sampler2D stars;" +
 		"uniform sampler2D color;" +
+		"uniform sampler2D glow;" +
 		"uniform vec3 sunPos;" +
 		"varying vec3 vertex;" +
 		"void main()" +
@@ -156,7 +157,8 @@ public class ShaderSources
 			"float vl = dot(V, L);" +
 			"vec4 Kc = texture2D(color, vec2((L.y + 1.0) / 2.0, 1.0 - (V.y + 1.0) / 2.0));" +
 			"vec4 Kg = texture2D(glow, vec2((L.y + 1.0) / 2.0, 1.0 - (vl + 1.0) / 2.0));" +
-			"gl_FragColor = vec4(Kc.rgb + Kg.rgb * Kg.a / 2.0 , Kc.a);" +
+			"vec4 St = texture2D(stars, vec2(V.x, V.z));" +
+			"gl_FragColor = mix(St, vec4(Kc.rgb + Kg.rgb * Kg.a / 2.0 , Kc.a), Kc.a);" +
 		"}";
 
 	public const string VertexSkysphere =
