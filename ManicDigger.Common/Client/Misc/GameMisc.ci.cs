@@ -813,11 +813,6 @@ public abstract class AviWriterCi
 	public abstract void Close();
 }
 
-public class BitmapCi
-{
-	public virtual void Dispose() { }
-}
-
 public abstract class EntityScript
 {
 	public virtual void OnNewFrameFixed(Game game, int entity, float dt) { }

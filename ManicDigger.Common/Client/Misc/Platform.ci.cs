@@ -628,8 +628,10 @@ public class NewFrameEventArgs
 	}
 }
 
-public abstract class Texture
+// Empty value classes for use in JavaScript. Native implementation derives from this.
+public class BitmapCi
 {
+	public virtual void Dispose() { }
 }
 
 public enum TextAlign
