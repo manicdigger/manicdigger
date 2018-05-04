@@ -2,12 +2,12 @@
 {
 	GamePlatform p;
 	bool isLinked;
-	int programId;
+	GlProgram programId;
 
 	public ShaderCi()
 	{
 		isLinked = false;
-		programId = -1;
+		programId = null;
 		p = null;
 	}
 
@@ -26,7 +26,7 @@
 	/// </summary>
 	public void Dispose()
 	{
-		if (programId >= 0)
+		if (programId != null)
 		{
 			p.GlDeleteProgram(programId);
 		}
@@ -41,12 +41,11 @@
 	public void Compile(string sShader, ShaderType type)
 	{
 		isLinked = false;
-		int shaderObject = p.GlCreateShader(type);
-		if (0 == shaderObject) { p.ThrowException("Could not create shader object"); }
+		GlShader shaderObject = p.GlCreateShader(type);
+		if (null == shaderObject) { p.ThrowException("Could not create shader object"); }
 		p.GlShaderSource(shaderObject, sShader);
 		p.GlCompileShader(shaderObject);
-		int status_code = p.GlGetShaderCompileStatus(shaderObject);
-		if (1 != status_code)
+		if (!p.GlGetShaderCompileStatus(shaderObject))
 		{
 			p.ThrowException(p.StringFormat("Error compiling shader: \n{0}", p.GlGetShaderInfoLog(shaderObject)));
 		}
@@ -58,7 +57,7 @@
 	/// </summary>
 	public void BeginUse()
 	{
-		if (programId < 0) { return; }
+		if (programId == null) { return; }
 		p.GlUseProgram(programId);
 	}
 
@@ -67,8 +66,8 @@
 	/// </summary>
 	public void EndUse()
 	{
-		if (programId < 0) { return; }
-		p.GlUseProgram(0);
+		if (programId == null) { return; }
+		p.GlUseProgram(null);
 	}
 
 	/// <summary>
@@ -91,22 +90,12 @@
 	}
 
 	/// <summary>
-	/// Get program ID of the shader program.
-	/// </summary>
-	/// <returns>OpenGL program ID</returns>
-	public int GetProgramId()
-	{
-		return programId;
-	}
-
-	/// <summary>
 	/// Link the program using previously attached shaders.
 	/// </summary>
 	public void Link()
 	{
 		p.GlLinkProgram(programId);
-		int status_code = p.GlGetProgramLinkStatus(programId);
-		if (1 != status_code)
+		if (!p.GlGetProgramLinkStatus(programId))
 		{
 			p.ThrowException(p.StringFormat("Error linking shader: \n{0}", p.GlGetProgramInfoLog(programId)));
 		}

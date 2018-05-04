@@ -1775,17 +1775,18 @@ namespace ManicDigger.ClientNative
 			}
 		}
 
-		public override int GlCreateProgram()
+		public override GlProgram GlCreateProgram()
 		{
-			return GL.CreateProgram();
+			return new GlProgramNative() { id = GL.CreateProgram() };
 		}
 
-		public override void GlDeleteProgram(int program)
+		public override void GlDeleteProgram(GlProgram program)
 		{
-			GL.DeleteProgram(program);
+			GlProgramNative p = (GlProgramNative)program;
+			GL.DeleteProgram(p.id);
 		}
 
-		public override int GlCreateShader(ShaderType shaderType)
+		public override GlShader GlCreateShader(ShaderType shaderType)
 		{
 			OpenTK.Graphics.OpenGL.ShaderType glShaderType;
 			switch (shaderType)
@@ -1798,61 +1799,77 @@ namespace ManicDigger.ClientNative
 					glShaderType = OpenTK.Graphics.OpenGL.ShaderType.FragmentShader;
 					break;
 			}
-			return GL.CreateShader(glShaderType);
+			return new GLShaderNative() { id = GL.CreateShader(glShaderType) };
 		}
 
-		public override void GlShaderSource(int shader, string source)
+		public override void GlShaderSource(GlShader shader, string source)
 		{
-			GL.ShaderSource(shader, source);
+			GLShaderNative s = (GLShaderNative)shader;
+			GL.ShaderSource(s.id, source);
 		}
 
-		public override void GlCompileShader(int shader)
+		public override void GlCompileShader(GlShader shader)
 		{
-			GL.CompileShader(shader);
+			GLShaderNative s = (GLShaderNative)shader;
+			GL.CompileShader(s.id);
 		}
 
-		public override int GlGetShaderCompileStatus(int shader)
+		public override bool GlGetShaderCompileStatus(GlShader shader)
 		{
+			GLShaderNative s = (GLShaderNative)shader;
 			int status_code;
-			GL.GetShader(shader, ShaderParameter.CompileStatus, out status_code);
-			return status_code;
+			GL.GetShader(s.id, ShaderParameter.CompileStatus, out status_code);
+			return (1 == status_code);
 		}
 
-		public override string GlGetShaderInfoLog(int shader)
+		public override string GlGetShaderInfoLog(GlShader shader)
 		{
-			return GL.GetShaderInfoLog(shader);
+			GLShaderNative s = (GLShaderNative)shader;
+			return GL.GetShaderInfoLog(s.id);
 		}
 
-		public override void GlAttachShader(int program, int shader)
+		public override void GlAttachShader(GlProgram program, GlShader shader)
 		{
-			GL.AttachShader(program, shader);
+			GlProgramNative p = (GlProgramNative)program;
+			GLShaderNative s = (GLShaderNative)shader;
+			GL.AttachShader(p.id, s.id);
 		}
 
-		public override void GlUseProgram(int program)
+		public override void GlUseProgram(GlProgram program)
 		{
-			GL.UseProgram(program);
+			if (program == null)
+			{
+				GL.UseProgram(0);
+				return;
+			}
+			GlProgramNative p = (GlProgramNative)program;
+			GL.UseProgram(p.id);
 		}
 
-		public override int GlGetUniformLocation(int program, string name)
+		public override int GlGetUniformLocation(GlProgram program, string name)
 		{
-			return GL.GetUniformLocation(program, name);
+			GlProgramNative p = (GlProgramNative)program;
+			return GL.GetUniformLocation(p.id, name);
 		}
 
-		public override void GlLinkProgram(int program)
+		public override void GlLinkProgram(GlProgram program)
 		{
-			GL.LinkProgram(program);
+			GlProgramNative p = (GlProgramNative)program;
+			GL.LinkProgram(p.id);
 		}
 
-		public override int GlGetProgramLinkStatus(int program)
+		public override bool GlGetProgramLinkStatus(GlProgram program)
 		{
+			GlProgramNative p = (GlProgramNative)program;
 			int status_code;
-			GL.GetProgram(program, GetProgramParameterName.LinkStatus, out status_code);
-			return status_code;
+			GL.GetProgram(p.id, GetProgramParameterName.LinkStatus, out status_code);
+			return (1 == status_code);
 		}
 
-		public override string GlGetProgramInfoLog(int program)
+		public override string GlGetProgramInfoLog(GlProgram program)
 		{
-			return GL.GetProgramInfoLog(program);
+			GlProgramNative p = (GlProgramNative)program;
+			return GL.GetProgramInfoLog(p.id);
 		}
 
 		public override string GlGetStringSupportedShadingLanguage()
@@ -2404,10 +2421,13 @@ namespace ManicDigger.ClientNative
 	{
 		public Bitmap bmp;
 	}
-
-	public class TextureNative : Texture
+	public class GlProgramNative : GlProgram
 	{
-		public int value;
+		public int id;
+	}
+	public class GLShaderNative : GlShader
+	{
+		public int id;
 	}
 
 
