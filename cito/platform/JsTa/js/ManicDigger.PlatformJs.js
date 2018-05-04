@@ -250,7 +250,9 @@ PlatformJs.prototype.clipboardGetText = function() {
 
 PlatformJs.prototype.clipboardSetText = function(s) {};
 
-PlatformJs.prototype.consoleWriteLine = function(p) {};
+PlatformJs.prototype.consoleWriteLine = function(p) {
+	console.log(p);
+};
 
 PlatformJs.prototype.createModel = function(modelData) {
 	model = {};
@@ -1176,7 +1178,9 @@ PlatformJs.prototype.textSize = function(text, font, outWidth, outHeight) {
 
 PlatformJs.prototype.threadSpinWait = function(iterations) {};
 
-PlatformJs.prototype.throwException = function(message) {};
+PlatformJs.prototype.throwException = function(message) {
+	throw message;
+};
 
 PlatformJs.prototype.thumbnailDownloadAsync = function(ip, port, response) {};
 
