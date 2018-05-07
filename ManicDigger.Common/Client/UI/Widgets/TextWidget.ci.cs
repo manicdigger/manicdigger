@@ -51,18 +51,30 @@
 		renderer.Draw2dTexture(_texture.texture, x + _offsetX, y + _offsetY, _texture.texturewidth, _texture.textureheight, null, 0, color);
 	}
 
+	public TextAlign GetAlignment()
+	{
+		return _align;
+	}
 	public void SetAlignment(TextAlign align)
 	{
 		_align = align;
 		UpdateOffset_Alignment();
 	}
 
+	public TextBaseline GetBaseline()
+	{
+		return _baseline;
+	}
 	public void SetBaseline(TextBaseline baseline)
 	{
 		_baseline = baseline;
 		UpdateOffset_Baseline();
 	}
 
+	public FontCi GetFont()
+	{
+		return _font;
+	}
 	public void SetFont(FontCi font)
 	{
 		if (font == null) { return; }
