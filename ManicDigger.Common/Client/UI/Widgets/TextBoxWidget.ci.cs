@@ -98,20 +98,17 @@
 
 		renderer.Draw2dTexture(renderer.GetTexture(hasKeyboardFocus ? _textureNameActive : _textureNameInactive), x, y, sizex, sizey, null, 0, color);
 
-		if (_text != null)
+		_text.x = x + sizex / 2;
+		_text.y = y + sizey / 2;
+		if (hasKeyboardFocus)
 		{
-			_text.x = x + sizex / 2;
-			_text.y = y + sizey / 2;
-			if (hasKeyboardFocus)
-			{
-				_text.SetText(StringTools.StringAppend(renderer.GetPlatform(), _textDisplay, "_"));
-			}
-			else
-			{
-				_text.SetText(_textDisplay);
-			}
-			_text.Draw(dt, renderer);
+			_text.SetText(StringTools.StringAppend(renderer.GetPlatform(), _textDisplay, "_"));
 		}
+		else
+		{
+			_text.SetText(_textDisplay);
+		}
+		_text.Draw(dt, renderer);
 	}
 
 	public override string GetEventResponse()
@@ -126,13 +123,11 @@
 
 	public void SetContent(GamePlatform p, string c)
 	{
-		if (p == null) { return; }
-		if (c == null) { return; }
-		if (_text == null) { return; }
-		_textContent = c;
+		_textContent = (c != null) ? c : "";
 		if (_hideInput)
 		{
-			_textDisplay = CharRepeat(p, 42, StringTools.StringLength(p, _textContent)); // '*'
+			// replace display text with '*' if display mode is hidden
+			_textDisplay = (p != null) ? CharRepeat(p, 42, StringTools.StringLength(p, _textContent)) : "*hidden*";
 		}
 		else
 		{
