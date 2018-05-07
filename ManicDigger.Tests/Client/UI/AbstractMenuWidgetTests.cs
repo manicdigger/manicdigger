@@ -283,10 +283,22 @@ namespace Tests
 		[Test()]
 		public void SetEventKeyCharTest()
 		{
-			string val = "test";
-			Assert.That(w.GetEventKeyPressed(), Is.EqualTo(false));
-			w.SetEventName(val);
-			Assert.That(w.GetEventKeyPressed(), Is.EqualTo(false));
+			KeyPressEventArgs keyPressA = new KeyPressEventArgs();
+			keyPressA.SetKeyChar('a');
+			KeyPressEventArgs keyPressB = new KeyPressEventArgs();
+			keyPressB.SetKeyChar('b');
+
+			Assert.That(w.GetEventKeyPressed(), Is.False);
+			w.SetEventKeyChar('a');
+			Assert.That(w.GetEventKeyPressed(), Is.False);
+			w.OnKeyPress(null, keyPressA);
+			Assert.That(w.GetEventKeyPressed(), Is.True);
+			w.SetEventKeyChar('b');
+			Assert.That(w.GetEventKeyPressed(), Is.False);
+			w.OnKeyPress(null, keyPressB);
+			Assert.That(w.GetEventKeyPressed(), Is.True);
+			w.OnKeyPress(null, keyPressA);
+			Assert.That(w.GetEventKeyPressed(), Is.False);
 		}
 
 		[Test()]
