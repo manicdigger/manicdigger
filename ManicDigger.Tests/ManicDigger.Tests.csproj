@@ -41,6 +41,7 @@
     <Compile Include="Client\UI\Widgets\AnimatedBackgroundWidgetTests.cs" />
     <Compile Include="Client\UI\Widgets\ButtonWidgetTests.cs" />
     <Compile Include="Client\UI\Widgets\CheckBoxWidgetTests.cs" />
+    <Compile Include="Client\UI\Widgets\ListWidgetTests.cs" />
     <Compile Include="Client\UI\Widgets\ServerButtonWidgetTests.cs" />
     <Compile Include="Client\UI\Widgets\TextBoxWidgetTests.cs" />
     <Compile Include="Client\UI\Widgets\TextWidgetTests.cs" />

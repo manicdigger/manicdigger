@@ -150,6 +150,61 @@
 		}
 	}
 
+	public int GetPage()
+	{
+		return currentPage;
+	}
+	public bool IsLastPage()
+	{
+		// determine if page is the last containing servers
+		return ((currentPage + 1) * entriesPerPage >= entriesMax) ||
+			(listEntries[(currentPage + 1) * entriesPerPage] == null);
+	}
+	public void AddElement(ListEntry newEntry)
+	{
+		if (entriesCount < entriesMax)
+		{
+			listEntries[entriesCount] = newEntry;
+			entriesCount++;
+		}
+		UpdateScrollButtons();
+	}
+	public ListEntry GetElement(int index)
+	{
+		if (index < 0 ||
+			index >= entriesCount ||
+			listEntries == null)
+		{
+			return null;
+		}
+		return listEntries[index];
+	}
+	public int GetEntriesCount()
+	{
+		return entriesCount;
+	}
+	public int GetEntriesPerPage()
+	{
+		return entriesPerPage;
+	}
+	public void Clear()
+	{
+		listEntries = new ListEntry[entriesMax];
+		entriesCount = 0;
+		UpdateScrollButtons();
+	}
+	public int GetIndexSelected()
+	{
+		for (int i = 0; i < entriesPerPage; i++)
+		{
+			if (listButtons[i].hasKeyboardFocus)
+			{
+				return i + currentPage * entriesPerPage;
+			}
+		}
+		return -1;
+	}
+
 	void PageUp()
 	{
 		if (!IsLastPage())
@@ -166,69 +221,23 @@
 			UpdateScrollButtons();
 		}
 	}
-	bool IsLastPage()
-	{
-		// determine if page is the last containing servers
-		return ((currentPage + 1) * entriesPerPage >= entriesMax) ||
-			(listEntries[(currentPage + 1) * entriesPerPage] == null);
-	}
-	public void UpdateScrollButtons()
+	void UpdateScrollButtons()
 	{
 		// hide scroll buttons
 		wbtn_pageDown.SetVisible((currentPage == 0) ? false : true);
 		wbtn_pageUp.SetVisible(IsLastPage() ? false : true);
 	}
-
-	public void AddElement(ListEntry newEntry)
-	{
-		if (entriesCount < entriesMax)
-		{
-			listEntries[entriesCount] = newEntry;
-			entriesCount++;
-		}
-		UpdateScrollButtons();
-	}
-
-	public ListEntry GetElement(int index)
-	{
-		if (index < 0 ||
-			index >= entriesCount ||
-			listEntries == null)
-		{
-			return null;
-		}
-		return listEntries[index];
-	}
-
-	public void Clear()
-	{
-		listEntries = new ListEntry[entriesMax];
-		entriesCount = 0;
-		UpdateScrollButtons();
-	}
-
-	public int GetIndexSelected()
-	{
-		for (int i = 0; i < entriesPerPage; i++)
-		{
-			if (listButtons[i].hasKeyboardFocus)
-			{
-				return i + currentPage * entriesPerPage;
-			}
-		}
-		return -1;
-	}
 }
 
 public class ListEntry
 {
-	internal string textTopLeft;
-	internal string textTopRight;
-	internal string textBottomLeft;
-	internal string textBottomRight;
-	internal string imageMain;
-	internal string imageStatusTop;
-	internal string imageStatusBottom;
+	public string textTopLeft;
+	public string textTopRight;
+	public string textBottomLeft;
+	public string textBottomRight;
+	public string imageMain;
+	public string imageStatusTop;
+	public string imageStatusBottom;
 
 	public ListEntry()
 	{
