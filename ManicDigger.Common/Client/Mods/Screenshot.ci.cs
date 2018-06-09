@@ -9,7 +9,7 @@
 	bool takeScreenshot;
 	int screenshotFlashFramesLeft;
 
-	public override void OnNewFrameDraw2d(Game game, float deltaTime)
+	public override void OnBeforeNewFrameDraw2d(Game game, float deltaTime)
 	{
 		if (takeScreenshot)
 		{
@@ -18,6 +18,11 @@
 			game.platform.SaveScreenshot();
 			screenshotFlashFramesLeft = 5;
 		}
+	}
+
+	public override void OnNewFrameDraw2d(Game game, float deltaTime)
+	{
+		// draw screenshot flash for some frames
 		if (screenshotFlashFramesLeft > 0)
 		{
 			DrawScreenshotFlash(game);
@@ -39,6 +44,7 @@
 
 	public override void OnKeyDown(Game game, KeyEventArgs args)
 	{
+		// queue screenshot to be taken when pressing F12
 		if (args.GetKeyCode() == game.GetKey(GlKeys.F12))
 		{
 			takeScreenshot = true;

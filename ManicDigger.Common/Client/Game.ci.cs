@@ -3788,6 +3788,11 @@
 	bool startedconnecting;
 	internal void GotoDraw2d(float dt)
 	{
+		for (int i = 0; i < clientmodsCount; i++)
+		{
+			clientmods[i].OnBeforeNewFrameDraw2d(this, dt);
+		}
+
 		SetAmbientLight(ColorCi.FromArgb(255, 255, 255, 255));
 		Draw2d(dt);
 
