@@ -61,12 +61,13 @@
 		}
 		else
 		{
-			eventKeyPressed = (eventKeyChar == args.GetKeyChar()) ? true : false;
+			DefaultOnKeyPress(p, args);
 		}
 	}
 
 	public override void OnKeyDown(GamePlatform p, KeyEventArgs args)
 	{
+		DefaultOnKeyDown(p, args);
 		if (hasKeyboardFocus)
 		{
 			int key = args.GetKeyCode();
