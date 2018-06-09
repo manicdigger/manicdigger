@@ -31,6 +31,8 @@
 				if (actions[i] != null && actions[i].active && (!actions[i].finished))
 				{
 					allDone = false;
+					// skip further checks as long as at least one action remains unfinished
+					break;
 				}
 			}
 
