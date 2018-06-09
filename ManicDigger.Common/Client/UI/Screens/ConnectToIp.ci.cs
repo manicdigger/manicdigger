@@ -27,6 +27,13 @@
 		AddWidget(wtbx_ip);
 		wtbx_port = new TextBoxWidget();
 		AddWidget(wtbx_port);
+
+		// tabbing setup
+		wtbx_ip.SetNextWidget(wtbx_port);
+		wtbx_port.SetNextWidget(wbtn_connect);
+		wbtn_connect.SetNextWidget(wbtn_back);
+		wbtn_back.SetNextWidget(wtbx_ip);
+		wtbx_ip.SetFocused(true);
 	}
 
 	ButtonWidget wbtn_back;

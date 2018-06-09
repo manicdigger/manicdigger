@@ -36,6 +36,14 @@
 
 		triedSavedLogin = false;
 		loginResult = new LoginResultRef();
+
+		// tabbing setup
+		wtbx_username.SetNextWidget(wtbx_password);
+		wtbx_password.SetNextWidget(wcbx_rememberPassword);
+		wcbx_rememberPassword.SetNextWidget(wbtn_login);
+		wbtn_login.SetNextWidget(wbtn_back);
+		wbtn_back.SetNextWidget(wtbx_username);
+		wtbx_username.SetFocused(true);
 	}
 
 	ButtonWidget wbtn_back;
