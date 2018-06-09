@@ -311,10 +311,64 @@ namespace Tests
 			w.SetEventName(null);
 			Assert.That(w.GetEventName(), Is.EqualTo(null));
 		}
+
 		[Test()]
 		public void GetEventResponseTest()
 		{
 			Assert.That(w.GetEventResponse(), Is.AnyOf(null, ""));
+		}
+
+		[Test()]
+		public void SetNextWidgetTest()
+		{
+			AbstractMenuWidget val = new ImageWidget();
+			Assert.That(w.GetNextWidget(), Is.Null);
+			w.SetNextWidget(val);
+			Assert.That(w.GetNextWidget(), Is.EqualTo(val));
+			w.SetNextWidget(null);
+			Assert.That(w.GetNextWidget(), Is.Null);
+		}
+
+		[Test()]
+		public void NextWidgetKeyDownTest()
+		{
+			KeyEventArgs args = new KeyEventArgs();
+			args.SetHandled(false);
+			args.SetKeyCode(GlKeys.Tab);
+
+			// using a TextBoxWidget as it has focus properties set by default
+			AbstractMenuWidget val = new TextBoxWidget();
+
+			// no action when not focused
+			w.OnKeyDown(null, args);
+			Assert.That(w.GetFocused(), Is.False);
+			Assert.That(val.GetFocused(), Is.False);
+			Assert.That(args.GetHandled(), Is.False);
+
+			if (!w.GetFocusable()) { return; }
+			w.SetFocused(true);
+
+			// no action when no target is set
+			w.OnKeyDown(null, args);
+			Assert.That(w.GetFocused(), Is.True);
+			Assert.That(val.GetFocused(), Is.False);
+			Assert.That(args.GetHandled(), Is.False);
+
+			w.SetNextWidget(val);
+
+			// no action when wrong key is pressed
+			args.SetKeyCode(GlKeys.Space);
+			w.OnKeyDown(null, args);
+			Assert.That(w.GetFocused(), Is.True);
+			Assert.That(val.GetFocused(), Is.False);
+			Assert.That(args.GetHandled(), Is.False);
+
+			// focused widget is changed and event set handled
+			args.SetKeyCode(GlKeys.Tab);
+			w.OnKeyDown(null, args);
+			Assert.That(w.GetFocused(), Is.False);
+			Assert.That(val.GetFocused(), Is.True);
+			Assert.That(args.GetHandled(), Is.True);
 		}
 	}
 }
