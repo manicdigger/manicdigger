@@ -12,6 +12,7 @@
 		_textureNameUnchecked = "button.png";
 		_textureNameChecked = "button_sel.png";
 		clickable = true;
+		focusable = true;
 
 		FontCi fontDefault = new FontCi();
 		_textState = new TextWidget();
@@ -34,7 +35,7 @@
 		_textDescription.y = y + sizey / 2;
 
 		// TODO: use atlas texture
-		renderer.Draw2dTexture(renderer.GetTexture(_stateChecked ? _textureNameChecked : _textureNameUnchecked), x, y, sizey, sizey, null, 0, color);
+		renderer.Draw2dTexture(renderer.GetTexture(_stateChecked || hasKeyboardFocus ? _textureNameChecked : _textureNameUnchecked), x, y, sizey, sizey, null, 0, color);
 		_textState.Draw(dt, renderer);
 		_textDescription.Draw(dt, renderer);
 	}
