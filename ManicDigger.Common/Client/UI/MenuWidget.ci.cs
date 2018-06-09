@@ -13,6 +13,7 @@
 	internal int eventKeyChar;
 	internal string eventName;
 	internal bool eventKeyPressed;
+	internal AbstractMenuWidget nextWidget;
 
 	public AbstractMenuWidget()
 	{
@@ -28,56 +29,79 @@
 		eventKeyChar = -1;
 		eventName = null;
 		eventKeyPressed = false;
+		nextWidget = null;
 	}
+
+	/// --------------------------------------------------
+	/// Virtual methods
+	/// --------------------------------------------------
+
 	public virtual void OnKeyPress(GamePlatform p, KeyPressEventArgs args)
 	{
-		eventKeyPressed = (eventKeyChar == args.GetKeyChar()) ? true : false;
+		DefaultOnKeyPress(p, args);
 	}
-	public virtual void OnKeyDown(GamePlatform p, KeyEventArgs args) { }
+	public virtual void OnKeyDown(GamePlatform p, KeyEventArgs args)
+	{
+		DefaultOnKeyDown(p, args);
+	}
 	public virtual void OnMouseDown(GamePlatform p, MouseEventArgs args) { }
 	public virtual void OnMouseUp(GamePlatform p, MouseEventArgs args) { }
 	public virtual void OnMouseMove(GamePlatform p, MouseEventArgs args) { }
 	public virtual void OnMouseWheel(GamePlatform p, MouseWheelEventArgs args) { }
-	public virtual bool IsCursorInside(MouseEventArgs args)
+	public abstract void Draw(float dt, UiRenderer renderer);
+
+	/// --------------------------------------------------
+	/// Methods with shared functionality
+	/// --------------------------------------------------
+
+	internal void DefaultOnKeyPress(GamePlatform p, KeyPressEventArgs args)
+	{
+		eventKeyPressed = (eventKeyChar == args.GetKeyChar()) ? true : false;
+	}
+	internal void DefaultOnKeyDown(GamePlatform p, KeyEventArgs args)
+	{
+		if (hasKeyboardFocus &&
+			args.GetKeyCode() == GlKeys.Tab && !args.GetHandled())
+		{
+			// activate next widget when tab key is pressed
+			// only do this when it has not been already handled
+			if (nextWidget != null)
+			{
+				SetFocused(false);
+				nextWidget.SetFocused(true);
+				args.SetHandled(true);
+			}
+		}
+	}
+	public bool IsCursorInside(MouseEventArgs args)
 	{
 		return (args.GetX() >= x && args.GetX() <= x + sizex &&
 			args.GetY() >= y && args.GetY() <= y + sizey);
 	}
-	public abstract void Draw(float dt, UiRenderer renderer);
-
-	public virtual bool GetFocused()
+	public bool HasBeenClicked(MouseEventArgs args)
 	{
-		return hasKeyboardFocus;
+		return (visible && clickable && IsCursorInside(args));
 	}
-	public virtual void SetFocused(bool hasFocus)
+
+	/// --------------------------------------------------
+	/// Getter and Setter methods
+	/// --------------------------------------------------
+
+	public bool GetFocused() { return hasKeyboardFocus; }
+	public void SetFocused(bool hasFocus)
 	{
 		if (!focusable) { return; }
 		hasKeyboardFocus = hasFocus;
 	}
 
-	public virtual bool GetVisible()
-	{
-		return visible;
-	}
-	public virtual void SetVisible(bool isVisible)
-	{
-		visible = isVisible;
-	}
+	public bool GetVisible() { return visible; }
+	public void SetVisible(bool isVisible) { visible = isVisible; }
 
-	public virtual bool GetClickable()
-	{
-		return clickable;
-	}
-	public virtual void SetClickable(bool isClickable)
-	{
-		clickable = isClickable;
-	}
+	public bool GetClickable() { return clickable; }
+	public void SetClickable(bool isClickable) { clickable = isClickable; }
 
-	public virtual bool GetFocusable()
-	{
-		return focusable;
-	}
-	public virtual void SetFocusable(bool isFocusable)
+	public bool GetFocusable() { return focusable; }
+	public void SetFocusable(bool isFocusable)
 	{
 		focusable = isFocusable;
 		if (!focusable && hasKeyboardFocus)
@@ -87,69 +111,40 @@
 		}
 	}
 
-	public virtual bool HasBeenClicked(MouseEventArgs args)
-	{
-		return (visible && clickable && IsCursorInside(args));
-	}
-	public void SetX(float newX)
-	{
-		x = newX;
-	}
-	public float GetX()
-	{
-		return x;
-	}
-	public void SetY(float newY)
-	{
-		y = newY;
-	}
-	public float GetY()
-	{
-		return y;
-	}
-	public void SetSizeX(float newSizeX)
-	{
-		sizex = newSizeX;
-	}
-	public float GetSizeX()
-	{
-		return sizex;
-	}
-	public void SetSizeY(float newSizeY)
-	{
-		sizey = newSizeY;
-	}
-	public float GetSizeY()
-	{
-		return sizey;
-	}
-	public void SetColor(int newColor)
-	{
-		color = newColor;
-	}
-	public int GetColor()
-	{
-		return color;
-	}
+	public void SetX(float newX) { x = newX; }
+	public float GetX() { return x; }
+
+	public void SetY(float newY) { y = newY; }
+	public float GetY() { return y; }
+
+	public void SetSizeX(float newSizeX) { sizex = newSizeX; }
+	public float GetSizeX() { return sizex; }
+
+	public void SetSizeY(float newSizeY) { sizey = newSizeY; }
+	public float GetSizeY() { return sizey; }
+
+	public void SetColor(int newColor) { color = newColor; }
+	public int GetColor() { return color; }
+
 	public void SetEventKeyChar(int listenChar)
 	{
 		eventKeyPressed = false;
 		eventKeyChar = listenChar;
 	}
-	public void SetEventName(string clickKey)
-	{
-		eventName = clickKey;
-	}
-	public string GetEventName()
-	{
-		return eventName;
-	}
-	public bool GetEventKeyPressed()
-	{
-		return eventKeyPressed;
-	}
+	public void SetEventName(string clickKey) { eventName = clickKey; }
+
+	public string GetEventName() { return eventName; }
+	public bool GetEventKeyPressed() { return eventKeyPressed; }
+
 	public virtual string GetEventResponse() { return null; }
+
+	public void SetNextWidget(AbstractMenuWidget w) { nextWidget = w; }
+	public AbstractMenuWidget GetNextWidget() { return nextWidget; }
 }
+
+/// --------------------------------------------------
+/// Custom datatype definitions
+/// --------------------------------------------------
 
 public enum WidgetType
 {
