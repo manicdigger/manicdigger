@@ -45,7 +45,6 @@
 	/// <param name="game">Game object</param>
 	/// <param name="deltaTime">Milliseconds since the last frame</param>
 	public virtual void OnNewFrameDraw3d(Game game, float deltaTime) { }
-	public virtual void OnNewFrameReadOnlyMainThread(Game game, float deltaTime) { }
 
 	public virtual void OnKeyDown(Game game, KeyEventArgs args) { }
 	public virtual void OnKeyPress(Game game, KeyPressEventArgs args) { }

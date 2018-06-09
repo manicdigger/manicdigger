@@ -9,7 +9,7 @@
 		fillarea = new DictionaryVector3Float();
 	}
 
-	public override void OnNewFrameReadOnlyMainThread(Game game, float deltaTime)
+	public override void OnBeforeNewFrameDraw3d(Game game, float deltaTime)
 	{
 		if (game.guistate == GuiState.Normal)
 		{

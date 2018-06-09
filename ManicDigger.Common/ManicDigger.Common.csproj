@@ -175,7 +175,6 @@
     <Compile Include="Client\Mods\SendPosition.ci.cs" />
     <Compile Include="Client\Mods\SkySphereAnimated.ci.cs" />
     <Compile Include="Client\Mods\GuiTouchButtons.ci.cs" />
-    <Compile Include="Client\Mods\UpdateMain.ci.cs" />
     <Compile Include="Client\Mods\WalkSound.ci.cs" />
     <Compile Include="Client\Misc\NetworkTcpClient.ci.cs" />
     <Compile Include="Client\Misc\QueryClient.ci.cs" />

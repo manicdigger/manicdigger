@@ -223,7 +223,6 @@
 		clientmodsCount = 0;
 		modmanager.game = this;
 		AddMod(new ModDrawMain());
-		AddMod(new ModUpdateMain());
 		AddMod(new ModNetworkProcess());
 		AddMod(new ModUnloadRendererChunks());
 		AddMod(new ModAutoCamera());
@@ -3622,15 +3621,6 @@
 		lastplayerpositionX = player.position.x;
 		lastplayerpositionY = player.position.y;
 		lastplayerpositionZ = player.position.z;
-	}
-
-	public void Update(float dt)
-	{
-		for (int i = 0; i < clientmodsCount; i++)
-		{
-			if (clientmods[i] == null) { continue; }
-			clientmods[i].OnNewFrameReadOnlyMainThread(this, dt);
-		}
 	}
 
 	float lastplayerpositionX;
