@@ -17,6 +17,7 @@
 		sizex = 0;
 		sizey = 0;
 		clickable = true;
+		focusable = true;
 	}
 	//public ButtonWidget(float dx, float dy, float dw, float dh, string text, FontCi font)
 	//{
@@ -75,7 +76,7 @@
 	{
 		if (!visible) { return; }
 		if (sizex <= 0 || sizey <= 0) { return; }
-		switch (_state)
+		switch (hasKeyboardFocus ? ButtonState.Hover : _state)
 		{
 			// TODO: Use atlas textures
 			case ButtonState.Normal:
