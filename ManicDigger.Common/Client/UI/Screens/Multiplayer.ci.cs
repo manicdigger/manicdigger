@@ -148,7 +148,7 @@
 				continue;
 			}
 
-			wlst_serverList.GetElement(index).imageStatusBottom = (s.version != menu.p.GetGameVersion()) ? null : "";
+			wlst_serverList.GetElement(index).imageStatusBottom = (s.version == menu.p.GetGameVersion()) ? null : "";
 			if (s.thumbnailFetched && !s.thumbnailError)
 			{
 				wlst_serverList.GetElement(index).imageMain = menu.p.StringFormat("serverlist_entry_{0}.png", s.hash);
