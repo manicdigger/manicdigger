@@ -213,7 +213,7 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 			AbstractMenuWidget b = null;
 			switch (a.Type)
 			{
-				case Packet_WidgetTypeEnum.Image:
+				case Packet_WidgetTypeEnum.ImageWdgt:
 					ImageWidget newImg = new ImageWidget();
 					if (a.Image == "Solid")
 					{
@@ -225,7 +225,7 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 					}
 					b = newImg;
 					break;
-				case Packet_WidgetTypeEnum.Text:
+				case Packet_WidgetTypeEnum.TextWdgt:
 					TextWidget newTxt = new TextWidget();
 					FontCi newFont = new FontCi();
 					if (a.Font != null)
@@ -247,10 +247,16 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 					newTxt.SetText(tmp);
 					b = newTxt;
 					break;
-				case Packet_WidgetTypeEnum.TextBox:
+				case Packet_WidgetTypeEnum.TextBoxWdgt:
 					TextBoxWidget newTbx = new TextBoxWidget();
 					newTbx.SetContent(game.platform, a.Text);
 					b = newTbx;
+					break;
+				case Packet_WidgetTypeEnum.ButtonWdgt:
+					ButtonWidget newBtn = new ButtonWidget();
+					newBtn.SetText(a.Text);
+					//newBtn.SetTextureNames();
+					b = newBtn;
 					break;
 			}
 			b.SetX(game.xcenter(p.GetWidth()) + a.X);

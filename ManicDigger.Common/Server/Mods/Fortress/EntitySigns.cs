@@ -100,17 +100,15 @@ namespace ManicDigger.Mods
 			d.Width = 400;
 			d.Height = 200;
 			d.IsModal = true;
-			d.Widgets = new Widget[4];
+			d.Widgets = new Widget[3];
 			int widgetCount = 0;
 			var font = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
 			d.Widgets[widgetCount++] = Widget.MakeSolid(0, 0, 300, 200, Color.FromArgb(255, 50, 50, 50).ToArgb());
 			d.Widgets[widgetCount++] = Widget.MakeTextBox(e.sign.text, font, 50, 50, 200, 50);
-			Widget okHandler = Widget.MakeSolid(100, 100, 100, 50, Color.FromArgb(255, 100, 100, 100).ToArgb());
+			Widget okHandler = Widget.MakeButton("OK", 100, 100, 100, 50);
 			okHandler.Clickable = true;
-			okHandler.ClickKey = (char)13;
 			okHandler.Id = "UseSign_OK";
 			d.Widgets[widgetCount++] = okHandler;
-			d.Widgets[widgetCount++] = Widget.MakeText("OK", font, 100, 100);
 			editingSign[player] = id;
 			m.SendDialog(player, "UseSign", d);
 		}

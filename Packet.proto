@@ -806,13 +806,14 @@ message Widget {
 	optional string image = 9;
 	optional int32 color = 10; // should mostly be white
 	optional DialogFont font = 11;
-	optional WidgetType type = 12 [default = Image];
+	optional WidgetType type = 12 [default = ImageWdgt];
 }
 
 enum WidgetType {
-	Image = 0;
-	Text = 1;
-	TextBox = 2;
+	ImageWdgt = 0;
+	TextWdgt = 1;
+	TextBoxWdgt = 2;
+	ButtonWdgt = 3;
 }
 
 message DialogFont {

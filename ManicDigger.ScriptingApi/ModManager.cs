@@ -1115,13 +1115,37 @@ namespace ManicDigger
 			w.Color = renderColor;
 			return w;
 		}
+
+		/// <summary>
+		/// Create a textbox widget. This widget accepts user input and can send it back to the server.
+		/// </summary>
+		/// <param name="text">Text to render.</param>
+		/// <param name="x">X position of the widget.</param>
+		/// <param name="y">Y position of the widget.</param>
+		/// <param name="width">Width of the widget.</param>
+		/// <param name="height">Height of the widget.</param>
+		/// <param name="renderColor">Rendering color of the widget.</param>
+		/// <returns></returns>
+		public static Widget MakeButton(string text, float x, float y, float width, float height, int renderColor = -1)
+		{
+			Widget w = new Widget();
+			w.Type = WidgetType.Button;
+			w.Text = text;
+			w.X = (int)x;
+			w.Y = (int)y;
+			w.Width = (int)width;
+			w.Height = (int)height;
+			w.Color = renderColor;
+			return w;
+		}
 	}
 
 	public enum WidgetType
 	{
-		Image,
-		Text,
-		TextBox,
+		Image = 0,
+		Text = 1,
+		TextBox = 2,
+		Button = 3
 	}
 
 	public class ModInfo
