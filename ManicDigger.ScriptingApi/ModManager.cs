@@ -1014,6 +1014,9 @@ namespace ManicDigger
 		Bottom = 2
 	}
 
+	/// <summary>
+	/// Class handling creation of dialog widgets
+	/// </summary>
 	[ProtoContract]
 	public class Widget
 	{
@@ -1042,7 +1045,18 @@ namespace ManicDigger
 		[ProtoMember(12, IsRequired = false)]
 		public WidgetType Type;
 		public const string SolidImage = "Solid";
-		public static Widget MakeSolid(float x, float y, float width, float height, int color)
+
+		/// <summary>
+		/// Create a solid color widget. This is basically a white rectangle,
+		/// stretched and colored according to the parameters given.
+		/// </summary>
+		/// <param name="x">X position of the widget.</param>
+		/// <param name="y">Y position of the widget.</param>
+		/// <param name="width">Width of the widget.</param>
+		/// <param name="height">Height of the widget.</param>
+		/// <param name="renderColor">Rendering color of the widget.</param>
+		/// <returns></returns>
+		public static Widget MakeSolid(float x, float y, float width, float height, int renderColor = -1)
 		{
 			Widget w = new Widget();
 			w.Type = WidgetType.Image;
@@ -1051,11 +1065,21 @@ namespace ManicDigger
 			w.Y = (int)y;
 			w.Width = (int)width;
 			w.Height = (int)height;
-			w.Color = color;
+			w.Color = renderColor;
 			return w;
 		}
 
-		public static Widget MakeText(string text, DialogFont Font, float x, float y, int textColor)
+		/// <summary>
+		/// Crete a text widget. Use this to render display text.
+		/// Color codes are available and can be combined with renderColor.
+		/// </summary>
+		/// <param name="text">Text to render.</param>
+		/// <param name="Font">Font to use for rendering.</param>
+		/// <param name="x">X position of the widget.</param>
+		/// <param name="y">Y position of the widget.</param>
+		/// <param name="renderColor">Rendering color of the widget.</param>
+		/// <returns></returns>
+		public static Widget MakeText(string text, DialogFont Font, float x, float y, int renderColor = -1)
 		{
 			Widget w = new Widget();
 			w.Type = WidgetType.Text;
@@ -1063,11 +1087,22 @@ namespace ManicDigger
 			w.X = (int)x;
 			w.Y = (int)y;
 			w.Font = Font;
-			w.Color = textColor;
+			w.Color = renderColor;
 			return w;
 		}
 
-		public static Widget MakeTextBox(string text, DialogFont Font, float x, float y, float width, float height, int textColor)
+		/// <summary>
+		/// Create a textbox widget. This widget accepts user input and can send it back to the server.
+		/// </summary>
+		/// <param name="text">Text to render.</param>
+		/// <param name="Font">Font to use for rendering.</param>
+		/// <param name="x">X position of the widget.</param>
+		/// <param name="y">Y position of the widget.</param>
+		/// <param name="width">Width of the widget.</param>
+		/// <param name="height">Height of the widget.</param>
+		/// <param name="renderColor">Rendering color of the widget.</param>
+		/// <returns></returns>
+		public static Widget MakeTextBox(string text, DialogFont Font, float x, float y, float width, float height, int renderColor = -1)
 		{
 			Widget w = new Widget();
 			w.Type = WidgetType.TextBox;
@@ -1077,7 +1112,7 @@ namespace ManicDigger
 			w.Width = (int)width;
 			w.Height = (int)height;
 			w.Font = Font;
-			w.Color = textColor;
+			w.Color = renderColor;
 			return w;
 		}
 	}
