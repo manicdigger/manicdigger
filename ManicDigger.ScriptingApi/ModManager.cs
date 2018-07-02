@@ -1020,7 +1020,7 @@ namespace ManicDigger
 		[ProtoMember(1, IsRequired = false)]
 		public string Id;
 		[ProtoMember(2, IsRequired = false)]
-		public bool Click;
+		public bool Clickable;
 		[ProtoMember(3, IsRequired = false)]
 		public int X;
 		[ProtoMember(4, IsRequired = false)]

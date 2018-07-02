@@ -3177,7 +3177,7 @@ namespace ManicDigger.Server
 				return null;
 			}
 			Packet_Widget w = new Packet_Widget();
-			w.Click = widget.Click ? 1 : 0;
+			w.Click = widget.Clickable ? 1 : 0;
 			w.ClickKey = widget.ClickKey;
 			w.Color = widget.Color;
 			w.Font = ConvertFont(widget.Font);
