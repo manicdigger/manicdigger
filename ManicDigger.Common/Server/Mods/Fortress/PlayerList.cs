@@ -79,28 +79,28 @@ namespace ManicDigger.Mods.Fortress
 
 			// 1 - heading: Servername
 			widgets.Add(Widget.MakeSolid(tableX, tableY, tableWidth, row1Height, Color.DarkGreen.ToArgb()));
-			widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding));
 			heightOffset += row1Height;
 
 			// 2 - MOTD
 			widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row2Height, Color.ForestGreen.ToArgb()));
-			widgets.Add(Widget.MakeText(row2, SmallFontBold, tableX + xcenter(tableWidth, textWidth(row2, SmallFontBold)), tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row2, SmallFontBold, tableX + xcenter(tableWidth, textWidth(row2, SmallFontBold)), tableY + heightOffset + tablePadding));
 			heightOffset += row2Height;
 
 			// 3 - server info: IP Motd Serverping
 			widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row3Height, Color.DarkSeaGreen.ToArgb()));
 			// row3_1 - IP align left
-			widgets.Add(Widget.MakeText(row3_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row3_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding));
 			// row3_2 - Serverping align right
-			widgets.Add(Widget.MakeText(row3_2, SmallFont, tableX + tableWidth - textWidth(row3_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row3_2, SmallFont, tableX + tableWidth - textWidth(row3_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding));
 			heightOffset += row3Height;
 
 			// 4 - infoline: Playercount, Page
 			widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row4Height, Color.DimGray.ToArgb()));
 			// row4_1 PlayerCount
-			widgets.Add(Widget.MakeText(row4_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row4_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding));
 			// row4_2 PlayerCount
-			widgets.Add(Widget.MakeText(row4_2, SmallFont, tableX + tableWidth - textWidth(row4_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row4_2, SmallFont, tableX + tableWidth - textWidth(row4_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding));
 			heightOffset += row4Height;
 
 			// 5 - playerlist heading: ID | Player | Ping
@@ -111,11 +111,11 @@ namespace ManicDigger.Mods.Fortress
 			widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth, tableY + heightOffset, tableLineWidth, row5Height, Color.DimGray.ToArgb()));
 			widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth + tablePlayerColumnWidth - tableLineWidth, tableY + heightOffset, tableLineWidth, row5Height, Color.DimGray.ToArgb()));
 			// row4_1 ID - align center
-			widgets.Add(Widget.MakeText(row5_1, NormalFontBold, tableX + xcenter(tableIdColumnWidth, textWidth(row5_1, NormalFontBold)), tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row5_1, NormalFontBold, tableX + xcenter(tableIdColumnWidth, textWidth(row5_1, NormalFontBold)), tableY + heightOffset + tablePadding));
 			// row4_2 Player - align center
-			widgets.Add(Widget.MakeText(row5_2, NormalFontBold, tableX + tableIdColumnWidth + tablePlayerColumnWidth / 2 - textWidth(row5_2, NormalFontBold) / 2, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row5_2, NormalFontBold, tableX + tableIdColumnWidth + tablePlayerColumnWidth / 2 - textWidth(row5_2, NormalFontBold) / 2, tableY + heightOffset + tablePadding));
 			// row4_3 Ping - align center
-			widgets.Add(Widget.MakeText(row5_3, NormalFontBold, tableX + tableIdColumnWidth + tablePlayerColumnWidth + tablePingColumnWidth / 2 - textWidth(row5_3, NormalFontBold) / 2, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row5_3, NormalFontBold, tableX + tableIdColumnWidth + tablePlayerColumnWidth + tablePingColumnWidth / 2 - textWidth(row5_3, NormalFontBold) / 2, tableY + heightOffset + tablePadding));
 			heightOffset += row5Height;
 			// horizontal line
 			widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, tableLineWidth, Color.DimGray.ToArgb()));
@@ -143,8 +143,8 @@ namespace ManicDigger.Mods.Fortress
 				widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth, tableY + heightOffset, tableLineWidth, listEntryHeight, Color.DimGray.ToArgb()));
 				widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth + tablePlayerColumnWidth - tableLineWidth, tableY + heightOffset, tableLineWidth, listEntryHeight, Color.DimGray.ToArgb()));
 
-				widgets.Add(Widget.MakeText(AllPlayers[i].ToString(), NormalFont, tableX + tableIdColumnWidth - textWidth(AllPlayers[i].ToString(), NormalFont) - tablePadding, tableY + heightOffset + listEntryPaddingTopBottom, TEXT_COLOR.ToArgb()));
-				widgets.Add(Widget.MakeText(getPrefix(AllPlayers[i]) + m.GetPlayerName(AllPlayers[i]), NormalFont, tableX + tableIdColumnWidth + tablePadding, tableY + heightOffset + listEntryPaddingTopBottom, TEXT_COLOR.ToArgb()));
+				widgets.Add(Widget.MakeText(AllPlayers[i].ToString(), NormalFont, tableX + tableIdColumnWidth - textWidth(AllPlayers[i].ToString(), NormalFont) - tablePadding, tableY + heightOffset + listEntryPaddingTopBottom));
+				widgets.Add(Widget.MakeText(getPrefix(AllPlayers[i]) + m.GetPlayerName(AllPlayers[i]), NormalFont, tableX + tableIdColumnWidth + tablePadding, tableY + heightOffset + listEntryPaddingTopBottom));
 				string pingString;
 				if (m.IsBot(AllPlayers[i]))
 				{
@@ -154,7 +154,7 @@ namespace ManicDigger.Mods.Fortress
 				{
 					pingString = ((int)(m.GetPlayerPing(AllPlayers[i]) * 1000)).ToString();
 				}
-				widgets.Add(Widget.MakeText(pingString, NormalFont, tableX + tableIdColumnWidth + tablePlayerColumnWidth + tablePingColumnWidth - textWidth(pingString, NormalFont) - tablePadding, tableY + heightOffset + listEntryPaddingTopBottom, TEXT_COLOR.ToArgb()));
+				widgets.Add(Widget.MakeText(pingString, NormalFont, tableX + tableIdColumnWidth + tablePlayerColumnWidth + tablePingColumnWidth - textWidth(pingString, NormalFont) - tablePadding, tableY + heightOffset + listEntryPaddingTopBottom));
 				heightOffset += listEntryHeight;
 			}
 			var wtab = Widget.MakeSolid(0, 0, 0, 0, 0);
@@ -176,7 +176,6 @@ namespace ManicDigger.Mods.Fortress
 		private int page = 0; // current displayed page
 
 		// fonts
-		public readonly Color TEXT_COLOR = Color.White;
 		public DialogFont HeadingFont = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
 		public DialogFont NormalFont = new DialogFont("Verdana", 10f, DialogFontStyle.Regular);
 		public DialogFont NormalFontBold = new DialogFont("Verdana", 10f, DialogFontStyle.Bold);

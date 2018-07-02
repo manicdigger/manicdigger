@@ -776,28 +776,28 @@ namespace ManicDigger.Mods.War
 
 			// 1 - heading: Servername
 			widgets.Add(Widget.MakeSolid(tableX, tableY, tableWidth, row1Height, Color.DarkGreen.ToArgb()));
-			widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding));
 			heightOffset += row1Height;
 
 			// 2 - MOTD
 			widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row2Height, Color.ForestGreen.ToArgb()));
-			widgets.Add(Widget.MakeText(row2, SmallFontBold, tableX + xcenter(tableWidth, textWidth(row2, SmallFontBold)), tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row2, SmallFontBold, tableX + xcenter(tableWidth, textWidth(row2, SmallFontBold)), tableY + heightOffset + tablePadding));
 			heightOffset += row2Height;
 
 			// 3 - server info: IP Motd Serverping
 			widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row3Height, Color.DarkSeaGreen.ToArgb()));
 			// row3_1 - IP align left
-			widgets.Add(Widget.MakeText(row3_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row3_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding));
 			// row3_2 - Serverping align right
-			widgets.Add(Widget.MakeText(row3_2, SmallFont, tableX + tableWidth - textWidth(row3_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row3_2, SmallFont, tableX + tableWidth - textWidth(row3_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding));
 			heightOffset += row3Height;
 
 			// 4 - infoline: Playercount, Page
 			widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row4Height, Color.DimGray.ToArgb()));
 			// row4_1 PlayerCount
-			widgets.Add(Widget.MakeText(row4_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row4_1, SmallFont, tableX + tablePadding, tableY + heightOffset + tablePadding));
 			// row4_2 PlayerCount
-			widgets.Add(Widget.MakeText(row4_2, SmallFont, tableX + tableWidth - textWidth(row4_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
+			widgets.Add(Widget.MakeText(row4_2, SmallFont, tableX + tableWidth - textWidth(row4_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding));
 			heightOffset += row4Height;
 
 			Dictionary<Team, List<int>> playersByTeam = new Dictionary<Team, List<int>>();
@@ -817,7 +817,7 @@ namespace ManicDigger.Mods.War
 				for (int i = 0; i < players.Count; i++)
 				{
 					string s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), this.players[players[i]].kills);
-					widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * i, Color.White.ToArgb()));
+					widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * i));
 				}
 			}
 
@@ -842,7 +842,6 @@ namespace ManicDigger.Mods.War
 		private int page = 0; // current displayed page
 
 		// fonts
-		public readonly Color TEXT_COLOR = Color.White;
 		public DialogFont HeadingFont = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
 		public DialogFont NormalFont = new DialogFont("Verdana", 10f, DialogFontStyle.Regular);
 		public DialogFont NormalFontBold = new DialogFont("Verdana", 10f, DialogFontStyle.Bold);
