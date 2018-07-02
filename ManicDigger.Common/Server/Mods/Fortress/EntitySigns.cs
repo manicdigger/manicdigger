@@ -106,6 +106,7 @@ namespace ManicDigger.Mods
 			d.Widgets[widgetCount++] = Widget.MakeSolid(0, 0, 300, 200, Color.FromArgb(255, 50, 50, 50).ToArgb());
 			d.Widgets[widgetCount++] = Widget.MakeTextBox(e.sign.text, font, 50, 50, 200, 50, Color.FromArgb(255, 0, 0, 0).ToArgb());
 			Widget okHandler = Widget.MakeSolid(100, 100, 100, 50, Color.FromArgb(255, 100, 100, 100).ToArgb());
+			okHandler.Clickable = true;
 			okHandler.ClickKey = (char)13;
 			okHandler.Id = "UseSign_OK";
 			d.Widgets[widgetCount++] = okHandler;

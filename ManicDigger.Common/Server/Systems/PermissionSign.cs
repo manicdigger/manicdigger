@@ -165,6 +165,7 @@ namespace ManicDigger.Server
 				d.Widgets[widgetCount++] = Widget.MakeText(g.Name, font, 50, 150 + i * 50, ColorCi.FromArgb(255, 0, 0, 0));
 			}
 			Widget okHandler = Widget.MakeSolid(200, 50, 100, 50, ColorCi.FromArgb(255, 100, 100, 100));
+			okHandler.Clickable = true;
 			okHandler.ClickKey = (char)13;
 			okHandler.Id = "UsePermissionSign_OK";
 			d.Widgets[widgetCount++] = okHandler;

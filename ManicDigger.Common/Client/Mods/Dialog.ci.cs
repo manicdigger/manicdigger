@@ -249,6 +249,7 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 					break;
 				case Packet_WidgetTypeEnum.TextBox:
 					TextBoxWidget newTbx = new TextBoxWidget();
+					newTbx.SetContent(game.platform, a.Text);
 					b = newTbx;
 					break;
 			}
@@ -258,10 +259,15 @@ public class ClientPacketHandlerDialog : ClientPacketHandler
 			b.SetSizeY(a.Height);
 			b.SetColor(a.Color);
 
-			if (a.ClickKey != 0)
+			if (!game.platform.StringEmpty(a.Id))
 			{
+				// set up "click" event handling only when widget has an id assigned
 				b.SetEventName(a.Id);
-				b.SetEventKeyChar(a.ClickKey);
+				b.SetClickable(a.Click == 1);
+				if (a.ClickKey != 0)
+				{
+					b.SetEventKeyChar(a.ClickKey);
+				}
 			}
 
 			s.AddWidget(b);

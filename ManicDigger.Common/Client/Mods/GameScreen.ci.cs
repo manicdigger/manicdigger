@@ -22,17 +22,7 @@
 			// send dialog response if necessary
 			if (widgets[i].GetEventKeyPressed())
 			{
-				string[] textValues = new string[WidgetCount];
-				for (int j = 0; j < WidgetCount; j++)
-				{
-					string s = widgets[j].GetEventResponse();
-					if (s == null)
-					{
-						s = "";
-					}
-					textValues[j] = s;
-				}
-				game_.SendPacketClient(ClientPackets.DialogClick(widgets[i].GetEventName(), textValues, WidgetCount));
+				game_.SendPacketClient(CreateDialogResponse(widgets[i].GetEventName()));
 			}
 		}
 	}
@@ -53,6 +43,11 @@
 			if (widgets[i].HasBeenClicked(e))
 			{
 				OnButton(widgets[i]);
+				// send dialog response if necessary
+				if (!game_.platform.StringEmpty(widgets[i].GetEventName()))
+				{
+					game_.SendPacketClient(CreateDialogResponse(widgets[i].GetEventName()));
+				}
 			}
 		}
 	}
@@ -101,5 +96,19 @@
 		WidgetCount = 0;
 		WidgetMaxCount = maxWidgetCount;
 		widgets = new AbstractMenuWidget[WidgetMaxCount];
+	}
+	public Packet_Client CreateDialogResponse(string widgetId)
+	{
+		string[] textValues = new string[WidgetCount];
+		for (int j = 0; j < WidgetCount; j++)
+		{
+			string s = widgets[j].GetEventResponse();
+			if (s == null)
+			{
+				s = "";
+			}
+			textValues[j] = s;
+		}
+		return ClientPackets.DialogClick(widgetId, textValues, WidgetCount);
 	}
 }
