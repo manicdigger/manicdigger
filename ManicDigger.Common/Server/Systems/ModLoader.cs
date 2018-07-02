@@ -120,7 +120,7 @@ namespace ManicDigger.Server
 		Dictionary<string, string> javascriptScripts = new Dictionary<string, string>();
 		public void CompileScripts(Dictionary<string, string> scripts, bool restart)
 		{
-			CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v3.5" } });
+			CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v4.0" } });
 			var parms = new CompilerParameters();
 			parms.GenerateExecutable = false;
 			parms.CompilerOptions = "/unsafe";
