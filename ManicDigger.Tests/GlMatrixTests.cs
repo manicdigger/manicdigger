@@ -23,7 +23,7 @@
 
 using NUnit.Framework;
 
-namespace ManicDigger.Tests
+namespace ManicDigger.Tests.GlMatrix
 {
 	[TestFixture]
 	public class TestVec3

@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace Tests
+namespace ManicDigger.Tests.UI
 {
 	[TestFixture()]
 	public class TextBoxWidgetTests
