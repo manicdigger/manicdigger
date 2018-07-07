@@ -2181,18 +2181,8 @@ namespace ManicDigger.ClientNative
 			}
 		}
 
-		int lastMouseWheelTick;
 		void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
 		{
-			int currentTick = TimeMillisecondsFromStart();
-			if (currentTick - lastMouseWheelTick < 10)
-			{
-				// Limit processing of MouseWheel events
-				// This is due to a bug in OpenTK that fires two events on Windows 10
-				// Documented in issue #207
-				return;
-			}
-
 			foreach (MouseEventHandler h in mouseEventHandlers)
 			{
 				MouseWheelEventArgs args = new MouseWheelEventArgs();
@@ -2200,8 +2190,6 @@ namespace ManicDigger.ClientNative
 				args.SetDeltaPrecise(e.DeltaPrecise);
 				h.OnMouseWheel(args);
 			}
-
-			lastMouseWheelTick = currentTick;
 		}
 
 		void Mouse_ButtonDown(object sender, MouseButtonEventArgs e)
