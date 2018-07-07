@@ -1241,7 +1241,6 @@ namespace ManicDigger.ClientNative
 
 		public void Start()
 		{
-			window.Keyboard.KeyRepeat = true;
 			window.KeyDown += new EventHandler<KeyboardKeyEventArgs>(game_KeyDown);
 			window.KeyUp += new EventHandler<KeyboardKeyEventArgs>(game_KeyUp);
 			window.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(game_KeyPress);
@@ -1600,7 +1599,7 @@ namespace ManicDigger.ClientNative
 			if (ENABLE_TRANSPARENCY)
 			{
 				GL.Enable(EnableCap.Blend);
-				GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+				GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 				//GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Blend);
 				//GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvColor, new Color4(0, 0, 0, byte.MaxValue));
 			}
