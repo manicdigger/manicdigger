@@ -1,4 +1,7 @@
-﻿public class ScreenGame : Screen
+﻿/// <summary>
+/// ScreenGame acts as the interface towards the game itself. All user input is forwarded to be handled by game logic.
+/// </summary>
+public class ScreenGame : MainMenuScreen
 {
 	public ScreenGame()
 	{
@@ -8,19 +11,18 @@
 
 	public void Start(GamePlatform platform_, bool singleplayer_, string singleplayerSavePath_, ConnectData connectData_)
 	{
-		platform = platform_;
 		singleplayer = singleplayer_;
 		singleplayerSavePath = singleplayerSavePath_;
 		connectData = connectData_;
 
-		game.platform = platform;
+		game.platform = gamePlatform;
 		game.issingleplayer = singleplayer;
 		game.assets = uiRenderer.GetAssetList();
 		game.assetsLoadProgress = menu.uiRenderer.GetAssetLoadProgress();
 		game.uiRenderer = uiRenderer;
 
 		game.Start();
-		Connect(platform);
+		Connect(gamePlatform);
 	}
 
 	ServerSimple serverSimple;
@@ -88,7 +90,6 @@
 		}
 	}
 
-	GamePlatform platform;
 	ConnectData connectData;
 	bool singleplayer;
 	string singleplayerSavePath;
@@ -108,12 +109,12 @@
 			{
 				//Query new server for public key
 				QueryClient qclient = new QueryClient();
-				qclient.SetPlatform(platform);
+				qclient.SetPlatform(gamePlatform);
 				qclient.PerformQuery(game.GetRedirect().GetIP(), game.GetRedirect().GetPort());
 				if (qclient.queryPerformed && !qclient.querySuccess)
 				{
 					//Query did not succeed. Back to main menu
-					platform.MessageBoxShowError(qclient.GetServerMessage(), "Redirection error");
+					gamePlatform.MessageBoxShowError(qclient.GetServerMessage(), "Redirection error");
 					menu.StartMainMenu();
 					return;
 				}
@@ -121,17 +122,17 @@
 				//Get auth hash for new server
 				LoginClientCi lic = new LoginClientCi();
 				LoginData lidata = new LoginData();
-				string token = platform.StringSplit(qresult.PublicHash, "=", new IntRef())[1];
-				lic.Login(platform, connectData.Username, "", token, platform.GetPreferences().GetString("Password", ""), new LoginResultRef(), lidata);
+				string token = gamePlatform.StringSplit(qresult.PublicHash, "=", new IntRef())[1];
+				lic.Login(gamePlatform, connectData.Username, "", token, gamePlatform.GetPreferences().GetString("Password", ""), new LoginResultRef(), lidata);
 				while (lic.loginResult.value == LoginResult.Connecting)
 				{
-					lic.Update(platform);
+					lic.Update(gamePlatform);
 				}
 				//Check if login was successful
 				if (!lidata.ServerCorrect)
 				{
 					//Invalid server adress
-					platform.MessageBoxShowError("Invalid server address!", "Redirection error!");
+					gamePlatform.MessageBoxShowError("Invalid server address!", "Redirection error!");
 					menu.StartMainMenu();
 				}
 				else if (!lidata.PasswordCorrect)

@@ -1,4 +1,7 @@
-﻿public class MainMenu
+﻿/// <summary>
+/// MainMenu acts as the entry point to the game. It manages different states, screens and forwards user input.
+/// </summary>
+public class MainMenu
 {
 	public MainMenu()
 	{
@@ -16,7 +19,7 @@
 	float[] pMatrix;
 	int viewportWidth;
 	int viewportHeight;
-	Screen screen;
+	MainMenuScreen screen;
 	bool initialized;
 	LoginClientCi loginClient;
 
@@ -132,9 +135,7 @@
 	internal void StartSingleplayer()
 	{
 		screen = new ScreenSingleplayer();
-		screen.menu = this;
-		screen.uiRenderer = uiRenderer;
-		screen.LoadTranslations();
+		screen.Init(this, uiRenderer);
 	}
 
 	internal void StartLogin(string serverHash, string ip, int port)
@@ -144,18 +145,14 @@
 		screenLogin.serverIp = ip;
 		screenLogin.serverPort = port;
 		screen = screenLogin;
-		screen.menu = this;
-		screen.uiRenderer = uiRenderer;
-		screen.LoadTranslations();
+		screen.Init(this, uiRenderer);
 	}
 
 	internal void StartConnectToIp()
 	{
 		ScreenConnectToIp screenConnectToIp = new ScreenConnectToIp();
 		screen = screenConnectToIp;
-		screen.menu = this;
-		screen.uiRenderer = uiRenderer;
-		screen.LoadTranslations();
+		screen.Init(this, uiRenderer);
 	}
 
 	internal void Exit()
@@ -166,9 +163,7 @@
 	internal void StartMainMenu()
 	{
 		screen = new ScreenMain();
-		screen.menu = this;
-		screen.uiRenderer = uiRenderer;
-		screen.LoadTranslations();
+		screen.Init(this, uiRenderer);
 		p.ExitMousePointerLock();
 		p.SetVSync(true);
 		drawBackground = true;
@@ -177,9 +172,7 @@
 	internal void StartMultiplayer()
 	{
 		screen = new ScreenMultiplayer();
-		screen.menu = this;
-		screen.uiRenderer = uiRenderer;
-		screen.LoadTranslations();
+		screen.Init(this, uiRenderer);
 	}
 
 	internal void Login(string user, string password, string serverHash, string token, LoginResultRef loginResult, LoginData loginResultData)
@@ -245,8 +238,7 @@
 	public void StartGame(bool singleplayer, string singleplayerSavePath, ConnectData connectData)
 	{
 		ScreenGame screenGame = new ScreenGame();
-		screenGame.menu = this;
-		screenGame.uiRenderer = uiRenderer;
+		screenGame.Init(this, uiRenderer);
 		screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
 		screen = screenGame;
 		drawBackground = false;

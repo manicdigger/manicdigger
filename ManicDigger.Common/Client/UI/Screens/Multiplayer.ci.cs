@@ -1,4 +1,7 @@
-﻿public class ScreenMultiplayer : Screen
+﻿/// <summary>
+/// ScreenMultiplayer displays a server list and allows choosing a target server to connect to.
+/// </summary>
+public class ScreenMultiplayer : MainMenuScreen
 {
 	public ScreenMultiplayer()
 	{
@@ -78,29 +81,28 @@
 	}
 	public override void Render(float dt)
 	{
-		GamePlatform p = menu.p;
 		float scale = menu.uiRenderer.GetScale();
 
 		// setup widgets
-		wtxt_title.x = p.GetCanvasWidth() / 2;
+		wtxt_title.x = gamePlatform.GetCanvasWidth() / 2;
 		wtxt_title.y = 10 * scale;
 		wtxt_title.SetAlignment(TextAlign.Center);
 
 		wbtn_back.x = 40 * scale;
-		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.y = gamePlatform.GetCanvasHeight() - 104 * scale;
 		wbtn_back.sizex = 256 * scale;
 		wbtn_back.sizey = 64 * scale;
 
-		wbtn_logout.x = p.GetCanvasWidth() - 298 * scale;
+		wbtn_logout.x = gamePlatform.GetCanvasWidth() - 298 * scale;
 		wbtn_logout.y = 62 * scale;
 		wbtn_logout.sizex = 128 * scale;
 		wbtn_logout.sizey = 32 * scale;
 
 		wtxt_userName.x = wbtn_logout.x - 6 * scale;
 		wtxt_userName.y = 78 * scale;
-		if (p.GetPreferences().GetString("Password", "") != "")
+		if (gamePlatform.GetPreferences().GetString("Password", "") != "")
 		{
-			wtxt_userName.SetText(p.GetPreferences().GetString("Username", "Invalid"));
+			wtxt_userName.SetText(gamePlatform.GetPreferences().GetString("Username", "Invalid"));
 			wtxt_userName.SetVisible(true);
 			wbtn_logout.SetVisible(true);
 		}
@@ -116,16 +118,16 @@
 
 		wlst_serverList.x = 100 * scale;
 		wlst_serverList.y = 100 * scale;
-		wlst_serverList.sizex = p.GetCanvasWidth() - 200 * scale;
-		wlst_serverList.sizey = p.GetCanvasHeight() - 200 * scale;
+		wlst_serverList.sizex = gamePlatform.GetCanvasWidth() - 200 * scale;
+		wlst_serverList.sizey = gamePlatform.GetCanvasHeight() - 200 * scale;
 
 		wbtn_connect.x = wlst_serverList.x + wlst_serverList.sizex - 326 * scale;
-		wbtn_connect.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_connect.y = gamePlatform.GetCanvasHeight() - 104 * scale;
 		wbtn_connect.sizex = 256 * scale;
 		wbtn_connect.sizey = 64 * scale;
 
 		wbtn_connectToIp.x = wbtn_connect.x - wbtn_connect.sizex - 6 * scale;
-		wbtn_connectToIp.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_connectToIp.y = gamePlatform.GetCanvasHeight() - 104 * scale;
 		wbtn_connectToIp.sizex = 256 * scale;
 		wbtn_connectToIp.sizey = 64 * scale;
 
@@ -148,10 +150,10 @@
 				continue;
 			}
 
-			wlst_serverList.GetElement(index).imageStatusBottom = (s.version == menu.p.GetGameVersion()) ? null : "";
+			wlst_serverList.GetElement(index).imageStatusBottom = (s.version == gamePlatform.GetGameVersion()) ? null : "";
 			if (s.thumbnailFetched && !s.thumbnailError)
 			{
-				wlst_serverList.GetElement(index).imageMain = menu.p.StringFormat("serverlist_entry_{0}.png", s.hash);
+				wlst_serverList.GetElement(index).imageMain = gamePlatform.StringFormat("serverlist_entry_{0}.png", s.hash);
 			}
 			else
 			{
@@ -183,10 +185,10 @@
 		}
 		if (w == wbtn_logout)
 		{
-			Preferences pref = menu.p.GetPreferences();
+			Preferences pref = gamePlatform.GetPreferences();
 			pref.Remove("Username");
 			pref.Remove("Password");
-			menu.p.SetPreferences(pref);
+			gamePlatform.SetPreferences(pref);
 			wtxt_userName.SetText(null);
 			wtxt_userName.SetVisible(false);
 			wbtn_logout.SetVisible(false);
@@ -206,13 +208,13 @@
 	{
 		if (!serverListDownloadStarted)
 		{
-			menu.p.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.php", serverListAddress);
+			gamePlatform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.php", serverListAddress);
 			serverListDownloadStarted = true;
 		}
 		if (serverListAddress.done)
 		{
 			serverListAddress.done = false;
-			menu.p.WebClientDownloadDataAsync(serverListAddress.GetString(menu.p), serverListCsv);
+			gamePlatform.WebClientDownloadDataAsync(serverListAddress.GetString(gamePlatform), serverListCsv);
 		}
 		if (serverListCsv.done)
 		{
@@ -224,25 +226,25 @@
 				thumbResponses[i] = null;
 			}
 			IntRef serversCount = new IntRef();
-			string[] servers = menu.p.StringSplit(serverListCsv.GetString(menu.p), "\n", serversCount);
+			string[] servers = gamePlatform.StringSplit(serverListCsv.GetString(gamePlatform), "\n", serversCount);
 			wlst_serverList.Clear();
 			for (int i = 0; i < serversCount.value; i++)
 			{
 				IntRef ssCount = new IntRef();
-				string[] ss = menu.p.StringSplit(servers[i], "\t", ssCount);
+				string[] ss = gamePlatform.StringSplit(servers[i], "\t", ssCount);
 				if (ssCount.value < 10)
 				{
 					continue;
 				}
 				ServerOnList s = new ServerOnList();
 				s.hash = ss[0];
-				s.name = menu.p.DecodeHTMLEntities(ss[1]);
-				s.motd = menu.p.DecodeHTMLEntities(ss[2]);
-				s.port = menu.p.IntParse(ss[3]);
+				s.name = gamePlatform.DecodeHTMLEntities(ss[1]);
+				s.motd = gamePlatform.DecodeHTMLEntities(ss[2]);
+				s.port = gamePlatform.IntParse(ss[3]);
 				s.ip = ss[4];
 				s.version = ss[5];
-				s.users = menu.p.IntParse(ss[6]);
-				s.max = menu.p.IntParse(ss[7]);
+				s.users = gamePlatform.IntParse(ss[6]);
+				s.max = gamePlatform.IntParse(ss[7]);
 				s.gamemode = ss[8];
 				s.players = ss[9];
 				serversOnList[i] = s;
@@ -250,7 +252,7 @@
 				ListEntry e = new ListEntry();
 				e.textTopLeft = serversOnList[i].name;
 				e.textBottomLeft = serversOnList[i].motd;
-				e.textTopRight = menu.p.StringFormat2("{0}/{1}", menu.p.IntToString(serversOnList[i].users), menu.p.IntToString(serversOnList[i].max));
+				e.textTopRight = gamePlatform.StringFormat2("{0}/{1}", gamePlatform.IntToString(serversOnList[i].users), gamePlatform.IntToString(serversOnList[i].max));
 				e.textBottomRight = serversOnList[i].gamemode;
 				wlst_serverList.AddElement(e);
 			}
@@ -275,7 +277,7 @@
 			{
 				//Not started downloading yet
 				thumbResponses[i] = new ThumbnailResponseCi();
-				menu.p.ThumbnailDownloadAsync(server.ip, server.port, thumbResponses[i]);
+				gamePlatform.ThumbnailDownloadAsync(server.ip, server.port, thumbResponses[i]);
 				server.thumbnailDownloading = true;
 			}
 			else
@@ -286,11 +288,11 @@
 					if (thumbResponses[i].done)
 					{
 						//Request completed. load received bitmap
-						BitmapCi bmp = menu.p.BitmapCreateFromPng(thumbResponses[i].data, thumbResponses[i].dataLength);
+						BitmapCi bmp = gamePlatform.BitmapCreateFromPng(thumbResponses[i].data, thumbResponses[i].dataLength);
 						if (bmp != null)
 						{
-							menu.uiRenderer.LoadBitmap(bmp, menu.p.StringFormat("serverlist_entry_{0}.png", server.hash));
-							menu.p.BitmapDelete(bmp);
+							menu.uiRenderer.LoadBitmap(bmp, gamePlatform.StringFormat("serverlist_entry_{0}.png", server.hash));
+							gamePlatform.BitmapDelete(bmp);
 						}
 						server.thumbnailDownloading = false;
 						server.thumbnailFetched = true;

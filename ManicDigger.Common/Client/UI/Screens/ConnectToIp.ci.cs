@@ -1,4 +1,8 @@
-﻿public class ScreenConnectToIp : Screen
+﻿/// <summary>
+/// ScreenConnectToIp shows an input mask for entering server details manually.
+/// This enables users to connect to private (unlisted) servers and also allows connections without a valid account.
+/// </summary>
+public class ScreenConnectToIp : MainMenuScreen
 {
 	public ScreenConnectToIp()
 	{
@@ -58,23 +62,21 @@
 
 	public override void Render(float dt)
 	{
-		GamePlatform p = menu.p;
-
 		// load stored values or defaults
 		if (!loaded)
 		{
-			wtbx_ip.SetContent(p, p.GetPreferences().GetString("ConnectToIpIp", "127.0.0.1"));
-			wtbx_port.SetContent(p, p.GetPreferences().GetString("ConnectToIpPort", "25565"));
+			wtbx_ip.SetContent(gamePlatform, gamePlatform.GetPreferences().GetString("ConnectToIpIp", "127.0.0.1"));
+			wtbx_port.SetContent(gamePlatform, gamePlatform.GetPreferences().GetString("ConnectToIpPort", "25565"));
 			loaded = true;
 		}
 
 		float connectAreaWidth = 600;
 		float connectAreaHeight = 400;
 		float scale = menu.uiRenderer.GetScale();
-		float leftx = p.GetCanvasWidth() / 2 - (connectAreaWidth / 2) * scale;
-		float topy = p.GetCanvasHeight() / 2 - (connectAreaHeight / 2) * scale;
+		float leftx = gamePlatform.GetCanvasWidth() / 2 - (connectAreaWidth / 2) * scale;
+		float topy = gamePlatform.GetCanvasHeight() / 2 - (connectAreaHeight / 2) * scale;
 
-		wtxt_title.x = p.GetCanvasWidth() / 2;
+		wtxt_title.x = gamePlatform.GetCanvasWidth() / 2;
 		wtxt_title.y = topy;
 		wtxt_statusMessage.x = leftx;
 		wtxt_statusMessage.y = topy + 258 * scale;
@@ -99,7 +101,7 @@
 		wbtn_connect.sizey = 64 * scale;
 
 		wbtn_back.x = 40 * scale;
-		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.y = gamePlatform.GetCanvasHeight() - 104 * scale;
 		wbtn_back.sizex = 256 * scale;
 		wbtn_back.sizey = 64 * scale;
 
@@ -121,17 +123,17 @@
 			{
 				wtxt_statusMessage.SetText(menu.lang.Get("MainMenu_ConnectToIpErrorIp"));
 			}
-			else if (!menu.p.IntTryParse(wtbx_port.GetContent(), ret))
+			else if (!gamePlatform.IntTryParse(wtbx_port.GetContent(), ret))
 			{
 				wtxt_statusMessage.SetText(menu.lang.Get("MainMenu_ConnectToIpErrorPort"));
 			}
 			else
 			{
 				// save user input
-				Preferences preferences = menu.p.GetPreferences();
+				Preferences preferences = gamePlatform.GetPreferences();
 				preferences.SetString("ConnectToIpIp", wtbx_ip.GetContent());
 				preferences.SetString("ConnectToIpPort", wtbx_port.GetContent());
-				menu.p.SetPreferences(preferences);
+				gamePlatform.SetPreferences(preferences);
 
 				// perform login
 				menu.StartLogin(null, wtbx_ip.GetContent(), ret.value);

@@ -1,4 +1,8 @@
-﻿public class ScreenSingleplayer : Screen
+﻿/// <summary>
+/// ScreenSingleplayer shows a minimalistic "Open File" dialog for loading local savegames.
+/// TODO: Replace/Enhance this with ScreenModifyWorld to hide unnecessary complexity from the user.
+/// </summary>
+public class ScreenSingleplayer : MainMenuScreen
 {
 	public ScreenSingleplayer()
 	{
@@ -52,10 +56,9 @@
 
 	public override void Render(float dt)
 	{
-		GamePlatform p = menu.p;
 		float scale = menu.uiRenderer.GetScale();
-		float leftx = p.GetCanvasWidth() / 2 - 128 * scale;
-		float y = p.GetCanvasHeight() / 2 + 0 * scale;
+		float leftx = gamePlatform.GetCanvasWidth() / 2 - 128 * scale;
+		float y = gamePlatform.GetCanvasHeight() / 2 + 0 * scale;
 
 		wbtn_playWorld.x = leftx;
 		wbtn_playWorld.y = y + 100 * scale;
@@ -73,7 +76,7 @@
 		wbtn_modifyWorld.sizey = 64 * scale;
 
 		wbtn_back.x = 40 * scale;
-		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.y = gamePlatform.GetCanvasHeight() - 104 * scale;
 		wbtn_back.sizex = 256 * scale;
 		wbtn_back.sizey = 64 * scale;
 
@@ -82,7 +85,7 @@
 		wbtn_openFile.sizex = 256 * scale;
 		wbtn_openFile.sizey = 64 * scale;
 
-		wtxt_title.x = p.GetCanvasWidth() / 2;
+		wtxt_title.x = gamePlatform.GetCanvasWidth() / 2;
 		wtxt_title.y = 10;
 		wtxt_title.SetAlignment(TextAlign.Center);
 
@@ -92,16 +95,16 @@
 		wlst_worldList.sizey = 400 * scale;
 
 		// TODO: Implement savegame handling in game menu
-		//LoadSavegameList(p);
+		//LoadSavegameList();
 
 		DrawWidgets(dt);
 
-		if (!menu.p.SinglePlayerServerAvailable())
+		if (!gamePlatform.SinglePlayerServerAvailable())
 		{
 			wbtn_openFile.SetVisible(false);
 			wtxt_singleplayerUnavailable.SetVisible(true);
-			wtxt_singleplayerUnavailable.x = p.GetCanvasWidth() / 2;
-			wtxt_singleplayerUnavailable.y = p.GetCanvasHeight() / 2;
+			wtxt_singleplayerUnavailable.x = gamePlatform.GetCanvasWidth() / 2;
+			wtxt_singleplayerUnavailable.y = gamePlatform.GetCanvasHeight() / 2;
 			wtxt_singleplayerUnavailable.SetAlignment(TextAlign.Center);
 			wtxt_singleplayerUnavailable.SetBaseline(TextBaseline.Middle);
 		}
@@ -137,7 +140,7 @@
 		if (w == wbtn_openFile)
 		{
 			string extension;
-			if (menu.p.SinglePlayerServerAvailable())
+			if (gamePlatform.SinglePlayerServerAvailable())
 			{
 				extension = "mddbs";
 			}
@@ -145,7 +148,7 @@
 			{
 				extension = "mdss";
 			}
-			string result = menu.p.FileOpenDialog(extension, "Manic Digger Savegame", menu.p.PathSavegames());
+			string result = gamePlatform.FileOpenDialog(extension, "Manic Digger Savegame", gamePlatform.PathSavegames());
 			if (result != null)
 			{
 				menu.ConnectToSingleplayer(result);
@@ -153,7 +156,7 @@
 		}
 	}
 
-	void LoadSavegameList(GamePlatform p)
+	void LoadSavegameList()
 	{
 		if (savegames == null)
 		{

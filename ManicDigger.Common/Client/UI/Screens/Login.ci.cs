@@ -1,4 +1,8 @@
-﻿public class ScreenLogin : Screen
+﻿/// <summary>
+/// ScreenLogin shows a login dialog that allows signing in before connecting to a server.
+/// If login credentials are saved login happens automatically.
+/// </summary>
+public class ScreenLogin : MainMenuScreen
 {
 	public ScreenLogin()
 	{
@@ -75,8 +79,8 @@
 		// first try logging in using stored credentials
 		if (!triedSavedLogin)
 		{
-			Preferences preferences = menu.p.GetPreferences();
-			wtbx_username.SetContent(menu.p, preferences.GetString("Username", ""));
+			Preferences preferences = gamePlatform.GetPreferences();
+			wtbx_username.SetContent(gamePlatform, preferences.GetString("Username", ""));
 			string token = preferences.GetString("Password", "");
 
 			loginResultData = new LoginData();
@@ -94,13 +98,13 @@
 		{
 			if (wcbx_rememberPassword.GetChecked())
 			{
-				Preferences preferences = menu.p.GetPreferences();
+				Preferences preferences = gamePlatform.GetPreferences();
 				preferences.SetString("Username", wtbx_username.GetContent());
 				if (loginResultData.Token != null && loginResultData.Token != "")
 				{
 					preferences.SetString("Password", loginResultData.Token);
 				}
-				menu.p.SetPreferences(preferences);
+				gamePlatform.SetPreferences(preferences);
 			}
 			menu.ConnectToGame(loginResultData, wtbx_username.GetContent());
 		}
@@ -120,18 +124,17 @@
 		}
 		wtxt_statusMessage.SetText(loginResultText);
 
-		GamePlatform p = menu.p;
 		float scale = menu.uiRenderer.GetScale();
 
 		float loginAreaWidth = 600;
 		float loginAreaHeight = 400;
 		const int textboxHeight = 64;
 
-		float leftx = p.GetCanvasWidth() / 2 - (loginAreaWidth / 2) * scale;
-		float rightx = p.GetCanvasWidth() / 2 + 44 * scale;
-		float topy = p.GetCanvasHeight() / 2 - (loginAreaHeight / 2) * scale;
+		float leftx = gamePlatform.GetCanvasWidth() / 2 - (loginAreaWidth / 2) * scale;
+		float rightx = gamePlatform.GetCanvasWidth() / 2 + 44 * scale;
+		float topy = gamePlatform.GetCanvasHeight() / 2 - (loginAreaHeight / 2) * scale;
 
-		wtxt_title.x = p.GetCanvasWidth() / 2;
+		wtxt_title.x = gamePlatform.GetCanvasWidth() / 2;
 		wtxt_title.y = topy;
 		wtxt_statusMessage.x = leftx;
 		wtxt_statusMessage.y = topy + 258 * scale;
@@ -168,7 +171,7 @@
 		wbtn_createAccount.sizey = 64 * scale;
 
 		wbtn_back.x = 40 * scale;
-		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.y = gamePlatform.GetCanvasHeight() - 104 * scale;
 		wbtn_back.sizex = 256 * scale;
 		wbtn_back.sizey = 64 * scale;
 
@@ -200,9 +203,9 @@
 				// Save username
 				if (wcbx_rememberPassword.GetChecked())
 				{
-					Preferences preferences = menu.p.GetPreferences();
+					Preferences preferences = gamePlatform.GetPreferences();
 					preferences.SetString("Username", wtbx_username.GetContent());
-					menu.p.SetPreferences(preferences);
+					gamePlatform.SetPreferences(preferences);
 				}
 
 				ConnectData connectdata = new ConnectData();

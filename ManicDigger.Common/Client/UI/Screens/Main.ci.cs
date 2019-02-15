@@ -1,4 +1,4 @@
-﻿public class ScreenMain : Screen
+﻿public class ScreenMain : MainMenuScreen
 {
 	public ScreenMain()
 	{

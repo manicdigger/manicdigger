@@ -1,4 +1,4 @@
-﻿public class ScreenModifyWorld : Screen
+﻿public class ScreenModifyWorld : MainMenuScreen
 {
 	public ScreenModifyWorld()
 	{
@@ -20,15 +20,14 @@
 
 	public override void Render(float dt)
 	{
-		GamePlatform p = menu.p;
 		float scale = menu.uiRenderer.GetScale();
 
 		wbtn_back.x = 40 * scale;
-		wbtn_back.y = p.GetCanvasHeight() - 104 * scale;
+		wbtn_back.y = gamePlatform.GetCanvasHeight() - 104 * scale;
 		wbtn_back.sizex = 256 * scale;
 		wbtn_back.sizey = 64 * scale;
 
-		wtxt_title.x = menu.p.GetCanvasWidth() / 2;
+		wtxt_title.x = gamePlatform.GetCanvasWidth() / 2;
 		wtxt_title.y = 10 * scale;
 
 		DrawWidgets(dt);

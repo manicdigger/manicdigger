@@ -98,6 +98,7 @@
     <Compile Include="Client\Misc\ShaderCi.ci.cs" />
     <Compile Include="Client\Misc\TextureCi.ci.cs" />
     <Compile Include="Client\Mods\SkySphereShader.ci.cs" />
+    <Compile Include="Client\UI\MainMenuScreen.ci.cs" />
     <Compile Include="Client\UI\MenuWidget.ci.cs" />
     <Compile Include="Client\UI\Misc.ci.cs" />
     <Compile Include="Client\Misc\Model.ci.cs" />

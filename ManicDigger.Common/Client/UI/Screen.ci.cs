@@ -1,4 +1,7 @@
-﻿public class Screen
+﻿/// <summary>
+/// A Screen is a collection of widgets and offers basic handling for user interaction.
+/// </summary>
+public abstract class Screen
 {
 	public Screen()
 	{
@@ -6,36 +9,33 @@
 		WidgetMaxCount = 64;
 		widgets = new AbstractMenuWidget[WidgetMaxCount];
 
-		fontTitle = new FontCi();
-		fontTitle.size = 20;
-		fontTitle.style = 1;
 		fontDefault = new FontCi();
-		fontMessage = new FontCi();
-		fontMessage.style = 3;
 	}
 
-	internal MainMenu menu;
-	internal FontCi fontTitle;
-	internal FontCi fontDefault;
-	internal FontCi fontMessage;
 	int WidgetMaxCount;
 	int WidgetCount;
 	AbstractMenuWidget[] widgets;
+	internal FontCi fontDefault;
+	internal GamePlatform gamePlatform;
 	internal UiRenderer uiRenderer;
 
+	/// <summary>
+	/// Render all widgets that are part of this screen.
+	/// </summary>
+	/// <param name="dt">milliseconds since last rendered frame</param>
 	public virtual void Render(float dt) { }
 	public virtual void OnKeyDown(KeyEventArgs e)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnKeyDown(menu.p, e);
+			widgets[i].OnKeyDown(gamePlatform, e);
 		}
 	}
 	public virtual void OnKeyPress(KeyPressEventArgs e)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnKeyPress(menu.p, e);
+			widgets[i].OnKeyPress(gamePlatform, e);
 		}
 	}
 	public virtual void OnKeyUp(KeyEventArgs e) { }
@@ -46,7 +46,7 @@
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseDown(menu.p, e);
+			widgets[i].OnMouseDown(gamePlatform, e);
 			if (widgets[i].HasBeenClicked(e))
 			{
 				OnButton(widgets[i]);
@@ -57,7 +57,7 @@
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseUp(menu.p, e);
+			widgets[i].OnMouseUp(gamePlatform, e);
 		}
 	}
 	public virtual void OnMouseMove(MouseEventArgs e)
@@ -68,17 +68,16 @@
 		}
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseMove(menu.p, e);
+			widgets[i].OnMouseMove(gamePlatform, e);
 		}
 	}
 	public virtual void OnBackPressed() { }
-	public virtual void LoadTranslations() { }
 	public virtual void OnButton(AbstractMenuWidget w) { }
 	public virtual void OnMouseWheel(MouseWheelEventArgs e)
 	{
 		for (int i = 0; i < WidgetCount; i++)
 		{
-			widgets[i].OnMouseWheel(menu.p, e);
+			widgets[i].OnMouseWheel(gamePlatform, e);
 		}
 	}
 	public void AddWidget(AbstractMenuWidget widget)
