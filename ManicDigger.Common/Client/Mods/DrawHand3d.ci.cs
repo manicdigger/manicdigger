@@ -177,14 +177,14 @@
 		oldLight = curlight;
 
 		game.platform.GlClearDepthBuffer();
-		game.GLMatrixModeModelView();
-		game.GLPushMatrix();
-		game.GLLoadIdentity();
+		game.cam.GLMatrixModeModelView();
+		game.cam.GLPushMatrix();
+		game.cam.GLLoadIdentity();
 
-		game.GLTranslate((one * 3 / 10) + zzzposz - attackt * 5, -(one * 15 / 10) + zzzposx - buildt * 10, -(one * 15 / 10) + zzzposy);
-		game.GLRotate(30 + (zzzx) - attackt * 300, 1, 0, 0);
-		game.GLRotate(60 + zzzy, 0, 1, 0);
-		game.GLScale(one * 8 / 10, one * 8 / 10, one * 8 / 10);
+		game.cam.GLTranslate((one * 3 / 10) + zzzposz - attackt * 5, -(one * 15 / 10) + zzzposx - buildt * 10, -(one * 15 / 10) + zzzposy);
+		game.cam.GLRotate(30 + (zzzx) - attackt * 300, 1, 0, 0);
+		game.cam.GLRotate(60 + zzzy, 0, 1, 0);
+		game.cam.GLScale(one * 8 / 10, one * 8 / 10, one * 8 / 10);
 
 		bool move = !(oldplayerposX == game.player.position.x
 			&& oldplayerposY == game.player.position.y
@@ -249,7 +249,7 @@
 		game.platform.BindTexture2d(terrainTexture());
 		game.DrawModelData(modelData);
 
-		game.GLPopMatrix();
+		game.cam.GLPopMatrix();
 	}
 	float attackt;
 	float buildt;

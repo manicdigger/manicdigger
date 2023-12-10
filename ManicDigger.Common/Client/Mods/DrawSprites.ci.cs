@@ -9,12 +9,12 @@
 			if (entity == null) { continue; }
 			if (entity.sprite == null) { continue; }
 			Sprite b = entity.sprite;
-			game.GLMatrixModeModelView();
-			game.GLPushMatrix();
-			game.GLTranslate(b.positionX, b.positionY, b.positionZ);
+			game.cam.GLMatrixModeModelView();
+			game.cam.GLPushMatrix();
+			game.cam.GLTranslate(b.positionX, b.positionY, b.positionZ);
 			Billboard(game);
-			game.GLScale((one * 2 / 100), (one * 2 / 100), (one * 2 / 100));
-			game.GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
+			game.cam.GLScale((one * 2 / 100), (one * 2 / 100), (one * 2 / 100));
+			game.cam.GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
 			//d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
 			IntRef n = null;
 			if (b.animationcount > 0)
@@ -23,13 +23,13 @@
 				n = IntRef.Create(game.platform.FloatToInt(progress * (b.animationcount * b.animationcount - 1)));
 			}
 			game.Draw2dTexture(game.GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, ColorCi.FromArgb(255, 255, 255, 255), true);
-			game.GLPopMatrix();
+			game.cam.GLPopMatrix();
 		}
 	}
 
 	public static void Billboard(Game game)
 	{
-		float[] m = game.mvMatrix.Peek();
+		float[] m = game.cam.mvMatrix.Peek();
 		// http://stackoverflow.com/a/5487981
 		// | d 0 0 T.x |
 		// | 0 d 0 T.y |
@@ -59,6 +59,6 @@
 
 		Mat4.RotateX(m, m, Game.GetPi());
 
-		game.GLLoadMatrix(m);
+		game.cam.GLLoadMatrix(m);
 	}
 }

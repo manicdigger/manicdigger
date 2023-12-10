@@ -35,8 +35,8 @@ public class ModSkySphereShader : ClientMod
 		game.platform.GlUniform1i(shader.GetUniformLocation("stars"), 1);
 		game.platform.GlUniform1i(shader.GetUniformLocation("color"), 2);
 		game.platform.GlUniform1i(shader.GetUniformLocation("glow"), 3);
-		//game.pMatrix.Peek();
-		//game.mvMatrix.Peek();
+		//game.cam.pMatrix.Peek();
+		//game.cam.mvMatrix.Peek();
 	}
 
 	internal void DrawSkySphere(Game game)
@@ -99,14 +99,14 @@ public class ModSkySphereShader : ClientMod
 
 	public void Draw(Game game, float fov)
 	{
-		game.Set3dProjection(skysphereSize + 1, fov);
-		game.GLMatrixModeModelView();
-		game.GLPushMatrix();
-		game.GLTranslate(game.player.position.x,
+        game.cam.Set3dProjection(skysphereSize + 1, fov);
+		game.cam.GLMatrixModeModelView();
+		game.cam.GLPushMatrix();
+		game.cam.GLTranslate(game.player.position.x,
 			game.player.position.y,
 			game.player.position.z);
 		game.DrawModelData(skymodel);
-		game.GLPopMatrix();
-		game.Set3dProjection(game.zfar(), fov);
+		game.cam.GLPopMatrix();
+        game.cam.Set3dProjection(game.zfar(), fov);
 	}
 }

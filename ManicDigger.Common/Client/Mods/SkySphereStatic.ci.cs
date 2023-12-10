@@ -50,15 +50,15 @@
 		{
 			skymodel = game.platform.CreateModel(SphereModelData.GetSphereModelData(size, size, 20, 20));
 		}
-		game.Set3dProjection(size * 2, fov);
-		game.GLMatrixModeModelView();
-		game.GLPushMatrix();
-		game.GLTranslate(game.player.position.x,
+        game.cam.Set3dProjection(size * 2, fov);
+		game.cam.GLMatrixModeModelView();
+		game.cam.GLPushMatrix();
+		game.cam.GLTranslate(game.player.position.x,
 			game.player.position.y,
 			game.player.position.z);
 		game.platform.BindTexture2d(SkyTexture);
 		game.DrawModel(skymodel);
-		game.GLPopMatrix();
-		game.Set3dProjection(game.zfar(), fov);
+		game.cam.GLPopMatrix();
+        game.cam.Set3dProjection(game.zfar(), fov);
 	}
 }

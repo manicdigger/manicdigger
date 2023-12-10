@@ -152,10 +152,10 @@ namespace ManicDigger.MonsterEditor
 			bool exception = false;
 			try
 			{
-				game.GLMatrixModeModelView();
-				game.GLLoadMatrix(m);
+				game.cam.GLMatrixModeModelView();
+				game.cam.GLLoadMatrix(m);
 				GL.BindTexture(TextureTarget.Texture2D, playertexture);
-				game.GLRotate(HeadingDeg(), 0, 1, 0);
+				game.cam.GLRotate(HeadingDeg(), 0, 1, 0);
 				d.Render(dt, PitchDeg(), 1);
 			}
 			catch (Exception ee)

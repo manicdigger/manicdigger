@@ -23,10 +23,7 @@
 		lastplacedblockZ = -1;
 		mLightLevels = new float[16];
 		sunlight_ = 15;
-		mvMatrix = new StackMatrix4();
-		pMatrix = new StackMatrix4();
-		mvMatrix.Push(Mat4.Create());
-		pMatrix.Push(Mat4.Create());
+
 		whitetexture = -1;
 		cachedTextTexturesMax = 1024;
 		cachedTextTextures = new CachedTextTexture[cachedTextTexturesMax];
@@ -48,8 +45,6 @@
 		mouserightdeclick = false;
 		wasmouseright = false;
 		ENABLE_LAG = 0;
-		znear = one / 10;
-		CameraMatrix = new GetCameraMatrix();
 		ENABLE_ZFAR = true;
 		TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
 		LoadedAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
@@ -112,11 +107,7 @@
 		enable_move = true;
 		handTexture = -1;
 		modelViewInverted = new float[16];
-		GLScaleTempVec3 = Vec3.Create();
-		GLRotateTempVec3 = Vec3.Create();
-		GLTranslateTempVec3 = Vec3.Create();
-		identityMatrix = Mat4.Identity_(Mat4.Create());
-		Set3dProjectionTempMat4 = Mat4.Create();
+		
 		getAsset = new string[1024 * 2];
 		PlayerStats = new Packet_ServerPlayerStats();
 		mLightLevels = new float[16];
@@ -134,16 +125,16 @@
 		ChatLines = new Chatline[ChatLinesMax];
 		ChatLineLength = 64;
 		audio = new AudioControl();
-		CameraEyeX = -1;
-		CameraEyeY = -1;
-		CameraEyeZ = -1;
+
 		controls = new Controls();
 		movedz = 0;
 		taskScheduler = new TaskScheduler();
 		commitActions = ListAction.Create(16 * 1024);
 		constWallDistance = 0.3f;
 		mouseSmoothing = false;
-	}
+
+        cam = new  Camera();
+    }
 
 	internal AssetList assets;
 	internal FloatRef assetsLoadProgress;
@@ -153,6 +144,8 @@
 
 	public void Start()
 	{
+        cam.SetPlatform(platform);
+
 		textColorRenderer = new TextColorRenderer();
 		textColorRenderer.platform = platform;
 		language.platform = platform;
@@ -175,7 +168,7 @@
 		d_TerrainTextures = terrainTextures;
 
 		FrustumCulling frustumculling = new FrustumCulling();
-		frustumculling.d_GetCameraMatrix = this.CameraMatrix;
+		frustumculling.d_GetCameraMatrix = cam.CameraMatrix;
 		frustumculling.platform = platform;
 		d_FrustumCulling = frustumculling;
 
@@ -383,9 +376,9 @@
 			if (clientmods[i] == null) { continue; }
 			clientmods[i].OnBeforeNewFrameDraw3d(this, deltaTime);
 		}
-		GLMatrixModeModelView();
-		GLLoadMatrix(camera);
-		CameraMatrix.lastmvmatrix = camera;
+        cam.GLMatrixModeModelView();
+        cam.GLLoadMatrix(camera);
+        cam.CameraMatrix.lastmvmatrix = camera;
 
 		d_FrustumCulling.CalcFrustumEquations();
 
@@ -499,14 +492,15 @@
 		{
 			quadModel = platform.CreateModel(QuadModelData.GetQuadModelData());
 		}
-		GLPushMatrix();
-		GLTranslate(x1, y1, 0);
-		GLScale(width, height, 0);
-		GLScale(one / 2, one / 2, 0);
-		GLTranslate(one, one, 0);
+		
+        cam.GLPushMatrix();
+        cam.GLTranslate(x1, y1, 0);
+        cam.GLScale(width, height, 0);
+        cam.GLScale(one / 2, one / 2, 0);
+        cam.GLTranslate(one, one, 0);
 
 		DrawModel(quadModel);
-		GLPopMatrix();
+        cam.GLPopMatrix();
 
 		if (!enabledepthtest)
 		{
@@ -649,200 +643,6 @@
 		platform.GlEnableTexture2d();
 	}
 
-	internal bool currentMatrixModeProjection;
-	internal StackMatrix4 mvMatrix;
-	internal StackMatrix4 pMatrix;
-
-	public void GLMatrixModeModelView()
-	{
-		currentMatrixModeProjection = false;
-	}
-
-	public void GLMatrixModeProjection()
-	{
-		currentMatrixModeProjection = true;
-	}
-
-	public void SetMatrixUniforms()
-	{
-		platform.SetMatrixUniformProjection(pMatrix.Peek());
-		platform.SetMatrixUniformModelView(mvMatrix.Peek());
-	}
-
-	public void SetMatrixUniformProjection()
-	{
-		platform.SetMatrixUniformProjection(pMatrix.Peek());
-	}
-
-	public void SetMatrixUniformModelView()
-	{
-		platform.SetMatrixUniformModelView(mvMatrix.Peek());
-	}
-
-	public void GLLoadMatrix(float[] m)
-	{
-		if (currentMatrixModeProjection)
-		{
-			if (pMatrix.Count() > 0)
-			{
-				pMatrix.Pop();
-			}
-			pMatrix.Push(m);
-		}
-		else
-		{
-			if (mvMatrix.Count() > 0)
-			{
-				mvMatrix.Pop();
-			}
-			mvMatrix.Push(m);
-		}
-	}
-
-	public void GLPopMatrix()
-	{
-		if (currentMatrixModeProjection)
-		{
-			if (pMatrix.Count() > 1)
-			{
-				pMatrix.Pop();
-			}
-		}
-		else
-		{
-			if (mvMatrix.Count() > 1)
-			{
-				mvMatrix.Pop();
-			}
-		}
-	}
-
-	float[] GLScaleTempVec3;
-	public void GLScale(float x, float y, float z)
-	{
-		float[] m;
-		if (currentMatrixModeProjection)
-		{
-			m = pMatrix.Peek();
-		}
-		else
-		{
-			m = mvMatrix.Peek();
-		}
-		Vec3.Set(GLScaleTempVec3, x, y, z);
-		Mat4.Scale(m, m, GLScaleTempVec3);
-	}
-
-	float[] GLRotateTempVec3;
-	public void GLRotate(float angle, float x, float y, float z)
-	{
-		angle /= 360;
-		angle *= 2 * Game.GetPi();
-		float[] m;
-		if (currentMatrixModeProjection)
-		{
-			m = pMatrix.Peek();
-		}
-		else
-		{
-			m = mvMatrix.Peek();
-		}
-		Vec3.Set(GLRotateTempVec3, x, y, z);
-		Mat4.Rotate(m, m, angle, GLRotateTempVec3);
-	}
-
-	float[] GLTranslateTempVec3;
-	public void GLTranslate(float x, float y, float z)
-	{
-		float[] m;
-		if (currentMatrixModeProjection)
-		{
-			m = pMatrix.Peek();
-		}
-		else
-		{
-			m = mvMatrix.Peek();
-		}
-		Vec3.Set(GLTranslateTempVec3, x, y, z);
-		Mat4.Translate(m, m, GLTranslateTempVec3);
-	}
-
-	public void GLPushMatrix()
-	{
-		if (currentMatrixModeProjection)
-		{
-			pMatrix.Push(pMatrix.Peek());
-		}
-		else
-		{
-			mvMatrix.Push(mvMatrix.Peek());
-		}
-	}
-
-	float[] identityMatrix;
-	public void GLLoadIdentity()
-	{
-		if (currentMatrixModeProjection)
-		{
-			if (pMatrix.Count() > 0)
-			{
-				pMatrix.Pop();
-			}
-			pMatrix.Push(identityMatrix);
-		}
-		else
-		{
-			if (mvMatrix.Count() > 0)
-			{
-				mvMatrix.Pop();
-			}
-			mvMatrix.Push(identityMatrix);
-		}
-	}
-
-	public void GLOrtho(float left, float right, float bottom, float top, float zNear, float zFar)
-	{
-		if (currentMatrixModeProjection)
-		{
-			float[] m = pMatrix.Peek();
-			Mat4.Ortho(m, left, right, bottom, top, zNear, zFar);
-		}
-		else
-		{
-			platform.ThrowException("GLOrtho");
-		}
-	}
-
-	public void OrthoMode(int width, int height)
-	{
-		//GL.Disable(EnableCap.DepthTest);
-		GLMatrixModeProjection();
-		GLPushMatrix();
-		GLLoadIdentity();
-		GLOrtho(0, width, height, 0, 0, 1);
-		SetMatrixUniformProjection();
-
-		GLMatrixModeModelView();
-		GLPushMatrix();
-		GLLoadIdentity();
-		SetMatrixUniformModelView();
-	}
-
-	public void PerspectiveMode()
-	{
-		// Enter into our projection matrix mode
-		GLMatrixModeProjection();
-		// Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
-		GLPopMatrix();
-		SetMatrixUniformProjection();
-
-		// Go back to our model view matrix like normal
-		GLMatrixModeModelView();
-		GLPopMatrix();
-		SetMatrixUniformModelView();
-		//GL.LoadIdentity();
-		//GL.Enable(EnableCap.DepthTest);
-	}
 
 	public int WhiteTexture()
 	{
@@ -1268,21 +1068,10 @@
 		return platform.GetCanvasHeight();
 	}
 
-	internal float znear;
 
-	internal GetCameraMatrix CameraMatrix;
 
-	float[] Set3dProjectionTempMat4;
-	public void Set3dProjection(float zfar, float fov)
-	{
-		float aspect_ratio = one * Width() / Height();
-		Mat4.Perspective(Set3dProjectionTempMat4, fov, aspect_ratio, znear, zfar);
-		CameraMatrix.lastpmatrix = Set3dProjectionTempMat4;
-		GLMatrixModeProjection();
-		GLLoadMatrix(Set3dProjectionTempMat4);
-		SetMatrixUniformProjection();
-	}
-	internal bool ENABLE_ZFAR;
+
+    internal bool ENABLE_ZFAR;
 
 	internal float zfar()
 	{
@@ -2103,8 +1892,8 @@
 	public void Circle3i(float x, float y, float radius)
 	{
 		float angle;
-		GLPushMatrix();
-		GLLoadIdentity();
+        cam.GLPushMatrix();
+        cam.GLLoadIdentity();
 
 		int n = 32;
 		if (circleModelData == null)
@@ -2142,7 +1931,7 @@
 
 		DrawModelData(circleModelData);
 
-		GLPopMatrix();
+        cam.GLPopMatrix();
 	}
 
 	internal int totaltimeMilliseconds;
@@ -2235,9 +2024,9 @@
 
 	int GetCameraBlock()
 	{
-		int bx = MathFloor(CameraEyeX);
-		int by = MathFloor(CameraEyeZ);
-		int bz = MathFloor(CameraEyeY);
+		int bx = MathFloor(cam.CameraEyeX);
+		int by = MathFloor(cam.CameraEyeZ);
+		int bz = MathFloor(cam.CameraEyeY);
 
 		if (!map.IsValidPos(bx, by, bz))
 		{
@@ -2666,16 +2455,6 @@
 		}
 	}
 
-	internal void Set3dProjection1(float zfar_)
-	{
-		Set3dProjection(zfar_, currentfov());
-	}
-
-	internal void Set3dProjection2()
-	{
-		Set3dProjection1(zfar());
-	}
-
 	internal void SendGameResolution()
 	{
 		SendPacketClient(ClientPackets.GameResolution(Width(), Height()));
@@ -2685,9 +2464,9 @@
 	internal void OnResize()
 	{
 		platform.GlViewport(0, 0, Width(), Height());
-		this.Set3dProjection2();
-		//Notify server of size change
-		if (sendResize)
+        cam.Set3dProjection(zfar(), currentfov());
+        //Notify server of size change
+        if (sendResize)
 		{
 			SendGameResolution();
 		}
@@ -3566,7 +3345,7 @@
 			return;
 		}
 
-		OrthoMode(Width(), Height());
+        cam.OrthoMode(Width(), Height());
 
 		for (int i = 0; i < clientmodsCount; i++)
 		{
@@ -3574,7 +3353,7 @@
 			clientmods[i].OnNewFrameDraw2d(this, dt);
 		}
 
-		PerspectiveMode();
+        cam.PerspectiveMode();
 	}
 
 	public const int ChatFontSize = 11;
@@ -3905,19 +3684,19 @@
 
 	public void DrawModel(Model model)
 	{
-		SetMatrixUniformModelView();
+        cam.SetMatrixUniformModelView();
 		platform.DrawModel(model);
 	}
 
 	public void DrawModels(Model[] model, int count)
 	{
-		SetMatrixUniformModelView();
+        cam.SetMatrixUniformModelView();
 		platform.DrawModels(model, count);
 	}
 
 	public void DrawModelData(ModelData data)
 	{
-		SetMatrixUniformModelView();
+        cam.SetMatrixUniformModelView();
 		platform.DrawModelData(data);
 	}
 
@@ -3983,12 +3762,9 @@
 		return (value / (2 * GetPi())) * 255;
 	}
 
-	internal float CameraEyeX;
-	internal float CameraEyeY;
-	internal float CameraEyeZ;
 
 	internal bool isplayeronground;
-
+    public Camera cam;
 	internal bool reachedwall;
 	internal bool reachedwall_1blockhigh;
 	internal bool reachedHalfBlock;

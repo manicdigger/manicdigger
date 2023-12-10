@@ -179,12 +179,12 @@ public class ClientModManager1 : ClientModManager
 
 	public override void OrthoMode()
 	{
-		game.OrthoMode(GetWindowWidth(), GetWindowHeight());
+		game.cam.OrthoMode(GetWindowWidth(), GetWindowHeight());
 	}
 
 	public override void PerspectiveMode()
 	{
-		game.PerspectiveMode();
+        game.cam.PerspectiveMode();
 	}
 
 	public override DictionaryStringString GetPerformanceInfo()

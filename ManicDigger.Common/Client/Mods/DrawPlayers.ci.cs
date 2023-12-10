@@ -102,14 +102,14 @@
 				p_.drawModel.renderer.SetAnimation("idle");
 			}
 
-			game.GLPushMatrix();
-			game.GLTranslate(FeetPosX, FeetPosY, FeetPosZ);
-			//game.GLRotate(PlayerInterpolate.RadToDeg(p_.position.rotx), 1, 0, 0);
-			game.GLRotate(PlayerInterpolate.RadToDeg(-p_.position.roty + Game.GetPi()), 0, 1, 0);
-			//game.GLRotate(PlayerInterpolate.RadToDeg(p_.position.rotz), 0, 0, 1);
+			game.cam.GLPushMatrix();
+			game.cam.GLTranslate(FeetPosX, FeetPosY, FeetPosZ);
+			//game.cam.GLRotate(PlayerInterpolate.RadToDeg(p_.position.rotx), 1, 0, 0);
+			game.cam.GLRotate(PlayerInterpolate.RadToDeg(-p_.position.roty + Game.GetPi()), 0, 1, 0);
+			//game.cam.GLRotate(PlayerInterpolate.RadToDeg(p_.position.rotz), 0, 0, 1);
 			game.platform.BindTexture2d(game.entities[i].drawModel.CurrentTexture);
 			p_.drawModel.renderer.Render(dt, PlayerInterpolate.RadToDeg(p_.position.rotx + Game.GetPi()), shadow);
-			game.GLPopMatrix();
+			game.cam.GLPopMatrix();
 		}
 	}
 }

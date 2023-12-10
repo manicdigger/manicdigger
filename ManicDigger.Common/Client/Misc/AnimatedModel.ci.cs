@@ -405,14 +405,14 @@ public class AnimatedModelRenderer
 			{
 				continue;
 			}
-			game.GLPushMatrix();
+			game.cam.GLPushMatrix();
 			RectangleFloat[] r = new RectangleFloat[6];
 			r = CuboidRenderer.CuboidNet(n.sizex, n.sizey, n.sizez, n.u, n.v);
 			CuboidRenderer.CuboidNetNormalize(r, m.global.texw, m.global.texh);
 			GetAnimation(n, tempVec3, KeyframeType.Scale);
 			if (tempVec3[0] != 0 && tempVec3[1] != 0 && tempVec3[2] != 0)
 			{
-				game.GLScale(tempVec3[0], tempVec3[1], tempVec3[2]);
+				game.cam.GLScale(tempVec3[0], tempVec3[1], tempVec3[2]);
 			}
 			GetAnimation(n, tempVec3, KeyframeType.Position);
 			tempVec3[0] /= 16;
@@ -420,30 +420,30 @@ public class AnimatedModelRenderer
 			tempVec3[2] /= 16;
 			if (!IsZero(tempVec3))
 			{
-				game.GLTranslate(tempVec3[0], tempVec3[1], tempVec3[2]);
+				game.cam.GLTranslate(tempVec3[0], tempVec3[1], tempVec3[2]);
 			}
 			GetAnimation(n, tempVec3, KeyframeType.Rotation);
 			if (tempVec3[0] != 0)
 			{
-				game.GLRotate(tempVec3[0], 1, 0, 0);
+				game.cam.GLRotate(tempVec3[0], 1, 0, 0);
 			}
 			if (tempVec3[1] != 0)
 			{
-				game.GLRotate(tempVec3[1], 0, 1, 0);
+				game.cam.GLRotate(tempVec3[1], 0, 1, 0);
 			}
 			if (tempVec3[2] != 0)
 			{
-				game.GLRotate(tempVec3[2], 0, 0, 1);
+				game.cam.GLRotate(tempVec3[2], 0, 0, 1);
 			}
 			if (n.head == 1)
 			{
-				game.GLRotate(headDeg, 1, 0, 0);
+				game.cam.GLRotate(headDeg, 1, 0, 0);
 			}
 			GetAnimation(n, tempVec3, KeyframeType.Pivot);
 			tempVec3[0] /= 16;
 			tempVec3[1] /= 16;
 			tempVec3[2] /= 16;
-			game.GLTranslate(tempVec3[0], tempVec3[1], tempVec3[2]);
+			game.cam.GLTranslate(tempVec3[0], tempVec3[1], tempVec3[2]);
 			GetAnimation(n, tempVec3, KeyframeType.Size);
 			tempVec3[0] /= 16;
 			tempVec3[1] /= 16;
@@ -453,7 +453,7 @@ public class AnimatedModelRenderer
 			CuboidRenderer.DrawCuboid2(game, 0 - tempVec3[0] / 2, 0 - tempVec3[1] / 2, 0 - tempVec3[2] / 2, tempVec3[0], tempVec3[1], tempVec3[2], r, light);
 
 			DrawNode(n.name, headDeg, light);
-			game.GLPopMatrix();
+			game.cam.GLPopMatrix();
 		}
 	}
 

@@ -63,11 +63,11 @@ public class DrawWireframeCube
 			ModelData data = WireframeCube.Get();
 			wireframeCube = game.platform.CreateModel(data);
 		}
-		game.GLPushMatrix();
-		game.GLTranslate(posx, posy, posz);
+        game.cam.GLPushMatrix();
+        game.cam.GLTranslate(posx, posy, posz);
 		float half = one / 2;
-		game.GLScale(scalex * half, scaley * half, scalez * half);
+        game.cam.GLScale(scalex * half, scaley * half, scalez * half);
 		game.DrawModel(wireframeCube);
-		game.GLPopMatrix();
+		game.cam.GLPopMatrix();
 	}
 }

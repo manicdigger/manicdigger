@@ -8,7 +8,7 @@
 			string img = HandImage2d(game);
 			if (img != null)
 			{
-				game.OrthoMode(game.Width(), game.Height());
+				game.cam.OrthoMode(game.Width(), game.Height());
 				if (lasthandimage != img)
 				{
 					lasthandimage = img;
@@ -21,7 +21,7 @@
 					}
 				}
 				game.Draw2dTexture(game.handTexture, game.Width() / 2, game.Height() - 512, 512, 512, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
-				game.PerspectiveMode();
+                game.cam.PerspectiveMode();
 			}
 		}
 	}

@@ -311,6 +311,7 @@
     <Compile Include="Client\UI\Widgets\SettingsListWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\LabeledTextBoxWidget.ci.cs" />
     <Compile Include="Server\Mods\Fortress\MonsterEggs.cs" />
+    <Compile Include="Client\Camera.ci.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

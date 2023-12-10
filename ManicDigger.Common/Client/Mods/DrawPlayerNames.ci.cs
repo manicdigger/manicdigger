@@ -45,15 +45,15 @@
 					//    posY = p.NetworkY;
 					//    posZ = p.NetworkZ;
 					//}
-					game.GLPushMatrix();
-					game.GLTranslate(posX, posY, posZ);
+					game.cam.GLPushMatrix();
+					game.cam.GLTranslate(posX, posY, posZ);
 					//if (p.Type == PlayerType.Monster)
 					//{
 					//    GLTranslate(0, 1, 0);
 					//}
 					ModDrawSprites.Billboard(game);
 					float scale = game.one * 2 / 100;
-					game.GLScale(scale, scale, scale);
+					game.cam.GLScale(scale, scale, scale);
 
 					//Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
 					//TODO: Can't change text color because text has outline anyway.
@@ -66,7 +66,7 @@
 					font.size = 14;
 					game.Draw2dText(name, font, -game.TextSizeWidth(name, font) / 2, 0, IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), true);
 					//                        GL.Translate(0, 1, 0);
-					game.GLPopMatrix();
+					game.cam.GLPopMatrix();
 				}
 			}
 		}

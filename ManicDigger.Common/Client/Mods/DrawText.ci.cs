@@ -31,19 +31,19 @@
 
 					float shadow = (game.one * game.GetLight(game.platform.FloatToInt(posX), game.platform.FloatToInt(posZ), game.platform.FloatToInt(posY))) / Game.maxlight;
 
-					game.GLPushMatrix();
-					game.GLTranslate(posX, posY, posZ);
+					game.cam.GLPushMatrix();
+					game.cam.GLTranslate(posX, posY, posZ);
 
-					game.GLRotate(180, 1, 0, 0);
-					game.GLRotate(e.position.roty * 360 / (2 * Game.GetPi()), 0, 1, 0);
+					game.cam.GLRotate(180, 1, 0, 0);
+					game.cam.GLRotate(e.position.roty * 360 / (2 * Game.GetPi()), 0, 1, 0);
 					float scale = game.one * 5 / 1000;
-					game.GLScale(scale, scale, scale);
+					game.cam.GLScale(scale, scale, scale);
 
 					FontCi font = new FontCi();
 					font.size = 14;
 					game.Draw2dText(text, font, -game.TextSizeWidth(text, font) / 2, 0, IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), true);
 
-					game.GLPopMatrix();
+					game.cam.GLPopMatrix();
 				}
 			}
 		}
