@@ -1,3 +1,4 @@
+
 #! /bin/bash
 # Linux build script
 
@@ -28,10 +29,10 @@ cp -R ManicDigger.Common/Server/Mods output
 cp Lib/* output
 
 # NuGet packages
-cp packages/OpenTK.2.0.0/lib/net20/OpenTK.dll output
-cp packages/OpenTK.2.0.0/content/OpenTK.dll.config output
-cp packages/protobuf-net.2.1.0/lib/net45/protobuf-net.dll output
-
+cp packages/OpenTK.3.3.3/lib/net20/OpenTK.dll output
+cp packages/OpenTK.3.3.3/content/OpenTK.dll.config output
+cp packages/protobuf-net.2.4.0/lib/net40/protobuf-net.dll output
+cp packages/Newtonsoft.Json.13.0.3/lib/net40/Newtonsoft.Json.dll output
 rm -f output/*vshost.exe
 cp COPYING.md output/credits.txt
 

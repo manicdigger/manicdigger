@@ -1,7 +1,10 @@
 ﻿using ProtoBuf;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ManicDigger
 {
@@ -94,14 +97,14 @@ namespace ManicDigger
 		/// <returns>Name of the block at the given position</returns>
 		string GetBlockNameAt(int x, int y, int z);
 
-		/// <summary>
-		/// Set a block at the given position
-		/// </summary>
-		/// <param name="x">x coordinate</param>
-		/// <param name="y">y coordinate</param>
-		/// <param name="z">z coordinate</param>
-		/// <param name="tileType">The block to place</param>
-		void SetBlock(int x, int y, int z, int tileType);
+        /// <summary>
+        /// Set a block at the given position
+        /// </summary>
+        /// <param name="x">x coordinate</param>
+        /// <param name="y">y coordinate</param>
+        /// <param name="z">z coordinate</param>
+        /// <param name="tileType">The block to place</param>
+        void SetBlock(int x, int y, int z, int tileType);
 
 		void SetSunLevels(int[] sunLevels);
 		void SetLightLevels(float[] lightLevels);
@@ -702,9 +705,16 @@ namespace ManicDigger
 		/// </summary>
 		/// <param name="id">The ID of the entity to delete</param>
 		void EntityDelete(ServerEntityId id);
-
-		#region Deprecated functions
-		[Obsolete("GetCurrentYearTotal is deprecated, please use GetYear instead.", false)]
+        /// <summary>
+        /// Get the name of a certain block
+        /// </summary>
+        /// <param name="x">x coordinate</param>
+        /// <param name="y">y coordinate</param>
+        /// <param name="z">z coordinate</param>
+        /// <returns>Name of the block at the given position</returns>
+        void SpawnMonster(int x, int y, int z);
+        #region Deprecated functions
+        [Obsolete("GetCurrentYearTotal is deprecated, please use GetYear instead.", false)]
 		double GetCurrentYearTotal();
 		[Obsolete("GetCurrentHourTotal is deprecated, please use GetTotalHours instead.", false)]
 		double GetCurrentHourTotal();
@@ -717,7 +727,39 @@ namespace ManicDigger
 		#endregion
 	}
 
-	public enum SpecialKey
+
+    public interface ContentLoader {
+        void Load(string file,ModManager mod);
+    }
+
+    /*   public class BlockLoader : ContentLoader
+     {
+         public DrawType convertDrawType(JToken token){
+       if(token.)
+ }
+         public void Load(string file, ModManager mod)
+         {
+             if(!File.Exists(file))
+                 throw new FileNotFoundException("This file was not found.: "+ file);
+
+              JObject o = JObject.Parse(File.ReadAllText(file));
+
+             JArray a = (JArray)o["blocks"];
+             Console.WriteLine("child count" + a.Count);
+             for(int i=0;i<a.Count; i++) {
+
+                 mod.SetBlockType(a[i]["id"], a[i]["id"], new BlockType()
+                 {
+                     DrawType = convertDrawType(a[i]["Blocktype"]);
+                     WalkableType = WalkableType.Empty,
+                     Sounds = noSound,
+                 });
+             }
+
+}
+    }*/
+
+    public enum SpecialKey
 	{
 		Respawn,
 		SetSpawn,

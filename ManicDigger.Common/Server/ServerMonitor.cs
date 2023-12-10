@@ -199,7 +199,7 @@ namespace ManicDigger.Server
 		string filename = "ServerMonitor.txt";
 		private void LoadConfig()
 		{
-			if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
+			if (!File.Exists(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 			{
 				Console.WriteLine(server.language.ServerMonitorConfigNotFound());
 				SaveConfig();
@@ -208,7 +208,7 @@ namespace ManicDigger.Server
 			{
 				try
 				{
-					using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
+					using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 					{
 						XmlSerializer deserializer = new XmlSerializer(typeof(ServerMonitorConfig));
 						this.config = (ServerMonitorConfig)deserializer.Deserialize(textReader);
@@ -218,7 +218,7 @@ namespace ManicDigger.Server
 				}
 				catch //This if for the original format
 				{
-					using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
+					using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathgameconfig, filename))))
 					{
 						this.config = new ServerMonitorConfig();
 						StreamReader sr = new StreamReader(s);
@@ -234,13 +234,13 @@ namespace ManicDigger.Server
 		public void SaveConfig()
 		{
 			//Verify that we have a directory to place the file into.
-			if (!Directory.Exists(GameStorePath.gamepathconfig))
+			if (!Directory.Exists(GameStorePath.gamepathgameconfig))
 			{
-				Directory.CreateDirectory(GameStorePath.gamepathconfig);
+				Directory.CreateDirectory(GameStorePath.gamepathgameconfig);
 			}
 
 			XmlSerializer serializer = new XmlSerializer(typeof(ServerMonitorConfig));
-			TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, filename));
+			TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathgameconfig, filename));
 
 			//Check to see if config has been initialized.
 			if (this.config == null)

@@ -25,8 +25,14 @@ namespace ManicDigger.Server
 		bool loaded;
 		public void LoadConfig(Server server)
 		{
-			string filename = "ServerConfig.txt";
-			if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
+           
+            FileInfo info = new FileInfo(server.SaveFilenameOverride);//todo better place?
+            info.Name.Replace(info.Extension, "");
+          
+            ManicDigger.Common.GameStorePath.SetGameName(info.Name.Replace(info.Extension, ""));
+
+            string filename = "ServerConfig.txt";
+			if (!File.Exists(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 			{
 				Console.WriteLine(server.language.ServerConfigNotFound());
 				SaveConfig(server);
@@ -34,7 +40,7 @@ namespace ManicDigger.Server
 			}
 			try
 			{
-				using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
+				using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 				{
 					XmlSerializer deserializer = new XmlSerializer(typeof(ServerConfig));
 					server.config = (ServerConfig)deserializer.Deserialize(textReader);
@@ -45,7 +51,8 @@ namespace ManicDigger.Server
 			{
 				try
 				{
-					using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
+                    Console.WriteLine("Config path =  " + GameStorePath.gamepathgameconfig);
+					using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathgameconfig, filename))))
 					{
 						server.config = new ServerConfig();
 						StreamReader sr = new StreamReader(s);
@@ -90,7 +97,7 @@ namespace ManicDigger.Server
 					//ServerConfig is really messed up. Backup a copy, then create a new one.
 					try
 					{
-						File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
+						File.Copy(Path.Combine(GameStorePath.gamepathgameconfig, filename), Path.Combine(GameStorePath.gamepathgameconfig, filename + ".old"));
 						Console.WriteLine(server.language.ServerConfigCorruptBackup());
 					}
 					catch
@@ -104,133 +111,163 @@ namespace ManicDigger.Server
 			server.language.OverrideLanguage = server.config.ServerLanguage;  //Switch to user-defined language.
 			Console.WriteLine(server.language.ServerConfigLoaded());
 		}
+        public void SaveConfig(Server server)
+        {
+            //Verify that we have a directory to place the file into.
+            if (!Directory.Exists(GameStorePath.gamepathgameconfig))
+            {
+                Directory.CreateDirectory(GameStorePath.gamepathgameconfig);
+            }
 
-		public void SaveConfig(Server server)
-		{
-			//Verify that we have a directory to place the file into.
-			if (!Directory.Exists(GameStorePath.gamepathconfig))
-			{
-				Directory.CreateDirectory(GameStorePath.gamepathconfig);
-			}
+            XmlSerializer serializer = new XmlSerializer(typeof(ServerConfig));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathgameconfig, "ServerConfig.txt"));
 
-			XmlSerializer serializer = new XmlSerializer(typeof(ServerConfig));
-			TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.txt"));
+            //Check to see if config has been initialized
+            if (server.config == null)
+            {
+                server.config = new ServerConfig();
+                //Set default language to user's locale
+                server.config.ServerLanguage = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+                //Ask for config parameters the first time the server is started
+            
+               
+            }
+            if (server.config.Areas.Count == 0)
+            {
+                server.config.Areas = ServerConfigMisc.getDefaultAreas();
+            }
+            //ToDo load configs
+            //server.SettingsOverride
+            //Serialize the ServerConfig class to XML
+            serializer.Serialize(textWriter, server.config);
+            textWriter.Close();
+        }
+        //public void SaveConfig(Server server)
+        //{
+        //	//Verify that we have a directory to place the file into.
+        //	if (!Directory.Exists(GameStorePath.gamepathgameconfig))
+        //	{
+        //		Directory.CreateDirectory(GameStorePath.gamepathgameconfig);
+        //	}
 
-			//Check to see if config has been initialized
-			if (server.config == null)
-			{
-				server.config = new ServerConfig();
-				//Set default language to user's locale
-				server.config.ServerLanguage = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-				//Ask for config parameters the first time the server is started
-				string line;
-				bool wantsconfig = false;
-				Console.WriteLine(server.language.ServerSetupFirstStart());
-				Console.WriteLine(server.language.ServerSetupQuestion());
-				line = Console.ReadLine();
-				if (!string.IsNullOrEmpty(line))
-				{
-					if (line.Equals(server.language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
-						wantsconfig = true;
-					else
-						wantsconfig = false;
-				}
-				//Only ask these questions if user wants to
-				if (wantsconfig)
-				{
-					Console.WriteLine(server.language.ServerSetupPublic());
-					line = Console.ReadLine();
-					if (!string.IsNullOrEmpty(line))
-					{
-						bool choice;
-						if (line.Equals(server.language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
-							choice = true;
-						else
-							choice = false;
-						server.config.Public = choice;
-					}
-					Console.WriteLine(server.language.ServerSetupName());
-					line = Console.ReadLine();
-					if (!string.IsNullOrEmpty(line))
-					{
-						server.config.Name = line;
-					}
-					Console.WriteLine(server.language.ServerSetupMOTD());
-					line = Console.ReadLine();
-					if (!string.IsNullOrEmpty(line))
-					{
-						server.config.Motd = line;
-					}
-					Console.WriteLine(server.language.ServerSetupWelcomeMessage());
-					line = Console.ReadLine();
-					if (!string.IsNullOrEmpty(line))
-					{
-						server.config.WelcomeMessage = line;
-					}
-					Console.WriteLine(server.language.ServerSetupPort());
-					line = Console.ReadLine();
-					if (!string.IsNullOrEmpty(line))
-					{
-						int port;
-						try
-						{
-							port = int.Parse(line);
-							if (port > 0 && port <= 65565)
-							{
-								server.config.Port = port;
-							}
-							else
-							{
-								Console.WriteLine(server.language.ServerSetupPortInvalidValue());
-							}
-						}
-						catch
-						{
-							Console.WriteLine(server.language.ServerSetupPortInvalidInput());
-						}
-					}
-					Console.WriteLine(server.language.ServerSetupMaxClients());
-					line = Console.ReadLine();
-					if (!string.IsNullOrEmpty(line))
-					{
-						int players;
-						try
-						{
-							players = int.Parse(line);
-							if (players > 0)
-							{
-								server.config.MaxClients = players;
-							}
-							else
-							{
-								Console.WriteLine(server.language.ServerSetupMaxClientsInvalidValue());
-							}
-						}
-						catch
-						{
-							Console.WriteLine(server.language.ServerSetupMaxClientsInvalidInput());
-						}
-					}
-					Console.WriteLine(server.language.ServerSetupEnableHTTP());
-					line = Console.ReadLine();
-					if (!string.IsNullOrEmpty(line))
-					{
-						bool choice;
-						if (line.Equals(server.language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
-							choice = true;
-						else
-							choice = false;
-						server.config.EnableHTTPServer = choice;
-					}
-				}
-			}
-			if (server.config.Areas.Count == 0)
-			{
-				server.config.Areas = ServerConfigMisc.getDefaultAreas();
-			}
-			//Serialize the ServerConfig class to XML
-			serializer.Serialize(textWriter, server.config);
-			textWriter.Close();
-		}
-	}
+        //	XmlSerializer serializer = new XmlSerializer(typeof(ServerConfig));
+        //	TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathgameconfig, "ServerConfig.txt"));
+
+        //	//Check to see if config has been initialized
+        //	if (server.config == null)
+        //	{
+        //		server.config = new ServerConfig();
+        //		//Set default language to user's locale
+        //		server.config.ServerLanguage = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+        //		//Ask for config parameters the first time the server is started
+        //		string line;
+        //		bool wantsconfig = false;
+        //		Console.WriteLine(server.language.ServerSetupFirstStart());
+        //		Console.WriteLine(server.language.ServerSetupQuestion());
+        //		line = Console.ReadLine();
+        //		if (!string.IsNullOrEmpty(line))
+        //		{
+        //			if (line.Equals(server.language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
+        //				wantsconfig = true;
+        //			else
+        //				wantsconfig = false;
+        //		}
+        //		//Only ask these questions if user wants to
+        //		if (wantsconfig)
+        //		{
+        //			Console.WriteLine(server.language.ServerSetupPublic());
+        //			line = Console.ReadLine();
+        //			if (!string.IsNullOrEmpty(line))
+        //			{
+        //				bool choice;
+        //				if (line.Equals(server.language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
+        //					choice = true;
+        //				else
+        //					choice = false;
+        //				server.config.Public = choice;
+        //			}
+        //			Console.WriteLine(server.language.ServerSetupName());
+        //			line = Console.ReadLine();
+        //			if (!string.IsNullOrEmpty(line))
+        //			{
+        //				server.config.Name = line;
+        //			}
+        //			Console.WriteLine(server.language.ServerSetupMOTD());
+        //			line = Console.ReadLine();
+        //			if (!string.IsNullOrEmpty(line))
+        //			{
+        //				server.config.Motd = line;
+        //			}
+        //			Console.WriteLine(server.language.ServerSetupWelcomeMessage());
+        //			line = Console.ReadLine();
+        //			if (!string.IsNullOrEmpty(line))
+        //			{
+        //				server.config.WelcomeMessage = line;
+        //			}
+        //			Console.WriteLine(server.language.ServerSetupPort());
+        //			line = Console.ReadLine();
+        //			if (!string.IsNullOrEmpty(line))
+        //			{
+        //				int port;
+        //				try
+        //				{
+        //					port = int.Parse(line);
+        //					if (port > 0 && port <= 65565)
+        //					{
+        //						server.config.Port = port;
+        //					}
+        //					else
+        //					{
+        //						Console.WriteLine(server.language.ServerSetupPortInvalidValue());
+        //					}
+        //				}
+        //				catch
+        //				{
+        //					Console.WriteLine(server.language.ServerSetupPortInvalidInput());
+        //				}
+        //			}
+        //			Console.WriteLine(server.language.ServerSetupMaxClients());
+        //			line = Console.ReadLine();
+        //			if (!string.IsNullOrEmpty(line))
+        //			{
+        //				int players;
+        //				try
+        //				{
+        //					players = int.Parse(line);
+        //					if (players > 0)
+        //					{
+        //						server.config.MaxClients = players;
+        //					}
+        //					else
+        //					{
+        //						Console.WriteLine(server.language.ServerSetupMaxClientsInvalidValue());
+        //					}
+        //				}
+        //				catch
+        //				{
+        //					Console.WriteLine(server.language.ServerSetupMaxClientsInvalidInput());
+        //				}
+        //			}
+        //			Console.WriteLine(server.language.ServerSetupEnableHTTP());
+        //			line = Console.ReadLine();
+        //			if (!string.IsNullOrEmpty(line))
+        //			{
+        //				bool choice;
+        //				if (line.Equals(server.language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
+        //					choice = true;
+        //				else
+        //					choice = false;
+        //				server.config.EnableHTTPServer = choice;
+        //			}
+        //		}
+        //	}
+        //	if (server.config.Areas.Count == 0)
+        //	{
+        //		server.config.Areas = ServerConfigMisc.getDefaultAreas();
+        //	}
+        //	//Serialize the ServerConfig class to XML
+        //	serializer.Serialize(textWriter, server.config);
+        //	textWriter.Close();
+        //}
+    }
 }

@@ -55,7 +55,6 @@
       <HintPath>..\Lib\ENet.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp">
-      <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="protobuf-net, Version=2.4.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
       <HintPath>..\packages\protobuf-net.2.4.0\lib\net40\protobuf-net.dll</HintPath>
@@ -63,7 +62,6 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Data" />
@@ -309,6 +307,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
     <Compile Include="Server\Systems\UnloadUnusedChunks.cs" />
+    <Compile Include="Client\UI\Screens\NewWorld.ci.cs" />
+    <Compile Include="Client\UI\Widgets\SettingsListWidget.ci.cs" />
+    <Compile Include="Client\UI\Widgets\LabeledTextBoxWidget.ci.cs" />
+    <Compile Include="Server\Mods\Fortress\MonsterEggs.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

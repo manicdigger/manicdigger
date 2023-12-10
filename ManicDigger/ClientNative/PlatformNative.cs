@@ -281,7 +281,8 @@ namespace ManicDigger.ClientNative
 
 		public override string PathSavegames()
 		{
-			return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+            return GameStorePath.gamepathsaves;
 		}
 
 		public override string PathCombine(string part1, string part2)
@@ -1916,10 +1917,10 @@ namespace ManicDigger.ClientNative
 			return singlePlayerServerAvailable;
 		}
 
-		public override void SinglePlayerServerStart(string saveFilename)
+		public override void SinglePlayerServerStart(string saveFilename,SettingListEntry[] settingsOverride)
 		{
 			singlepLayerServerExit = false;
-			StartSinglePlayerServer(saveFilename);
+			StartSinglePlayerServer(saveFilename, settingsOverride);
 		}
 
 		public bool singlepLayerServerExit;
@@ -1928,7 +1929,7 @@ namespace ManicDigger.ClientNative
 			singlepLayerServerExit = true;
 		}
 
-		public System.Action<string> StartSinglePlayerServer;
+		public System.Action<string,SettingListEntry[]> StartSinglePlayerServer;
 		public bool singlePlayerServerLoaded;
 
 		public override bool SinglePlayerServerLoaded()

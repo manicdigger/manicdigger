@@ -14,6 +14,7 @@
 
 			Cake = m.GetBlockId("Cake");
 			Apples = m.GetBlockId("Apples");
+            m.AddToStartInventory("Cake",2);
 		}
 		ModManager m;
 		int Cake,

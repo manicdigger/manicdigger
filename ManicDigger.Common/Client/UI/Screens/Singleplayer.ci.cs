@@ -9,23 +9,30 @@ public class ScreenSingleplayer : MainMenuScreen
 		// initialize widgets
 		wbtn_newWorld = new ButtonWidget();
 		wbtn_newWorld.SetText("New World");
-		wbtn_newWorld.SetVisible(false);
+		wbtn_newWorld.SetVisible(true);
 		AddWidget(wbtn_newWorld);
+
 		wbtn_playWorld = new ButtonWidget();
-		wbtn_playWorld.SetText("Play");
-		wbtn_playWorld.SetVisible(false);
+		wbtn_playWorld.SetText("Play selected");
+		wbtn_playWorld.SetVisible(true);
 		AddWidget(wbtn_playWorld);
+
 		wbtn_modifyWorld = new ButtonWidget();
 		wbtn_modifyWorld.SetText("Modify");
-		wbtn_modifyWorld.SetVisible(false);
+		wbtn_modifyWorld.SetVisible(true);
 		AddWidget(wbtn_modifyWorld);
+
 		wbtn_back = new ButtonWidget();
 		AddWidget(wbtn_back);
-		wbtn_openFile = new ButtonWidget();
-		AddWidget(wbtn_openFile);
+	
+       	wbtn_openFile = new ButtonWidget();
+        wbtn_openFile.visible = false;
+        AddWidget(wbtn_openFile);
+
 		wtxt_title = new TextWidget();
 		wtxt_title.SetFont(fontTitle);
 		AddWidget(wtxt_title);
+
 		wtxt_singleplayerUnavailable = new TextWidget();
 		wtxt_singleplayerUnavailable.SetFont(fontDefault);
 		wtxt_singleplayerUnavailable.SetText("Singleplayer is only available on desktop (Windows, Linux, Mac) version of game.");
@@ -40,6 +47,7 @@ public class ScreenSingleplayer : MainMenuScreen
 	ButtonWidget wbtn_modifyWorld;
 	ButtonWidget wbtn_back;
 	ButtonWidget wbtn_openFile;
+
 	TextWidget wtxt_title;
 	TextWidget wtxt_singleplayerUnavailable;
 	ListWidget wlst_worldList;
@@ -95,7 +103,7 @@ public class ScreenSingleplayer : MainMenuScreen
 		wlst_worldList.sizey = 400 * scale;
 
 		// TODO: Implement savegame handling in game menu
-		//LoadSavegameList();
+		LoadSavegameList();
 
 		DrawWidgets(dt);
 
@@ -124,8 +132,12 @@ public class ScreenSingleplayer : MainMenuScreen
 
 		if (w == wbtn_playWorld)
 		{
-
-		}
+            int selected = wlst_worldList.GetIndexSelected();
+            if (selected != -1)
+            {
+                menu.ConnectToSingleplayer( savegames[selected]);
+            }
+        }
 
 		if (w == wbtn_modifyWorld)
 		{

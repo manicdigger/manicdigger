@@ -19,7 +19,7 @@ namespace ManicDigger.Mods
 				Build = new string[] { "build" },
 				Clone = new string[] { "clone" },
 			};
-			m.SetBlockType(46, "TNT", new BlockType()
+			m.SetBlockType(34, "TNT", new BlockType()
 			{
 				TextureIdTop = "TNTTop",
 				TextureIdBottom = "TNTBottom",

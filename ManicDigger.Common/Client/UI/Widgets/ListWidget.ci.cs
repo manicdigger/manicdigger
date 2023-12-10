@@ -138,6 +138,7 @@
 			PageDown();
 		}
 	}
+
 	public override void OnMouseWheel(GamePlatform p, MouseWheelEventArgs e)
 	{
 		if (e.GetDelta() < 0)

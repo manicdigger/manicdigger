@@ -107,6 +107,10 @@ namespace ManicDigger.Server
 
 		public bool LoadDatabase(string filename)
 		{
+            FileInfo info = new FileInfo(filename);//todo better place?
+
+            ManicDigger.Common.GameStorePath.SetGameName(info.Name.Replace(info.Extension, ""));
+
 			// save all pending changes
 			ProcessSave(true);
 			if (filename != GetSaveFilename())
@@ -171,7 +175,8 @@ namespace ManicDigger.Server
 
 		public string SaveFilenameWithoutExtension = "default";
 		public string SaveFilenameOverride;
-		public string GetSaveFilename()
+        public SettingListEntry [] SettingsOverride;
+        public string GetSaveFilename()
 		{
 			if (SaveFilenameOverride != null)
 			{

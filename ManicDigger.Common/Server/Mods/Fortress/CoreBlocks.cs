@@ -1,9 +1,12 @@
 ﻿namespace ManicDigger.Mods
 {
-	/// <summary>
-	/// This class contains all block definitions
-	/// </summary>
-	public class CoreBlocks : IMod
+    /// <summary>
+    /// This class contains all block definitions
+    /// </summary>
+    /// 
+
+
+    public class CoreBlocks : IMod
 	{
 		ModManager m;
 		SoundSet solidSounds;

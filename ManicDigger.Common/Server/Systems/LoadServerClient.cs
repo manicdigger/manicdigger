@@ -27,7 +27,7 @@ namespace ManicDigger.Server
 		public void LoadServerClient(Server server)
 		{
 			string filename = "ServerClient.txt";
-			if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
+			if (!File.Exists(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 			{
 				Console.WriteLine(server.language.ServerClientConfigNotFound());
 				SaveServerClient(server);
@@ -36,7 +36,7 @@ namespace ManicDigger.Server
 			{
 				try
 				{
-					using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
+					using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 					{
 						XmlSerializer deserializer = new XmlSerializer(typeof(ServerClient));
 						server.serverClient = (ServerClient)deserializer.Deserialize(textReader);
@@ -47,7 +47,7 @@ namespace ManicDigger.Server
 				}
 				catch //This if for the original format
 				{
-					using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
+					using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathgameconfig, filename))))
 					{
 						server.serverClient = new ServerClient();
 						StreamReader sr = new StreamReader(s);
@@ -108,13 +108,13 @@ namespace ManicDigger.Server
 		public void SaveServerClient(Server server)
 		{
 			//Verify that we have a directory to place the file into.
-			if (!Directory.Exists(GameStorePath.gamepathconfig))
+			if (!Directory.Exists(GameStorePath.gamepathgameconfig))
 			{
-				Directory.CreateDirectory(GameStorePath.gamepathconfig);
+				Directory.CreateDirectory(GameStorePath.gamepathgameconfig);
 			}
 
 			XmlSerializer serializer = new XmlSerializer(typeof(ServerClient));
-			TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerClient.txt"));
+			TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathgameconfig, "ServerClient.txt"));
 
 			//Check to see if config has been initialized
 			if (server.serverClient == null)

@@ -1,4 +1,4 @@
-﻿namespace ManicDigger.Server
+﻿ namespace ManicDigger.Server
 {
 	public class InfiniteMapChunked2dServer
 	{

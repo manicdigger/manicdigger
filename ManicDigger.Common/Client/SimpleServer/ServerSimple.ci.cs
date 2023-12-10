@@ -48,15 +48,17 @@
 	NetServer server;
 	string saveFilename;
 	internal GamePlatform platform;
-	public void Start(NetServer server_, string saveFilename_, GamePlatform platform_)
-	{
-		server = server_;
-		saveFilename = saveFilename_;
-		platform = platform_;
-		mainThreadActionsLock = platform.MonitorCreate();
-	}
+    SettingListEntry[] SettingOverride;
 
-	public void Update()
+    public void Start(NetServer server_, string saveFilename_, GamePlatform platform_,SettingListEntry[] overide)
+    {
+        SettingOverride = overide;
+        server = server_;
+        saveFilename = saveFilename_;
+        platform = platform_;
+        mainThreadActionsLock = platform.MonitorCreate();
+    }
+    public void Update()
 	{
 		ProcessPackets();
 		NotifyMap();

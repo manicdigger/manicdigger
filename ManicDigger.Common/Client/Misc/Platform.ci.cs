@@ -218,7 +218,8 @@
 
 	// Game
 	public abstract bool SinglePlayerServerAvailable();
-	public abstract void SinglePlayerServerStart(string saveFilename);
+	public abstract void SinglePlayerServerStart(string saveFilename, SettingListEntry[] settingsOverride);
+
 	public abstract void SinglePlayerServerExit();
 	public abstract bool SinglePlayerServerLoaded();
 	public abstract void SinglePlayerServerDisable();

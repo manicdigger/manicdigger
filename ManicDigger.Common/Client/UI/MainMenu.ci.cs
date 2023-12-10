@@ -201,7 +201,7 @@ public class MainMenu
 
 	internal string[] GetSavegames(IntRef length)
 	{
-		string[] files = p.DirectoryGetFiles(p.PathSavegames(), length);
+    		string[] files = p.DirectoryGetFiles(p.PathSavegames(), length);
 		string[] savegames = new string[length.value];
 		int count = 0;
 		for (int i = 0; i < length.value; i++)
@@ -229,22 +229,23 @@ public class MainMenu
 
 	internal void StartNewWorld()
 	{
-	}
+        screen = new NewWorld();
+        screen.Init(this, uiRenderer);
+    }
 
 	internal void StartModifyWorld()
 	{
 	}
 
-	public void StartGame(bool singleplayer, string singleplayerSavePath, ConnectData connectData)
-	{
-		ScreenGame screenGame = new ScreenGame();
-		screenGame.Init(this, uiRenderer);
-		screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
-		screen = screenGame;
-		drawBackground = false;
-	}
-
-	internal void ConnectToGame(LoginData loginResultData, string username)
+     public void StartGame(bool singleplayer, string singleplayerSavePath, ConnectData connectData,SettingListEntry[] entries)
+    {
+        ScreenGame screenGame = new ScreenGame();
+        screenGame.Init(this, uiRenderer);
+        screenGame.Start(p, singleplayer, singleplayerSavePath, connectData, entries);
+        screen = screenGame;
+        drawBackground = false;
+    }
+    internal void ConnectToGame(LoginData loginResultData, string username)
 	{
 		ConnectData connectData = new ConnectData();
 		connectData.Ip = loginResultData.ServerAddress;
@@ -252,11 +253,11 @@ public class MainMenu
 		connectData.Auth = loginResultData.AuthCode;
 		connectData.Username = username;
 
-		StartGame(false, null, connectData);
+		StartGame(false, null, connectData,null);
 	}
 
 	public void ConnectToSingleplayer(string filename)
 	{
-		StartGame(true, filename, null);
+        StartGame(true, filename, null,null);
 	}
 }

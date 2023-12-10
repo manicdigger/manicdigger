@@ -1,4 +1,5 @@
 ﻿#region Using Statements
+using ManicDigger;
 using ManicDigger.ClientNative;
 using ManicDigger.Common;
 using ManicDigger.Server;
@@ -41,7 +42,11 @@ public class ManicDiggerProgram
 
 	private void Start(string[] args)
 	{
-		string appPath = Path.GetDirectoryName(Application.ExecutablePath);
+      //  BlockLoader loader = new BlockLoader();
+
+        //loader.Load("/home/Alex/Desktop/data.json", null);
+
+        string appPath = Path.GetDirectoryName(Application.ExecutablePath);
 		if (!Debugger.IsAttached)
 		{
 			System.Environment.CurrentDirectory = appPath;
@@ -53,7 +58,7 @@ public class ManicDiggerProgram
 		platform.crashreporter = crashreporter;
 		platform.singlePlayerServerDummyNetwork = dummyNetwork;
 		this.platform = platform;
-		platform.StartSinglePlayerServer = (filename) => { savefilename = filename; new Thread(ServerThreadStart).Start(); };
+		platform.StartSinglePlayerServer = (filename, sOverride) => { savefilename = filename; settingsOverride = sOverride; new Thread(ServerThreadStart).Start(); };
 		GraphicsMode mode = new GraphicsMode(OpenTK.DisplayDevice.Default.BitsPerPixel, 24);
 		using (GameWindowNative game = new GameWindowNative(mode))
 		{
@@ -74,22 +79,26 @@ public class ManicDiggerProgram
 			ConnectData connectdata = new ConnectData();
 			connectdata = ConnectData.FromUri(new GamePlatformNative().ParseUri(args[0]));
 
-			mainmenu.StartGame(false, null, connectdata);
+			mainmenu.StartGame(false, null, connectdata, null);
 		}
 	}
 
 	DummyNetwork dummyNetwork;
 	string savefilename;
-	public GameExit exit = new GameExit();
-	GamePlatformNative platform;
+    SettingListEntry[] settingsOverride;
 
+    public GameExit exit = new GameExit();
+	GamePlatformNative platform;
+    
 	public void ServerThreadStart()
 	{
 		try
 		{
 			Server server = new Server();
 			server.SaveFilenameOverride = savefilename;
-			server.exit = exit;
+            server.SettingsOverride = settingsOverride;
+
+            server.exit = exit;
 			DummyNetServer netServer = new DummyNetServer();
 			netServer.SetPlatform(new GamePlatformNative());
 			netServer.SetNetwork(dummyNetwork);

@@ -8,9 +8,10 @@ public class ScreenGame : MainMenuScreen
 		game = new Game();
 	}
 	Game game;
-
-	public void Start(GamePlatform platform_, bool singleplayer_, string singleplayerSavePath_, ConnectData connectData_)
+    SettingListEntry[] settingsOveride;
+	public void Start(GamePlatform platform_, bool singleplayer_, string singleplayerSavePath_, ConnectData connectData_, SettingListEntry[] Override)
 	{
+        settingsOveride = Override;
 		singleplayer = singleplayer_;
 		singleplayerSavePath = singleplayerSavePath_;
 		connectData = connectData_;
@@ -25,7 +26,7 @@ public class ScreenGame : MainMenuScreen
 		Connect(gamePlatform);
 	}
 
-	ServerSimple serverSimple;
+    ServerSimple serverSimple;
 	ModServerSimple serverSimpleMod;
 
 	void Connect(GamePlatform platform)
@@ -34,7 +35,7 @@ public class ScreenGame : MainMenuScreen
 		{
 			if (platform.SinglePlayerServerAvailable())
 			{
-				platform.SinglePlayerServerStart(singleplayerSavePath);
+				platform.SinglePlayerServerStart(singleplayerSavePath,settingsOveride);
 			}
 			else
 			{
@@ -45,7 +46,7 @@ public class ScreenGame : MainMenuScreen
 				server.network = network;
 				server.platform = platform;
 				server.Start();
-				serverSimple.Start(server, singleplayerSavePath, platform);
+				serverSimple.Start(server, singleplayerSavePath, platform,settingsOveride);
 
 				serverSimpleMod = new ModServerSimple();
 				serverSimpleMod.server = serverSimple;
@@ -99,7 +100,7 @@ public class ScreenGame : MainMenuScreen
 		if (game.reconnect)
 		{
 			game.Dispose();
-			menu.StartGame(singleplayer, singleplayerSavePath, connectData);
+			menu.StartGame(singleplayer, singleplayerSavePath, connectData,null);
 			return;
 		}
 		if (game.exitToMainMenu)

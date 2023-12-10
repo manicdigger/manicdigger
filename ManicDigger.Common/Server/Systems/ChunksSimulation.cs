@@ -128,7 +128,7 @@ namespace ManicDigger.Server
 		{
 			ServerChunk chunk = server.d_Map.GetChunkValid(p.x / Server.chunksize, p.y / Server.chunksize, p.z / Server.chunksize);
 			int tries = 0;
-			while (chunk.Monsters.Count < 1)
+			while (chunk.Monsters.Count < 5)
 			{
 				int xx = server.rnd.Next(Server.chunksize);
 				int yy = server.rnd.Next(Server.chunksize);

@@ -584,7 +584,7 @@ namespace ManicDigger.Server
 		public void LoadBanlist(Server server)
 		{
 			string filename = "ServerBanlist.txt";
-			if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
+			if (!File.Exists(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 			{
 				Console.WriteLine(server.language.ServerBanlistNotFound());
 				SaveBanlist(server);
@@ -592,7 +592,7 @@ namespace ManicDigger.Server
 			}
 			try
 			{
-				using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
+				using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathgameconfig, filename)))
 				{
 					XmlSerializer deserializer = new XmlSerializer(typeof(ServerBanlist));
 					server.banlist = (ServerBanlist)deserializer.Deserialize(textReader);
@@ -604,7 +604,7 @@ namespace ManicDigger.Server
 				//Banlist corrupt. Try to backup old, then create new one.
 				try
 				{
-					File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
+					File.Copy(Path.Combine(GameStorePath.gamepathgameconfig, filename), Path.Combine(GameStorePath.gamepathgameconfig, filename + ".old"));
 					Console.WriteLine(server.language.ServerBanlistCorrupt());
 				}
 				catch
@@ -621,13 +621,13 @@ namespace ManicDigger.Server
 		public void SaveBanlist(Server server)
 		{
 			//Verify that we have a directory to place the file into.
-			if (!Directory.Exists(GameStorePath.gamepathconfig))
+			if (!Directory.Exists(GameStorePath.gamepathgameconfig))
 			{
-				Directory.CreateDirectory(GameStorePath.gamepathconfig);
+				Directory.CreateDirectory(GameStorePath.gamepathgameconfig);
 			}
 
 			XmlSerializer serializer = new XmlSerializer(typeof(ServerBanlist));
-			TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerBanlist.txt"));
+			TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathgameconfig, "ServerBanlist.txt"));
 
 			//Check to see if banlist has been initialized
 			if (server.banlist == null)

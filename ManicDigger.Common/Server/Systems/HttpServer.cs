@@ -28,7 +28,9 @@ namespace ManicDigger.Server
 							httpServer.Install(module.module);
 						}
 						httpServer.Start();
-						Console.WriteLine(server.language.ServerHTTPServerStarted(), httpPort);
+   
+
+                        Console.WriteLine(server.language.ServerHTTPServerStarted(), httpPort);
 					}
 					catch
 					{

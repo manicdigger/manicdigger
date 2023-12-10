@@ -264,10 +264,10 @@ namespace ManicDigger.ClientNative
 		}
 		public void UpdateListener(Vector3 position, Vector3 orientation)
 		{
-			lastlistener = position;
+		/*	lastlistener = position;
 			OpenTK.Audio.OpenAL.AL.Listener(OpenTK.Audio.OpenAL.ALListener3f.Position, position.X, position.Y, position.Z);
 			Vector3 up = Vector3.UnitY;
-			OpenTK.Audio.OpenAL.AL.Listener(OpenTK.Audio.OpenAL.ALListenerfv.Orientation, ref orientation, ref up);
+			OpenTK.Audio.OpenAL.AL.Listener(OpenTK.Audio.OpenAL.ALListenerfv.Orientation, ref orientation, ref up);*/
 		}
 	}
 }

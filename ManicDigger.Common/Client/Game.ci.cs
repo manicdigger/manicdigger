@@ -142,7 +142,7 @@
 		taskScheduler = new TaskScheduler();
 		commitActions = ListAction.Create(16 * 1024);
 		constWallDistance = 0.3f;
-		mouseSmoothing = true;
+		mouseSmoothing = false;
 	}
 
 	internal AssetList assets;
@@ -1997,20 +1997,20 @@
 
 	internal void UpdateMouseViewportControl(float dt)
 	{
-		if (mouseSmoothing)
-		{
-			float constMouseSmoothing1 = 0.85f;
-			float constMouseSmoothing2 = 0.8f;
-			mouseSmoothingVelX = mouseSmoothingVelX + mouseDeltaX / (300 / 75) * constMouseSmoothing2;
-			mouseSmoothingVelY = mouseSmoothingVelY + mouseDeltaY / (300 / 75) * constMouseSmoothing2;
-			mouseSmoothingVelX = mouseSmoothingVelX * constMouseSmoothing1;
-			mouseSmoothingVelY = mouseSmoothingVelY * constMouseSmoothing1;
-		}
-		else
-		{
+	//	if (mouseSmoothing) TODO rreimplement this
+	//	{
+		//	float constMouseSmoothing1 = 0.85f;
+		//	float constMouseSmoothing2 = 0.8f;
+		//	mouseSmoothingVelX = mouseSmoothingVelX + mouseDeltaX / (300 / 75) * constMouseSmoothing2;
+		//	mouseSmoothingVelY = mouseSmoothingVelY + mouseDeltaY / (300 / 75) * constMouseSmoothing2;
+		//	mouseSmoothingVelX = mouseSmoothingVelX * constMouseSmoothing1;
+		//	mouseSmoothingVelY = mouseSmoothingVelY * constMouseSmoothing1;*/
+	//	}
+	//	else
+	//	{
 			mouseSmoothingVelX = mouseDeltaX;
 			mouseSmoothingVelY = mouseDeltaY;
-		}
+	//	}
 
 		if (guistate == GuiState.Normal && enableCameraControl && platform.Focused())
 		{

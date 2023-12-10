@@ -89,10 +89,10 @@ namespace ManicDigger.Server
 			this.ChatLogging = false;
 			this.AllowScripting = false;
 			this.Key = Guid.NewGuid().ToString();
-			this.IsCreative = true;
+			this.IsCreative = false;
 			this.Public = true;
 			this.AllowGuests = true;
-			this.Monsters = false;
+			this.Monsters = true;
 			this.MapSizeX = 9984;
 			this.MapSizeY = 9984;
 			this.MapSizeZ = 128;
@@ -107,7 +107,55 @@ namespace ManicDigger.Server
 			this.PlayerDrawDistance = 128;
 			this.EnablePlayerPushing = true;
 		}
-	}
+        public ServerConfig(SettingListEntry[] overide) {
+            this.Format = 1;
+            this.Name = "Manic Digger server";
+            this.Motd = "MOTD";
+            this.WelcomeMessage = "Welcome to my Manic Digger server!";
+            this.Port = 25565;
+            this.MaxClients = 16;
+            this.ServerMonitor = true;
+            this.ClientConnectionTimeout = 600;
+            this.ClientPlayingTimeout = 60;
+            this.BuildLogging = false;
+            this.ServerEventLogging = false;
+            this.ChatLogging = false;
+            this.AllowScripting = false;
+            this.Key = Guid.NewGuid().ToString();
+            this.IsCreative = false;
+            this.Public = true;
+            this.AllowGuests = true;
+            this.Monsters = false;
+            this.MapSizeX = 9984;
+            this.MapSizeY = 9984;
+            this.MapSizeZ = 128;
+            this.Areas = new List<AreaConfig>();
+            this.AutoRestartCycle = 6;
+            this.Seed = 0;
+            this.RandomSeed = true;
+            this.EnableHTTPServer = false;
+            this.AllowSpectatorUse = false;
+            this.AllowSpectatorBuild = false;
+            this.ServerLanguage = "en";
+            this.PlayerDrawDistance = 128;
+            this.EnablePlayerPushing = true;
+
+            if (overide != null) { 
+            foreach(SettingListEntry entry in overide)
+                    switch (entry._setting)
+                {
+                    case "":
+                        // code block
+                        break;
+                        
+                        default:
+                        // code block
+                        break;
+                }
+
+            }
+        }
+    }
 
 	public class AreaConfig
 	{

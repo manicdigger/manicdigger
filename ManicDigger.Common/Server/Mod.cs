@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.IO;
 
 namespace ManicDigger.Server
 {
@@ -981,7 +982,8 @@ namespace ManicDigger.Server
 
 		public void LoadWorld(string filename)
 		{
-			server.LoadDatabase(filename);
+     
+            server.LoadDatabase(filename);
 		}
 
 		public string[] GetModPaths()
@@ -1146,9 +1148,23 @@ namespace ManicDigger.Server
 			}
 			server.DespawnEntity(id);
 		}
+        public void SpawnMonster(int x, int y, int z) {
+           
+            server.d_Map.GetChunk(x, y, z).Monsters.Add(new Monster()
+            {
+                X = x,
+                Y = y,
+                Z = z,
+                Id = 0,
+                Health = 20,
+                MonsterType = 0
+            });
+        }
 
-		#region Deprecated methods
-		public double GetCurrentYearTotal()
+
+
+        #region Deprecated methods
+        public double GetCurrentYearTotal()
 		{
 			return server.GetTime().Year;
 		}
