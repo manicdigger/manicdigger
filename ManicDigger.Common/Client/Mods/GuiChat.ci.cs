@@ -104,7 +104,7 @@
 		if (chatlines2Count > 0)
 		{
 			// draw chatbox background
-			game.cam.Draw2dTexture(game.WhiteTexture(),
+			game.rend.Draw2dTexture(game.WhiteTexture(),
 				(posX - chatboxMargin) * game.Scale(),
 				(posY - chatboxMargin) * game.Scale(),
 				(750 + 2 * chatboxMargin) * game.Scale(),
@@ -159,7 +159,7 @@
 		}
 
 		// draw typing buffer background
-		game.cam.Draw2dTexture(game.WhiteTexture(),
+		game.rend.Draw2dTexture(game.WhiteTexture(),
 			(posX - chatboxMargin) * game.Scale(),
 			(posY - chatboxMargin) * game.Scale(),
 			(750 + 2 * chatboxMargin) * game.Scale(),

@@ -1,9 +1,9 @@
-﻿public class Camera {
+﻿public class CoreRenderer {
     public float CameraEyeX;
     public float CameraEyeY;
     public float CameraEyeZ;
     public float one;
-    public Camera() {
+    public CoreRenderer() {
         one = 1;
         CameraMatrix = new GetCameraMatrix();
         CameraEyeX = -1;

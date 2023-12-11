@@ -45,28 +45,28 @@
 					//    posY = p.NetworkY;
 					//    posZ = p.NetworkZ;
 					//}
-					game.cam.GLPushMatrix();
-					game.cam.GLTranslate(posX, posY, posZ);
+					game.rend.GLPushMatrix();
+					game.rend.GLTranslate(posX, posY, posZ);
 					//if (p.Type == PlayerType.Monster)
 					//{
 					//    GLTranslate(0, 1, 0);
 					//}
 					ModDrawSprites.Billboard(game);
 					float scale = game.one * 2 / 100;
-					game.cam.GLScale(scale, scale, scale);
+					game.rend.GLScale(scale, scale, scale);
 
 					//Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
 					//TODO: Can't change text color because text has outline anyway.
 					if (p.DrawHealth)
 					{
-						game.cam.Draw2dTexture(game.WhiteTexture(), -26, -11, 52, 12, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
-						game.cam.Draw2dTexture(game.WhiteTexture(), -25, -10, 50 * (game.one * p.Health), 10, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
+						game.rend.Draw2dTexture(game.WhiteTexture(), -26, -11, 52, 12, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+						game.rend.Draw2dTexture(game.WhiteTexture(), -25, -10, 50 * (game.one * p.Health), 10, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
 					}
 					FontCi font = new FontCi();
 					font.size = 14;
 					game.Draw2dText(name, font, -game.TextSizeWidth(name, font) / 2, 0, IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), true);
 					//                        GL.Translate(0, 1, 0);
-					game.cam.GLPopMatrix();
+					game.rend.GLPopMatrix();
 				}
 			}
 		}

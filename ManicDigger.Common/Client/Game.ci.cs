@@ -133,7 +133,7 @@
 		constWallDistance = 0.3f;
 		mouseSmoothing = false;
 
-        cam = new  Camera();
+        rend = new  CoreRenderer();
     }
 
 	internal AssetList assets;
@@ -144,7 +144,7 @@
 
 	public void Start()
 	{
-        cam.SetPlatform(platform);
+        rend.SetPlatform(platform);
 
 		textColorRenderer = new TextColorRenderer();
 		textColorRenderer.platform = platform;
@@ -168,7 +168,7 @@
 		d_TerrainTextures = terrainTextures;
 
 		FrustumCulling frustumculling = new FrustumCulling();
-		frustumculling.d_GetCameraMatrix = cam.CameraMatrix;
+		frustumculling.d_GetCameraMatrix = rend.CameraMatrix;
 		frustumculling.platform = platform;
 		d_FrustumCulling = frustumculling;
 
@@ -215,6 +215,7 @@
 		clientmods = new ClientMod[128];
 		clientmodsCount = 0;
 		modmanager.game = this;
+        AddMod(new CoreComands());
 		AddMod(new ModDrawMain());
 		AddMod(new ModNetworkProcess());
 		AddMod(new ModUnloadRendererChunks());
@@ -319,6 +320,7 @@
 
 	internal float[] camera;
 	float accumulator;
+
 	internal void MainThreadOnRenderFrame(float deltaTime)
 	{
 		UpdateResize();
@@ -376,9 +378,10 @@
 			if (clientmods[i] == null) { continue; }
 			clientmods[i].OnBeforeNewFrameDraw3d(this, deltaTime);
 		}
-        cam.GLMatrixModeModelView();
-        cam.GLLoadMatrix(camera);
-        cam.CameraMatrix.lastmvmatrix = camera;
+
+        rend.GLMatrixModeModelView();
+        rend.GLLoadMatrix(camera);
+        rend.CameraMatrix.lastmvmatrix = camera;
 
 		d_FrustumCulling.CalcFrustumEquations();
 
@@ -577,7 +580,7 @@
 
 		ct = GetCachedTextTexture(t);
 		ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
-		cam.Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), enabledepthtest);
+		rend.Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), enabledepthtest);
 		DeleteUnusedCachedTextTextures();
 	}
 
@@ -1093,7 +1096,7 @@
 
 	public void Draw2dBitmapFile(string filename, float x, float y, float w, float h)
 	{
-		cam.Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
+		rend.Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 	}
 	internal int maxdrawdistance;
 	public void ToggleFog()
@@ -1597,7 +1600,7 @@
 	float rotationspeed;
 	float mouseSmoothingVelX;
 	float mouseSmoothingVelY;
-	bool mouseSmoothing;
+	public bool mouseSmoothing;
 	float mouseSmoothingAccum;
 
 	internal void UpdateMouseViewportControl(float dt)
@@ -1708,8 +1711,8 @@
 	public void Circle3i(float x, float y, float radius)
 	{
 		float angle;
-        cam.GLPushMatrix();
-        cam.GLLoadIdentity();
+        rend.GLPushMatrix();
+        rend.GLLoadIdentity();
 
 		int n = 32;
 		if (circleModelData == null)
@@ -1745,9 +1748,9 @@
 			circleModelData.uv[i] = 0;
 		}
 
-        cam.DrawModelData(circleModelData);
+        rend.DrawModelData(circleModelData);
 
-        cam.GLPopMatrix();
+        rend.GLPopMatrix();
 	}
 
 	internal int totaltimeMilliseconds;
@@ -1840,9 +1843,9 @@
 
 	int GetCameraBlock()
 	{
-		int bx = MathFloor(cam.CameraEyeX);
-		int by = MathFloor(cam.CameraEyeZ);
-		int bz = MathFloor(cam.CameraEyeY);
+		int bx = MathFloor(rend.CameraEyeX);
+		int by = MathFloor(rend.CameraEyeZ);
+		int bz = MathFloor(rend.CameraEyeY);
 
 		if (!map.IsValidPos(bx, by, bz))
 		{
@@ -2280,7 +2283,7 @@
 	internal void OnResize()
 	{
 		platform.GlViewport(0, 0, Width(), Height());
-        cam.Set3dProjection(zfar(), currentfov());
+        rend.Set3dProjection(zfar(), currentfov());
         //Notify server of size change
         if (sendResize)
 		{
@@ -2330,7 +2333,6 @@
 		if (StringTools.StringStartsWith(platform, s_, "."))
 		{
 			//Client command starting with a "."
-			string strFreemoveNotAllowed = language.FreemoveNotAllowed();
 			string cmd = StringTools.StringSubstringToEnd(platform, ss[0], 1);
 			string arguments;
 			if (platform.StringIndexOf(s_, " ") == -1)
@@ -2343,172 +2345,14 @@
 			}
 			arguments = platform.StringTrim(arguments);
 
-			// Command requiring no arguments
-			if (cmd == "clients")
-			{
-				Log("Clients:");
-				for (int i = 0; i < entitiesCount; i++)
-				{
-					Entity entity = entities[i];
-					if (entity == null) { continue; }
-					if (entity.drawName == null) { continue; }
-					if (!entity.drawName.ClientAutoComplete) { continue; }
-					Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].drawName.Name));
-				}
-			}
-			else if (cmd == "reconnect")
-			{
-				Reconnect();
-			}
-			else if (cmd == "m")
-			{
-				mouseSmoothing = !mouseSmoothing;
-				if (mouseSmoothing) { Log("Mouse smoothing enabled."); }
-				else { Log("Mouse smoothing disabled."); }
-			}
+
 			// Commands requiring boolean arguments
-			else if (cmd == "noclip")
-			{
-				if (this.AllowFreemove)
-				{
-					stopPlayerMove = true;
-					if (BoolCommandArgument(arguments))
-					{
-						controls.SetFreemove(FreemoveLevelEnum.Noclip);
-					}
-					else
-					{
-						controls.SetFreemove(FreemoveLevelEnum.None);
-					}
-				}
-				else
-				{
-					Log(strFreemoveNotAllowed);
-					return;
-				}
-			}
-			else if (cmd == "freemove")
-			{
-				if (this.AllowFreemove)
-				{
-					stopPlayerMove = true;
-					if (BoolCommandArgument(arguments))
-					{
-						controls.SetFreemove(FreemoveLevelEnum.Freemove);
-					}
-					else
-					{
-						controls.SetFreemove(FreemoveLevelEnum.None);
-					}
-				}
-				else
-				{
-					Log(strFreemoveNotAllowed);
-					return;
-				}
-			}
-			else if (cmd == "gui")
-			{
-				ENABLE_DRAW2D = BoolCommandArgument(arguments);
-			}
-			// Commands requiring numeric arguments
-			else if (arguments != "")
-			{
-				if (cmd == "fog")
-				{
-					int foglevel;
-					foglevel = platform.IntParse(arguments);
-					{
-						int foglevel2 = foglevel;
-						if (foglevel2 > 1024)
-						{
-							foglevel2 = 1024;
-						}
-						if (foglevel2 % 2 == 0)
-						{
-							foglevel2--;
-						}
-						d_Config3d.viewdistance = foglevel2;
-					}
-					OnResize();
-				}
-				else if (cmd == "fov")
-				{
-					int arg = platform.IntParse(arguments);
-					int minfov = 1;
-					int maxfov = 179;
-					if (!issingleplayer)
-					{
-						minfov = 60;
-					}
-					if (arg < minfov || arg > maxfov)
-					{
-						Log(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
-					}
-					else
-					{
-						float fov_ = (2 * Game.GetPi() * (one * arg / 360));
-						this.fov = fov_;
-						OnResize();
-					}
-				}
-				else if (cmd == "movespeed")
-				{
-					if (this.AllowFreemove)
-					{
-						if (platform.FloatParse(arguments) <= 500)
-						{
-							movespeed = basemovespeed * platform.FloatParse(arguments);
-							AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
-						}
-						else
-						{
-							AddChatline("Entered movespeed to high! max. 500x");
-						}
-					}
-					else
-					{
-						Log(strFreemoveNotAllowed);
-						return;
-					}
-				}
-				else if (cmd == "serverinfo")
-				{
-					//Fetches server info from given adress
-					IntRef splitCount = new IntRef();
-					string[] split = platform.StringSplit(arguments, ":", splitCount);
-					if (splitCount.value == 2)
-					{
-						QueryClient qClient = new QueryClient();
-						qClient.SetPlatform(platform);
-						qClient.PerformQuery(split[0], platform.IntParse(split[1]));
-						if (qClient.querySuccess)
-						{
-							//Received result
-							QueryResult r = qClient.GetResult();
-							AddChatline(r.GameMode);
-							AddChatline(platform.IntToString(r.MapSizeX));
-							AddChatline(platform.IntToString(r.MapSizeY));
-							AddChatline(platform.IntToString(r.MapSizeZ));
-							AddChatline(platform.IntToString(r.MaxPlayers));
-							AddChatline(r.MOTD);
-							AddChatline(r.Name);
-							AddChatline(platform.IntToString(r.PlayerCount));
-							AddChatline(r.PlayerList);
-							AddChatline(platform.IntToString(r.Port));
-							AddChatline(r.PublicHash);
-							AddChatline(r.ServerVersion);
-						}
-						AddChatline(qClient.GetServerMessage());
-					}
-				}
-			}
-			else
-			{
-				//Send client command to server if none matches
-				string chatline = StringTools.StringSubstring(platform, GuiTypingBuffer, 0, MathCi.MinInt(GuiTypingBuffer.Length, 256));
-				SendChat(chatline);
-			}
+          
+	
+			//Send client command to server if none matches TODO reimplement not sending
+			string chatline = StringTools.StringSubstring(platform, GuiTypingBuffer, 0, MathCi.MinInt(GuiTypingBuffer.Length, 256));
+			SendChat(chatline);
+			
 			//Process clientside mod commands anyway
 			for (int i = 0; i < clientmodsCount; i++)
 			{
@@ -2816,8 +2660,8 @@
 			int[] bmpPixels = new int[tilesize * tilesize];
 			platform.BitmapGetPixelsArgb(bmp, bmpPixels);
 
-			int x = i % cam.texturesPacked();
-			int y = i / cam.texturesPacked();
+			int x = i % rend.texturesPacked();
+			int y = i / rend.texturesPacked();
 			for (int xx = 0; xx < tilesize; xx++)
 			{
 				for (int yy = 0; yy < tilesize; yy++)
@@ -3161,7 +3005,7 @@
 			return;
 		}
 
-        cam.OrthoMode(Width(), Height());
+        rend.OrthoMode(Width(), Height());
 
 		for (int i = 0; i < clientmodsCount; i++)
 		{
@@ -3169,7 +3013,7 @@
 			clientmods[i].OnNewFrameDraw2d(this, dt);
 		}
 
-        cam.PerspectiveMode();
+        rend.PerspectiveMode();
 	}
 
 	public const int ChatFontSize = 11;
@@ -3545,6 +3389,7 @@
 	internal float sunPositionX;
 	internal float sunPositionY;
 	internal float sunPositionZ;
+
 	internal float moonPositionX;
 	internal float moonPositionY;
 	internal float moonPositionZ;
@@ -3565,7 +3410,7 @@
 
 
 	internal bool isplayeronground;
-    public Camera cam;
+    public CoreRenderer rend;
 	internal bool reachedwall;
 	internal bool reachedwall_1blockhigh;
 	internal bool reachedHalfBlock;

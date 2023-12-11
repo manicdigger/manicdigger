@@ -48,7 +48,7 @@
 	internal BlockRendererTorch d_BlockRendererTorch;
 
 	public int terrainTexture() { return game.terrainTexture; }
-	public int texturesPacked() { return game.cam.texturesPacked(); }
+	public int texturesPacked() { return game.rend.texturesPacked(); }
 	public int GetWeaponTextureId(int side)
 	{
 		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
@@ -177,14 +177,14 @@
 		oldLight = curlight;
 
 		game.platform.GlClearDepthBuffer();
-		game.cam.GLMatrixModeModelView();
-		game.cam.GLPushMatrix();
-		game.cam.GLLoadIdentity();
+		game.rend.GLMatrixModeModelView();
+		game.rend.GLPushMatrix();
+		game.rend.GLLoadIdentity();
 
-		game.cam.GLTranslate((one * 3 / 10) + zzzposz - attackt * 5, -(one * 15 / 10) + zzzposx - buildt * 10, -(one * 15 / 10) + zzzposy);
-		game.cam.GLRotate(30 + (zzzx) - attackt * 300, 1, 0, 0);
-		game.cam.GLRotate(60 + zzzy, 0, 1, 0);
-		game.cam.GLScale(one * 8 / 10, one * 8 / 10, one * 8 / 10);
+		game.rend.GLTranslate((one * 3 / 10) + zzzposz - attackt * 5, -(one * 15 / 10) + zzzposx - buildt * 10, -(one * 15 / 10) + zzzposy);
+		game.rend.GLRotate(30 + (zzzx) - attackt * 300, 1, 0, 0);
+		game.rend.GLRotate(60 + zzzy, 0, 1, 0);
+		game.rend.GLScale(one * 8 / 10, one * 8 / 10, one * 8 / 10);
 
 		bool move = !(oldplayerposX == game.player.position.x
 			&& oldplayerposY == game.player.position.y
@@ -247,9 +247,9 @@
 
 		game.platform.GlEnableTexture2d();
 		game.platform.BindTexture2d(terrainTexture());
-		game.cam.DrawModelData(modelData);
+		game.rend.DrawModelData(modelData);
 
-		game.cam.GLPopMatrix();
+		game.rend.GLPopMatrix();
 	}
 	float attackt;
 	float buildt;
@@ -460,7 +460,7 @@ public class BlockRendererTorch
 		//top
 		{
 			int sidetexture = TopTexture;
-			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.cam.texturesPacked());
+			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.rend.texturesPacked());
 			int lastelement = m.GetVerticesCount();
 			AddVertex(m, top00.X, top00.Y, top00.Z, texrec.Left(), texrec.Top(), curcolor);
 			AddVertex(m, top01.X, top01.Y, top01.Z, texrec.Left(), texrec.Bottom(), curcolor);
@@ -477,7 +477,7 @@ public class BlockRendererTorch
 		//bottom - same as top, but z is 1 less.
 		{
 			int sidetexture = SideTexture;
-			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.cam.texturesPacked());
+			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.rend.texturesPacked());
 			int lastelement = m.GetVerticesCount();
 			AddVertex(m, bottom00.X, bottom00.Y, bottom00.Z, texrec.Left(), texrec.Top(), curcolor);
 			AddVertex(m, bottom01.X, bottom01.Y, bottom01.Z, texrec.Left(), texrec.Bottom(), curcolor);
@@ -494,7 +494,7 @@ public class BlockRendererTorch
 		//front
 		{
 			int sidetexture = SideTexture;
-			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.cam.texturesPacked());
+			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.rend.texturesPacked());
 			int lastelement = m.GetVerticesCount();
 			AddVertex(m, bottom00.X, bottom00.Y, bottom00.Z, texrec.Left(), texrec.Bottom(), curcolor);
 			AddVertex(m, bottom01.X, bottom01.Y, bottom01.Z, texrec.Right(), texrec.Bottom(), curcolor);
@@ -511,7 +511,7 @@ public class BlockRendererTorch
 		//back - same as front, but x is 1 greater.
 		{
 			int sidetexture = SideTexture;
-			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.cam.texturesPacked());
+			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.rend.texturesPacked());
 			int lastelement = m.GetVerticesCount();
 			AddVertex(m, bottom10.X, bottom10.Y, bottom10.Z, texrec.Right(), texrec.Bottom(), curcolor);
 			AddVertex(m, bottom11.X, bottom11.Y, bottom11.Z, texrec.Left(), texrec.Bottom(), curcolor);
@@ -527,7 +527,7 @@ public class BlockRendererTorch
 
 		{
 			int sidetexture = SideTexture;
-			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.cam.texturesPacked());
+			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.rend.texturesPacked());
 			int lastelement = m.GetVerticesCount();
 			AddVertex(m, bottom00.X, bottom00.Y, bottom00.Z, texrec.Right(), texrec.Bottom(), curcolor);
 			AddVertex(m, top00.X, top00.Y, top00.Z, texrec.Right(), texrec.Top(), curcolor);
@@ -544,7 +544,7 @@ public class BlockRendererTorch
 		//right - same as left, but y is 1 greater.
 		{
 			int sidetexture = SideTexture;
-			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.cam.texturesPacked());
+			RectFRef texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.rend.texturesPacked());
 			int lastelement = m.GetVerticesCount();
 			AddVertex(m, bottom01.X, bottom01.Y, bottom01.Z, texrec.Left(), texrec.Bottom(), curcolor);
 			AddVertex(m, top01.X, top01.Y, top01.Z, texrec.Left(), texrec.Top(), curcolor);

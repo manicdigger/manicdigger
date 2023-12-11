@@ -351,7 +351,7 @@
 					{
 						c = ColorCi.FromArgb(100, 0, 255, 0); // green
 					}
-					game.cam.Draw2dTexture(game.WhiteTexture(), x, y,
+					game.rend.Draw2dTexture(game.WhiteTexture(), x, y,
 						CellDrawSize * sizex, CellDrawSize * sizey,
 						null, 0, c, false);
 				}
@@ -372,7 +372,7 @@
 				{
 					c = ColorCi.FromArgb(100, 0, 255, 0); // green
 				}
-				game.cam.Draw2dTexture(game.WhiteTexture(), p.X, p.Y,
+				game.rend.Draw2dTexture(game.WhiteTexture(), p.X, p.Y,
 					CellDrawSize * size.X, CellDrawSize * size.Y,
 					null, 0, c, false);
 			}
@@ -505,8 +505,8 @@
 			{
 				return;
 			}
-			game.cam.Draw2dTexture(game.terrainTexture, screenposX, screenposY,
-				drawsizeX, drawsizeY, IntRef.Create(dataItems.TextureIdForInventory()[item.BlockId]), game.cam.texturesPacked(), ColorCi.FromArgb(255, 255, 255, 255), false);
+			game.rend.Draw2dTexture(game.terrainTexture, screenposX, screenposY,
+				drawsizeX, drawsizeY, IntRef.Create(dataItems.TextureIdForInventory()[item.BlockId]), game.rend.texturesPacked(), ColorCi.FromArgb(255, 255, 255, 255), false);
 			if (item.BlockCount > 1)
 			{
 				FontCi font = new FontCi();
@@ -539,8 +539,8 @@
 		if (screenposY < h + 20) { screenposY = h + 20; }
 		if (screenposX > game.Width() - (w + 20)) { screenposX = game.Width() - (w + 20); }
 		if (screenposY > game.Height() - (h + 20)) { screenposY = game.Height() - (h + 20); }
-		game.cam.Draw2dTexture(game.WhiteTexture(), screenposX - w, screenposY - h, w, h, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
-		game.cam.Draw2dTexture(game.WhiteTexture(), screenposX - w + 2, screenposY - h + 2, w - 4, h - 4, null, 0, ColorCi.FromArgb(255, 105, 105, 105), false);
+		game.rend.Draw2dTexture(game.WhiteTexture(), screenposX - w, screenposY - h, w, h, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+		game.rend.Draw2dTexture(game.WhiteTexture(), screenposX - w + 2, screenposY - h + 2, w - 4, h - 4, null, 0, ColorCi.FromArgb(255, 105, 105, 105), false);
 		game.Draw2dText(dataItems.ItemInfo(item), font, screenposX - tw.value + 4, screenposY - h + 2, null, false);
 		Packet_Item item2 = new Packet_Item();
 		item2.BlockId = item.BlockId;

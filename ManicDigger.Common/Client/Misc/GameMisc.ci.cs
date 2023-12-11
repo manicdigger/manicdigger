@@ -777,7 +777,7 @@ public class ITerrainTextures
 {
 	internal Game game;
 
-	public int texturesPacked() { return game.cam.texturesPacked(); }
+	public int texturesPacked() { return game.rend.texturesPacked(); }
 	public int terrainTexture() { return game.terrainTexture; }
 	public int[] terrainTextures1d() { return game.terrainTextures1d; }
 	public int terrainTexturesPerAtlas() { return game.terrainTexturesPerAtlas; }

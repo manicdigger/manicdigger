@@ -76,7 +76,7 @@
 			{
 				game.platform.BindTexture2d(glTextures[i]);
 			}
-			game.cam.DrawModels(tocallSolid[i].Lists, tocallSolid[i].Count);
+			game.rend.DrawModels(tocallSolid[i].Lists, tocallSolid[i].Count);
 		}
 		game.platform.GlDisableCullFace(); // for water.
 		for (int i = 0; i < texturesCount; i++)
@@ -86,7 +86,7 @@
 			{
 				game.platform.BindTexture2d(glTextures[i]);
 			}
-			game.cam.DrawModels(tocallTransparent[i].Lists, tocallTransparent[i].Count);
+			game.rend.DrawModels(tocallTransparent[i].Lists, tocallTransparent[i].Count);
 		}
 		game.platform.GlEnableCullFace();
 	}
