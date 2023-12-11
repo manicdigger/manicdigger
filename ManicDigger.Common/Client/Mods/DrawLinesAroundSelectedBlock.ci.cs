@@ -67,7 +67,7 @@ public class DrawWireframeCube
         game.cam.GLTranslate(posx, posy, posz);
 		float half = one / 2;
         game.cam.GLScale(scalex * half, scaley * half, scalez * half);
-		game.DrawModel(wireframeCube);
+		game.cam.DrawModel(wireframeCube);
 		game.cam.GLPopMatrix();
 	}
 }

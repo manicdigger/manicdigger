@@ -73,7 +73,7 @@
 			float progressratio = one * game.maploadingprogress.ProgressPercent / 100;
 			int sizex = 400;
 			int sizey = 40;
-			game.Draw2dTexture(game.WhiteTexture(), game.xcenter(sizex), Height / 2 + 70, sizex, sizey, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+			game.rend.Draw2dTexture(game.WhiteTexture(), game.xcenter(sizex), Height / 2 + 70, sizex, sizey, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
 			int red = ColorCi.FromArgb(255, 255, 0, 0);
 			int yellow = ColorCi.FromArgb(255, 255, 255, 0);
 			int green = ColorCi.FromArgb(255, 0, 255, 0);
@@ -82,7 +82,7 @@
 			colors[1] = yellow;
 			colors[2] = green;
 			int c = InterpolationCi.InterpolateColor(platform, progressratio, colors, 3);
-			game.Draw2dTexture(game.WhiteTexture(), game.xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, 0, c, false);
+			game.rend.Draw2dTexture(game.WhiteTexture(), game.xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, 0, c, false);
 		}
 	}
 
@@ -97,7 +97,7 @@
 		{
 			for (int y = 0; y < countY; y++)
 			{
-				game.Draw2dTexture(game.GetTexture("background.png"), x * backgroundW, y * backgroundH, backgroundW, backgroundH, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
+				game.rend.Draw2dTexture(game.GetTexture("background.png"), x * backgroundW, y * backgroundH, backgroundW, backgroundH, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 			}
 		}
 	}

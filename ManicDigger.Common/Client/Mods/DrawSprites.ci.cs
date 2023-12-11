@@ -22,7 +22,7 @@
 				float progress = one - (entity.expires.timeLeft / entity.expires.totalTime);
 				n = IntRef.Create(game.platform.FloatToInt(progress * (b.animationcount * b.animationcount - 1)));
 			}
-			game.Draw2dTexture(game.GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, ColorCi.FromArgb(255, 255, 255, 255), true);
+			game.cam.Draw2dTexture(game.GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, ColorCi.FromArgb(255, 255, 255, 255), true);
 			game.cam.GLPopMatrix();
 		}
 	}

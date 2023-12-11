@@ -59,8 +59,8 @@
 					//TODO: Can't change text color because text has outline anyway.
 					if (p.DrawHealth)
 					{
-						game.Draw2dTexture(game.WhiteTexture(), -26, -11, 52, 12, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
-						game.Draw2dTexture(game.WhiteTexture(), -25, -10, 50 * (game.one * p.Health), 10, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
+						game.cam.Draw2dTexture(game.WhiteTexture(), -26, -11, 52, 12, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+						game.cam.Draw2dTexture(game.WhiteTexture(), -25, -10, 50 * (game.one * p.Health), 10, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
 					}
 					FontCi font = new FontCi();
 					font.size = 14;

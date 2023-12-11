@@ -28,7 +28,7 @@
 		{
 			return;
 		}
-		game.Draw2dTexture(game.WhiteTexture(), startX, startY, maxColumns * charSize, maxLines * charSize, null, 0, ColorCi.FromArgb(255, 100, 100, 100), false);
+		game.rend.Draw2dTexture(game.WhiteTexture(), startX, startY, maxColumns * charSize, maxLines * charSize, null, 0, ColorCi.FromArgb(255, 100, 100, 100), false);
 		for (int i = 0; i < maxLines; i++)
 		{
 			game.Draw2dText(LineToString(buffer[i]), font, startX, startY + charSize * i, null, false);

@@ -29,7 +29,7 @@
 	public override void OnNewFrameDraw3d(Game game, float dt)
 	{
 		GamePlatform platform = game.platform;
-		game.cam.GLMatrixModeModelView();
+		game.rend.GLMatrixModeModelView();
 		if (suntexture == -1)
 		{
 			suntexture = game.GetTexture("sun.png");
@@ -56,13 +56,13 @@
 		posY += game.player.position.y;
 		posZ += game.player.position.z;
 
-		game.cam.GLPushMatrix();
-		game.cam.GLTranslate(posX, posY, posZ);
+		game.rend.GLPushMatrix();
+		game.rend.GLTranslate(posX, posY, posZ);
 		ModDrawSprites.Billboard(game);
-		game.cam.GLScale(one * 2 / 100, one * 2 / 100, one * 2 / 100);
+		game.rend.GLScale(one * 2 / 100, one * 2 / 100, one * 2 / 100);
 		//GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
-		game.Draw2dTexture(game.isNight ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
-		game.cam.GLPopMatrix();
+		game.rend.Draw2dTexture(game.isNight ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
+		game.rend.GLPopMatrix();
 	}
 
 	void UpdateSunMoonPosition(Game game, float dt)

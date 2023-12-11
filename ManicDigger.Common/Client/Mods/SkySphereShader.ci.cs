@@ -99,14 +99,14 @@ public class ModSkySphereShader : ClientMod
 
 	public void Draw(Game game, float fov)
 	{
-        game.cam.Set3dProjection(skysphereSize + 1, fov);
-		game.cam.GLMatrixModeModelView();
-		game.cam.GLPushMatrix();
-		game.cam.GLTranslate(game.player.position.x,
+        game.rend.Set3dProjection(skysphereSize + 1, fov);
+		game.rend.GLMatrixModeModelView();
+		game.rend.GLPushMatrix();
+		game.rend.GLTranslate(game.player.position.x,
 			game.player.position.y,
 			game.player.position.z);
-		game.DrawModelData(skymodel);
-		game.cam.GLPopMatrix();
-        game.cam.Set3dProjection(game.zfar(), fov);
+		game.rend.DrawModelData(skymodel);
+		game.rend.GLPopMatrix();
+        game.rend.Set3dProjection(game.zfar(), fov);
 	}
 }

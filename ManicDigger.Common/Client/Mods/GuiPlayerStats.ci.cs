@@ -29,8 +29,8 @@
 		if (game.PlayerStats != null)
 		{
 			float progress = game.one * game.PlayerStats.CurrentHealth / game.PlayerStats.MaxHealth;
-			game.Draw2dTexture(game.GetTexture("ui_bar_background.png"), healthPosX, healthPosY, baseSizeX, baseSizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
-			game.Draw2dTexturePart(game.GetTexture("ui_bar_inner.png"), progress, 1, healthPosX, healthPosY, (progress) * baseSizeX, baseSizeY, ColorCi.FromArgb(255, 255, 0, 0), false);
+			game.rend.Draw2dTexture(game.GetTexture("ui_bar_background.png"), healthPosX, healthPosY, baseSizeX, baseSizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
+			game.rend.Draw2dTexturePart(game.GetTexture("ui_bar_inner.png"), progress, 1, healthPosX, healthPosY, (progress) * baseSizeX, baseSizeY, ColorCi.FromArgb(255, 255, 0, 0), false);
 		}
 	}
 
@@ -41,8 +41,8 @@
 			if (game.PlayerStats.CurrentOxygen < game.PlayerStats.MaxOxygen)
 			{
 				float progress = game.one * game.PlayerStats.CurrentOxygen / game.PlayerStats.MaxOxygen;
-				game.Draw2dTexture(game.GetTexture("ui_bar_background.png"), oxygenPosX, oxygenPosY, baseSizeX, baseSizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
-				game.Draw2dTexturePart(game.GetTexture("ui_bar_inner.png"), progress, 1, oxygenPosX, oxygenPosY, (progress) * baseSizeX, baseSizeY, ColorCi.FromArgb(255, 0, 0, 255), false);
+				game.rend.Draw2dTexture(game.GetTexture("ui_bar_background.png"), oxygenPosX, oxygenPosY, baseSizeX, baseSizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
+				game.rend.Draw2dTexturePart(game.GetTexture("ui_bar_inner.png"), progress, 1, oxygenPosX, oxygenPosY, (progress) * baseSizeX, baseSizeY, ColorCi.FromArgb(255, 0, 0, 255), false);
 			}
 		}
 	}

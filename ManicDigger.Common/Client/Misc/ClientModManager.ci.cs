@@ -161,14 +161,14 @@ public class ClientModManager1 : ClientModManager
 		int r = ColorCi.ExtractR(color);
 		int g = ColorCi.ExtractG(color);
 		int b = ColorCi.ExtractB(color);
-		game.Draw2dTexture(textureid, game.platform.FloatToInt(x1), game.platform.FloatToInt(y1),
+		game.cam.Draw2dTexture(textureid, game.platform.FloatToInt(x1), game.platform.FloatToInt(y1),
 			game.platform.FloatToInt(width), game.platform.FloatToInt(height),
 			inAtlasId, 0, ColorCi.FromArgb(a, r, g, b), false);
 	}
 
 	public override void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureId)
 	{
-		game.Draw2dTextures(todraw, todrawLength, textureId);
+		game.cam.Draw2dTextures(todraw, todrawLength, textureId);
 	}
 
 

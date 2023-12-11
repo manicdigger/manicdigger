@@ -104,8 +104,8 @@
 	internal void DrawEnemyHealthUseInfo(Game game, string name, float progress, bool useInfo)
 	{
 		int y = useInfo ? 55 : 35;
-		game.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300, y, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
-		game.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
+		game.rend.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300, y, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+		game.rend.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
 		FontCi font = new FontCi();
 		font.size = 14;
 		IntRef w = new IntRef();
