@@ -30,9 +30,9 @@
 		Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
 			Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
 			upVec3);
-		game.cam.CameraEyeX = cameraEye.X;
-		game.cam.CameraEyeY = cameraEye.Y;
-		game.cam.CameraEyeZ = cameraEye.Z;
+		game.rend.CameraEyeX = cameraEye.X;
+		game.rend.CameraEyeY = cameraEye.Y;
+		game.rend.CameraEyeZ = cameraEye.Z;
 		return ret;
 	}
 	float[] upVec3;
@@ -70,9 +70,9 @@
 		Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
 			Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
 			upVec3);
-        game.cam.CameraEyeX = cameraEye.X;
-        game.cam.CameraEyeY = cameraEye.Y;
-        game.cam.CameraEyeZ = cameraEye.Z;
+        game.rend.CameraEyeX = cameraEye.X;
+        game.rend.CameraEyeY = cameraEye.Y;
+        game.rend.CameraEyeZ = cameraEye.Z;
 		return ret;
 	}
 

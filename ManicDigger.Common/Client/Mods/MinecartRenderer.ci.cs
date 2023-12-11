@@ -36,22 +36,22 @@ public class ModDrawMinecarts : ClientMod
 		{
 			minecarttexture = game.GetTexture("minecart.png");
 		}
-		game.cam.GLPushMatrix();
+		game.rend.GLPushMatrix();
 		float pX = positionX;
 		float pY = positionY;
 		float pZ = positionZ;
 		pY += -(one * 7 / 10);
-		game.cam.GLTranslate(pX, pY, pZ);
+		game.rend.GLTranslate(pX, pY, pZ);
 		float currot = vehiclerotation(dir);
 		float lastrot = vehiclerotation(lastdir);
 		//double rot = lastrot + (currot - lastrot) * progress;
 		float rot = AngleInterpolation.InterpolateAngle360(game.platform, lastrot, currot, progress);
-		game.cam.GLRotate(-rot - 90, 0, 1, 0);
+		game.rend.GLRotate(-rot - 90, 0, 1, 0);
 		RectangleFloat[] cc = CuboidRenderer.CuboidNet(8, 8, 8, 0, 0);
 		CuboidRenderer.CuboidNetNormalize(cc, 32, 16);
 		game.platform.BindTexture2d(minecarttexture);
 		CuboidRenderer.DrawCuboid(game, -(one * 5 / 10), -(one * 3 / 10), -(one * 5 / 10), 1, 1, 1, cc, 1);
-		game.cam.GLPopMatrix();
+		game.rend.GLPopMatrix();
 	}
 
 	float vehiclerotation(VehicleDirection12 dir)

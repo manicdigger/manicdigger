@@ -968,8 +968,8 @@
 		tempViewport[2] = game.Width();
 		tempViewport[3] = game.Height();
 
-		unproject.UnProject(mouseX, game.Height() - mouseY, 1, game.cam.mvMatrix.Peek(), game.cam.pMatrix.Peek(), tempViewport, tempRay);
-		unproject.UnProject(mouseX, game.Height() - mouseY, 0, game.cam.mvMatrix.Peek(), game.cam.pMatrix.Peek(), tempViewport, tempRayStartPoint);
+		unproject.UnProject(mouseX, game.Height() - mouseY, 1, game.rend.mvMatrix.Peek(), game.rend.pMatrix.Peek(), tempViewport, tempRay);
+		unproject.UnProject(mouseX, game.Height() - mouseY, 0, game.rend.mvMatrix.Peek(), game.rend.pMatrix.Peek(), tempViewport, tempRayStartPoint);
 
 		float raydirX = (tempRay[0] - tempRayStartPoint[0]);
 		float raydirY = (tempRay[1] - tempRayStartPoint[1]);

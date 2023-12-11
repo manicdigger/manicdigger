@@ -25,11 +25,11 @@
 			AnimatedModel model = AnimatedModelSerializer.Deserialize(game.platform, dataString);
 			testmodel.Start(game, model);
 		}
-		game.cam.GLPushMatrix();
-		game.cam.GLTranslate(game.map.MapSizeX / 2, game.blockheight(game.map.MapSizeX / 2, game.map.MapSizeY / 2 - 2, 128), game.map.MapSizeY / 2 - 2);
+		game.rend.GLPushMatrix();
+		game.rend.GLTranslate(game.map.MapSizeX / 2, game.blockheight(game.map.MapSizeX / 2, game.map.MapSizeY / 2 - 2, 128), game.map.MapSizeY / 2 - 2);
 		game.platform.BindTexture2d(game.GetTexture("mineplayer.png"));
 		testmodel.Render(deltaTime, 0, 1);
-		game.cam.GLPopMatrix();
+		game.rend.GLPopMatrix();
 	}
 	AnimatedModelRenderer testmodel;
 

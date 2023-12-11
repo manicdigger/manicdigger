@@ -446,7 +446,6 @@
 
 	internal int terrainTexturesPerAtlas;
 
-	internal int texturesPacked() { return GlobalVar.MAX_BLOCKTYPES_SQRT; } //16x16
 	internal int terrainTexture;
 	internal int[] terrainTextures1d;
 	internal ITerrainTextures d_TerrainTextures;
@@ -463,187 +462,7 @@
 	internal MeshBatcher d_Batcher;
 	internal int sunlight_;
 
-	public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
-	{
-		platform.GLDisableAlphaTest();
-		if (color == ColorCi.FromArgb(255, 255, 255, 255) && inAtlasId == null)
-		{
-			Draw2dTextureSimple(textureid, x1, y1, width, height, enabledepthtest);
-		}
-		else
-		{
-			Draw2dTextureInAtlas(textureid, x1, y1, width, height, inAtlasId, atlastextures, color, enabledepthtest);
-		}
-		platform.GLEnableAlphaTest();
-	}
-
-	Model quadModel;
-	void Draw2dTextureSimple(int textureid, float x1, float y1, float width, float height, bool enabledepthtest)
-	{
-		platform.GlDisableCullFace();
-		platform.GlEnableTexture2d();
-		platform.BindTexture2d(textureid);
-
-		if (!enabledepthtest)
-		{
-			platform.GlDisableDepthTest();
-		}
-		if (quadModel == null)
-		{
-			quadModel = platform.CreateModel(QuadModelData.GetQuadModelData());
-		}
-		
-        cam.GLPushMatrix();
-        cam.GLTranslate(x1, y1, 0);
-        cam.GLScale(width, height, 0);
-        cam.GLScale(one / 2, one / 2, 0);
-        cam.GLTranslate(one, one, 0);
-
-		DrawModel(quadModel);
-        cam.GLPopMatrix();
-
-		if (!enabledepthtest)
-		{
-			platform.GlEnableDepthTest();
-		}
-		platform.GlEnableCullFace();
-		platform.GlEnableTexture2d();
-	}
-
-	void Draw2dTextureInAtlas(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
-	{
-		RectFRef rect = RectFRef.Create(0, 0, 1, 1);
-		if (inAtlasId != null)
-		{
-			TextureAtlasCi.TextureCoords2d(inAtlasId.value, atlastextures, rect);
-		}
-		platform.GlDisableCullFace();
-		platform.GlEnableTexture2d();
-		platform.BindTexture2d(textureid);
-
-		if (!enabledepthtest)
-		{
-			platform.GlDisableDepthTest();
-		}
-		ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-			x1, y1, width, height, ConvertCi.IntToByte(ColorCi.ExtractR(color)), ConvertCi.IntToByte(ColorCi.ExtractG(color)), ConvertCi.IntToByte(ColorCi.ExtractB(color)), ConvertCi.IntToByte(ColorCi.ExtractA(color)));
-		DrawModelData(data);
-		if (!enabledepthtest)
-		{
-			platform.GlEnableDepthTest();
-		}
-		platform.GlEnableCullFace();
-		platform.GlEnableTexture2d();
-	}
-
-	public void Draw2dTexturePart(int textureid, float srcwidth, float srcheight, float dstx, float dsty, float dstwidth, float dstheight, int color, bool enabledepthtest)
-	{
-		RectFRef rect = RectFRef.Create(0, 0, srcwidth, srcheight);
-		platform.GlDisableCullFace();
-		platform.GlEnableTexture2d();
-		platform.BindTexture2d(textureid);
-
-		if (!enabledepthtest)
-		{
-			platform.GlDisableDepthTest();
-		}
-		ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-			dstx, dsty, dstwidth, dstheight, ConvertCi.IntToByte(ColorCi.ExtractR(color)), ConvertCi.IntToByte(ColorCi.ExtractG(color)), ConvertCi.IntToByte(ColorCi.ExtractB(color)), ConvertCi.IntToByte(ColorCi.ExtractA(color)));
-		DrawModelData(data);
-		if (!enabledepthtest)
-		{
-			platform.GlEnableDepthTest();
-		}
-		platform.GlEnableCullFace();
-		platform.GlEnableTexture2d();
-	}
-
-	public ModelData CombineModelData(ModelData[] modelDatas, int count)
-	{
-		ModelData ret = new ModelData();
-		int totalIndices = 0;
-		int totalVertices = 0;
-		for (int i = 0; i < count; i++)
-		{
-			ModelData m = modelDatas[i];
-			totalIndices += m.indicesCount;
-			totalVertices += m.verticesCount;
-		}
-		ret.indices = new int[totalIndices];
-		ret.xyz = new float[totalVertices * 3];
-		ret.uv = new float[totalVertices * 2];
-		ret.rgba = new byte[totalVertices * 4];
-
-		for (int i = 0; i < count; i++)
-		{
-			ModelData m = modelDatas[i];
-			int retVerticesCount = ret.verticesCount;
-			int retIndicesCount = ret.indicesCount;
-			for (int k = 0; k < m.indicesCount; k++)
-			{
-				ret.indices[ret.indicesCount++] = m.indices[k] + retVerticesCount;
-			}
-			for (int k = 0; k < m.verticesCount * 3; k++)
-			{
-				ret.xyz[retVerticesCount * 3 + k] = m.xyz[k];
-			}
-			for (int k = 0; k < m.verticesCount * 2; k++)
-			{
-				ret.uv[retVerticesCount * 2 + k] = m.uv[k];
-			}
-			for (int k = 0; k < m.verticesCount * 4; k++)
-			{
-				ret.rgba[retVerticesCount * 4 + k] = m.rgba[k];
-			}
-			ret.verticesCount += m.verticesCount;
-		}
-		return ret;
-	}
-
-	public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureid)
-	{
-		ModelData[] modelDatas = new ModelData[512];
-		int modelDatasCount = 0;
-		for (int i = 0; i < todrawLength; i++)
-		{
-			Draw2dData d = todraw[i];
-			float x1 = d.x1;
-			float y1 = d.y1;
-			float width = d.width;
-			float height = d.height;
-			IntRef inAtlasId = d.inAtlasId;
-			int textureId = textureid;
-			int color = d.color;
-
-			RectFRef rect = RectFRef.Create(0, 0, 1, 1);
-			if (inAtlasId != null)
-			{
-				TextureAtlasCi.TextureCoords2d(inAtlasId.value, texturesPacked(), rect);
-			}
-
-			ModelData modelData =
-				QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-				x1, y1, width, height, ConvertCi.IntToByte(ColorCi.ExtractR(color)), ConvertCi.IntToByte(ColorCi.ExtractG(color)), ConvertCi.IntToByte(ColorCi.ExtractB(color)), ConvertCi.IntToByte(ColorCi.ExtractA(color)));
-			modelDatas[modelDatasCount++] = modelData;
-		}
-
-		ModelData combined = CombineModelData(modelDatas, modelDatasCount);
-
-		platform.GlDisableCullFace();
-		platform.GlEnableTexture2d();
-		platform.BindTexture2d(textureid);
-
-		platform.GlDisableDepthTest();
-
-		DrawModelData(combined);
-
-		platform.GlEnableDepthTest();
-
-		platform.GlDisableCullFace();
-		platform.GlEnableTexture2d();
-	}
-
-
+ 
 	public int WhiteTexture()
 	{
 		if (this.whitetexture == -1)
@@ -758,7 +577,7 @@
 
 		ct = GetCachedTextTexture(t);
 		ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
-		Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), enabledepthtest);
+		cam.Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), enabledepthtest);
 		DeleteUnusedCachedTextTextures();
 	}
 
@@ -1067,10 +886,7 @@
 	{
 		return platform.GetCanvasHeight();
 	}
-
-
-
-
+ 
     internal bool ENABLE_ZFAR;
 
 	internal float zfar()
@@ -1277,7 +1093,7 @@
 
 	public void Draw2dBitmapFile(string filename, float x, float y, float w, float h)
 	{
-		Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
+		cam.Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorCi.FromArgb(255, 255, 255, 255), false);
 	}
 	internal int maxdrawdistance;
 	public void ToggleFog()
@@ -1929,7 +1745,7 @@
 			circleModelData.uv[i] = 0;
 		}
 
-		DrawModelData(circleModelData);
+        cam.DrawModelData(circleModelData);
 
         cam.GLPopMatrix();
 	}
@@ -3000,8 +2816,8 @@
 			int[] bmpPixels = new int[tilesize * tilesize];
 			platform.BitmapGetPixelsArgb(bmp, bmpPixels);
 
-			int x = i % texturesPacked();
-			int y = i / texturesPacked();
+			int x = i % cam.texturesPacked();
+			int y = i / cam.texturesPacked();
 			for (int xx = 0; xx < tilesize; xx++)
 			{
 				for (int yy = 0; yy < tilesize; yy++)
@@ -3682,23 +3498,7 @@
 		commitActions.Add(action);
 	}
 
-	public void DrawModel(Model model)
-	{
-        cam.SetMatrixUniformModelView();
-		platform.DrawModel(model);
-	}
 
-	public void DrawModels(Model[] model, int count)
-	{
-        cam.SetMatrixUniformModelView();
-		platform.DrawModels(model, count);
-	}
-
-	public void DrawModelData(ModelData data)
-	{
-        cam.SetMatrixUniformModelView();
-		platform.DrawModelData(data);
-	}
 
 	public void Dispose()
 	{
@@ -3748,6 +3548,7 @@
 	internal float moonPositionX;
 	internal float moonPositionY;
 	internal float moonPositionZ;
+
 	internal bool isNight;
 	internal bool fancySkysphere;
 
