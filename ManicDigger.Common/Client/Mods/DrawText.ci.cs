@@ -41,7 +41,7 @@
 
 					FontCi font = new FontCi();
 					font.size = 14;
-					game.Draw2dText(text, font, -game.TextSizeWidth(text, font) / 2, 0, IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), true);
+					game.rend.Draw2dText(text, font, -game.TextSizeWidth(text, font) / 2, 0, IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), true);
 
 					game.rend.GLPopMatrix();
 				}

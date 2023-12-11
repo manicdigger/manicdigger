@@ -104,7 +104,7 @@
 		if (chatlines2Count > 0)
 		{
 			// draw chatbox background
-			game.rend.Draw2dTexture(game.WhiteTexture(),
+			game.rend.Draw2dTexture(game.rend.WhiteTexture(),
 				(posX - chatboxMargin) * game.Scale(),
 				(posY - chatboxMargin) * game.Scale(),
 				(750 + 2 * chatboxMargin) * game.Scale(),
@@ -127,11 +127,11 @@
 				//1 = bold
 				font.style = 1;
 			}
-			game.Draw2dText(chatlines2[i].text, font, posX * game.Scale(), (posY + i * lineSpacing) * game.Scale(), null, false);
+			game.rend.Draw2dText(chatlines2[i].text, font, posX * game.Scale(), (posY + i * lineSpacing) * game.Scale(), null, false);
 		}
 		if (ChatPageScroll != 0)
 		{
-			game.Draw2dText(game.platform.StringFormat("&7Page: {0}", game.platform.IntToString(ChatPageScroll)), font, posX * game.Scale(), (posY + (-1) * lineSpacing) * game.Scale(), null, false);
+			game.rend.Draw2dText(game.platform.StringFormat("&7Page: {0}", game.platform.IntToString(ChatPageScroll)), font, posX * game.Scale(), (posY + (-1) * lineSpacing) * game.Scale(), null, false);
 		}
 	}
 	FontCi font;
@@ -159,7 +159,7 @@
 		}
 
 		// draw typing buffer background
-		game.rend.Draw2dTexture(game.WhiteTexture(),
+		game.rend.Draw2dTexture(game.rend.WhiteTexture(),
 			(posX - chatboxMargin) * game.Scale(),
 			(posY - chatboxMargin) * game.Scale(),
 			(750 + 2 * chatboxMargin) * game.Scale(),
@@ -167,7 +167,7 @@
 			null, 0, color_background, false);
 
 		// draw text input
-		game.Draw2dText(game.platform.StringFormat("{0}_", s), font, posX, posY, null, true);
+		game.rend.Draw2dText(game.platform.StringFormat("{0}_", s), font, posX, posY, null, true);
 	}
 
 	public override void OnKeyDown(Game game_, KeyEventArgs args)

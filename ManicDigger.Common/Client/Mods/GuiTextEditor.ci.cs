@@ -28,10 +28,10 @@
 		{
 			return;
 		}
-		game.rend.Draw2dTexture(game.WhiteTexture(), startX, startY, maxColumns * charSize, maxLines * charSize, null, 0, ColorCi.FromArgb(255, 100, 100, 100), false);
+		game.rend.Draw2dTexture(game.rend.WhiteTexture(), startX, startY, maxColumns * charSize, maxLines * charSize, null, 0, ColorCi.FromArgb(255, 100, 100, 100), false);
 		for (int i = 0; i < maxLines; i++)
 		{
-			game.Draw2dText(LineToString(buffer[i]), font, startX, startY + charSize * i, null, false);
+			game.rend.Draw2dText(LineToString(buffer[i]), font, startX, startY + charSize * i, null, false);
 		}
 		int[] spaces = new int[maxColumns];
 		for (int i = 0; i < maxColumns; i++)
@@ -40,7 +40,7 @@
 		}
 		spaces[cursorColumn] = 95; //_
 		string spacesString = game.platform.CharArrayToString(spaces, cursorColumn + 1);
-		game.Draw2dText(spacesString, font, startX, startY + cursorLine * charSize, null, false);
+		game.rend.Draw2dText(spacesString, font, startX, startY + cursorLine * charSize, null, false);
 	}
 	int[][] buffer;
 	int cursorColumn;

@@ -104,21 +104,21 @@
 	internal void DrawEnemyHealthUseInfo(Game game, string name, float progress, bool useInfo)
 	{
 		int y = useInfo ? 55 : 35;
-		game.rend.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300, y, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
-		game.rend.Draw2dTexture(game.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
+		game.rend.Draw2dTexture(game.rend.WhiteTexture(), game.xcenter(300), 40, 300, y, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+		game.rend.Draw2dTexture(game.rend.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
 		FontCi font = new FontCi();
 		font.size = 14;
 		IntRef w = new IntRef();
 		IntRef h = new IntRef();
 		game.platform.TextSize(name, font, w, h);
-		game.Draw2dText(name, font, game.xcenter(w.value), 40, null, false);
+		game.rend.Draw2dText(name, font, game.xcenter(w.value), 40, null, false);
 		if (useInfo)
 		{
 			name = game.platform.StringFormat(game.language.PressToUse(), "E");
 			FontCi font2 = new FontCi();
 			font2.size = 10;
 			game.platform.TextSize(name, font2, w, h);
-			game.Draw2dText(name, font2, game.xcenter(w.value), 70, null, false);
+			game.rend.Draw2dText(name, font2, game.xcenter(w.value), 70, null, false);
 		}
 	}
 
@@ -151,13 +151,13 @@
 				string s = game.platform.StringFormat2("{0}/{1}", game.platform.IntToString(loaded), game.platform.IntToString(total - loaded));
 				FontCi font = new FontCi();
 				font.size = 18;
-				game.Draw2dText(s, font, game.Width() - game.TextSizeWidth(s, font) - 50,
+				game.rend.Draw2dText(s, font, game.Width() - game.TextSizeWidth(s, font) - 50,
 					game.Height() - game.TextSizeHeight(s, font) - 50, loaded == 0 ? IntRef.Create(ColorCi.FromArgb(255, 255, 0, 0)) : IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)), false);
 				if (loaded == 0)
 				{
 					font.size = 14;
 					string pressR = "Press R to reload";
-					game.Draw2dText(pressR, font, game.Width() - game.TextSizeWidth(pressR, font) - 50,
+					game.rend.Draw2dText(pressR, font, game.Width() - game.TextSizeWidth(pressR, font) - 50,
 						game.Height() - game.TextSizeHeight(s, font) - 80, IntRef.Create(ColorCi.FromArgb(255, 255, 0, 0)), false);
 				}
 			}
@@ -174,8 +174,8 @@
 			game.Draw2dBitmapFile("disconnected.png", game.Width() - 100, 50, 50, 50);
 			FontCi font = new FontCi();
 			font.size = 12;
-			game.Draw2dText(game.platform.IntToString(game.platform.FloatToInt(lagSeconds)), font, game.Width() - 100, 50 + 50 + 10, null, false);
-			game.Draw2dText("Press F6 to reconnect", font, game.Width() / 2 - 200 / 2, 50, null, false);
+			game.rend.Draw2dText(game.platform.IntToString(game.platform.FloatToInt(lagSeconds)), font, game.Width() - 100, 50 + 50 + 10, null, false);
+			game.rend.Draw2dText("Press F6 to reconnect", font, game.Width() / 2 - 200 / 2, 50, null, false);
 		}
 	}
 }

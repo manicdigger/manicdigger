@@ -496,10 +496,8 @@
 		}
 		game.Font = fontValues[options.Font];
 		game.UpdateTextRendererFont();
-		for (int i = 0; i < game.cachedTextTexturesMax; i++)
-		{
-			game.cachedTextTextures[i] = null;
-		}
+        game.rend.RemoveCahedTextures();
+
 	}
 
 	string KeyName(int key)
@@ -554,7 +552,7 @@
 		for (int i = 0; i < widgetsCount; i++)
 		{
 			Button w = widgets[i];
-			game.Draw2dText(w.Text, w.font, w.x, w.y, IntRef.Create(w.selected ? w.fontcolorselected : w.fontcolor), false);
+			game.rend.Draw2dText(w.Text, w.font, w.x, w.y, IntRef.Create(w.selected ? w.fontcolorselected : w.fontcolor), false);
 		}
 	}
 	Button[] widgets;

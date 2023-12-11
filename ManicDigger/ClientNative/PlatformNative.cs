@@ -2138,14 +2138,15 @@ namespace ManicDigger.ClientNative
 			{
 				return;
 			}
-			if (current != previous)
+			if (current != previous && !mousePointerLocked)
 			{
-				// Mouse state has changed
+                // Mouse state has changed
 				int xdelta = current.X - previous.X;
 				int ydelta = current.Y - previous.Y;
 				foreach (MouseEventHandler h in mouseEventHandlers)
 				{
-					MouseEventArgs args = new MouseEventArgs();
+     
+                    MouseEventArgs args = new MouseEventArgs();
 					args.SetX(lastX);
 					args.SetY(lastY);
 					args.SetMovementX(xdelta);
@@ -2157,32 +2158,48 @@ namespace ManicDigger.ClientNative
 			previous = current;
 			if (mousePointerLocked)
 			{
-				/*
-				* Windows: OK
-				* Cursor hides properly
-				* Cursor is trapped inside window
-				* Centering works
-				*
-				* Linux: Needs workaround
-				* Cursor hides properly
-				* Cursor is trapped inside window
-				* Centering broken
-				*
-				* Mac OS X: OK
-				* Cursor hides properly (although visible when doing Skype screencast)
-				* Centering works
-				* Opening "mission control" by gesture does not free cursor
-				*/
+                /*
+                * Windows: UNTESTED
+                *                
+                * Linux: OK
+                * Cursor hides properly
+                * Cursor is trapped inside window
+                * Centering working
+                * Orginal code was Working for mac os and windows i dont have time right now for testing this
+                * I run  Native Linux soo... TODO               
+                *               
+                * Mac OS X: Untested
 
-				int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
-				int centery = window.Bounds.Top + (window.Bounds.Height / 2);
+                */
+                var mouseDelta = Cursor.Position - new Size(_lastMousePos);
+                if (mouseDelta != Point.Empty)
+                {
+                    foreach (MouseEventHandler h in mouseEventHandlers)
+                    {
 
-				// Setting cursor position this way works on Windows and Mac
-				Mouse.SetPosition(centerx, centery);
-			}
+                        MouseEventArgs args = new MouseEventArgs();
+                        args.SetX(lastX);
+                        args.SetY(lastY);
+                        args.SetMovementX(mouseDelta.X);
+                        args.SetMovementY(mouseDelta.Y);
+                        args.SetEmulated(true);
+                        h.OnMouseMove(args);
+                    }
+                    ResetCursorPosition();
+                }
+
+
+ 
+            }
 		}
+        Point _lastMousePos;
+        protected void ResetCursorPosition()
+        {
+            Cursor.Position = new Point(window.Bounds.Left + (window.Bounds.Width / 2), window.Bounds.Top + (window.Bounds.Height / 2));
+            _lastMousePos = Cursor.Position;
+        }
 
-		void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
+        void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
 		{
 			foreach (MouseEventHandler h in mouseEventHandlers)
 			{

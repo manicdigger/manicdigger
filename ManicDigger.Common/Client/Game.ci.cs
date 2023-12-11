@@ -24,13 +24,7 @@
 		mLightLevels = new float[16];
 		sunlight_ = 15;
 
-		whitetexture = -1;
-		cachedTextTexturesMax = 1024;
-		cachedTextTextures = new CachedTextTexture[cachedTextTexturesMax];
-		for (int i = 0; i < cachedTextTexturesMax; i++)
-		{
-			cachedTextTextures[i] = null;
-		}
+
 		packetLen = new IntRef();
 		ENABLE_DRAW2D = true;
 		AllowFreemove = true;
@@ -138,18 +132,16 @@
 
 	internal AssetList assets;
 	internal FloatRef assetsLoadProgress;
-	internal TextColorRenderer textColorRenderer;
 	internal UiRenderer uiRenderer;
 	internal AudioControl audio;
 
 	public void Start()
 	{
-        rend.SetPlatform(platform);
+        rend.Start(platform);
 
-		textColorRenderer = new TextColorRenderer();
-		textColorRenderer.platform = platform;
 		language.platform = platform;
 		language.LoadTranslations();
+
 		GameData gamedata = new GameData();
 		gamedata.Start();
 		Config3d config3d = new Config3d();
@@ -464,22 +456,7 @@
 	internal float[] mLightLevels;
 	internal MeshBatcher d_Batcher;
 	internal int sunlight_;
-
  
-	public int WhiteTexture()
-	{
-		if (this.whitetexture == -1)
-		{
-			BitmapCi bmp = platform.BitmapCreate(1, 1);
-			int[] pixels = new int[1];
-			pixels[0] = ColorCi.FromArgb(255, 255, 255, 255);
-			platform.BitmapSetPixelsArgb(bmp, pixels);
-			this.whitetexture = platform.LoadTextureFromBitmap(bmp);
-		}
-		return this.whitetexture;
-	}
-	int whitetexture;
-
 	public float getblockheight(int x, int y, int z)
 	{
 		float RailHeight = one * 3 / 10;
@@ -502,98 +479,12 @@
 		return 1;
 	}
 
-	internal CachedTextTexture[] cachedTextTextures;
-	internal int cachedTextTexturesMax;
-
-	public void DeleteUnusedCachedTextTextures()
-	{
-		int now = platform.TimeMillisecondsFromStart();
-		for (int i = 0; i < cachedTextTexturesMax; i++)
-		{
-			CachedTextTexture t = cachedTextTextures[i];
-			if (t == null)
-			{
-				continue;
-			}
-			if ((one * (now - t.texture.lastuseMilliseconds) / 1000) > 1)
-			{
-				platform.GLDeleteTexture(t.texture.textureId);
-				cachedTextTextures[i] = null;
-			}
-		}
-	}
-
-	CachedTexture GetCachedTextTexture(Text_ t)
-	{
-		for (int i = 0; i < cachedTextTexturesMax; i++)
-		{
-			CachedTextTexture ct = cachedTextTextures[i];
-			if (ct == null)
-			{
-				continue;
-			}
-			if (ct.text.Equals_(t))
-			{
-				return ct.texture;
-			}
-		}
-		return null;
-	}
 
 	public void UpdateTextRendererFont()
 	{
 		platform.SetTextRendererFont(Font);
 	}
 
-	public void Draw2dText(string text, FontCi font, float x, float y, IntRef color, bool enabledepthtest)
-	{
-		if (text == null || platform.StringTrim(text) == "")
-		{
-			return;
-		}
-		if (color == null) { color = IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)); }
-		Text_ t = new Text_();
-		t.text = text;
-		t.color = color.value;
-		t.font = font;
-		CachedTexture ct;
-
-		if (GetCachedTextTexture(t) == null)
-		{
-			ct = MakeTextTexture(t);
-			if (ct == null)
-			{
-				return;
-			}
-			for (int i = 0; i < cachedTextTexturesMax; i++)
-			{
-				if (cachedTextTextures[i] == null)
-				{
-					CachedTextTexture ct1 = new CachedTextTexture();
-					ct1.text = t;
-					ct1.texture = ct;
-					cachedTextTextures[i] = ct1;
-					break;
-				}
-			}
-		}
-
-		ct = GetCachedTextTexture(t);
-		ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
-		rend.Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), enabledepthtest);
-		DeleteUnusedCachedTextTextures();
-	}
-
-	CachedTexture MakeTextTexture(Text_ t)
-	{
-		CachedTexture ct = new CachedTexture();
-		BitmapCi bmp = textColorRenderer.CreateTextTexture(t);
-		ct.sizeX = platform.BitmapGetWidth(bmp);
-		ct.sizeY = platform.BitmapGetHeight(bmp);
-		ct.textureId = platform.LoadTextureFromBitmap(bmp);
-		platform.BitmapDelete(bmp);
-		return ct;
-	}
 
 	internal float FloorFloat(float a)
 	{
@@ -1605,54 +1496,51 @@
 
 	internal void UpdateMouseViewportControl(float dt)
 	{
-	//	if (mouseSmoothing) TODO rreimplement this
-	//	{
-		//	float constMouseSmoothing1 = 0.85f;
-		//	float constMouseSmoothing2 = 0.8f;
-		//	mouseSmoothingVelX = mouseSmoothingVelX + mouseDeltaX / (300 / 75) * constMouseSmoothing2;
-		//	mouseSmoothingVelY = mouseSmoothingVelY + mouseDeltaY / (300 / 75) * constMouseSmoothing2;
-		//	mouseSmoothingVelX = mouseSmoothingVelX * constMouseSmoothing1;
-		//	mouseSmoothingVelY = mouseSmoothingVelY * constMouseSmoothing1;*/
-	//	}
-	//	else
-	//	{
-			mouseSmoothingVelX = mouseDeltaX;
-			mouseSmoothingVelY = mouseDeltaY;
-	//	}
+  if (mouseSmoothing)  
+      {
+         float constMouseSmoothing1 = 0.85f;
+          float constMouseSmoothing2 = 0.8f;
+          mouseSmoothingVelX = mouseSmoothingVelX + mouseDeltaX / (300 / 75) * constMouseSmoothing2;
+          mouseSmoothingVelY = mouseSmoothingVelY + mouseDeltaY / (300 / 75) * constMouseSmoothing2;
+          mouseSmoothingVelX = mouseSmoothingVelX * constMouseSmoothing1;
+          mouseSmoothingVelY = mouseSmoothingVelY * constMouseSmoothing1; 
+      }
+      else
+      {
+            mouseSmoothingVelX = mouseDeltaX;
+            mouseSmoothingVelY = mouseDeltaY;
+      }
+        if (guistate == GuiState.Normal && enableCameraControl && platform.Focused())
+        {
+            if (!overheadcamera)
+            {
+                if (platform.IsMousePointerLocked())
+                {
+                    player.position.roty += mouseSmoothingVelX * rotationspeed * 1f / 75;
+                    player.position.rotx += mouseSmoothingVelY * rotationspeed * 1f / 75;
+                    player.position.rotx = MathCi.ClampFloat(player.position.rotx,
+                        Game.GetPi() / 2 + (one * 15 / 1000),
+                        (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
+                }
+                player.position.rotx += touchOrientationDy * constRotationSpeed * (one / 75);
+                player.position.roty += touchOrientationDx * constRotationSpeed * (one / 75);
+                touchOrientationDx = 0;
+                touchOrientationDy = 0;
+            }
+            if (cameratype == CameraType.Overhead)
+            {
+                if (mouseMiddle || mouseRight)
+                {
+                    overheadcameraK.TurnLeft(mouseDeltaX / 70);
+                    overheadcameraK.TurnUp(mouseDeltaY / 3);
+                }
+            }
+        }
+        mouseDeltaX = 0;
+        mouseDeltaY = 0;
+    }
 
-		if (guistate == GuiState.Normal && enableCameraControl && platform.Focused())
-		{
-			if (!overheadcamera)
-			{
-				if (platform.IsMousePointerLocked())
-				{
-					player.position.roty += mouseSmoothingVelX * rotationspeed * 1f / 75;
-					player.position.rotx += mouseSmoothingVelY * rotationspeed * 1f / 75;
-					player.position.rotx = MathCi.ClampFloat(player.position.rotx,
-						Game.GetPi() / 2 + (one * 15 / 1000),
-						(Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
-				}
-
-				player.position.rotx += touchOrientationDy * constRotationSpeed * (one / 75);
-				player.position.roty += touchOrientationDx * constRotationSpeed * (one / 75);
-				touchOrientationDx = 0;
-				touchOrientationDy = 0;
-			}
-			if (cameratype == CameraType.Overhead)
-			{
-				if (mouseMiddle || mouseRight)
-				{
-					overheadcameraK.TurnLeft(mouseDeltaX / 70);
-					overheadcameraK.TurnUp(mouseDeltaY / 3);
-				}
-			}
-		}
-
-		mouseDeltaX = 0;
-		mouseDeltaY = 0;
-	}
-
-	internal string Follow;
+    internal string Follow;
 	internal IntRef FollowId()
 	{
 		if (Follow == null)
@@ -3328,7 +3216,7 @@
 			// Get delta only from emulated events (actual events negate previous ones)
 			mouseDeltaX += e.GetMovementX();
 			mouseDeltaY += e.GetMovementY();
-		}
+        }
 		for (int i = 0; i < clientmodsCount; i++)
 		{
 			if (clientmods[i] == null) { continue; }
@@ -3359,18 +3247,8 @@
 			}
 			platform.GLDeleteTexture(textures.items[i].value);
 		}
-		for (int i = 0; i < cachedTextTexturesMax; i++)
-		{
-			if (cachedTextTextures[i] == null)
-			{
-				continue;
-			}
-			if (cachedTextTextures[i].texture == null)
-			{
-				continue;
-			}
-			platform.GLDeleteTexture(cachedTextTextures[i].texture.textureId);
-		}
+
+        rend.Dispose();
 	}
 
 	public void StartTyping()

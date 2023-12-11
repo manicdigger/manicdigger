@@ -84,7 +84,7 @@
 		int menustarty = game.ycenter(currentRecipesCount * 80);
 		if (currentRecipesCount == 0)
 		{
-			game.Draw2dText(game.language.NoMaterialsForCrafting(), fontCraftingGui, game.xcenter(200), game.ycenter(20), null, false);
+			game.rend.Draw2dText(game.language.NoMaterialsForCrafting(), fontCraftingGui, game.xcenter(200), game.ycenter(20), null, false);
 			return;
 		}
 		for (int i = 0; i < currentRecipesCount; i++)
@@ -95,14 +95,14 @@
 				int xx = menustartx + 20 + ii * 130;
 				int yy = menustarty + i * 80;
 				game.rend.Draw2dTexture(game.d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(game.TextureIdForInventory[r.Ingredients[ii].Type]), game.rend.texturesPacked(), ColorCi.FromArgb(255, 255, 255, 255), false);
-				game.Draw2dText(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Ingredients[ii].Amount), game.blocktypes[r.Ingredients[ii].Type].Name), fontCraftingGui, xx + 50, yy,
+				game.rend.Draw2dText(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Ingredients[ii].Amount), game.blocktypes[r.Ingredients[ii].Type].Name), fontCraftingGui, xx + 50, yy,
 				   IntRef.Create(i == craftingselectedrecipe ? ColorCi.FromArgb(255, 255, 0, 0) : ColorCi.FromArgb(255, 255, 255, 255)), false);
 			}
 			{
 				int xx = menustartx + 20 + 400;
 				int yy = menustarty + i * 80;
 				game.rend.Draw2dTexture(game.d_TerrainTextures.terrainTexture(), xx, yy, 32, 32, IntRef.Create(game.TextureIdForInventory[r.Output.Type]), game.rend.texturesPacked(), ColorCi.FromArgb(255, 255, 255, 255), false);
-				game.Draw2dText(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Output.Amount), game.blocktypes[r.Output.Type].Name), fontCraftingGui, xx + 50, yy,
+				game.rend.Draw2dText(game.platform.StringFormat2("{0} {1}", game.platform.IntToString(r.Output.Amount), game.blocktypes[r.Output.Type].Name), fontCraftingGui, xx + 50, yy,
 				  IntRef.Create(i == craftingselectedrecipe ? ColorCi.FromArgb(255, 255, 0, 0) : ColorCi.FromArgb(255, 255, 255, 255)), false);
 			}
 		}

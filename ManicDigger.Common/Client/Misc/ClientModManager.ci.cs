@@ -152,7 +152,7 @@ public class ClientModManager1 : ClientModManager
 
 	public override int WhiteTexture()
 	{
-		return game.WhiteTexture();
+		return game.rend.WhiteTexture();
 	}
 
 	public override void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color)
@@ -174,7 +174,7 @@ public class ClientModManager1 : ClientModManager
 
 	public override void Draw2dText(string text, float x, float y, FontCi font)
 	{
-		game.Draw2dText(text, font, x, y, null, false);
+		game.rend.Draw2dText(text, font, x, y, null, false);
 	}
 
 	public override void OrthoMode()

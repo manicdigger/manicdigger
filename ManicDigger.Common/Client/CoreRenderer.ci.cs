@@ -1,9 +1,11 @@
-﻿public class CoreRenderer {
+﻿public class CoreRenderer
+{
     public float CameraEyeX;
     public float CameraEyeY;
     public float CameraEyeZ;
     public float one;
-    public CoreRenderer() {
+    public CoreRenderer()
+    {
         one = 1;
         CameraMatrix = new GetCameraMatrix();
         CameraEyeX = -1;
@@ -22,7 +24,13 @@
         identityMatrix = Mat4.Identity_(Mat4.Create());
         Set3dProjectionTempMat4 = Mat4.Create();
 
-
+        whitetexture = -1;
+        cachedTextTexturesMax = 1024;
+        cachedTextTextures = new CachedTextTexture[cachedTextTexturesMax];
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            cachedTextTextures[i] = null;
+        }
     }
     internal GetCameraMatrix CameraMatrix;
 
@@ -33,6 +41,67 @@
     internal GamePlatform platform;
 
     internal int texturesPacked() { return GlobalVar.MAX_BLOCKTYPES_SQRT; } //16x16
+    internal TextColorRenderer textColorRenderer;
+
+    internal CachedTextTexture[] cachedTextTextures;
+    internal int cachedTextTexturesMax;
+
+    public void Start(GamePlatform platform_)
+    {
+        this.platform = platform_;
+        textColorRenderer = new TextColorRenderer();
+        textColorRenderer.platform = platform;
+
+    }
+
+    int whitetexture;
+    public int WhiteTexture()
+    {
+        if (this.whitetexture == -1)
+        {
+            BitmapCi bmp = platform.BitmapCreate(1, 1);
+            int[] pixels = new int[1];
+            pixels[0] = ColorCi.FromArgb(255, 255, 255, 255);
+            platform.BitmapSetPixelsArgb(bmp, pixels);
+            this.whitetexture = platform.LoadTextureFromBitmap(bmp);
+        }
+        return this.whitetexture;
+    }
+
+    CachedTexture GetCachedTextTexture(Text_ t)
+    {
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            CachedTextTexture ct = cachedTextTextures[i];
+            if (ct == null)
+            {
+                continue;
+            }
+            if (ct.text.Equals_(t))
+            {
+                return ct.texture;
+            }
+        }
+        return null;
+    }
+
+    public void DeleteUnusedCachedTextTextures()
+    {
+        int now = platform.TimeMillisecondsFromStart();
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            CachedTextTexture t = cachedTextTextures[i];
+            if (t == null)
+            {
+                continue;
+            }
+            if ((one * (now - t.texture.lastuseMilliseconds) / 1000) > 1)
+            {
+                platform.GLDeleteTexture(t.texture.textureId);
+                cachedTextTextures[i] = null;
+            }
+        }
+    }
 
     public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
     {
@@ -195,6 +264,57 @@
         platform.GlEnableTexture2d();
     }
 
+
+    public void Draw2dText(string text, FontCi font, float x, float y, IntRef color, bool enabledepthtest)
+    {
+        if (text == null || platform.StringTrim(text) == "")
+        {
+            return;
+        }
+        if (color == null) { color = IntRef.Create(ColorCi.FromArgb(255, 255, 255, 255)); }
+        Text_ t = new Text_();
+        t.text = text;
+        t.color = color.value;
+        t.font = font;
+        CachedTexture ct;
+
+        if (GetCachedTextTexture(t) == null)
+        {
+            ct = MakeTextTexture(t);
+            if (ct == null)
+            {
+                return;
+            }
+            for (int i = 0; i < cachedTextTexturesMax; i++)
+            {
+                if (cachedTextTextures[i] == null)
+                {
+                    CachedTextTexture ct1 = new CachedTextTexture();
+                    ct1.text = t;
+                    ct1.texture = ct;
+                    cachedTextTextures[i] = ct1;
+                    break;
+                }
+            }
+        }
+
+        ct = GetCachedTextTexture(t);
+        ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
+        Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, ColorCi.FromArgb(255, 255, 255, 255), enabledepthtest);
+        DeleteUnusedCachedTextTextures();
+    }
+
+    CachedTexture MakeTextTexture(Text_ t)
+    {
+        CachedTexture ct = new CachedTexture();
+        BitmapCi bmp = textColorRenderer.CreateTextTexture(t);
+        ct.sizeX = platform.BitmapGetWidth(bmp);
+        ct.sizeY = platform.BitmapGetHeight(bmp);
+        ct.textureId = platform.LoadTextureFromBitmap(bmp);
+        platform.BitmapDelete(bmp);
+        return ct;
+    }
+
     public void DrawModel(Model model)
     {
         SetMatrixUniformModelView();
@@ -211,17 +331,10 @@
         platform.DrawModelData(data);
     }
 
-
-
-
-    public void SetPlatform(GamePlatform platform_) {
-        this.platform = platform_;
-    }
-
     float[] Set3dProjectionTempMat4;
     public void Set3dProjection(float zfar, float fov)
     {
-        float aspect_ratio =  1.0f * platform.GetCanvasWidth() / platform.GetCanvasHeight(); 
+        float aspect_ratio = 1.0f * platform.GetCanvasWidth() / platform.GetCanvasHeight();
         Mat4.Perspective(Set3dProjectionTempMat4, fov, aspect_ratio, znear, zfar);
         CameraMatrix.lastpmatrix = Set3dProjectionTempMat4;
         GLMatrixModeProjection();
@@ -421,5 +534,27 @@
         //GL.Enable(EnableCap.DepthTest);
     }
 
+    public void Dispose()
+    {
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            if (cachedTextTextures[i] == null)
+            {
+                continue;
+            }
+            if (cachedTextTextures[i].texture == null)
+            {
+                continue;
+            }
+            platform.GLDeleteTexture(cachedTextTextures[i].texture.textureId);
+        }
+    }
+    public void RemoveCahedTextures()
+    {
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            cachedTextTextures[i] = null;
+        }
 
+    }
 }

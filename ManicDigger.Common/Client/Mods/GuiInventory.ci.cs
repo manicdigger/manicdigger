@@ -351,7 +351,7 @@
 					{
 						c = ColorCi.FromArgb(100, 0, 255, 0); // green
 					}
-					game.rend.Draw2dTexture(game.WhiteTexture(), x, y,
+					game.rend.Draw2dTexture(game.rend.WhiteTexture(), x, y,
 						CellDrawSize * sizex, CellDrawSize * sizey,
 						null, 0, c, false);
 				}
@@ -372,7 +372,7 @@
 				{
 					c = ColorCi.FromArgb(100, 0, 255, 0); // green
 				}
-				game.rend.Draw2dTexture(game.WhiteTexture(), p.X, p.Y,
+				game.rend.Draw2dTexture(game.rend.WhiteTexture(), p.X, p.Y,
 					CellDrawSize * size.X, CellDrawSize * size.Y,
 					null, 0, c, false);
 			}
@@ -511,7 +511,7 @@
 			{
 				FontCi font = new FontCi();
 				font.size = 8;
-				game.Draw2dText(game.platform.IntToString(item.BlockCount), font, screenposX, screenposY, null, false);
+				game.rend.Draw2dText(game.platform.IntToString(item.BlockCount), font, screenposX, screenposY, null, false);
 			}
 		}
 		else
@@ -539,9 +539,9 @@
 		if (screenposY < h + 20) { screenposY = h + 20; }
 		if (screenposX > game.Width() - (w + 20)) { screenposX = game.Width() - (w + 20); }
 		if (screenposY > game.Height() - (h + 20)) { screenposY = game.Height() - (h + 20); }
-		game.rend.Draw2dTexture(game.WhiteTexture(), screenposX - w, screenposY - h, w, h, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
-		game.rend.Draw2dTexture(game.WhiteTexture(), screenposX - w + 2, screenposY - h + 2, w - 4, h - 4, null, 0, ColorCi.FromArgb(255, 105, 105, 105), false);
-		game.Draw2dText(dataItems.ItemInfo(item), font, screenposX - tw.value + 4, screenposY - h + 2, null, false);
+		game.rend.Draw2dTexture(game.rend.WhiteTexture(), screenposX - w, screenposY - h, w, h, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
+		game.rend.Draw2dTexture(game.rend.WhiteTexture(), screenposX - w + 2, screenposY - h + 2, w - 4, h - 4, null, 0, ColorCi.FromArgb(255, 105, 105, 105), false);
+		game.rend.Draw2dText(dataItems.ItemInfo(item), font, screenposX - tw.value + 4, screenposY - h + 2, null, false);
 		Packet_Item item2 = new Packet_Item();
 		item2.BlockId = item.BlockId;
 		DrawItem(screenposX - w + 2, screenposY - h + 2, item2, 0, 0);
