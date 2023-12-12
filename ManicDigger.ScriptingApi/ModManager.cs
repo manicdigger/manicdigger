@@ -186,7 +186,7 @@ namespace ManicDigger
 		/// </summary>
 		/// <param name="player"></param>
 		/// <param name="p">The privilege to check</param>
-		/// <returns>true if the player has the given privilege, false otherwise</returns>
+		/// <returns>true if the player has the given privilege OR is Singleplayer, false otherwise</returns>
 		bool PlayerHasPrivilege(int player, string p);
 
 		bool IsCreative();

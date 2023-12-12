@@ -313,6 +313,7 @@
     <Compile Include="Server\Mods\Fortress\MonsterEggs.cs" />
     <Compile Include="Client\CoreRenderer.ci.cs" />
     <Compile Include="Client\Mods\CoreComands.ci.cs" />
+    <Compile Include="Server\Mods\Fortress\PlayerStats.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -228,6 +228,8 @@ namespace ManicDigger.Server
 
 		public bool PlayerHasPrivilege(int player, string privilege)
 		{
+            if (server.IsSinglePlayer)
+                return true;
 			return server.PlayerHasPrivilege(player, privilege);
 		}
 
