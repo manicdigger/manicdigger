@@ -297,7 +297,6 @@
     <Compile Include="Server\Mods\Fortress\Core\CoreCrafting.cs" />
     <Compile Include="Server\Mods\Fortress\Core\CoreEvents.cs" />
     <Compile Include="Server\Mods\Fortress\Core\Default.cs" />
-    <Compile Include="Server\Mods\Fortress\Core\DefaultWorldGenerator.cs" />
     <Compile Include="Server\Mods\Fortress\Core\Doors.cs" />
     <Compile Include="Server\Mods\Fortress\Core\EntitySigns.cs" />
     <Compile Include="Server\Mods\Fortress\Core\Food.cs" />
@@ -314,6 +313,14 @@
     <Compile Include="Server\Mods\Fortress\Core\VandalFinder.cs" />
     <Compile Include="Server\Mods\Fortress\Core\VegetationGrowth.cs" />
     <Compile Include="Server\Mods\Fortress\MoreCommands\PlayerStats.cs" />
+    <Compile Include="Server\Mods\Fortress\Upgrades\AdvancedWorldGenerator.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\Locations.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\Protection.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\ChatHighlighter.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\Exporter.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\ServerSwitcher.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\Sounds.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\ServerUtilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

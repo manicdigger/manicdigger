@@ -88,9 +88,7 @@ namespace ManicDigger.Server
                 }
                 modpaths[i] = Path.Combine(modpaths[i], server.gameMode);
             }
-            //string CutomModDir = 
-
-
+  
             Dictionary<string, string> scripts = new Dictionary<string, string>();
             foreach (string modpath in modpaths)
             {
