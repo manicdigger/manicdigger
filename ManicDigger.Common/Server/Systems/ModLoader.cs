@@ -99,21 +99,28 @@ namespace ManicDigger.Server
                     continue;
                 }
                 server.ModPaths.Add(modpath);
-                string[] files = Directory.GetFiles(modpath);
-                foreach (string s in files)
+
+                string[] directories = Directory.GetDirectories(modpath);
+
+                foreach (string d in directories)
                 {
-                    if (!GameStorePath.IsValidName(Path.GetFileNameWithoutExtension(s)))
+                    string[] files = Directory.GetFiles(d);
+
+                    foreach (string s in files)
                     {
-                        continue;
+                        if (!GameStorePath.IsValidName(Path.GetFileNameWithoutExtension(s)))
+                        {
+                            continue;
+                        }
+                        if (!(Path.GetExtension(s).Equals(".cs", StringComparison.InvariantCultureIgnoreCase)
+                            || Path.GetExtension(s).Equals(".js", StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            continue;
+                        }
+                        string scripttext = File.ReadAllText(s);
+                        string filename = new FileInfo(s).Name;
+                        scripts[filename] = scripttext;
                     }
-                    if (!(Path.GetExtension(s).Equals(".cs", StringComparison.InvariantCultureIgnoreCase)
-                        || Path.GetExtension(s).Equals(".js", StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        continue;
-                    }
-                    string scripttext = File.ReadAllText(s);
-                    string filename = new FileInfo(s).Name;
-                    scripts[filename] = scripttext;
                 }
             }
 
@@ -213,9 +220,15 @@ namespace ManicDigger.Server
                     Use(results);
                     return;
                 }
+                for(int j =0; j < results.Errors.Count; j++) {
+                    Console.WriteLine("-----------------------------------ERRORR------------------------------------");
+                    Console.WriteLine(results.Errors[j].ErrorText);
+                    Console.WriteLine("-----------------------------------------------------------------------------");
+                }
             }
 
             //Error. Load scripts separately.
+            Console.WriteLine("Loading scripts separetly");
 
             foreach (var k in csharpScripts)
             {

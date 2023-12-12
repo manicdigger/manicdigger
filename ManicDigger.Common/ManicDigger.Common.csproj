@@ -230,9 +230,6 @@
     <Compile Include="Common\XmlTool.cs" />
     <Compile Include="Server\ClientOnServer.cs" />
     <Compile Include="Server\GetFile.cs" />
-    <Compile Include="Server\Mods\Fortress\Default.cs" />
-    <Compile Include="Server\Mods\Fortress\EntitySigns.cs" />
-    <Compile Include="Server\Mods\Fortress\Food.cs" />
     <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\Mods\War\Food.cs" />
     <Compile Include="Server\NetworkDummyServer.cs" />
@@ -254,25 +251,7 @@
     <Compile Include="Server\Systems\LoadLast.cs" />
     <Compile Include="Server\Systems\LoadServerClient.cs" />
     <Compile Include="Server\Systems\ModLoader.cs" />
-    <Compile Include="Server\Mods\Fortress\BuildLog.cs" />
-    <Compile Include="Server\Mods\Fortress\Core.cs" />
-    <Compile Include="Server\Mods\Fortress\CoreCrafting.cs" />
-    <Compile Include="Server\Mods\Fortress\CoreEvents.cs" />
-    <Compile Include="Server\Mods\Fortress\CoreBlocks.cs" />
-    <Compile Include="Server\Mods\Fortress\DefaultWorldGenerator.cs" />
-    <Compile Include="Server\Mods\Fortress\Doors.cs" />
-    <Compile Include="Server\Mods\Fortress\Ghost.cs" />
-    <Compile Include="Server\Mods\Fortress\OreGenerator.cs" />
-    <Compile Include="Server\Mods\Fortress\HttpStats.cs" />
-    <Compile Include="Server\Mods\Fortress\RememberPosition.cs" />
     <Compile Include="Server\Mods\Unused\PermissionBlock.cs" />
-    <Compile Include="Server\Mods\Fortress\PlayerList.cs" />
-    <Compile Include="Server\Mods\Fortress\Revert.cs" />
-    <Compile Include="Server\Mods\Fortress\SandPhysics.cs" />
-    <Compile Include="Server\Mods\Fortress\Tnt.cs" />
-    <Compile Include="Server\Mods\Fortress\TreeGenerator.cs" />
-    <Compile Include="Server\Mods\Fortress\VandalFinder.cs" />
-    <Compile Include="Server\Mods\Fortress\VegetationGrowth.cs" />
     <Compile Include="Server\Mods\Unused\BlockId.cs" />
     <Compile Include="Server\Mods\War\Core.cs" />
     <Compile Include="Server\Mods\War\CoreBlocks.cs" />
@@ -310,10 +289,31 @@
     <Compile Include="Client\UI\Screens\NewWorld.ci.cs" />
     <Compile Include="Client\UI\Widgets\SettingsListWidget.ci.cs" />
     <Compile Include="Client\UI\Widgets\LabeledTextBoxWidget.ci.cs" />
-    <Compile Include="Server\Mods\Fortress\MonsterEggs.cs" />
     <Compile Include="Client\CoreRenderer.ci.cs" />
     <Compile Include="Client\Mods\CoreComands.ci.cs" />
-    <Compile Include="Server\Mods\Fortress\PlayerStats.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\BuildLog.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Core.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\CoreBlocks.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\CoreCrafting.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\CoreEvents.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Default.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\DefaultWorldGenerator.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Doors.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\EntitySigns.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Food.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Ghost.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\HttpStats.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\MonsterEggs.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\OreGenerator.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\PlayerList.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\RememberPosition.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Revert.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\SandPhysics.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Tnt.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\TreeGenerator.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\VandalFinder.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\VegetationGrowth.cs" />
+    <Compile Include="Server\Mods\Fortress\MoreCommands\PlayerStats.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -342,6 +342,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Server\Mods\Fortress\Core\" />
+    <Folder Include="Server\Mods\Fortress\MoreCommands\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
