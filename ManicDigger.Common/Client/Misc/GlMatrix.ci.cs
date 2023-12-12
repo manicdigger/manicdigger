@@ -1473,10 +1473,65 @@ public class Mat4
 		output[11] = a23 * c - a13 * s;
 		return output;
 	}
+    public static float[] RotationX(
+        /// {Number} rad the angle to rotate the matrix by
+        float rad)
+    {
+        float s = Platform.Sin(rad);
+        float c = Platform.Cos(rad);
+        float[] output=new float[16];
+        output[0] = 1;
+        output[1] = 0;
+        output[2] = 0;
+        output[3] = 0;
 
-	/// Rotates a matrix by the given angle around the Y axis
-	/// @returns {mat4} out
-	public static float[] RotateY(
+        output[4] = 0;
+        output[5] = c;
+        output[6] = -s;
+        output[7] = 0;
+
+        output[8] = 0;
+        output[9] = s;
+        output[10] = c;
+        output[11] = 0;
+
+        output[12] = 0;
+        output[13] = 0;
+        output[14] = 0;
+        output[15] = 1;
+        return output;
+    }
+    public static float[] RotationY(
+        /// {Number} rad the angle to rotate the matrix by
+        float rad)
+    {
+        float s = Platform.Sin(rad);
+        float c = Platform.Cos(rad);
+        float[] output = new float[16];
+        output[0] = c;
+        output[1] = 0;
+        output[2] = s;
+        output[3] = 0;
+
+        output[4] = 0;
+        output[5] = 1;
+        output[6] = 0;
+        output[7] = 0;
+
+        output[8] = -s;
+        output[9] = 0;
+        output[10] = c;
+        output[11] = 0;
+
+        output[12] = 0;
+        output[13] = 0;
+        output[14] = 0;
+        output[15] = 1;
+        return output;
+    }
+    /// Rotates a matrix by the given angle around the Y axis
+    /// @returns {mat4} out
+    public static float[] RotateY(
 		/// {mat4} out the receiving matrix
 		float[] output,
 		/// {mat4} a the matrix to rotate

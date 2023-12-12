@@ -46,15 +46,13 @@
 
 	float one;
 	NetServer server;
-	string saveFilename;
 	internal GamePlatform platform;
-    SettingListEntry[] SettingOverride;
-
-    public void Start(NetServer server_, string saveFilename_, GamePlatform platform_,SettingListEntry[] overide)
+    ServerInitSettings serverInitSettings;
+    public void Start(NetServer server_, ServerInitSettings serverInitSettings_, GamePlatform platform_)
     {
-        SettingOverride = overide;
         server = server_;
-        saveFilename = saveFilename_;
+        serverInitSettings = serverInitSettings_;
+
         platform = platform_;
         mainThreadActionsLock = platform.MonitorCreate();
     }

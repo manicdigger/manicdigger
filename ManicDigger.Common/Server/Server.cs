@@ -22,7 +22,7 @@ namespace ManicDigger.Server
 		public int clientid;
 	}
 
-	public partial class Server : ICurrentTime, IDropItem
+    public partial class Server : ICurrentTime, IDropItem
 	{
 		public Server()
 		{

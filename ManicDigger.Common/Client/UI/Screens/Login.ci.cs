@@ -212,7 +212,7 @@ public class ScreenLogin : MainMenuScreen
 				connectdata.Ip = serverIp;
 				connectdata.Port = serverPort;
 				connectdata.Username = wtbx_username.GetContent();
-				menu.StartGame(false, null, connectdata,null);
+				menu.StartGame(false, null, connectdata);
 			}
 		}
 		if (w == wbtn_createAccount)

@@ -712,6 +712,7 @@ namespace ManicDigger
         /// <param name="y">y coordinate</param>
         /// <param name="z">z coordinate</param>
         /// <returns>Name of the block at the given position</returns>
+
         void SpawnMonster(int x, int y, int z);
         #region Deprecated functions
         [Obsolete("GetCurrentYearTotal is deprecated, please use GetYear instead.", false)]
@@ -759,6 +760,24 @@ namespace ManicDigger
 }
     }*/
 
+
+ 
+    class Modinfo
+    {
+        public Modinfo() { }
+        public String Version { get; set; }
+        public String ModID { get; set; }
+        public String[] IncompatibleIds { get; set; }
+        public String[] ModDependencies { get; set; }
+        public String Category { get; set; }
+        public String ModName { get; set; }
+        public String Description { get; set; }
+        public String[] KnownIssues { get; set; }
+        public String CreatorName { get; set; }
+        public String CreatorContact { get; set; }
+        public String Image { get; set; }
+    }
+   
     public enum SpecialKey
 	{
 		Respawn,

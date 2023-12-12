@@ -709,6 +709,7 @@ public class TerrainChunkTesselatorCi
 	}
 
 	VecCito3i tmpv;
+
 	void DrawBlockFace(int x, int y, int z, int tileType, int tileSide, float vOffsetX, float vOffsetY, float vOffsetZ, float vScaleX, float vScaleY, float vScaleZ, VecCito3i[] vNeighbors, float[] fShadowRation)
 	{
 		int color = _colorWhite;
@@ -773,11 +774,11 @@ public class TerrainChunkTesselatorCi
 			ModelDataTool.AddIndex(toreturn, (lastelement + 2));
 		}
 	}
-
-	// <summary>
-	// Returns the sides to draw for this block
-	// </summary>
-	int GetToDrawFlags(int xx, int yy, int zz)
+  
+    // <summary>
+    // Returns the sides to draw for this block
+    // </summary>
+    int GetToDrawFlags(int xx, int yy, int zz)
 	{
 		int nToDraw = TileSideFlagsEnum.None;
 

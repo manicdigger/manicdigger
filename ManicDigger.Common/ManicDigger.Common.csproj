@@ -83,6 +83,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\websocket-sharp.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Packet.Serializer.ci.cs">
@@ -237,7 +240,6 @@
     <Compile Include="Server\NetworkWebSocketServer.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\Saves\ChunkDb.cs" />
-    <Compile Include="Client\UI\MainMenu.ci.cs" />
     <Compile Include="Server\Saves\ChunkDbCompressed.cs" />
     <Compile Include="Server\Saves\ChunkDbDummy.cs" />
     <Compile Include="Server\Saves\ChunkDbPlainFile.cs" />
@@ -321,6 +323,8 @@
     <Compile Include="Server\Mods\Fortress\MoreCommands\ServerSwitcher.cs" />
     <Compile Include="Server\Mods\Fortress\MoreCommands\Sounds.cs" />
     <Compile Include="Server\Mods\Fortress\MoreCommands\ServerUtilities.cs" />
+    <Compile Include="Common\ModManagerUtil.cs" />
+    <Compile Include="Client\UI\MainMenu.ci.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

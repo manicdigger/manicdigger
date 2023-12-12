@@ -26,7 +26,7 @@ namespace ManicDigger.Server
 		public void LoadConfig(Server server)
 		{
            
-            FileInfo info = new FileInfo(server.SaveFilenameOverride);//todo better place?
+            FileInfo info = new FileInfo(server.GetSaveFilename());//todo better place?
             info.Name.Replace(info.Extension, "");
           
             ManicDigger.Common.GameStorePath.SetGameName(info.Name.Replace(info.Extension, ""));

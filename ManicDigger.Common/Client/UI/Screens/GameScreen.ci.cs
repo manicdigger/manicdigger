@@ -8,13 +8,14 @@ public class ScreenGame : MainMenuScreen
 		game = new Game();
 	}
 	Game game;
-    SettingListEntry[] settingsOveride;
-	public void Start(GamePlatform platform_, bool singleplayer_, string singleplayerSavePath_, ConnectData connectData_, SettingListEntry[] Override)
+    public ServerInitSettings serverInitSettings;
+
+    public void Start(GamePlatform platform_, bool singleplayer_, ServerInitSettings serverInitSettings_, ConnectData connectData_)
 	{
-        settingsOveride = Override;
 		singleplayer = singleplayer_;
-		singleplayerSavePath = singleplayerSavePath_;
-		connectData = connectData_;
+        serverInitSettings = serverInitSettings_;
+
+        connectData = connectData_;
 
 		game.platform = gamePlatform;
 		game.issingleplayer = singleplayer;
@@ -35,7 +36,7 @@ public class ScreenGame : MainMenuScreen
 		{
 			if (platform.SinglePlayerServerAvailable())
 			{
-				platform.SinglePlayerServerStart(singleplayerSavePath,settingsOveride);
+				platform.SinglePlayerServerStart(serverInitSettings );
 			}
 			else
 			{
@@ -46,7 +47,7 @@ public class ScreenGame : MainMenuScreen
 				server.network = network;
 				server.platform = platform;
 				server.Start();
-				serverSimple.Start(server, singleplayerSavePath, platform,settingsOveride);
+				serverSimple.Start(server, serverInitSettings, platform);
 
 				serverSimpleMod = new ModServerSimple();
 				serverSimpleMod.server = serverSimple;
@@ -93,14 +94,12 @@ public class ScreenGame : MainMenuScreen
 
 	ConnectData connectData;
 	bool singleplayer;
-	string singleplayerSavePath;
-
-	public override void Render(float dt)
+    public override void Render(float dt)
 	{
 		if (game.reconnect)
 		{
 			game.Dispose();
-			menu.StartGame(singleplayer, singleplayerSavePath, connectData,null);
+			menu.StartGame(singleplayer, serverInitSettings, connectData);
 			return;
 		}
 		if (game.exitToMainMenu)

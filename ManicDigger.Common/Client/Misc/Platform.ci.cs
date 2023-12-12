@@ -218,7 +218,7 @@
 
 	// Game
 	public abstract bool SinglePlayerServerAvailable();
-	public abstract void SinglePlayerServerStart(string saveFilename, SettingListEntry[] settingsOverride);
+	public abstract void SinglePlayerServerStart(ServerInitSettings serverInitSettings);
 
 	public abstract void SinglePlayerServerExit();
 	public abstract bool SinglePlayerServerLoaded();
@@ -230,7 +230,20 @@
 	public abstract bool LanguageNativeAvailable();
 	public abstract Language GetLanguageHandler();
 }
+public abstract class FrameBuffer {
 
+
+        public abstract void Init(bool hasDepthTexture, int textureFilter, int textureWrap);
+        public abstract void Deinit();
+        public abstract void UpdateSize(int width, int height, int internalFormat);
+        public abstract bool Validate();
+
+        public abstract void BindTexture(int target);
+        public abstract void BindDepthTexture(int target);
+
+        public abstract void Bind();
+
+}
 public class Asset
 {
 	public string name;

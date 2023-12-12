@@ -15,13 +15,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
+using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 
 namespace ManicDigger.ClientNative
 {
 	public class GamePlatformNative : GamePlatform
 	{
-		#region Primitive
-		public override int FloatToInt(float value)
+    
+        #region Primitive
+        public override int FloatToInt(float value)
 		{
 			return (int)value;
 		}
@@ -1391,7 +1393,9 @@ namespace ManicDigger.ClientNative
 		public override void GlDisableDepthTest()
 		{
 			GL.Disable(EnableCap.DepthTest);
-		}
+             
+        }
+
 
 		public override void BindTexture2d(int texture)
 		{
@@ -1907,20 +1911,52 @@ namespace ManicDigger.ClientNative
 			GL.Uniform2(location, count, values);
 		}
 
-		#endregion
+        public int GenerateTexture(int id1,int id2,int id3) {
+            FrameBuffer1 frameBuffer=new FrameBuffer1();
+            int textureSize = 32;
+            bool scissor = GL.IsEnabled(EnableCap.ScissorTest);
+            GL.Disable(EnableCap.ScissorTest);
+            bool depth = GL.IsEnabled(EnableCap.DepthTest);
+            GL.Disable(EnableCap.DepthTest);
+            bool cullFace = GL.IsEnabled(EnableCap.CullFace);
+            GL.Disable(EnableCap.CullFace);
 
-		#region Game
+            frameBuffer.Init(false,(int) TextureMinFilter.Nearest, (int)TextureWrapMode.Repeat);
+            frameBuffer.UpdateSize(textureSize, textureSize, (int)PixelInternalFormat.Rgba16f);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
-		bool singlePlayerServerAvailable = true;
+ 
+            float[] perspective=new float[16];
+            Mat4.Perspective(perspective, 0.013f, 1, 64, 256);
+
+  
+           float[] viewMatrix = new float[16];
+
+            Mat4.Multiply(viewMatrix, Mat4.RotationX(3.14159265359f / 4), Mat4.RotationY(-3.14159265359f / 4));
+
+
+
+            frameBuffer.Deinit();
+            if (scissor) GL.Enable(EnableCap.ScissorTest);
+            if (depth) GL.Enable(EnableCap.DepthTest);
+            if (cullFace) GL.Enable(EnableCap.CullFace);
+            return 0;
+        }
+
+        #endregion
+
+        #region Game
+
+        bool singlePlayerServerAvailable = true;
 		public override bool SinglePlayerServerAvailable()
 		{
 			return singlePlayerServerAvailable;
 		}
 
-		public override void SinglePlayerServerStart(string saveFilename,SettingListEntry[] settingsOverride)
+		public override void SinglePlayerServerStart(ServerInitSettings serverInitSettings)
 		{
 			singlepLayerServerExit = false;
-			StartSinglePlayerServer(saveFilename, settingsOverride);
+			StartSinglePlayerServer(serverInitSettings);
 		}
 
 		public bool singlepLayerServerExit;
@@ -1929,7 +1965,7 @@ namespace ManicDigger.ClientNative
 			singlepLayerServerExit = true;
 		}
 
-		public System.Action<string,SettingListEntry[]> StartSinglePlayerServer;
+		public System.Action<ServerInitSettings> StartSinglePlayerServer;
 		public bool singlePlayerServerLoaded;
 
 		public override bool SinglePlayerServerLoaded()
@@ -2328,7 +2364,111 @@ namespace ManicDigger.ClientNative
 		#endregion
 	}
 
-	public class RandomNative : RandomCi
+     public class FrameBuffer1 : FrameBuffer
+    {
+        public uint frameBuffer;
+        public uint texture;
+        public bool hasDepthTexture;
+        public uint depthTexture;
+
+        public override void Init(bool hasDepthTexture, int textureFilter, int textureWrap)
+        {
+            this.frameBuffer = 0;
+            this.texture = 0;
+            this.depthTexture = 0;
+            this.hasDepthTexture = hasDepthTexture;
+
+            GL.GenFramebuffers(1, out this.frameBuffer);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, this.frameBuffer);
+
+            if (hasDepthTexture)
+            {
+                GL.GenTextures(1, out this.depthTexture);
+                GL.BindTexture(TextureTarget.Texture2D, this.depthTexture);
+                GL.TextureParameter(depthTexture, TextureParameterName.TextureMinFilter, textureFilter);
+                GL.TextureParameter(depthTexture, TextureParameterName.TextureMagFilter, textureFilter);
+                GL.TextureParameter(depthTexture, TextureParameterName.TextureWrapR, textureWrap);
+                GL.TextureParameter(depthTexture, TextureParameterName.TextureWrapT, textureWrap);
+                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, this.depthTexture, 0);
+            }
+
+            GL.GenTextures(1, out this.texture);
+            GL.BindTexture(TextureTarget.Texture2D, this.texture);
+            GL.TextureParameter(texture, TextureParameterName.TextureMinFilter, textureFilter);
+            GL.TextureParameter(texture, TextureParameterName.TextureMagFilter, textureFilter);
+            GL.TextureParameter(texture, TextureParameterName.TextureWrapR, textureWrap);
+            GL.TextureParameter(texture, TextureParameterName.TextureWrapT, textureWrap);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, this.texture, 0);
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        }
+
+        public override void Deinit()
+        {
+            GL.DeleteFramebuffers(1, ref this.frameBuffer);
+            if (this.hasDepthTexture)
+            {
+                GL.DeleteRenderbuffers(1, ref this.depthTexture);
+            }
+            GL.DeleteTextures(1, ref this.texture);
+        }
+
+        public override void UpdateSize(int width, int height, int internalFormat)
+        {
+            int updatedWidth = (int)Math.Max(width, 1);
+            int updatedHeight = (int)Math.Max(height, 1);
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, this.frameBuffer);
+
+            if (this.hasDepthTexture)
+            {
+                GL.BindTexture(TextureTarget.Texture2D, this.depthTexture);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent32f, updatedWidth, updatedHeight, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+            }
+
+            GL.BindTexture(TextureTarget.Texture2D, this.texture);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, updatedWidth, updatedHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+        }
+
+        public override bool Validate()
+        {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, this.frameBuffer);
+            //   if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferStatus.FramebufferComplete)
+            //   {
+            //       Console.WriteLine("Frame Buffer Object error: {0}", GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer));
+            //       return false;
+            //   }
+            return true;
+        }
+
+        public override void BindTexture(int target)
+        {
+            GL.ActiveTexture((TextureUnit)target);
+            GL.BindTexture(TextureTarget.Texture2D, this.texture);
+        }
+
+        public override void BindDepthTexture(int target)
+        {
+            if (this.hasDepthTexture)
+            {
+                GL.ActiveTexture((TextureUnit)target);
+                GL.BindTexture(TextureTarget.Texture2D, this.depthTexture);
+            }
+        }
+
+        public override void Bind()
+        {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, this.frameBuffer);
+        }
+
+        public void Unbind()
+        {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        }
+
+    }
+
+    public class RandomNative : RandomCi
 	{
 		public Random rnd = new Random();
 		public override float NextFloat()
@@ -2447,3 +2587,5 @@ namespace ManicDigger.ClientNative
 		}
 	}
 }
+
+

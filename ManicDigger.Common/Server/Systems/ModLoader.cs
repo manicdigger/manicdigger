@@ -4,6 +4,7 @@ using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace ManicDigger.Server
 {
@@ -65,6 +66,9 @@ namespace ManicDigger.Server
             CompileScripts(scritps, restart);
             Start(m, m.required);
         }
+
+
+     
 
         Dictionary<string, string> GetScriptSources(Server server)
         {

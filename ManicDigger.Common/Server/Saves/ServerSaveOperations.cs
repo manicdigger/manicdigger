@@ -174,14 +174,15 @@ namespace ManicDigger.Server
 		}
 
 		public string SaveFilenameWithoutExtension = "default";
-		public string SaveFilenameOverride;
-        public SettingListEntry [] SettingsOverride;
+
+        public ServerInitSettings serverInitSettings;
+
         public string GetSaveFilename()
 		{
-			if (SaveFilenameOverride != null)
+			if (serverInitSettings.filename != null)
 			{
-				return SaveFilenameOverride;
-			}
+				return serverInitSettings.filename;
+            }
 			return Path.Combine(GameStorePath.gamepathsaves, SaveFilenameWithoutExtension + MapManipulator.BinSaveExtension);
 		}
 

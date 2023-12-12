@@ -204,8 +204,10 @@ public class NewWorld : MainMenuScreen
 
             //   string temp = string.Format("{0} ({1})",
             //    name,i);
-
-            menu.StartGame(true, wordname, null,wlst_SettingList.GetAllElements());
+            ServerInitSettings serverInitSettings=new ServerInitSettings();
+            serverInitSettings.filename = wordname;
+            serverInitSettings.settingsOverride = wlst_SettingList.GetAllElements();
+            menu.StartGame(true, serverInitSettings, null);
 
         }
 

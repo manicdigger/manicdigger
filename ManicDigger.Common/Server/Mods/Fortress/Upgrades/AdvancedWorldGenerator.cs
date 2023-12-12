@@ -71,7 +71,7 @@ namespace ManicDigger.Mods
 			m.RegisterPopulateChunk(PopulateChunk);
 			//m.RegisterOnSave(SaveImage);
 			m.RegisterOnSave(DisplayTimes);
-            ProcessUsingGetPixelSetPixel();
+        //    SaveImage();
 		}
 
 		void DisplayTimes()
@@ -688,24 +688,31 @@ namespace ManicDigger.Mods
 			terrainselect_canyon = new Select(noise_selectCanyonScaled, desertOutput, canyonScaled);
 			terrainselect_canyon.SetBounds(0.7, 1);
 			terrainselect_canyon.EdgeFalloff = 0.01;
+
 			terrainselect_desert_type = new Select(noise_selectDesertTypeScaled, desertOutput, terrainselect_canyon);
 			terrainselect_desert_type.SetBounds(0, 2);
 			terrainselect_desert_type.EdgeFalloff = 0.1;
+
 			terrainselect_island = new Select(noise_selectIslandScaled, oceanOutput, islandOutput);
 			terrainselect_island.SetBounds(0.8, 2);
 			terrainselect_island.EdgeFalloff = 0.2;
+
 			terrainselect_ocean_type = new Select(noise_selectOceanTypeScaled, oceanOutput, terrainselect_island);
 			terrainselect_ocean_type.SetBounds(-2, -0.5);
 			terrainselect_ocean_type.EdgeFalloff = 0.05;
+
 			terrainselect_plain_desert = new Select(noise_selectPlainDesertScaled, terrainselect_desert_type, plainsOutput);
 			terrainselect_plain_desert.SetBounds(-0.2, 2);
 			terrainselect_plain_desert.EdgeFalloff = 0.1;
+
 			terrainselect_hills = new Select(noise_selectHillsScaled, terrainselect_plain_desert, hillsOutput);
 			terrainselect_hills.SetBounds(0.4, 2);
 			terrainselect_hills.EdgeFalloff = 0.05;
+
 			terrainselect_mountains = new Select(noise_selectMountainsScaled, terrainselect_hills, mountainsOutput);
 			terrainselect_mountains.SetBounds(0.4, 2);
 			terrainselect_mountains.EdgeFalloff = 0.02;
+
 			terrainselect_ocean_land = new Select(noise_selectOceanTypeScaled, terrainselect_ocean_type, terrainselect_mountains);
 			terrainselect_ocean_land.SetBounds(0.2, 2);
 			terrainselect_ocean_land.EdgeFalloff = 0.05;
@@ -713,157 +720,106 @@ namespace ManicDigger.Mods
 
 
 
-        private void ProcessUsingGetPixelSetPixel()
+        private void SaveImage()
         {
-            System.Drawing.Bitmap bmp = new System.Drawing.Bitmap(1000, 1000);
-        
-                System.Drawing.Color c;
 
-                int width = bmp.Width;
-                int height = bmp.Height;
-                for (int x = 0; x < width; x++)
+            using (var tile = new System.Drawing.Bitmap(m.GetMapSizeX(), m.GetMapSizeY()))
+            {
+                try
                 {
-                    for (int y = 0; y < height; y++)
+                    System.Drawing.Imaging.BitmapData dstData = tile.LockBits(new System.Drawing.Rectangle(0, 0, tile.Width, tile.Height), System.Drawing.Imaging.ImageLockMode.ReadWrite, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                    unsafe
                     {
-                        switch (GetBiome(x, y))
+                        System.Drawing.Color c;
+
+                        byte* PtrFirstPixel = (byte*)dstData.Scan0;
+                        System.Threading.Tasks.Parallel.For(0, tile.Height, i =>
                         {
-                            case Biome.Ocean:
-                                c = System.Drawing.Color.FromArgb(0, 16, 190);
-                                break;
-                            case Biome.Island:
-                                c = System.Drawing.Color.FromArgb(0, 16, 160);
-                                break;
-                            case Biome.Shore:
-                                c = System.Drawing.Color.FromArgb(21, 35, 190);
-                                break;
-                            case Biome.Desert:
-                                c = System.Drawing.Color.FromArgb(213, 205, 0);
-                                break;
-                            case Biome.Dunes:
-                                c = System.Drawing.Color.FromArgb(213, 255, 0);
-                                break;
-                            case Biome.Canyon:
-                                c = System.Drawing.Color.FromArgb(213, 170, 0);
-                                break;
-                            case Biome.Plains:
-                                c = System.Drawing.Color.FromArgb(39, 173, 46);
-                                break;
-                            case Biome.Swamp:
-                                c = System.Drawing.Color.FromArgb(39, 128, 46);
-                                break;
-                            case Biome.Hills:
-                                c = System.Drawing.Color.FromArgb(39, 210, 46);
-                                break;
-                            case Biome.Mountains:
-                                c = System.Drawing.Color.FromArgb(162, 162, 162);
-                                break;
-                            case Biome.DesertMountains:
-                                c = System.Drawing.Color.FromArgb(162, 162, 128);
-                                break;
-                            case Biome.GrassyMountains:
-                                c = System.Drawing.Color.FromArgb(162, 206, 162);
-                                break;
-                            default:
-                                c = System.Drawing.Color.Pink;
-                                break;
-                        }
-                  
-                        bmp.SetPixel(x, y, c);
-                    Console.WriteLine("Row done.{0}", GetBiome(x * 88, y * 88).ToString());
 
+                            byte* currentLine = PtrFirstPixel + (i * dstData.Stride);
+                            for (int j = 0; j < tile.Width; j++)
+                            {
+                                switch (GetBiome(i * 88, j * 88))
+                                {
+                                    case Biome.Ocean:
+                                        c = System.Drawing.Color.FromArgb(0, 16, 190);
+                                        break;
+                                    case Biome.Island:
+                                        c = System.Drawing.Color.FromArgb(0, 16, 160);
+                                        break;
+                                    case Biome.Shore:
+                                        c = System.Drawing.Color.FromArgb(21, 35, 190);
+                                        break;
+                                    case Biome.Desert:
+                                        c = System.Drawing.Color.FromArgb(213, 205, 0);
+                                        break;
+                                    case Biome.Dunes:
+                                        c = System.Drawing.Color.FromArgb(213, 255, 0);
+                                        break;
+                                    case Biome.Canyon:
+                                        c = System.Drawing.Color.FromArgb(213, 170, 0);
+                                        break;
+                                    case Biome.Plains:
+                                        c = System.Drawing.Color.FromArgb(39, 173, 46);
+                                        break;
+                                    case Biome.Swamp:
+                                        c = System.Drawing.Color.FromArgb(39, 128, 46);
+                                        break;
+                                    case Biome.Hills:
+                                        c = System.Drawing.Color.FromArgb(39, 210, 46);
+                                        break;
+                                    case Biome.Mountains:
+                                        c = System.Drawing.Color.FromArgb(162, 162, 162);
+                                        break;
+                                    case Biome.DesertMountains:
+                                        c = System.Drawing.Color.FromArgb(162, 162, 128);
+                                        break;
+                                    case Biome.GrassyMountains:
+                                        c = System.Drawing.Color.FromArgb(162, 206, 162);
+                                        break;
+                                    default:
+                                        c = System.Drawing.Color.Pink;
+                                        break;
+                                }
 
+                                currentLine[0] = c.B; // Blue
+                                currentLine[1] = c.G; // Green
+                                currentLine[2] = c.R; // Red
+                                currentLine[3] = c.A; // Alpha
+
+                                currentLine += 4;
+
+                            }
+                        });
+                    }
+
+                    tile.UnlockBits(dstData);
+
+                    tile.Save("biomes.png");
+                }
+                catch (InvalidOperationException e)
+                {
+                    Console.Write(e);
                 }
             }
 
-                bmp.Save("biomes.png");
+
+
             
         }
 
-        void SaveImage()
-		{
-			// Example found here: http://csharpexamples.com/fast-image-processing-c/ - parallel variant only possible in .NET 4
-			System.Drawing.Bitmap bmp = new System.Drawing.Bitmap(1000,1000);
-			unsafe
-			{
-				System.Drawing.Imaging.BitmapData bitmapData = bmp.LockBits(new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat);
-				int bytesPerPixel = System.Drawing.Bitmap.GetPixelFormatSize(bmp.PixelFormat) / 8;
-				int heightInPixels = bitmapData.Height;
-				int widthInBytes = bitmapData.Width * bytesPerPixel;
-				byte* ptrFirstPixel = (byte*)bitmapData.Scan0;
-				System.Drawing.Color c;
-
-				//System.Threading.Tasks.Parallel.For(0, heightInPixels, y =>
-				for (int y = 0; y < heightInPixels; y++)
-				{
-					int x2 = 0;
-					byte* currentLine = ptrFirstPixel + (y * bitmapData.Stride);
-					for (int x = 0; x < widthInBytes; x = x + bytesPerPixel)
-					{
-						switch (GetBiome(x2, y))
-						{
-							case Biome.Ocean:
-								c = System.Drawing.Color.FromArgb(0, 16, 190);
-								break;
-							case Biome.Island:
-								c = System.Drawing.Color.FromArgb(0, 16, 160);
-								break;
-							case Biome.Shore:
-								c = System.Drawing.Color.FromArgb(21, 35, 190);
-								break;
-							case Biome.Desert:
-								c = System.Drawing.Color.FromArgb(213, 205, 0);
-								break;
-							case Biome.Dunes:
-								c = System.Drawing.Color.FromArgb(213, 255, 0);
-								break;
-							case Biome.Canyon:
-								c = System.Drawing.Color.FromArgb(213, 170, 0);
-								break;
-							case Biome.Plains:
-								c = System.Drawing.Color.FromArgb(39, 173, 46);
-								break;
-							case Biome.Swamp:
-								c = System.Drawing.Color.FromArgb(39, 128, 46);
-								break;
-							case Biome.Hills:
-								c = System.Drawing.Color.FromArgb(39, 210, 46);
-								break;
-							case Biome.Mountains:
-								c = System.Drawing.Color.FromArgb(162, 162, 162);
-								break;
-							case Biome.DesertMountains:
-								c = System.Drawing.Color.FromArgb(162, 162, 128);
-								break;
-							case Biome.GrassyMountains:
-								c = System.Drawing.Color.FromArgb(162, 206, 162);
-								break;
-							default:
-								c = System.Drawing.Color.Pink;
-								break;
-						}
-						x2++;
-						// calculate new pixel value
-						currentLine[x] = (byte)c.B;
-						currentLine[x + 1] = (byte)c.G;
-						currentLine[x + 2] = (byte)c.R;
-					}
-					Console.WriteLine("Row {0} of {1} done.", y, heightInPixels);
-				}
-				//});
-				bmp.UnlockBits(bitmapData);
-			}
-			bmp.Save("biomes.png");
-		}
+       
 
 		Biome GetBiome(int x, int y)
 		{
 //	 		return (Biome)((int)(select_ocean_land.GetValue(x / 1024.0, 0, y / 1024.0)));
 
-//	return (Biome)((int)(sel_bio_high01234_5.GetValue(x / 1024.0, 0, y / 1024.0)));
+ //	return (Biome)((int)(sel_bio_high01234_5.GetValue(x / 1024.0, 0, y / 1024.0)));
 
-			 		int moist = (int)(noise_humidity.GetValue((x)/2048.0, 0, (y)/2048.0) * 2.25 + 2.75);
-			 		int height = (int)(noise_height.GetValue((x)/1024.0, 0, (y)/1024.0) * 2.75 + 3.5);
-			 		return DetermineBiome((HeightBase)height, (Humidity)moist);
+	 		 		int moist = (int)(noise_humidity.GetValue((x)/2048.0, 0, (y)/2048.0) * 2.25 + 2.75);
+ 		 		int height = (int)(noise_height.GetValue((x)/1024.0, 0, (y)/1024.0) * 2.75 + 3.5);
+	 		 		return DetermineBiome((HeightBase)height, (Humidity)moist);
 		}
 
 		enum Biome
@@ -966,7 +922,7 @@ namespace ManicDigger.Mods
 					}
 					break;
 			}
-			return Biome.Canyon;
+			return Biome.Hills;
 		}
 
 		#region 3D Noise helpers

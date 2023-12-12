@@ -77,3 +77,9 @@ public enum MyNetDeliveryMethod
 	ReliableSequenced,// = 35,
 	ReliableOrdered// = 67,
 }
+
+public class ServerInitSettings
+{
+    public SettingListEntry[] settingsOverride;
+    public string filename;
+}

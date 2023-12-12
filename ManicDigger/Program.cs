@@ -58,7 +58,7 @@ public class ManicDiggerProgram
 		platform.crashreporter = crashreporter;
 		platform.singlePlayerServerDummyNetwork = dummyNetwork;
 		this.platform = platform;
-		platform.StartSinglePlayerServer = (filename, sOverride) => { savefilename = filename; settingsOverride = sOverride; new Thread(ServerThreadStart).Start(); };
+		platform.StartSinglePlayerServer = (serverSettings) => { serverInitSettings= serverSettings; new Thread(ServerThreadStart).Start(); };
 		GraphicsMode mode = new GraphicsMode(OpenTK.DisplayDevice.Default.BitsPerPixel, 24);
 		using (GameWindowNative game = new GameWindowNative(mode))
 		{
@@ -79,13 +79,12 @@ public class ManicDiggerProgram
 			ConnectData connectdata = new ConnectData();
 			connectdata = ConnectData.FromUri(new GamePlatformNative().ParseUri(args[0]));
 
-			mainmenu.StartGame(false, null, connectdata, null);
+			mainmenu.StartGame(false, null, connectdata);
 		}
 	}
 
 	DummyNetwork dummyNetwork;
-	string savefilename;
-    SettingListEntry[] settingsOverride;
+    ServerInitSettings serverInitSettings;
 
     public GameExit exit = new GameExit();
 	GamePlatformNative platform;
@@ -95,9 +94,7 @@ public class ManicDiggerProgram
 		try
 		{
 			Server server = new Server();
-			server.SaveFilenameOverride = savefilename;
-            server.SettingsOverride = settingsOverride;
-
+            server.serverInitSettings = serverInitSettings;
             server.exit = exit;
 			DummyNetServer netServer = new DummyNetServer();
 			netServer.SetPlatform(new GamePlatformNative());

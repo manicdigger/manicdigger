@@ -557,4 +557,105 @@
         }
 
     }
+
+    ShaderCi GenerateTextureshader;
+
+    public void GenerateTexture(Game game, int tileType, int id2, int id3) {
+
+        ModelData data = new ModelData();
+
+            for (int i = 0; i < TileSideEnum.SideCount; i++)
+        {
+
+            AddBlockFaceS(game,data,0, 0, 0, tileType, i, 0, 0,0, 1, 1, 1);
+
+        }
+
+        if (GenerateTextureshader==null) {
+            GenerateTextureshader = new ShaderCi();
+            GenerateTextureshader.Init(game.platform);
+            GenerateTextureshader.Compile(ShaderSources.VertexSkysphere, ShaderType.VertexShader);
+            GenerateTextureshader.Compile(ShaderSources.FragmentSkysphere, ShaderType.FragmentShader);
+            GenerateTextureshader.Link();
+        }
+        GenerateTextureshader.BeginUse();
+        game.platform.GlUniform3f(GenerateTextureshader.GetUniformLocation("modelPosition"), -65.5f - 1.5f, -92.631f - 1.5f, -65.5f - 1.5f);
+        game.platform.GlUniform1i(GenerateTextureshader.GetUniformLocation("visibilityMask"), 0xff);
+        game.platform.GlUniform1i(GenerateTextureshader.GetUniformLocation("voxelSize"), 1);
+        game.platform.GlUniform1i(GenerateTextureshader.GetUniformLocation("glow"), 3);
+
+
+    }
+
+    static int ColorMultiply(Game game, int c, float fValue)
+    {
+        return ColorCi.FromArgb(ColorCi.ExtractA(c),
+            game.platform.FloatToInt(ColorCi.ExtractR(c) * fValue),
+            game.platform.FloatToInt(ColorCi.ExtractG(c) * fValue),
+            game.platform.FloatToInt(ColorCi.ExtractB(c) * fValue));
+    }
+   
+     //tp implement inventory rendering
+    static ModelData AddBlockFaceS(Game game_, ModelData toreturn , int x, int y, int z, int tileType, int tileSide, float vOffsetX, float vOffsetY, float vOffsetZ, float vScaleX, float vScaleY, float vScaleZ)
+    {
+        int color = ColorCi.FromArgb(255, 255, 255, 255);
+        float terrainTexturesPerAtlas = game_.terrainTexturesPerAtlas;
+        float terrainTexturesPerAtlasInverse = 1f / game_.terrainTexturesPerAtlas;
+        float AtiArtifactFix;
+        if (game_.platform.IsFastSystem())
+        {
+            AtiArtifactFix = 1 / 32f * 0.25f;   
+        }
+        else
+        {
+             AtiArtifactFix = 1 / 32f * 1.5f;  
+        }
+
+        float _texrecWidth = 1 - (AtiArtifactFix * 2);
+        float _texrecHeight = terrainTexturesPerAtlasInverse * (1 - (AtiArtifactFix * 2));
+        float _texrecLeft = AtiArtifactFix;
+        float _texrecRight = _texrecLeft + _texrecWidth;
+
+        int sidetexture = game_.TextureId[tileType][tileSide];
+
+        float texrecTop = (terrainTexturesPerAtlasInverse * (sidetexture % terrainTexturesPerAtlas)) + (AtiArtifactFix * terrainTexturesPerAtlasInverse);
+        float texrecBottom = texrecTop + _texrecHeight;
+        int lastelement = toreturn.verticesCount;
+
+   
+
+        VecCito3i v = new VecCito3i();
+        float fSlopeModifier = 0f;
+
+        float xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        float zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        float yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecRight, texrecTop, ColorMultiply(game_,color, 1));
+
+        xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecTop, ColorMultiply(game_,color, 1));
+
+        xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecRight, texrecBottom, ColorMultiply(game_,color,1));
+
+        xPos = x + vOffsetX + ((v.x * 0.5f) * vScaleX);
+        zPos = z + vOffsetZ + ((v.z * 0.5f) * vScaleZ) + fSlopeModifier;
+        yPos = y + vOffsetY + ((v.y * 0.5f) * vScaleY);
+        ModelDataTool.AddVertex(toreturn, xPos, zPos, yPos, _texrecLeft, texrecBottom, ColorMultiply(game_,color,1));
+
+        {
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+        }
+        return toreturn;
+    }
+
 }

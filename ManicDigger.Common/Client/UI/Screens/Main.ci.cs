@@ -128,12 +128,16 @@
 		if (e.GetKeyCode() == GlKeys.F5)
 		{
 			menu.p.SinglePlayerServerDisable();
-			menu.StartGame(true, menu.p.PathCombine(menu.p.PathSavegames(), "Default.mdss"), null,null);
-		}
+            ServerInitSettings serverInitSettings = new ServerInitSettings();
+            serverInitSettings.filename = menu.p.PathCombine(menu.p.PathSavegames(), "Default.mdss");
+     		menu.StartGame(true, serverInitSettings, null);
+        }
 		if (e.GetKeyCode() == GlKeys.F6)
-		{
-			menu.StartGame(true, menu.p.PathCombine(menu.p.PathSavegames(), "Default.mddbs"), null, null);
-		}
+        {
+            ServerInitSettings serverInitSettings = new ServerInitSettings();
+            serverInitSettings.filename = menu.p.PathCombine(menu.p.PathSavegames(), "Default.mddbs");
+            menu.StartGame(true, serverInitSettings, null);
+        }
 	}
 
 	void UseQueryStringIpAndPort(MainMenu menu)
