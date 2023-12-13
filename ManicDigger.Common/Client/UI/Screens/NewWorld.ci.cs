@@ -1,33 +1,36 @@
-﻿/// <summary>
-/// ScreenSingleplayer shows a minimalistic "Open File" dialog for loading local savegames.
-/// TODO: Replace/Enhance this with ScreenModifyWorld to hide unnecessary complexity from the user.
-/// </summary>
+﻿
+public enum NewWorldPages { 
+Default,
+ServerSettings,
+Mods
+}
 public class NewWorld : MainMenuScreen
 {
-	public NewWorld()
-	{
+
+    public NewWorld()
+    {
         // initialize widgets
         wtbx_name = new LabeledTextBoxWidget();
         AddWidget(wtbx_name);
-        //public ? Server_SetupPublic
-        // Server_SetupPort
-        //  Server_SetupName
-        // Server_SetupMOTD
-        //Server_SetupWelcomeMessage
-        //Server_SetupEnableHTTP
-        //Server_SetupMaxClients
+    
         wbtn_serveroptions = new ButtonWidget();
         AddWidget(wbtn_serveroptions);
 
+        wbtn_serverModOptions = new ButtonWidget();
+        AddWidget(wbtn_serverModOptions);
+
         wbtn_create = new ButtonWidget();
-		AddWidget(wbtn_create);
+        AddWidget(wbtn_create);
 
         wbtn_back = new ButtonWidget();
         AddWidget(wbtn_back);
 
         wtxt_title = new TextWidget();
-		wtxt_title.SetFont(fontTitle);
-		AddWidget(wtxt_title);
+        wtxt_title.SetFont(fontTitle);
+        AddWidget(wtxt_title);
+
+        wlst_modList = new ListWidget();
+        AddWidget(wlst_modList);
 
         wlst_SettingList = new SettingsListWidget();
          setting=new SettingListEntry[7];
@@ -85,56 +88,86 @@ public class NewWorld : MainMenuScreen
 
 
         AddWidget(wlst_SettingList);
-        serverOptionsActive = true;
+        newWorldPage = NewWorldPages.Default;
+ 
+        wtbx_name.visible = true;
 
-            wbtn_serveroptions.SetText("Server Options");
-            wtbx_name.visible = false;
-            wlst_SettingList.visible = true;
-
-
+        wlst_SettingList.visible = false;
+        wlst_modList.visible = false;
     }
+
+
+
     SettingListEntry [] setting;
     LabeledTextBoxWidget wtbx_name;
     ButtonWidget wbtn_back; 
+
     SettingsListWidget wlst_SettingList;
+    ListWidget wlst_modList;
 
     ButtonWidget wbtn_serveroptions;
+    ButtonWidget wbtn_serverModOptions;
     ButtonWidget wbtn_create;
     TextWidget wtxt_title;
-    bool serverOptionsActive;
-
+    NewWorldPages newWorldPage;
     bool loaded;
 
-    public override void LoadTranslations()
-	{
-		wbtn_back.SetText(menu.lang.Get("MainMenu_ButtonBack"));
-        wbtn_create.SetText("Create");
-        wtxt_title.SetText(menu.lang.Get("MainMenu_Singleplayer"));
-        wbtn_serveroptions.SetText("Server Options");
 
+
+   
+
+
+    public override void LoadTranslations()
+    {
+        wbtn_back.SetText(menu.lang.Get("MainMenu_ButtonBack"));
+        wbtn_create.SetText("Create"); //TODO LANG
+        wtxt_title.SetText(menu.lang.Get("MainMenu_Singleplayer"));
+        wbtn_serveroptions.SetText("Server Options"); //TODO LANG
+        wbtn_serverModOptions.SetText("Mod Options"); //TODO LANG
     }
 
-	public override void Render(float dt)
-	{
+    public override void Render(float dt)
+    {
         // load stored values or defaults
         if (!loaded)
         {
-            wtbx_name.SetLabel("World name");
+            wtbx_name.SetLabel("World name"); //TODO LANG
             wtbx_name.SetContent(gamePlatform,"New World");
             loaded = true;
+
+            IntRef lenght = new IntRef();
+            Modinfo[] modinfos = menu.GetModinfo(lenght);
+            for (int m = 0; m < lenght.GetValue(); m++)
+            {
+                ListEntry entry = new ListEntry();
+                entry.textTopLeft = modinfos[m].ModName;
+                entry.textTopRight = "Active";
+                entry.textBottomLeft = modinfos[m].Description;
+                entry.textBottomRight = modinfos[m].Category;
+
+                wlst_modList.AddElement(entry);
+                
+            }
+            //wbtn_serveroptions.SetText(menu.p.StringFormat("Server Options{0}",menu.p.IntToString(lenght.GetValue())));
+
+
         }
         float scale = menu.uiRenderer.GetScale();
         float leftx = gamePlatform.GetCanvasWidth() / 2 - 128 * scale;
         float y = gamePlatform.GetCanvasHeight() / 2 + 0 * scale;
 
 
-
-
-
+  
         wlst_SettingList.x = 100 * scale;
         wlst_SettingList.y = 100 * scale;
         wlst_SettingList.sizex = gamePlatform.GetCanvasWidth() - 200 * scale;
         wlst_SettingList.sizey = gamePlatform.GetCanvasHeight() - 200 * scale;
+
+
+        wlst_modList.x = 100 * scale;
+        wlst_modList.y = 100 * scale;
+        wlst_modList.sizex = gamePlatform.GetCanvasWidth() - 200 * scale;
+        wlst_modList.sizey = gamePlatform.GetCanvasHeight() - 200 * scale;
 
 
         wtbx_name.x = leftx-128*scale;
@@ -148,7 +181,12 @@ public class NewWorld : MainMenuScreen
         wbtn_serveroptions.sizex = 256 * scale;
         wbtn_serveroptions.sizey = 64 * scale;
 
-        wbtn_create.x = 40 * scale + 512 * scale;
+        wbtn_serverModOptions.x = 40 * scale + 512 * scale;
+        wbtn_serverModOptions.y = gamePlatform.GetCanvasHeight() - 104 * scale;
+        wbtn_serverModOptions.sizex = 256 * scale;
+        wbtn_serverModOptions.sizey = 64 * scale;
+
+        wbtn_create.x = 40 * scale + (512+256) * scale;
         wbtn_create.y = gamePlatform.GetCanvasHeight() - 104 * scale;
         wbtn_create.sizex = 256 * scale;
         wbtn_create.sizey = 64 * scale;
@@ -160,42 +198,74 @@ public class NewWorld : MainMenuScreen
 
     
 
-		// TODO: Implement savegame handling in game menu
+        // TODO: Implement savegame handling in game menu
 
-		DrawWidgets(dt);
+        DrawWidgets(dt);
 
 
-	}
+    }
 
-	public override void OnBackPressed()
-	{
-		menu.StartMainMenu();
-	}
+    public override void OnBackPressed()
+    {
+        menu.StartMainMenu();
+    }
   
     public override void OnButton(AbstractMenuWidget w)
-	{
-		
+    {
+        
 
-		if (w == wbtn_back)
-		{
-			OnBackPressed();
-		}
+        if (w == wbtn_back)
+        {
+            OnBackPressed();
+        }
         if (w == wbtn_serveroptions)
         {
-            serverOptionsActive = !serverOptionsActive;
-            if (serverOptionsActive)
-            {
-                wbtn_serveroptions.SetText("main Options");
-                wtbx_name.visible = true;
-                wlst_SettingList.visible = false;
 
+           
+        }
+        if (w == wbtn_serverModOptions || w == wbtn_serveroptions)
+        {
+            //this shud be a widget
+            switch (newWorldPage)
+            {
+                case NewWorldPages.Default:
+                    newWorldPage = (w == wbtn_serverModOptions) ? NewWorldPages.Mods : NewWorldPages.ServerSettings;
+                    break;
+                case NewWorldPages.ServerSettings:
+                    newWorldPage = (w == wbtn_serverModOptions) ? NewWorldPages.Mods : NewWorldPages.Default;
+                    break;
+                case NewWorldPages.Mods:
+                    newWorldPage = (w == wbtn_serverModOptions) ? NewWorldPages.Default : NewWorldPages.ServerSettings;
+                    break;
             }
-            else
-            {
-                wbtn_serveroptions.SetText("Server Options");
-                wtbx_name.visible = false;
-                wlst_SettingList.visible = true;
 
+            wbtn_serverModOptions.SetText("Mod Options"); //TODO LANG
+            wbtn_serveroptions.SetText("Server Options"); //TODO LANG
+
+            wtbx_name.visible = false;
+
+            wlst_SettingList.visible = false;
+            wlst_modList.visible = false;
+
+            switch (newWorldPage)
+            {
+                case NewWorldPages.Mods:
+                    wbtn_serverModOptions.SetText("World Options");
+                    wlst_modList.visible = true;
+                    wtxt_title.SetText("Mod settings");//TODO LANG
+
+                    break;
+                case NewWorldPages.ServerSettings:
+                    wbtn_serveroptions.SetText("World Options"); //TODO LANG
+                    wtxt_title.SetText("Server settings"); //TODO LANG
+
+                    wlst_SettingList.visible = true; //TODO LANG
+                    break;
+                case NewWorldPages.Default:
+                    wtxt_title.SetText("World settings"); //TODO LANG
+
+                    wtbx_name.visible = true;
+                    break;
             }
         }
         if (w == wbtn_create)

@@ -15,6 +15,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
+using Newtonsoft.Json;
+
 using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 
 namespace ManicDigger.ClientNative
@@ -1910,9 +1912,12 @@ namespace ManicDigger.ClientNative
 		{
 			GL.Uniform2(location, count, values);
 		}
-
-        public int GenerateTexture(int id1,int id2,int id3) {
-            FrameBuffer1 frameBuffer=new FrameBuffer1();
+        FrameBuffer1 frameBuffer;
+        bool scissor;
+        bool depth;
+        bool cullFace;
+        public override void GenerateTextureStart() {
+             frameBuffer=new FrameBuffer1();
             int textureSize = 32;
             bool scissor = GL.IsEnabled(EnableCap.ScissorTest);
             GL.Disable(EnableCap.ScissorTest);
@@ -1924,30 +1929,63 @@ namespace ManicDigger.ClientNative
             frameBuffer.Init(false,(int) TextureMinFilter.Nearest, (int)TextureWrapMode.Repeat);
             frameBuffer.UpdateSize(textureSize, textureSize, (int)PixelInternalFormat.Rgba16f);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-
+            //frameBuffer.
  
-            float[] perspective=new float[16];
-            Mat4.Perspective(perspective, 0.013f, 1, 64, 256);
-
-  
-           float[] viewMatrix = new float[16];
-
-            Mat4.Multiply(viewMatrix, Mat4.RotationX(3.14159265359f / 4), Mat4.RotationY(-3.14159265359f / 4));
+         
 
 
 
+
+        }
+        public override void GenerateTextureEnd(int faces,int alocationStart)
+        {
+            int textureSize = 32;
+
+            //c.glDrawElementsBaseVertex(c.GL_TRIANGLES, 6 * faces, c.GL_UNSIGNED_INT, null, allocation.start * 4);
+            GL.DrawElementsBaseVertex(BeginMode.Triangles, 6 * faces, DrawElementsType.UnsignedInt,IntPtr.Zero , 0);
+            FrameBuffer1 finalFrameBuffer = new FrameBuffer1();
+
+            finalFrameBuffer.Init(false, (int)TextureMinFilter.Nearest, (int)TextureWrapMode.Repeat);
+            finalFrameBuffer.UpdateSize(textureSize, textureSize, (int)PixelInternalFormat.Rgba16f);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            uint texture = finalFrameBuffer.texture;
+
+            ShaderCi shader=new ShaderCi();
+
+
+
+
+
+            shader.BeginUse();
+            //uniform
+
+            frameBuffer.BindTexture((int)TextureUnit.Texture3);
+
+
+            int rectVAO = GL.GenVertexArray();
+            GL.BindVertexArray(rectVAO);
+
+            GL.Disable(EnableCap.Blend);
+            GL.DrawArrays(BeginMode.TriangleStrip, 0, 4);
+            GL.Enable(EnableCap.Blend);
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+            GL.Viewport(0, 0, window.Width, window.Height);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             frameBuffer.Deinit();
+
+            GL.DeleteFramebuffer(finalFrameBuffer.frameBuffer);
             if (scissor) GL.Enable(EnableCap.ScissorTest);
             if (depth) GL.Enable(EnableCap.DepthTest);
             if (cullFace) GL.Enable(EnableCap.CullFace);
-            return 0;
         }
 
-        #endregion
+            #endregion
 
-        #region Game
+            #region Game
 
-        bool singlePlayerServerAvailable = true;
+            bool singlePlayerServerAvailable = true;
 		public override bool SinglePlayerServerAvailable()
 		{
 			return singlePlayerServerAvailable;
@@ -1977,8 +2015,12 @@ namespace ManicDigger.ClientNative
 		{
 			return singlePlayerServerDummyNetwork;
 		}
+       
+         
 
-		public override void SinglePlayerServerDisable()
+        //Copyright (c) 2013, Brandon Jones, Colin MacKenzie IV. All rights reserved.
+
+        public override void SinglePlayerServerDisable()
 		{
 			singlePlayerServerAvailable = false;
 		}

@@ -561,6 +561,17 @@
     ShaderCi GenerateTextureshader;
 
     public void GenerateTexture(Game game, int tileType, int id2, int id3) {
+        game.platform.GenerateTextureStart();
+
+        float[] perspective = new float[16];
+        Mat4.Perspective(perspective, 0.013f, 1, 64, 256);
+        game.platform.SetMatrixUniformProjection(perspective);
+        //game.platform.SetMatrixUniform()
+
+        float[] viewMatrix = new float[16];
+
+        Mat4.Multiply(viewMatrix, Mat4.RotationX(3.14159265359f / 4), Mat4.RotationY(-3.14159265359f / 4));
+
 
         ModelData data = new ModelData();
 
@@ -583,7 +594,8 @@
         game.platform.GlUniform1i(GenerateTextureshader.GetUniformLocation("visibilityMask"), 0xff);
         game.platform.GlUniform1i(GenerateTextureshader.GetUniformLocation("voxelSize"), 1);
         game.platform.GlUniform1i(GenerateTextureshader.GetUniformLocation("glow"), 3);
-
+        game.platform.GlActiveTexture(game.terrainTexture);
+        game.platform.GenerateTextureEnd(0, 0);
 
     }
 

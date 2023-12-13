@@ -216,8 +216,11 @@
 	public abstract void GlUniform4f(int location, float v0, float v1, float v2, float v3);
 	public abstract void GlUniformArray1f(int location, int count, float[] values);
 
-	// Game
-	public abstract bool SinglePlayerServerAvailable();
+    public abstract void GenerateTextureStart();
+    public abstract void GenerateTextureEnd(int faces, int alocationStart);
+
+    // Game
+    public abstract bool SinglePlayerServerAvailable();
 	public abstract void SinglePlayerServerStart(ServerInitSettings serverInitSettings);
 
 	public abstract void SinglePlayerServerExit();
@@ -225,11 +228,26 @@
 	public abstract void SinglePlayerServerDisable();
 	public abstract DummyNetwork SinglePlayerServerGetNetwork();
 	public abstract PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a);
-
-	// Translation
+  	// Translation
 	public abstract bool LanguageNativeAvailable();
 	public abstract Language GetLanguageHandler();
 }
+public class Modinfo
+{
+    public string Version;
+    public string ModID;
+    public string[] IncompatibleIds;
+    public string[] ModDependencies;
+    public string Category;
+    public string ModName;
+    public string Description;
+    public string[] KnownIssues;
+    public string CreatorName;
+    public string CreatorContact;
+    public string Image;
+}
+
+
 public abstract class FrameBuffer {
 
 

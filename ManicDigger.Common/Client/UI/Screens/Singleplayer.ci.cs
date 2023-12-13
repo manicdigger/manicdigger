@@ -97,9 +97,9 @@ public class ScreenSingleplayer : MainMenuScreen
 		wtxt_title.y = 10;
 		wtxt_title.SetAlignment(TextAlign.Center);
 
-		wlst_worldList.x = leftx;
+		wlst_worldList.x = gamePlatform.GetCanvasWidth()/2  -512*scale;
 		wlst_worldList.y = 100;
-		wlst_worldList.sizex = 256 * scale;
+		wlst_worldList.sizex = 1024 * scale;
 		wlst_worldList.sizey = 400 * scale;
 
 		// TODO: Implement savegame handling in game menu
@@ -179,8 +179,13 @@ public class ScreenSingleplayer : MainMenuScreen
 			for (int i = 0; i < savegamesCount; i++)
 			{
 				ListEntry e = new ListEntry();
-				e.textTopLeft = menu.p.FileName(savegames[i]);
-				wlst_worldList.AddElement(e);
+                e.textTopLeft = menu.p.FileName(savegames[i]);
+                e.textTopLeft = menu.p.FileName(savegames[i]);
+                e.textTopRight= "textTopRight";
+                e.textBottomLeft = "textBottomLeft";
+                e.textBottomRight = "textBottomRight";
+
+                wlst_worldList.AddElement(e);
 			}
 		}
 	}

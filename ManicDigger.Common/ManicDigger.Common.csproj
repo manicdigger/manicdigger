@@ -323,8 +323,8 @@
     <Compile Include="Server\Mods\Fortress\MoreCommands\ServerSwitcher.cs" />
     <Compile Include="Server\Mods\Fortress\MoreCommands\Sounds.cs" />
     <Compile Include="Server\Mods\Fortress\MoreCommands\ServerUtilities.cs" />
-    <Compile Include="Common\ModManagerUtil.cs" />
     <Compile Include="Client\UI\MainMenu.ci.cs" />
+    <Compile Include="Client\UI\Widgets\ModListWidget.ci.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
