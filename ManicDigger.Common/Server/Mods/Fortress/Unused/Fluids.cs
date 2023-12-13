@@ -55,7 +55,7 @@ namespace ManicDigger.Mods
             this.m = m;
             m.RegisterOnBlockUpdate(CheckNeighbors);
             m.RegisterOnBlockBuild(Build);
-            m.RegisterTimer(UpdateFluids, 1);
+            m.RegisterTimer(UpdateFluids,1);
             m.RegisterOnBlockDelete(Delete);
             Water = m.GetBlockId("Water");
             Lava = m.GetBlockId("Lava");
@@ -98,7 +98,7 @@ namespace ManicDigger.Mods
 
             if (m.GetBlockNameAt(x, y, z) == "Cake")
             {
-                m.SetBlock(x, y, z, 8); //Water
+                m.SetBlock(x, y, z, Water); //Water
                 b = Water;
             }
 

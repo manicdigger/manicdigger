@@ -8,7 +8,7 @@ namespace ManicDigger.Mods
 	public class BlockId : IMod
 	{
 		private ModManager m;
-		public static bool DEBUG = true;
+		public static bool DEBUG = false;
 
 		public void PreStart(ModManager m)
 		{
@@ -24,8 +24,10 @@ namespace ManicDigger.Mods
 		{
 			m = manager;
 			m.RegisterOnLoad(OnLoad);
-		}
+            lastFreeId = -1;
 
+        }
+        int lastFreeId;
 		public void OnLoad()
 		{
 			if (DEBUG) Console.WriteLine("############# BlockID Mod #############");
@@ -42,13 +44,25 @@ namespace ManicDigger.Mods
 				if (s != null)
 				{
 					assignedBlocks.Add(i, new Block { Name = s, Type = m.GetBlockType(i) });
-					if (DEBUG)
-						Console.WriteLine(i + ": " + s);
-				}
+                    if (DEBUG)
+                    {
+                        if (lastFreeId != -1)
+                        {
+                            if (lastFreeId == i - 1)
+                                Console.WriteLine(lastFreeId + ": Not set");
+                            else 
+                                Console.WriteLine(lastFreeId + " to " + (i - 1) + " Not set");
+
+                            lastFreeId = -1;
+                        }
+                        Console.WriteLine(i + ": " + s);
+
+                    }
+                }
 				else
 				{
-					if (DEBUG)
-						Console.WriteLine(i + ": not set");
+                    if(lastFreeId==-1)
+                        lastFreeId = i;
 				}
 			}
 

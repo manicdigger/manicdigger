@@ -51,7 +51,7 @@
 	public int texturesPacked() { return game.rend.texturesPacked(); }
 	public int GetWeaponTextureId(int side)
 	{
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		if (item == null || IsCompass() || (item != null && item.BlockId == 0))
 		{
 			//empty hand
@@ -79,21 +79,21 @@
 	}
 	public bool IsTorch()
 	{
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		return item != null
 			&& item.ItemClass == Packet_ItemClassEnum.Block
 			&& game.blocktypes[item.BlockId].DrawType == Packet_DrawTypeEnum.Torch;
 	}
 	public bool IsCompass()
 	{
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		return item != null
 			&& item.ItemClass == Packet_ItemClassEnum.Block
 			&& item.BlockId == game.d_Data.BlockIdCompass();
 	}
 	public bool IsEmptyHand()
 	{
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		return item == null || item.BlockId == 0;
 	}
 
@@ -134,7 +134,7 @@
 		}
 		game.platform.BindTexture2d(terrainTexture());
 
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		int curmaterial;
 		if (item == null)
 		{

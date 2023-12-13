@@ -98,7 +98,7 @@
 
 	internal void DrawEnemyHealthCommon(Game game, string name, float progress)
 	{
-		DrawEnemyHealthUseInfo(game, name, 1, false);
+		DrawEnemyHealthUseInfo(game, name, progress, false);
 	}
 
 	internal void DrawEnemyHealthUseInfo(Game game, string name, float progress, bool useInfo)
@@ -141,7 +141,7 @@
 
 	internal void DrawAmmo(Game game)
 	{
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
 		{
 			if (game.blocktypes[item.BlockId].IsPistol)

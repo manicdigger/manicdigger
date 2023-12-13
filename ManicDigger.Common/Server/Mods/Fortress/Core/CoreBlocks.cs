@@ -55,6 +55,7 @@
 				DrawType = DrawType.Solid,
 				WalkableType = WalkableType.Solid,
 				Sounds = solidSounds,
+                Strength =30,
 			});
 			m.SetBlockType(2, "Grass", new BlockType()
 			{

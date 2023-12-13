@@ -233,7 +233,6 @@
     <Compile Include="Common\XmlTool.cs" />
     <Compile Include="Server\ClientOnServer.cs" />
     <Compile Include="Server\GetFile.cs" />
-    <Compile Include="Server\Mods\Unused\Sign.cs" />
     <Compile Include="Server\Mods\War\Food.cs" />
     <Compile Include="Server\NetworkDummyServer.cs" />
     <Compile Include="Server\NetworkEnetServer.cs" />
@@ -253,8 +252,6 @@
     <Compile Include="Server\Systems\LoadLast.cs" />
     <Compile Include="Server\Systems\LoadServerClient.cs" />
     <Compile Include="Server\Systems\ModLoader.cs" />
-    <Compile Include="Server\Mods\Unused\PermissionBlock.cs" />
-    <Compile Include="Server\Mods\Unused\BlockId.cs" />
     <Compile Include="Server\Mods\War\Core.cs" />
     <Compile Include="Server\Mods\War\CoreBlocks.cs" />
     <Compile Include="Server\Mods\War\WarBlocks.cs" />
@@ -325,6 +322,10 @@
     <Compile Include="Server\Mods\Fortress\MoreCommands\ServerUtilities.cs" />
     <Compile Include="Client\UI\MainMenu.ci.cs" />
     <Compile Include="Client\UI\Widgets\ModListWidget.ci.cs" />
+    <Compile Include="Server\Mods\Fortress\Unused\Sign.cs" />
+    <Compile Include="Server\Mods\Fortress\Unused\BlockId.cs" />
+    <Compile Include="Server\Mods\Fortress\Unused\PermissionBlock.cs" />
+    <Compile Include="Server\Mods\Fortress\Unused\Fluids.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -25,7 +25,7 @@
 		int eKey = args.GetKeyCode();
 		if (eKey == game.GetKey(GlKeys.R))
 		{
-			Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+			Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 			if (item != null && item.ItemClass == Packet_ItemClassEnum.Block
 				&& game.blocktypes[item.BlockId].IsPistol
 				&& game.reloadstartMilliseconds == 0)

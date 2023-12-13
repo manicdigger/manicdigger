@@ -63,7 +63,7 @@
 		mDamageToPlayer = new int[count];
 		mWalkableType = new int[count];
 
-		mDefaultMaterialSlots = new int[10];
+		mDefaultHudSlots = new int[10];
 	}
 
 	public int[] WhenPlayerPlacesGetsConvertedTo() { return mWhenPlayerPlacesGetsConvertedTo; }
@@ -81,7 +81,7 @@
 	public int[] DamageToPlayer() { return mDamageToPlayer; }
 	public int[] WalkableType1() { return mWalkableType; }
 
-	public int[] DefaultMaterialSlots() { return mDefaultMaterialSlots; }
+	public int[] DefaultHudSlots() { return mDefaultHudSlots; }
 
 	int[] mWhenPlayerPlacesGetsConvertedTo;
 	bool[] mIsFlower;
@@ -98,7 +98,7 @@
 	int[] mDamageToPlayer;
 	int[] mWalkableType;
 
-	int[] mDefaultMaterialSlots;
+	int[] mDefaultHudSlots;
 
 	// TODO: hardcoded IDs
 	// few code sections still expect some hardcoded IDs

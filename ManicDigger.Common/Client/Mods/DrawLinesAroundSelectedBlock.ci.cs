@@ -33,7 +33,8 @@
 					float posx = x + one / 2;
 					float posy = y + pickcubeheight * one / 2;
 					float posz = z + one / 2;
-					float scalex = size;
+
+                    float scalex = size;
 					float scaley = size * pickcubeheight;
 					float scalez = size;
 					lines.DrawWireframeCube_(game, posx, posy, posz, scalex, scaley, scalez);
@@ -55,8 +56,8 @@ public class DrawWireframeCube
 	public void DrawWireframeCube_(Game game, float posx, float posy, float posz, float scalex, float scaley, float scalez)
 	{
 		game.platform.GLLineWidth(2);
-
-		game.platform.BindTexture2d(0);
+ 
+        game.platform.BindTexture2d(0);
 
 		if (wireframeCube == null)
 		{

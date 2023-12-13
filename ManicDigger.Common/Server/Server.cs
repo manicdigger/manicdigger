@@ -3622,7 +3622,7 @@ namespace ManicDigger.Server
 			p.AimRadiusFloat = Server.SerializeFloat(block.AimRadius);
 			p.AmmoMagazine = block.AmmoMagazine;
 			p.AmmoTotal = block.AmmoTotal;
-			p.BulletsPerShotFloat = Server.SerializeFloat(block.BulletsPerShot);
+			p.ToolStrenghtFloat = Server.SerializeFloat(block.ToolStrenght);
 			p.DamageBodyFloat = Server.SerializeFloat(block.DamageBody);
 			p.DamageHeadFloat = Server.SerializeFloat(block.DamageHead);
 			p.DamageToPlayer = block.DamageToPlayer;

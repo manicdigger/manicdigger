@@ -59,16 +59,16 @@
 			return;
 		}
 		int keyChar = args.GetKeyChar();
-		if (keyChar == 49) { game.ActiveMaterial = 0; }
-		if (keyChar == 50) { game.ActiveMaterial = 1; }
-		if (keyChar == 51) { game.ActiveMaterial = 2; }
-		if (keyChar == 52) { game.ActiveMaterial = 3; }
-		if (keyChar == 53) { game.ActiveMaterial = 4; }
-		if (keyChar == 54) { game.ActiveMaterial = 5; }
-		if (keyChar == 55) { game.ActiveMaterial = 6; }
-		if (keyChar == 56) { game.ActiveMaterial = 7; }
-		if (keyChar == 57) { game.ActiveMaterial = 8; }
-		if (keyChar == 48) { game.ActiveMaterial = 9; }
+		if (keyChar == 49) { game.ActiveHudIndex = 0; }
+		if (keyChar == 50) { game.ActiveHudIndex = 1; }
+		if (keyChar == 51) { game.ActiveHudIndex = 2; }
+		if (keyChar == 52) { game.ActiveHudIndex = 3; }
+		if (keyChar == 53) { game.ActiveHudIndex = 4; }
+		if (keyChar == 54) { game.ActiveHudIndex = 5; }
+		if (keyChar == 55) { game.ActiveHudIndex = 6; }
+		if (keyChar == 56) { game.ActiveHudIndex = 7; }
+		if (keyChar == 57) { game.ActiveHudIndex = 8; }
+		if (keyChar == 48) { game.ActiveHudIndex = 9; }
 	}
 
 	int ScrollButtonSize() { return CellDrawSize; }
@@ -91,12 +91,12 @@
 		if (SelectedMaterialSelectorSlot(scaledMouse) != null)
 		{
 			//int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
-			game.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).value;
+			game.ActiveHudIndex = SelectedMaterialSelectorSlot(scaledMouse).value;
 			//if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
 			{
 				Packet_InventoryPosition p = new Packet_InventoryPosition();
 				p.Type = Packet_InventoryPositionTypeEnum.MaterialSelector;
-				p.MaterialId = game.ActiveMaterial;
+				p.MaterialId = game.ActiveHudIndex;
 				controller.InventoryClick(p);
 			}
 			args.SetHandled(true);
@@ -136,7 +136,7 @@
 					Packet_InventoryPosition p = new Packet_InventoryPosition();
 					p.Type = Packet_InventoryPositionTypeEnum.WearPlace;
 					p.WearPlace = WearPlace_.RightHand;
-					p.ActiveMaterial = game.ActiveMaterial;
+					p.ActiveMaterial = game.ActiveHudIndex;
 					controller.InventoryClick(p);
 				}
 				{
@@ -173,7 +173,7 @@
 			Packet_InventoryPosition p = new Packet_InventoryPosition();
 			p.Type = Packet_InventoryPositionTypeEnum.WearPlace;
 			p.WearPlace = (SelectedWearPlace(scaledMouse).value);
-			p.ActiveMaterial = game.ActiveMaterial;
+			p.ActiveMaterial = game.ActiveHudIndex;
 			controller.InventoryClick(p);
 			args.SetHandled(true);
 			return;
@@ -363,7 +363,7 @@
 				PointRef size = wearPlaceCells[selectedWear.value];
 
 				int c;
-				Packet_Item itemsAtArea = inventoryUtil.ItemAtWearPlace(selectedWear.value, game.ActiveMaterial);
+				Packet_Item itemsAtArea = inventoryUtil.ItemAtWearPlace(selectedWear.value, game.ActiveHudIndex);
 				if (!dataItems.CanWear(selectedWear.value, game.d_Inventory.DragDropItem))
 				{
 					c = ColorCi.FromArgb(100, 255, 0, 0); // red
@@ -383,7 +383,7 @@
 
 		//wear
 		//DrawItem(Offset(wearPlaceStart[(int)WearPlace.LeftHand], InventoryStart), inventory.LeftHand[ActiveMaterial.ActiveMaterial], null);
-		DrawItem(wearPlaceStart[WearPlace_.RightHand].X + InventoryStartX(), wearPlaceStart[WearPlace_.RightHand].Y + InventoryStartY(), game.d_Inventory.RightHand[game.ActiveMaterial], 0, 0);
+		DrawItem(wearPlaceStart[WearPlace_.RightHand].X + InventoryStartX(), wearPlaceStart[WearPlace_.RightHand].Y + InventoryStartY(), game.d_Inventory.RightHand[game.ActiveHudIndex], 0, 0);
 		DrawItem(wearPlaceStart[WearPlace_.MainArmor].X + InventoryStartX(), wearPlaceStart[WearPlace_.MainArmor].Y + InventoryStartY(), game.d_Inventory.MainArmor, 0, 0);
 		DrawItem(wearPlaceStart[WearPlace_.Boots].X + InventoryStartX(), wearPlaceStart[WearPlace_.Boots].Y + InventoryStartY(), game.d_Inventory.Boots, 0, 0);
 		DrawItem(wearPlaceStart[WearPlace_.Helmet].X + InventoryStartX(), wearPlaceStart[WearPlace_.Helmet].Y + InventoryStartY(), game.d_Inventory.Helmet, 0, 0);
@@ -409,7 +409,7 @@
 		if (SelectedWearPlace(scaledMouse) != null)
 		{
 			int selected = SelectedWearPlace(scaledMouse).value;
-			Packet_Item itemAtWearPlace = inventoryUtil.ItemAtWearPlace(selected, game.ActiveMaterial);
+			Packet_Item itemAtWearPlace = inventoryUtil.ItemAtWearPlace(selected, game.ActiveHudIndex);
 			if (itemAtWearPlace != null)
 			{
 				DrawItemInfo(scaledMouse.X, scaledMouse.Y, itemAtWearPlace);
@@ -458,7 +458,7 @@
 			}
 		}
 		game.Draw2dBitmapFile("activematerial.png",
-			MaterialSelectorStartX() + ActiveMaterialCellSize() * game.ActiveMaterial,
+			MaterialSelectorStartX() + ActiveMaterialCellSize() * game.ActiveHudIndex,
 			MaterialSelectorStartY(), ActiveMaterialCellSize() * 64 / 48, ActiveMaterialCellSize() * 64 / 48);
 	}
 
@@ -553,11 +553,11 @@
 		if ((game_.guistate == GuiState.Normal || (game_.guistate == GuiState.Inventory && !IsMouseOverCells()))
 			&& (!game_.keyboardState[game_.GetKey(GlKeys.LShift)]))
 		{
-			game_.ActiveMaterial -= game_.platform.FloatToInt(delta);
-			game_.ActiveMaterial = game_.ActiveMaterial % 10;
-			while (game_.ActiveMaterial < 0)
+			game_.ActiveHudIndex -= game_.platform.FloatToInt(delta);
+			game_.ActiveHudIndex = game_.ActiveHudIndex % 10;
+			while (game_.ActiveHudIndex < 0)
 			{
-				game_.ActiveMaterial += 10;
+				game_.ActiveHudIndex += 10;
 			}
 		}
 		if (IsMouseOverCells() && game.guistate == GuiState.Inventory)

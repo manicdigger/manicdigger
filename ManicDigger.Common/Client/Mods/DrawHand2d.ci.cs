@@ -33,7 +33,7 @@
 
 	public static string HandImage2d(Game game)
 	{
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		string img = null;
 		if (item != null)
 		{

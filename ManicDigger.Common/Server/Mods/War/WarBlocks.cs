@@ -89,7 +89,7 @@
 				AimRadius = 50,
 				Recoil = 0.08f,
 				Delay = 1f,
-				BulletsPerShot = 6,
+				ToolStrenght = 6,
 				WalkSpeedWhenUsed = 1f,
 				IronSightsEnabled = true,
 				IronSightsMoveSpeed = 1f,

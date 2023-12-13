@@ -275,7 +275,7 @@ message BlockType {
 	optional int32 aimRadiusFloat = 23;
 	optional int32 recoilFloat = 24;
 	optional int32 delayFloat = 25;
-	optional int32 bulletsPerShotFloat = 26;
+	optional int32 toolStrenghtFloat = 26;
 	optional int32 walkSpeedWhenUsedFloat = 27;
 	optional bool ironSightsEnabled = 28;
 	optional int32 ironSightsMoveSpeedFloat = 29;

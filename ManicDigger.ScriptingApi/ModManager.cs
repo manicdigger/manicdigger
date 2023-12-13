@@ -1261,8 +1261,11 @@ namespace ManicDigger
 	[ProtoContract]
 	public class BlockType
 	{
-		public BlockType() { }
-		[ProtoMember(1)]
+		public BlockType() {
+            Strength = 10;
+        
+        }
+        [ProtoMember(1)]
 		public string TextureIdTop = "Unknown";
 		[ProtoMember(2)]
 		public string TextureIdBottom = "Unknown";
@@ -1313,7 +1316,7 @@ namespace ManicDigger
 		[ProtoMember(25)]
 		public float Delay;
 		[ProtoMember(26)]
-		public float BulletsPerShot;
+		public float ToolStrenght;
 		[ProtoMember(27)]
 		public float WalkSpeedWhenUsed = 1;
 		[ProtoMember(28)]

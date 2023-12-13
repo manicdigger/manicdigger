@@ -544,11 +544,11 @@
 	{
 		SendPacketClient(ClientPackets.SetBlock(x, y, z, mode, type, materialslot));
 	}
-	internal int ActiveMaterial;
+	internal int ActiveHudIndex;
 
 	internal void SendFillArea(int startx, int starty, int startz, int endx, int endy, int endz, int blockType)
 	{
-		SendPacketClient(ClientPackets.FillArea(startx, starty, startz, endx, endy, endz, blockType, ActiveMaterial));
+		SendPacketClient(ClientPackets.FillArea(startx, starty, startz, endx, endy, endz, blockType, ActiveHudIndex));
 	}
 
 	internal void InventoryClick(Packet_InventoryPosition pos)
@@ -836,7 +836,7 @@
 	{
 		if (IronSights)
 		{
-			Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+			Packet_Item item = d_Inventory.RightHand[ActiveHudIndex];
 			if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
 			{
 				if (DeserializeFloat(blocktypes[item.BlockId].IronSightsFovFloat) != 0)
@@ -918,7 +918,7 @@
 
 	internal IntRef BlockInHand()
 	{
-		Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+		Packet_Item item = d_Inventory.RightHand[ActiveHudIndex];
 		if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
 		{
 			return IntRef.Create(item.BlockId);
@@ -930,7 +930,7 @@
 
 	internal float CurrentRecoil()
 	{
-		Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+		Packet_Item item = d_Inventory.RightHand[ActiveHudIndex];
 		if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
 		{
 			return 0;
@@ -941,7 +941,7 @@
 
 	internal float CurrentAimRadius()
 	{
-		Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+		Packet_Item item = d_Inventory.RightHand[ActiveHudIndex];
 		if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
 		{
 			return 0;
@@ -1168,7 +1168,7 @@
 
 	internal bool IsWearingWeapon()
 	{
-		return d_Inventory.RightHand[ActiveMaterial] != null;
+		return d_Inventory.RightHand[ActiveHudIndex] != null;
 	}
 
 	internal void ApplyDamageToPlayer(int damage, int damageSource, int sourceId)
@@ -1311,14 +1311,22 @@
 
 	internal DictionaryVector3Float blockHealth;
 
-	internal float GetCurrentBlockHealth(int x, int y, int z)
+    internal float GetCurrentToolStrenght(int x, int y, int z)
+    {
+        //  d_Data.
+        int blocktype = map.GetBlock(x, y, z);
+
+        return d_Data.Strength()[blocktype];
+    }
+
+    internal float GetCurrentBlockHealth(int x, int y, int z)
 	{
 		if (blockHealth.ContainsKey(x, y, z))
 		{
 			return blockHealth.Get(x, y, z);
 		}
 		int blocktype = map.GetBlock(x, y, z);
-		return d_Data.Strength()[blocktype];
+		return d_Data.Strength()[blocktype] ; 
 	}
 
 	internal Vector3IntRef currentAttackedBlock;
@@ -1830,7 +1838,7 @@
 			//enable_acceleration = false;
 			movespeednow *= one * 2 / 10;
 		}
-		Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+		Packet_Item item = d_Inventory.RightHand[ActiveHudIndex];
 		if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
 		{
 			float itemSpeed = DeserializeFloat(blocktypes[item.BlockId].WalkSpeedWhenUsedFloat);
@@ -1862,16 +1870,16 @@
 
 	internal void HandleMaterialKeys(int eKey)
 	{
-		if (eKey == GetKey(GlKeys.Number1)) { ActiveMaterial = 0; }
-		if (eKey == GetKey(GlKeys.Number2)) { ActiveMaterial = 1; }
-		if (eKey == GetKey(GlKeys.Number3)) { ActiveMaterial = 2; }
-		if (eKey == GetKey(GlKeys.Number4)) { ActiveMaterial = 3; }
-		if (eKey == GetKey(GlKeys.Number5)) { ActiveMaterial = 4; }
-		if (eKey == GetKey(GlKeys.Number6)) { ActiveMaterial = 5; }
-		if (eKey == GetKey(GlKeys.Number7)) { ActiveMaterial = 6; }
-		if (eKey == GetKey(GlKeys.Number8)) { ActiveMaterial = 7; }
-		if (eKey == GetKey(GlKeys.Number9)) { ActiveMaterial = 8; }
-		if (eKey == GetKey(GlKeys.Number0)) { ActiveMaterial = 9; }
+		if (eKey == GetKey(GlKeys.Number1)) { ActiveHudIndex = 0; }
+		if (eKey == GetKey(GlKeys.Number2)) { ActiveHudIndex = 1; }
+		if (eKey == GetKey(GlKeys.Number3)) { ActiveHudIndex = 2; }
+		if (eKey == GetKey(GlKeys.Number4)) { ActiveHudIndex = 3; }
+		if (eKey == GetKey(GlKeys.Number5)) { ActiveHudIndex = 4; }
+		if (eKey == GetKey(GlKeys.Number6)) { ActiveHudIndex = 5; }
+		if (eKey == GetKey(GlKeys.Number7)) { ActiveHudIndex = 6; }
+		if (eKey == GetKey(GlKeys.Number8)) { ActiveHudIndex = 7; }
+		if (eKey == GetKey(GlKeys.Number9)) { ActiveHudIndex = 8; }
+		if (eKey == GetKey(GlKeys.Number0)) { ActiveHudIndex = 9; }
 	}
 
 	internal void UseVsync()
@@ -2057,7 +2065,7 @@
 	internal void MapLoaded()
 	{
 		RedrawAllBlocks();
-		materialSlots = d_Data.DefaultMaterialSlots();
+		materialSlots = d_Data.DefaultHudSlots();
 		GuiStateBackToGame();
 
 		playerPositionSpawnX = player.position.x;
@@ -2101,9 +2109,9 @@
 
 	internal void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, int mode)
 	{
-		SendSetBlock(x, y, z, mode, material, ActiveMaterial);
+		SendSetBlock(x, y, z, mode, material, ActiveHudIndex);
 
-		Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+		Packet_Item item = d_Inventory.RightHand[ActiveHudIndex];
 		if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
 		{
 			//int blockid = d_Inventory.RightHand[d_Viewport.ActiveMaterial].BlockId;
@@ -2739,7 +2747,7 @@
 						}
 						else
 						{
-							SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.Use, 0, ActiveMaterial);
+							SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.Use, 0, ActiveHudIndex);
 						}
 					}
 				}

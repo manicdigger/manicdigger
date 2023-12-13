@@ -43,10 +43,10 @@
 			game.SelectedBlockPositionZ = 0 - 1;
 			return;
 		}
-		NextBullet(game, 0);
+	    BlockInteractions(game);
 	}
 
-	internal void NextBullet(Game game, int bulletsshot)
+	internal void BlockInteractions(Game game)
 	{
 		float one = 1;
 		bool left = game.mouseLeft;
@@ -78,7 +78,7 @@
 			game.currentAttackedBlock = null;
 		}
 
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 	
 		
 		//grenade cooking - TODO: fix instant explosion when closing ESC menu
@@ -98,6 +98,7 @@
 			game.handSetAttackBuild = true;
 		}
 
+        //Controle 3person camera
 		if (game.overheadcamera && pick2count.value > 0 && left)
 		{
 			//if not picked any object, and mouse button is pressed, then walk to destination.
@@ -107,6 +108,8 @@
 				game.playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
 			}
 		}
+
+
 		bool pickdistanceok = (pick2count.value > 0); //&& (!ispistol);
 		if (pickdistanceok)
 		{
@@ -146,6 +149,7 @@
 			pick0.blockPos[2] = -1;
 		}
 		PickEntity(game, pick, pick2, pick2count);
+
 		if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
 		{
 			int ntileX = game.platform.FloatToInt(pick0.Current()[0]);
@@ -168,7 +172,7 @@
 		if ((one * (game.platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay(game)
 			)
 		{
-			if (left && game.d_Inventory.RightHand[game.ActiveMaterial] == null)
+			if (left && game.d_Inventory.RightHand[game.ActiveHudIndex] == null)
 			{
 				game.SendPacketClient(ClientPackets.MonsterHit(game.platform.FloatToInt(2 + game.rnd.NextFloat() * 4)));
 			}
@@ -201,13 +205,13 @@
 								&& game.d_Inventory.RightHand[i].ItemClass == Packet_ItemClassEnum.Block
 								&& game.d_Inventory.RightHand[i].BlockId == clonesource2)
 							{
-								game.ActiveMaterial = i;
+								game.ActiveHudIndex = i;
 								gotoDone = true;
 							}
 						}
 						if (!gotoDone)
 						{
-							IntRef freehand = game.d_InventoryUtil.FreeHand(game.ActiveMaterial);
+							IntRef freehand = game.d_InventoryUtil.FreeHand(game.ActiveHudIndex);
 							//find this block in inventory.
 							for (int i = 0; i < game.d_Inventory.ItemsCount; i++)
 							{
@@ -228,14 +232,14 @@
 										break;
 									}
 									//try to replace current slot
-									if (game.d_Inventory.RightHand[game.ActiveMaterial] != null
-										&& game.d_Inventory.RightHand[game.ActiveMaterial].ItemClass == Packet_ItemClassEnum.Block)
+									if (game.d_Inventory.RightHand[game.ActiveHudIndex] != null
+										&& game.d_Inventory.RightHand[game.ActiveHudIndex].ItemClass == Packet_ItemClassEnum.Block)
 									{
 										game.MoveToInventory(
-											game.InventoryPositionMaterialSelector(game.ActiveMaterial));
+											game.InventoryPositionMaterialSelector(game.ActiveHudIndex));
 										game.WearItem(
 											game.InventoryPositionMainArea(k.X, k.Y),
-											game.InventoryPositionMaterialSelector(game.ActiveMaterial));
+											game.InventoryPositionMaterialSelector(game.ActiveHudIndex));
 									}
 								}
 							}
@@ -293,12 +297,16 @@
 							int posx = newtileX;
 							int posy = newtileZ;
 							int posz = newtileY;
+
 							game.currentAttackedBlock = Vector3IntRef.Create(posx, posy, posz);
 							if (!game.blockHealth.ContainsKey(posx, posy, posz))
 							{
 								game.blockHealth.Set(posx, posy, posz, game.GetCurrentBlockHealth(posx, posy, posz));
 							}
-							game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - game.WeaponAttackStrength());
+                            game.platform.ConsoleWriteLine(game.platform.StringFormat(" Current health {0}", 
+                                game.platform.FloatToString(game.GetCurrentBlockHealth(posx, posy, posz))));
+
+                            game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - game.WeaponAttackStrength());
 							float health = game.GetCurrentBlockHealth(posx, posy, posz);
 							if (health <= 0)
 							{
@@ -339,7 +347,7 @@
 	internal float BuildDelay(Game game)
 	{
 		float default_ = (1f * 95 / 100) * (1 / game.basemovespeed);
-		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
+		Packet_Item item = game.d_Inventory.RightHand[game.ActiveHudIndex];
 		if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
 		{
 			return default_;
@@ -361,7 +369,7 @@
 	{
 		float xfract = collisionPos[0] - game.MathFloor(collisionPos[0]);
 		float zfract = collisionPos[2] - game.MathFloor(collisionPos[2]);
-		int activematerial = game.MaterialSlots_(game.ActiveMaterial);
+		int activematerial = game.MaterialSlots_(game.ActiveHudIndex);
 		int railstart = game.d_Data.BlockIdRailstart();
 		if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
 			|| activematerial == railstart + RailDirectionFlags.Corners)
@@ -387,6 +395,7 @@
 		int x = game.platform.FloatToInt(blockposX);
 		int y = game.platform.FloatToInt(blockposY);
 		int z = game.platform.FloatToInt(blockposZ);
+
 		int mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
 		{
 			if (game.IsAnyPlayerInPos(x, y, z) || activematerial == 151) // Compass
@@ -525,7 +534,7 @@
 
 	internal void OnPickUseWithTool(Game game, int posX, int posY, int posZ)
 	{
-		game.SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.UseWithTool, game.d_Inventory.RightHand[game.ActiveMaterial].BlockId, game.ActiveMaterial);
+		game.SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.UseWithTool, game.d_Inventory.RightHand[game.ActiveHudIndex].BlockId, game.ActiveHudIndex);
 	}
 
 	internal RailDirection PickHorizontalVertical(float xfract, float yfract)
