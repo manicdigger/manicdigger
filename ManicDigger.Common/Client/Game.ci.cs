@@ -64,7 +64,6 @@
 		particleEffectBlockBreak = new ModDrawParticleEffectBlockBreak();
 		PICK_DISTANCE = 4.1f;
 		selectedmodelid = -1;
-		grenadetime = 3;
 		rotationspeed = one * 15 / 100;
 		entities = new Entity[entitiesMax];
 		for (int i = 0; i < entitiesMax; i++)
@@ -1480,10 +1479,7 @@
 	internal float PICK_DISTANCE;
 	internal bool leftpressedpicking;
 	internal int selectedmodelid;
-	internal int pistolcycle;
 	internal int lastironsightschangeMilliseconds;
-	internal int grenadecookingstartMilliseconds;
-	internal float grenadetime;
 	internal int lastpositionsentMilliseconds;
 
 	internal float mouseDeltaX;

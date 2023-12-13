@@ -53,7 +53,6 @@
 		bool middle = game.mouseMiddle;
 		bool right = game.mouseRight;
 
-		bool IsNextShot = bulletsshot != 0;
 
 		if (!game.leftpressedpicking)
 		{
@@ -80,52 +79,14 @@
 		}
 
 		Packet_Item item = game.d_Inventory.RightHand[game.ActiveMaterial];
-		bool ispistol = (item != null && game.blocktypes[item.BlockId].IsPistol);
-		bool ispistolshoot = ispistol && left;
-		bool isgrenade = ispistol && game.blocktypes[item.BlockId].PistolType == Packet_PistolTypeEnum.Grenade;
-		if (ispistol && isgrenade)
-		{
-			ispistolshoot = game.mouseleftdeclick;
-		}
+	
+		
 		//grenade cooking - TODO: fix instant explosion when closing ESC menu
-		if (game.mouseleftclick)
-		{
-			game.grenadecookingstartMilliseconds = game.platform.TimeMillisecondsFromStart();
-			if (ispistol && isgrenade)
-			{
-				if (game.blocktypes[item.BlockId].Sounds.ShootCount > 0)
-				{
-					game.AudioPlay(game.platform.StringFormat("{0}.ogg", game.blocktypes[item.BlockId].Sounds.Shoot[0]));
-				}
-			}
-		}
-		float wait = ((one * (game.platform.TimeMillisecondsFromStart() - game.grenadecookingstartMilliseconds)) / 1000);
-		if (isgrenade && left)
-		{
-			if (wait >= game.grenadetime && isgrenade && game.grenadecookingstartMilliseconds != 0)
-			{
-				ispistolshoot = true;
-				game.mouseleftdeclick = true;
-			}
-			else
-			{
-				return;
-			}
-		}
-		else
-		{
-			game.grenadecookingstartMilliseconds = 0;
-		}
-
-		if (ispistol && game.mouserightclick && (game.platform.TimeMillisecondsFromStart() - game.lastironsightschangeMilliseconds) >= 500)
-		{
-			game.IronSights = !game.IronSights;
-			game.lastironsightschangeMilliseconds = game.platform.TimeMillisecondsFromStart();
-		}
-
+		
+		
 		IntRef pick2count = new IntRef();
 		Line3D pick = new Line3D();
-		GetPickingLine(game, pick, ispistolshoot);
+		GetPickingLine(game, pick, false);
 		BlockPosSide[] pick2 = game.Pick(game.s, pick, pick2count);
 
 		if (left)
@@ -205,7 +166,7 @@
 		}
 
 		if ((one * (game.platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay(game)
-			|| IsNextShot)
+			)
 		{
 			if (left && game.d_Inventory.RightHand[game.ActiveMaterial] == null)
 			{
@@ -216,235 +177,11 @@
 				//TODO: animation
 				fastclicking = false;
 			}
-			if ((left || right || middle) && (!isgrenade))
+			if ((left || right || middle) )
 			{
 				lastbuildMilliseconds = game.platform.TimeMillisecondsFromStart();
 			}
-			if (isgrenade && game.mouseleftdeclick)
-			{
-				lastbuildMilliseconds = game.platform.TimeMillisecondsFromStart();
-			}
-			if (game.reloadstartMilliseconds != 0)
-			{
-				PickingEnd(left, right, middle, ispistol);
-				return;
-			}
-			if (ispistolshoot)
-			{
-				if ((!(game.LoadedAmmo[item.BlockId] > 0))
-					|| (!(game.TotalAmmo[item.BlockId] > 0)))
-				{
-					game.AudioPlay("Dry Fire Gun-SoundBible.com-2053652037.ogg");
-					PickingEnd(left, right, middle, ispistol);
-					return;
-				}
-			}
-			if (ispistolshoot)
-			{
-				float toX = pick.End[0];
-				float toY = pick.End[1];
-				float toZ = pick.End[2];
-				if (pick2count.value > 0)
-				{
-					toX = pick2[0].blockPos[0];
-					toY = pick2[0].blockPos[1];
-					toZ = pick2[0].blockPos[2];
-				}
 
-				Packet_ClientShot shot = new Packet_ClientShot();
-				shot.FromX = game.SerializeFloat(pick.Start[0]);
-				shot.FromY = game.SerializeFloat(pick.Start[1]);
-				shot.FromZ = game.SerializeFloat(pick.Start[2]);
-				shot.ToX = game.SerializeFloat(toX);
-				shot.ToY = game.SerializeFloat(toY);
-				shot.ToZ = game.SerializeFloat(toZ);
-				shot.HitPlayer = -1;
-
-				for (int i = 0; i < game.entitiesCount; i++)
-				{
-					if (game.entities[i] == null)
-					{
-						continue;
-					}
-					if (game.entities[i].drawModel == null)
-					{
-						continue;
-					}
-					Entity p_ = game.entities[i];
-					if (p_.networkPosition == null)
-					{
-						continue;
-					}
-					if (!p_.networkPosition.PositionLoaded)
-					{
-						continue;
-					}
-					float feetposX = p_.position.x;
-					float feetposY = p_.position.y;
-					float feetposZ = p_.position.z;
-					//var p = PlayerPositionSpawn;
-					Box3D bodybox = new Box3D();
-					float headsize = (p_.drawModel.ModelHeight - p_.drawModel.eyeHeight) * 2; //0.4f;
-					float h = p_.drawModel.ModelHeight - headsize;
-					float r = one * 35 / 100;
-
-					bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ - r);
-					bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ + r);
-					bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ - r);
-					bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ + r);
-
-					bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
-					bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
-					bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
-					bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
-
-					Box3D headbox = new Box3D();
-
-					headbox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
-					headbox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
-					headbox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
-					headbox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
-
-					headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ - r);
-					headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ + r);
-					headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ - r);
-					headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ + r);
-
-					float[] p;
-					float localeyeposX = game.EyesPosX();
-					float localeyeposY = game.EyesPosY();
-					float localeyeposZ = game.EyesPosZ();
-					p = Intersection.CheckLineBoxExact(pick, headbox);
-					if (p != null)
-					{
-						//do not allow to shoot through terrain
-						if (pick2count.value == 0 || (game.Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
-							> game.Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
-						{
-							if (!isgrenade)
-							{
-								Entity entity = new Entity();
-								Sprite sprite = new Sprite();
-								sprite.positionX = p[0];
-								sprite.positionY = p[1];
-								sprite.positionZ = p[2];
-								sprite.image = "blood.png";
-								entity.sprite = sprite;
-								entity.expires = Expires.Create(one * 2 / 10);
-								game.EntityAddLocal(entity);
-							}
-							shot.HitPlayer = i;
-							shot.IsHitHead = 1;
-						}
-					}
-					else
-					{
-						p = Intersection.CheckLineBoxExact(pick, bodybox);
-						if (p != null)
-						{
-							//do not allow to shoot through terrain
-							if (pick2count.value == 0 || (game.Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
-								> game.Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
-							{
-								if (!isgrenade)
-								{
-									Entity entity = new Entity();
-									Sprite sprite = new Sprite();
-									sprite.positionX = p[0];
-									sprite.positionY = p[1];
-									sprite.positionZ = p[2];
-									sprite.image = "blood.png";
-									entity.sprite = sprite;
-									entity.expires = Expires.Create(one * 2 / 10);
-									game.EntityAddLocal(entity);
-								}
-								shot.HitPlayer = i;
-								shot.IsHitHead = 0;
-							}
-						}
-					}
-				}
-				shot.WeaponBlock = item.BlockId;
-				game.LoadedAmmo[item.BlockId] = game.LoadedAmmo[item.BlockId] - 1;
-				game.TotalAmmo[item.BlockId] = game.TotalAmmo[item.BlockId] - 1;
-				float projectilespeed = game.DeserializeFloat(game.blocktypes[item.BlockId].ProjectileSpeedFloat);
-				if (projectilespeed == 0)
-				{
-					{
-						Entity entity = game.CreateBulletEntity(
-						  pick.Start[0], pick.Start[1], pick.Start[2],
-						  toX, toY, toZ, 150);
-						game.EntityAddLocal(entity);
-					}
-				}
-				else
-				{
-					float vX = toX - pick.Start[0];
-					float vY = toY - pick.Start[1];
-					float vZ = toZ - pick.Start[2];
-					float vLength = game.Length(vX, vY, vZ);
-					vX /= vLength;
-					vY /= vLength;
-					vZ /= vLength;
-					vX *= projectilespeed;
-					vY *= projectilespeed;
-					vZ *= projectilespeed;
-					shot.ExplodesAfter = game.SerializeFloat(game.grenadetime - wait);
-
-					{
-						Entity grenadeEntity = new Entity();
-
-						Sprite sprite = new Sprite();
-						sprite.image = "ChemicalGreen.png";
-						sprite.size = 14;
-						sprite.animationcount = 0;
-						sprite.positionX = pick.Start[0];
-						sprite.positionY = pick.Start[1];
-						sprite.positionZ = pick.Start[2];
-						grenadeEntity.sprite = sprite;
-
-						Grenade_ projectile = new Grenade_();
-						projectile.velocityX = vX;
-						projectile.velocityY = vY;
-						projectile.velocityZ = vZ;
-						projectile.block = item.BlockId;
-						projectile.sourcePlayer = game.LocalPlayerId;
-
-						grenadeEntity.expires = Expires.Create(game.grenadetime - wait);
-
-						grenadeEntity.grenade = projectile;
-						game.EntityAddLocal(grenadeEntity);
-					}
-				}
-				Packet_Client packet = new Packet_Client();
-				packet.Id = Packet_ClientIdEnum.Shot;
-				packet.Shot = shot;
-				game.SendPacketClient(packet);
-
-				if (game.blocktypes[item.BlockId].Sounds.ShootEndCount > 0)
-				{
-					game.pistolcycle = game.rnd.Next() % game.blocktypes[item.BlockId].Sounds.ShootEndCount;
-					game.AudioPlay(game.platform.StringFormat("{0}.ogg", game.blocktypes[item.BlockId].Sounds.ShootEnd[game.pistolcycle]));
-				}
-
-				bulletsshot++;
-				if (bulletsshot < game.DeserializeFloat(game.blocktypes[item.BlockId].BulletsPerShotFloat))
-				{
-					NextBullet(game, bulletsshot);
-				}
-
-				//recoil
-				game.player.position.rotx -= game.rnd.NextFloat() * game.CurrentRecoil();
-				game.player.position.roty += game.rnd.NextFloat() * game.CurrentRecoil() * 2 - game.CurrentRecoil();
-
-				PickingEnd(left, right, middle, ispistol);
-				return;
-			}
-			if (ispistol && right)
-			{
-				PickingEnd(left, right, middle, ispistol);
-				return;
-			}
 			if (pick2count.value > 0)
 			{
 				if (middle)
@@ -540,7 +277,7 @@
 							else { blocktype = ((game.BlockInHand() == null) ? 1 : game.BlockInHand().value); }
 							if (left && blocktype == game.d_Data.BlockIdAdminium())
 							{
-								PickingEnd(left, right, middle, ispistol);
+								PickingEnd(left, right, middle, false);
 								return;
 							}
 							string[] sound = left ? game.d_Data.BreakSound()[blocktype] : game.d_Data.BuildSound()[blocktype];
@@ -575,7 +312,7 @@
 									tile.collisionPos,
 									right);
 							}
-							PickingEnd(left, right, middle, ispistol);
+							PickingEnd(left, right, middle, false);
 							return;
 						}
 						if (!right)
@@ -596,7 +333,7 @@
 				}
 			}
 		}
-		PickingEnd(left, right, middle, ispistol);
+		PickingEnd(left, right, middle, false);
 	}
 
 	internal float BuildDelay(Game game)
