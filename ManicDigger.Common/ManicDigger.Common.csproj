@@ -326,6 +326,7 @@
     <Compile Include="Server\Mods\Fortress\Unused\BlockId.cs" />
     <Compile Include="Server\Mods\Fortress\Unused\PermissionBlock.cs" />
     <Compile Include="Server\Mods\Fortress\Unused\Fluids.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\Tools.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

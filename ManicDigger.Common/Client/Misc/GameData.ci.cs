@@ -60,7 +60,9 @@
 		mLightRadius = new int[count];
 		mStartInventoryAmount = new int[count];
 		mStrength = new float[count];
-		mDamageToPlayer = new int[count];
+        mToolStrength = new float[count];
+
+        mDamageToPlayer = new int[count];
 		mWalkableType = new int[count];
 
 		mDefaultHudSlots = new int[10];
@@ -77,8 +79,9 @@
 	public string[][] CloneSound() { return mCloneSound; }
 	public int[] LightRadius() { return mLightRadius; }
 	public int[] StartInventoryAmount() { return mStartInventoryAmount; }
-	public float[] Strength() { return mStrength; }
-	public int[] DamageToPlayer() { return mDamageToPlayer; }
+    public float[] Strength() { return mStrength; }
+    public float[] ToolStrength() { return mToolStrength; }
+    public int[] DamageToPlayer() { return mDamageToPlayer; }
 	public int[] WalkableType1() { return mWalkableType; }
 
 	public int[] DefaultHudSlots() { return mDefaultHudSlots; }
@@ -94,8 +97,9 @@
 	string[][] mCloneSound;
 	int[] mLightRadius;
 	int[] mStartInventoryAmount;
-	float[] mStrength;
-	int[] mDamageToPlayer;
+    float[] mStrength;
+    float[] mToolStrength;
+    int[] mDamageToPlayer;
 	int[] mWalkableType;
 
 	int[] mDefaultHudSlots;
@@ -201,6 +205,7 @@
 
 	public void UseBlockTypes(Packet_BlockType[] blocktypes, int count)
 	{
+        
 		for (int i = 0; i < count; i++)
 		{
 			if (blocktypes[i] != null)
@@ -235,6 +240,7 @@
 		WalkSound()[id] = new string[SoundCount];
 		BreakSound()[id] = new string[SoundCount];
 		BuildSound()[id] = new string[SoundCount];
+        
 		CloneSound()[id] = new string[SoundCount];
 		if (b.Sounds != null)
 		{
@@ -256,9 +262,10 @@
 			}
 		}
 		LightRadius()[id] = b.LightRadius;
-		//StartInventoryAmount { get; }
-		Strength()[id] = b.Strength;
-		DamageToPlayer()[id] = b.DamageToPlayer;
+        //StartInventoryAmount { get; }
+        Strength()[id] = b.Strength;
+        ToolStrength()[id] = DeserializeFloat(b.ToolStrenghtFloat);
+        DamageToPlayer()[id] = b.DamageToPlayer;
 		WalkableType1()[id] = b.WalkableType;
 		SetSpecialBlock(b, id);
 	}

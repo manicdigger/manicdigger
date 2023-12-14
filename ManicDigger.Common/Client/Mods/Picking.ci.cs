@@ -306,8 +306,14 @@
                             game.platform.ConsoleWriteLine(game.platform.StringFormat(" Current health {0}", 
                                 game.platform.FloatToString(game.GetCurrentBlockHealth(posx, posy, posz))));
 
-                            game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - game.WeaponAttackStrength());
-							float health = game.GetCurrentBlockHealth(posx, posy, posz);
+                            game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - game.d_Data.ToolStrength()[item.BlockId]);
+                            game.platform.ConsoleWriteLine(game.platform.StringFormat2(" Current minus toolstrengy {0} : {1}",
+                                   game.platform.FloatToString(game.GetCurrentBlockHealth(posx, posy, posz))
+                                , game.platform.FloatToString(game.d_Data.ToolStrength()[item.BlockId])
+                                   ));
+
+
+                            float health = game.GetCurrentBlockHealth(posx, posy, posz);
 							if (health <= 0)
 							{
 								if (game.currentAttackedBlock != null)

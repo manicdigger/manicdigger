@@ -1311,12 +1311,10 @@
 
 	internal DictionaryVector3Float blockHealth;
 
-    internal float GetCurrentToolStrenght(int x, int y, int z)
+    internal float GetToolStrenght(int  blocktype)
     {
-        //  d_Data.
-        int blocktype = map.GetBlock(x, y, z);
-
-        return d_Data.Strength()[blocktype];
+ 
+        return d_Data.ToolStrength()[blocktype];
     }
 
     internal float GetCurrentBlockHealth(int x, int y, int z)
