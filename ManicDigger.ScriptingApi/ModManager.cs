@@ -756,41 +756,14 @@ namespace ManicDigger
 	}
 
 
-    public interface ContentLoader {
-        void Load(string file,ModManager mod);
+    public interface ContentLoader
+    {
+        void Load(string file, ModManager mod);
     }
 
-    /*   public class BlockLoader : ContentLoader
-     {
-         public DrawType convertDrawType(JToken token){
-       if(token.)
- }
-         public void Load(string file, ModManager mod)
-         {
-             if(!File.Exists(file))
-                 throw new FileNotFoundException("This file was not found.: "+ file);
-
-              JObject o = JObject.Parse(File.ReadAllText(file));
-
-             JArray a = (JArray)o["blocks"];
-             Console.WriteLine("child count" + a.Count);
-             for(int i=0;i<a.Count; i++) {
-
-                 mod.SetBlockType(a[i]["id"], a[i]["id"], new BlockType()
-                 {
-                     DrawType = convertDrawType(a[i]["Blocktype"]);
-                     WalkableType = WalkableType.Empty,
-                     Sounds = noSound,
-                 });
-             }
-
-}
-    }*/
 
 
- 
-  
-   
+
     public enum SpecialKey
 	{
 		Respawn,

@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Newtonsoft.Json;
 
 namespace ManicDigger.Server
 {
@@ -21,6 +22,34 @@ namespace ManicDigger.Server
 		}
 		public int clientid;
 	}
+
+    /*   public class BlockLoader : ContentLoader
+     {
+         public DrawType convertDrawType(JToken token){
+       if(token.)
+ }
+         public void Load(string file, ModManager mod)
+         {
+             if(!File.Exists(file))
+                 throw new FileNotFoundException("This file was not found.: "+ file);
+
+              JObject o = JObject.Parse(File.ReadAllText(file));
+
+             JArray a = (JArray)o["blocks"];
+             Console.WriteLine("child count" + a.Count);
+             for(int i=0;i<a.Count; i++) {
+
+                 mod.SetBlockType(a[i]["id"], a[i]["id"], new BlockType()
+                 {
+                     DrawType = convertDrawType(a[i]["Blocktype"]);
+                     WalkableType = WalkableType.Empty,
+                     Sounds = noSound,
+                 });
+             }
+
+}
+    }*/
+
 
     public partial class Server : ICurrentTime, IDropItem
 	{
@@ -55,8 +84,25 @@ namespace ManicDigger.Server
 			language.LoadTranslations();
 		}
 
+        void SaveBlockstoJson() {
+            List<BlockType> blocktypes= new List<BlockType>();
+            for(int i = 0; i < 1024; i++) {
+                if (BlockTypes[i] != null)
+                    blocktypes.Add(BlockTypes[i]);
+            }
+            var opts = new JsonSerializerSettings()
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                Formatting = Formatting.Indented
+            };
+            string json = JsonConvert.SerializeObject(blocktypes, opts);
+            File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + @"" + "Blocktypes.json",
+                  json);
+            Console.WriteLine("blocktypes.Count " + blocktypes.Count);
+        }
 
-		internal ServerCi server;
+        internal ServerCi server;
 		internal ServerSystem[] systems;
 		internal int systemsCount;
 		internal ServerPlatform serverPlatform;
@@ -157,8 +203,10 @@ namespace ManicDigger.Server
 				{
 					systems[i].Update(this, dt);
 				}
-				//Save data
-				ProcessSave();
+                SaveBlockstoJson();
+
+                //Save data
+                ProcessSave();
 				//Do server stuff
 				ProcessMain();
 
@@ -3098,13 +3146,14 @@ namespace ManicDigger.Server
 		{
 			return new Vector3i(a.x - b.x, a.y - b.y, a.z - b.z);
 		}
-		int Length(Vector3i v)
-		{
-			return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-		}
-
+        int Length(Vector3i v)
+        {
+            return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+        }
+        bool loaded;
 		public void SetBlockType(int id, string name, BlockType block)
 		{
+            
 			BlockTypes[id] = block;
 			block.Name = name; 
 			d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(block));

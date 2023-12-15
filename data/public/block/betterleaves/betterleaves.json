@@ -1,0 +1,8 @@
+{
+	"__comment": "Fair warning, this format is highly likely to change even more in the future!",
+	"parent": "block/betterleaves/betterleaves",
+	"textures": {
+		"all": "blocks/betterleaves/leaves_oak_round",
+		"extra": "blocks/betterleaves/better_leaves_oak"
+	}
+}
