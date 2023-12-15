@@ -2,7 +2,8 @@
 {
 	public Game()
 	{
-		one = 1;
+        SelectedBlockPosition = new Vector3int();
+        one = 1;
 		map = new Map();
 		performanceinfo = new DictionaryStringString();
 		AudioEnabled = true;
@@ -18,13 +19,11 @@
 		}
 		TextureIdForInventory = new int[MaxBlockTypes];
 		language = new LanguageCi();
-		lastplacedblockX = -1;
-		lastplacedblockY = -1;
-		lastplacedblockZ = -1;
-		mLightLevels = new float[16];
+        lastplacedblock = new Vector3int();
+        lastplacedblock.SetXYZ(-1);
+        mLightLevels = new float[16];
 		sunlight_ = 15;
-
-
+ 
 		packetLen = new IntRef();
 		ENABLE_DRAW2D = true;
 		AllowFreemove = true;
@@ -443,11 +442,9 @@
 	internal int terrainTexture;
 	internal int[] terrainTextures1d;
 	internal ITerrainTextures d_TerrainTextures;
+    internal Vector3int lastplacedblock;
 
-	internal int lastplacedblockX;
-	internal int lastplacedblockY;
-	internal int lastplacedblockZ;
-
+ 
 	internal InfiniteMapChunked2d d_Heightmap;
 	internal Config3d d_Config3d;
 
@@ -1271,9 +1268,9 @@
 		map.SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
 		//d_Shadows.OnSetBlock(x, y, z);
 		ShadowsOnSetBlock(x, y, z);
-		lastplacedblockX = x;
-		lastplacedblockY = y;
-		lastplacedblockZ = z;
+		lastplacedblock.x = x;
+		lastplacedblock.y = y;
+		lastplacedblock.z = z;
 	}
 
 	internal VisibleDialog[] dialogs;
@@ -1310,10 +1307,12 @@
 
 	internal DictionaryVector3Float blockHealth;
 
-    internal float GetToolStrenght(int  blocktype)
+    internal float GetToolStrenght(int  blocktypetool,int blocktype)
     {
- 
-        return d_Data.ToolStrength()[blocktype];
+        if (d_Data.ToolStrength()[blocktypetool] <= 1)//beter way? todo 
+            return 3;
+        bool getsBonus = (d_Data.ToolSpeedBonusMask()[blocktype] & d_Data.HarvestabilityMask()[blocktypetool] )> 0;
+        return (getsBonus) ? d_Data.ToolStrength()[blocktypetool] : 3;
     }
 
     internal float GetCurrentBlockHealth(int x, int y, int z)

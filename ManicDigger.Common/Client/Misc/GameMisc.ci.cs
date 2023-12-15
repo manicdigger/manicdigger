@@ -223,6 +223,9 @@ public class DrawName
 }
 public class Vector3int
 {
+    public Vector3int() { x = 0; y = 0; z = 0; }
+    // public Vector3int(int v) { x = v; y = v; z = v; }
+    internal void SetXYZ(int v) { x = v; y = v; z = v; }
     internal int x;
     internal int y;
     internal int z;

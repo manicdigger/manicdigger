@@ -3620,8 +3620,8 @@ namespace ManicDigger.Server
 		{
 			Packet_BlockType p = new Packet_BlockType();
 			p.AimRadiusFloat = Server.SerializeFloat(block.AimRadius);
-			//p.HarvestabilityMask = block.HarvestabilityMask;
-			p.AmmoTotal = block.AmmoTotal;
+			p.HarvestabilityMask = block.HarvestabilityMask;
+			p.ToolSpeedBonusMask = block.ToolSpeedBonusMask;
 			p.ToolStrenghtFloat = Server.SerializeFloat(block.ToolStrenght);
 			p.DamageBodyFloat = Server.SerializeFloat(block.DamageBody);
 			p.DamageHeadFloat = Server.SerializeFloat(block.DamageHead);

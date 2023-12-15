@@ -1359,7 +1359,7 @@ namespace ManicDigger
 		[ProtoMember(33)]
 		public int HarvestabilityMask;
 		[ProtoMember(34)]
-		public int AmmoTotal;
+		public int ToolSpeedBonusMask;
 		[ProtoMember(35)]
 		public float ReloadDelay;
 		[ProtoMember(36)]

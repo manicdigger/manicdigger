@@ -282,8 +282,8 @@ message BlockType {
 	optional string ironSightsImage = 30;
 	optional int32 ironSightsAimRadiusFloat = 31;
 	optional int32 ironSightsFovFloat = 32;
-	optional int32 HarvestabilityMask = 33;
-	optional int32 ammoTotal = 34;
+	optional int32 harvestabilityMask = 33;
+	optional int32 toolSpeedBonusMask = 34;
 	optional int32 reloadDelayFloat = 35;
 	optional int32 explosionRangeFloat = 36;
 	optional int32 explosionTimeFloat = 37;

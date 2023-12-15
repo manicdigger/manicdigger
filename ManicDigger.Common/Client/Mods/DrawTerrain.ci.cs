@@ -117,10 +117,10 @@
 			return;
 		}
 
-		if (!(game.lastplacedblockX == -1 && game.lastplacedblockY == -1 && game.lastplacedblockZ == -1))
+		if (!(game.lastplacedblock.x == -1 && game.lastplacedblock.y == -1 && game.lastplacedblock.z == -1))
 		{
 			HashSetVector3IntRef ChunksToRedraw = new HashSetVector3IntRef();
-			Vector3IntRef[] around = BlocksAround7(Vector3IntRef.Create(game.lastplacedblockX, game.lastplacedblockY, game.lastplacedblockZ));
+			Vector3IntRef[] around = BlocksAround7(Vector3IntRef.Create(game.lastplacedblock.x, game.lastplacedblock.y, game.lastplacedblock.z));
 			for (int i = 0; i < 7; i++)
 			{
 				Vector3IntRef a = around[i];
@@ -150,9 +150,9 @@
 					}
 				}
 			}
-			game.lastplacedblockX = -1;
-			game.lastplacedblockY = -1;
-			game.lastplacedblockZ = -1;
+			game.lastplacedblock.x = -1;
+			game.lastplacedblock.y = -1;
+			game.lastplacedblock.z = -1;
 		}
 		int updated = 0;
 		for (; ; )

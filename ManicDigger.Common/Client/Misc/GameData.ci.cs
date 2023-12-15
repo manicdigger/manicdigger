@@ -70,6 +70,7 @@
 
         //Tools
         mHarvestabilityMask = new int[count];
+        mToolSpeedBonusMask = new int[count];
         tooltypes = new string[count];
 
     }
@@ -89,7 +90,8 @@
     public float[] ToolStrength() { return mToolStrength; }
     public int[] DamageToPlayer() { return mDamageToPlayer; }
     public int[] WalkableType1() { return mWalkableType; }
-    public int[] HarvestabilityMask() { return mWalkableType; }
+    public int[] HarvestabilityMask() { return mHarvestabilityMask; }
+    public int[] ToolSpeedBonusMask() { return mToolSpeedBonusMask; }
 
     public int[] DefaultHudSlots() { return mDefaultHudSlots; }
 
@@ -111,14 +113,17 @@
 
 	int[] mDefaultHudSlots;
     int[] mHarvestabilityMask;
+    int[] mToolSpeedBonusMask;
 
     //for now not inicilized outside server TODO
     public string[] tooltypes; //STUPID TODO
     public const int MAX_TOOLTYPES = 32;
     public int tooltypesAdded;
+
     public bool IsHarvestableByTool(int blockId, int toolID) {
-        int harvestabilitymask =mHarvestabilityMask[blockId];
+        int harvestabilitymask = mHarvestabilityMask[blockId];
          int toolmask = mHarvestabilityMask[toolID];
+        if (harvestabilitymask == 0) return true;//if no data harvestable by all
         return (harvestabilitymask & toolmask) > 0;
     }
 
@@ -284,6 +289,7 @@
         Strength()[id] = b.Strength;
         ToolStrength()[id] = DeserializeFloat(b.ToolStrenghtFloat);
         HarvestabilityMask()[id] = b.HarvestabilityMask;
+        mToolSpeedBonusMask[id] = b.ToolSpeedBonusMask;
         DamageToPlayer()[id] = b.DamageToPlayer;
 		WalkableType1()[id] = b.WalkableType;
 		SetSpecialBlock(b, id);

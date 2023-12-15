@@ -303,8 +303,8 @@
 							{
 								game.blockHealth.Set(posx, posy, posz, game.GetCurrentBlockHealth(posx, posy, posz));
 							}
-                        
-                            game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - game.d_Data.ToolStrength()[item.BlockId]);
+                            float toolStrenght = game.GetToolStrenght(item.BlockId, game.map.GetBlock(posx, posy, posz));
+                            game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - toolStrenght);
                              
 
 
