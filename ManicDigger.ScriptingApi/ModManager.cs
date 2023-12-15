@@ -1290,7 +1290,7 @@ namespace ManicDigger
 	{
 		public BlockType() {
             Strength = 10;
-        
+            IsBuildable = true;
         }
         [ProtoMember(1)]
 		public string TextureIdTop = "Unknown";
@@ -1346,6 +1346,9 @@ namespace ManicDigger
 		public float ToolStrenght;
 		[ProtoMember(27)]
 		public float WalkSpeedWhenUsed = 1;
+        /// <summary>
+        /// UNUSED
+        /// </summary>
 		[ProtoMember(28)]
 		public bool IsUnplecable;
 		[ProtoMember(29)]

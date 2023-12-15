@@ -3106,7 +3106,7 @@ namespace ManicDigger.Server
 		public void SetBlockType(int id, string name, BlockType block)
 		{
 			BlockTypes[id] = block;
-			block.Name = name;
+			block.Name = name; 
 			d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(block));
 		}
 		public void SetBlockType(string name, BlockType block)

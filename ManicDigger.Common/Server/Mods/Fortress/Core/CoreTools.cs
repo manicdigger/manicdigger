@@ -12,7 +12,7 @@
             type.AllTextures =name;
             type.DrawType = DrawType.Solid;
             type.WalkableType = WalkableType.Solid;
-            type.IsUnplecable = true;
+            type.IsBuildable = false;
             m.SetBlockType(name, type);
             m.AddToStartInventory(name, 1);
             m.AddToCreativeInventory(name);

@@ -26,8 +26,8 @@
 
         }
 
-        public TemplateAddStone(string name,BlockType blocktype) {
-            blocktype.AllTextures = "Stone";
+        public void TemplateAddStone(string name,BlockType blocktype) {
+            blocktype.AllTextures =name;
             blocktype.DrawType = DrawType.Solid;
             blocktype.WalkableType = WalkableType.Solid;
             blocktype.Sounds = solidSounds;
@@ -35,7 +35,7 @@
             blocktype.HarvestabilityMask = Pickaxe;
 
             if (blocktype.Strength == 10)
-                blocktype.Strength = 30
+                blocktype.Strength = 30;
             m.SetBlockType(name, blocktype);
             m.AddToCreativeInventory(name);
         }
@@ -1037,7 +1037,6 @@
 			#region Creative inventory
 			m.AddToCreativeInventory("Stone");
 			m.AddToCreativeInventory("Dirt");
-			m.AddToCreativeInventory("Cobblestone");
 			m.AddToCreativeInventory("OakWood");
 			m.AddToCreativeInventory("OakSapling");
 			//m.AddToCreativeInventory("Adminium");

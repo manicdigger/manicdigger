@@ -413,7 +413,7 @@
 					OnPickUseWithTool(game, blockposX, blockposY, blockposZ);
 					return;
 				}
-                if (game.blocktypes[activeItem].IsUnplecable)
+                if (!game.blocktypes[activeItem].IsBuildable)
                 {
                     return;
                 }

@@ -41,9 +41,9 @@ namespace ManicDigger.Server
                     return i;
                 }
             }
-                throw new Exception("No Block id:"+ name);
-            //return -1;
 
+            return -1;
+            //throw new Exception("No Block id:" + name);
         }
 
         public void AddToCreativeInventory(string blockType)
@@ -53,7 +53,6 @@ namespace ManicDigger.Server
             {
                 throw new Exception(blockType);
             }
-            server.BlockTypes[id].IsBuildable = true;
             server.d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(server.BlockTypes[id]));
         }
 
