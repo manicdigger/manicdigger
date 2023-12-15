@@ -270,11 +270,33 @@ public class NewWorld : MainMenuScreen
         }
         if (w == wbtn_create)
         {
-            string wordname = menu.p.StringFormat2("{0}/{1}.mddbs", menu.p.PathSavegames(), wtbx_name.GetContent());
+            string name = wtbx_name.GetContent();
+            IntRef savegamesCount_=new IntRef();
+            string[] savegames = menu.GetSavegames(savegamesCount_);
+            //TODO ITS STUPID CODE THERE MUST BE A BETTER WAY
+            bool contains;
 
-            //   string temp = string.Format("{0} ({1})",
-            //    name,i);
-            ServerInitSettings serverInitSettings=new ServerInitSettings();
+
+            for (int j = 2; true; j++)
+            {   contains = false;
+                for (int k = 0; k < savegamesCount_.value; k++)
+                {
+                    if (savegames[j] == menu.p.StringFormat2("{0} ({1})",name,menu.p.IntToString(j)))
+                    {
+                        contains = true;
+                        break;
+                    }
+                }
+                if (!contains) {
+                    name = menu.p.StringFormat2("{0} ({1})", name, menu.p.IntToString(j));
+                    break;
+                }
+            }
+        
+            
+            string wordname = menu.p.StringFormat2("{0}/{1}.mddbs", menu.p.PathSavegames(), name);
+
+            ServerInitSettings serverInitSettings =new ServerInitSettings();
             serverInitSettings.filename = wordname;
             serverInitSettings.settingsOverride = wlst_SettingList.GetAllElements();
             menu.StartGame(true, serverInitSettings, null);

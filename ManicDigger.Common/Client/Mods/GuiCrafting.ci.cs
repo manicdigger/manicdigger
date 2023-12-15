@@ -152,11 +152,11 @@
 		int eKey = args.GetKeyCode();
 		if (eKey == (game.GetKey(GlKeys.E)) && game.GuiTyping == TypingState.None)
 		{
-			if (!(game.SelectedBlockPositionX == -1 && game.SelectedBlockPositionY == -1 && game.SelectedBlockPositionZ == -1))
+			if (!(game.SelectedBlockPosition.x == -1 && game.SelectedBlockPosition.y == -1 && game.SelectedBlockPosition.z == -1))
 			{
-				int posx = game.SelectedBlockPositionX;
-				int posy = game.SelectedBlockPositionZ;
-				int posz = game.SelectedBlockPositionY;
+				int posx = game.SelectedBlockPosition.x;
+				int posy = game.SelectedBlockPosition.z;
+				int posz = game.SelectedBlockPosition.y;
 				if (game.map.GetBlock(posx, posy, posz) == game.d_Data.BlockIdCraftingTable())
 				{
 					//draw crafting recipes list.

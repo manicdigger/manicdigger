@@ -221,6 +221,14 @@ public class DrawName
 	internal bool OnlyWhenSelected;
 	internal bool ClientAutoComplete;
 }
+public class Vector3int
+{
+    internal int x;
+    internal int y;
+    internal int z;
+    
+}
+
 
 public class Vector3Float
 {

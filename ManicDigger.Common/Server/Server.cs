@@ -3632,7 +3632,7 @@ namespace ManicDigger.Server
 			p.ExplosionTimeFloat = Server.SerializeFloat(block.ExplosionTime);
 			p.Handimage = block.handimage;
 			//p.IronSightsAimRadiusFloat = Server.SerializeFloat(block.HarverstabilityMask);
-			p.IronSightsEnabled = block.IronSightsEnabled;
+			p.IsUnplecable = block.IsUnplecable;
 			p.IronSightsFovFloat = Server.SerializeFloat(block.IronSightsFov);
 			p.IronSightsImage = block.IronSightsImage;
 			p.IronSightsMoveSpeedFloat = Server.SerializeFloat(block.IronSightsMoveSpeed);

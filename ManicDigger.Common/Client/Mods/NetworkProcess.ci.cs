@@ -409,11 +409,7 @@ public class ProcessPacketTask : Action_
 				game.language.Override(packet.Translation.Lang, packet.Translation.Id, packet.Translation.Translation);
 				break;
 			case Packet_ServerIdEnum.BlockType:
-                //game.platform.ConsoleWriteLine(
-                //game.platform.StringFormat3("Name: {0} | id: {1} |toolStrenght: {2}",
-                //    packet.BlockType.Blocktype.Name,
-                //game.platform.IntToString(packet.BlockType.Id),
-                    //game.platform.FloatToString(packet.BlockType.Blocktype.ToolStrenghtFloat)));
+ 
 				game.NewBlockTypes[packet.BlockType.Id] = packet.BlockType.Blocktype;
 				break;
 			case Packet_ServerIdEnum.SunLevels:

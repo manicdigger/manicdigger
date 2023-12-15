@@ -41,8 +41,9 @@ namespace ManicDigger.Server
                     return i;
                 }
             }
-            return -1;
-            //throw new Exception(name);
+                throw new Exception("No Block id:"+ name);
+            //return -1;
+
         }
 
         public void AddToCreativeInventory(string blockType)

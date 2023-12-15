@@ -24,11 +24,11 @@
 			}
 			else
 			{
-				if (game.SelectedBlockPositionX != -1)
+				if (game.SelectedBlockPosition.x != -1)
 				{
-					int x = game.SelectedBlockPositionX;
-					int y = game.SelectedBlockPositionY;
-					int z = game.SelectedBlockPositionZ;
+					int x = game.SelectedBlockPosition.x;
+					int y = game.SelectedBlockPosition.y;
+					int z = game.SelectedBlockPosition.z;
 					float pickcubeheight = game.getblockheight(game.platform.FloatToInt(x), game.platform.FloatToInt(z), game.platform.FloatToInt(y));
 					float posx = x + one / 2;
 					float posy = y + pickcubeheight * one / 2;

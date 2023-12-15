@@ -1347,7 +1347,7 @@ namespace ManicDigger
 		[ProtoMember(27)]
 		public float WalkSpeedWhenUsed = 1;
 		[ProtoMember(28)]
-		public bool IronSightsEnabled;
+		public bool IsUnplecable;
 		[ProtoMember(29)]
 		public float IronSightsMoveSpeed = 1;
 		[ProtoMember(30)]

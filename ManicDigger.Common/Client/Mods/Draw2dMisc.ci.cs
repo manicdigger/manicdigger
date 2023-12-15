@@ -22,9 +22,9 @@
 		{
 			return;
 		}
-		int x = game.SelectedBlockPositionX;
-		int y = game.SelectedBlockPositionZ;
-		int z = game.SelectedBlockPositionY;
+		int x = game.SelectedBlockPosition.x;
+		int y = game.SelectedBlockPosition.z;
+		int z = game.SelectedBlockPosition.y;
 		//string info = "None";
 		if (!game.map.IsValidPos(x, y, z))
 		{

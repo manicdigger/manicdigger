@@ -38,9 +38,9 @@
 	{
 		if (game.FollowId() != null)
 		{
-			game.SelectedBlockPositionX = 0 - 1;
-			game.SelectedBlockPositionY = 0 - 1;
-			game.SelectedBlockPositionZ = 0 - 1;
+			game.SelectedBlockPosition.x = 0 - 1;
+			game.SelectedBlockPosition.y = 0 - 1;
+			game.SelectedBlockPosition.z = 0 - 1;
 			return;
 		}
 	    BlockInteractions(game);
@@ -133,16 +133,16 @@
 			|| game.overheadcamera)
 			)
 		{
-			game.SelectedBlockPositionX = game.platform.FloatToInt(pick2[0].Current()[0]);
-			game.SelectedBlockPositionY = game.platform.FloatToInt(pick2[0].Current()[1]);
-			game.SelectedBlockPositionZ = game.platform.FloatToInt(pick2[0].Current()[2]);
+			game.SelectedBlockPosition.x = game.platform.FloatToInt(pick2[0].Current()[0]);
+			game.SelectedBlockPosition.y = game.platform.FloatToInt(pick2[0].Current()[1]);
+			game.SelectedBlockPosition.z = game.platform.FloatToInt(pick2[0].Current()[2]);
 			pick0 = pick2[0];
 		}
 		else
 		{
-			game.SelectedBlockPositionX = -1;
-			game.SelectedBlockPositionY = -1;
-			game.SelectedBlockPositionZ = -1;
+			game.SelectedBlockPosition.x = -1;
+			game.SelectedBlockPosition.y = -1;
+			game.SelectedBlockPosition.z = -1;
 			pick0.blockPos = new float[3];
 			pick0.blockPos[0] = -1;
 			pick0.blockPos[1] = -1;
@@ -303,14 +303,9 @@
 							{
 								game.blockHealth.Set(posx, posy, posz, game.GetCurrentBlockHealth(posx, posy, posz));
 							}
-                            game.platform.ConsoleWriteLine(game.platform.StringFormat(" Current health {0}", 
-                                game.platform.FloatToString(game.GetCurrentBlockHealth(posx, posy, posz))));
-
+                        
                             game.blockHealth.Set(posx, posy, posz, game.blockHealth.Get(posx, posy, posz) - game.d_Data.ToolStrength()[item.BlockId]);
-                            game.platform.ConsoleWriteLine(game.platform.StringFormat2(" Current minus toolstrengy {0} : {1}",
-                                   game.platform.FloatToString(game.GetCurrentBlockHealth(posx, posy, posz))
-                                , game.platform.FloatToString(game.d_Data.ToolStrength()[item.BlockId])
-                                   ));
+                             
 
 
                             float health = game.GetCurrentBlockHealth(posx, posy, posz);
@@ -375,13 +370,13 @@
 	{
 		float xfract = collisionPos[0] - game.MathFloor(collisionPos[0]);
 		float zfract = collisionPos[2] - game.MathFloor(collisionPos[2]);
-		int activematerial = game.MaterialSlots_(game.ActiveHudIndex);
+		int activeItem= game.HudSlots_(game.ActiveHudIndex);
 		int railstart = game.d_Data.BlockIdRailstart();
-		if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
-			|| activematerial == railstart + RailDirectionFlags.Corners)
+		if (activeItem == railstart + RailDirectionFlags.TwoHorizontalVertical
+			|| activeItem == railstart + RailDirectionFlags.Corners)
 		{
 			RailDirection dirnew;
-			if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical)
+			if (activeItem == railstart + RailDirectionFlags.TwoHorizontalVertical)
 			{
 				dirnew = PickHorizontalVertical(xfract, zfract);
 			}
@@ -396,7 +391,7 @@
 				blockposY = blockposoldY;
 				blockposZ = blockposoldZ;
 			}
-			activematerial = railstart + (dir | DirectionUtils.ToRailDirectionFlags(dirnew));
+			activeItem = railstart + (dir | DirectionUtils.ToRailDirectionFlags(dirnew));
 		}
 		int x = game.platform.FloatToInt(blockposX);
 		int y = game.platform.FloatToInt(blockposY);
@@ -404,7 +399,7 @@
 
 		int mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
 		{
-			if (game.IsAnyPlayerInPos(x, y, z) || activematerial == 151) // Compass
+			if (game.IsAnyPlayerInPos(x, y, z) || activeItem == 151) // Compass
 			{
 				return;
 			}
@@ -413,13 +408,17 @@
 			Vector3IntRef oldfillend = fillend;
 			if (mode == Packet_BlockSetModeEnum.Create)
 			{
-				if (game.blocktypes[activematerial].IsTool)
+				if (game.blocktypes[activeItem].IsTool)
 				{
 					OnPickUseWithTool(game, blockposX, blockposY, blockposZ);
 					return;
 				}
+                if (game.blocktypes[activeItem].IsUnplecable)
+                {
+                    return;
+                }
 
-				if (activematerial == game.d_Data.BlockIdCuboid())
+                if (activeItem == game.d_Data.BlockIdCuboid())
 				{
 					ClearFillArea(game);
 
@@ -444,7 +443,7 @@
 					game.RedrawBlock(v.X, v.Y, v.Z);
 					return;
 				}
-				if (activematerial == game.d_Data.BlockIdFillStart())
+				if (activeItem == game.d_Data.BlockIdFillStart())
 				{
 					ClearFillArea(game);
 					if (!game.IsFillBlock(game.map.GetBlock(v.X, v.Y, v.Z)))
@@ -459,7 +458,7 @@
 				}
 				if (fillarea.ContainsKey(v.X, v.Y, v.Z))// && fillarea[v])
 				{
-					game.SendFillArea(fillstart.X, fillstart.Y, fillstart.Z, fillend.X, fillend.Y, fillend.Z, activematerial);
+					game.SendFillArea(fillstart.X, fillstart.Y, fillstart.Z, fillend.X, fillend.Y, fillend.Z, activeItem);
 					ClearFillArea(game);
 					fillstart = null;
 					fillend = null;
@@ -468,7 +467,7 @@
 			}
 			else
 			{
-				if (game.blocktypes[activematerial].IsTool)
+				if (game.blocktypes[activeItem].IsTool)
 				{
 					OnPickUseWithTool(game, blockposX, blockposY, blockposoldZ);
 					return;
@@ -489,7 +488,7 @@
 					return;
 				}
 			}
-			game.SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
+			game.SendSetBlockAndUpdateSpeculative(activeItem, x, y, z, mode);
 		}
 	}
 

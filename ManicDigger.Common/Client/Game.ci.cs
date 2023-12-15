@@ -811,10 +811,9 @@
 		return AllowedFonts[0];
 	}
 
-	internal int SelectedBlockPositionX;
-	internal int SelectedBlockPositionY;
-	internal int SelectedBlockPositionZ;
-	internal int SelectedEntityId;
+    internal Vector3int SelectedBlockPosition;
+
+    internal int SelectedEntityId;
 
 	internal bool IsWater(int blockType)
 	{
@@ -1122,7 +1121,7 @@
 		}
 	}
 
-	public int MaterialSlots_(int i)
+	public int HudSlots_(int i)
 	{
 		Packet_Item item = d_Inventory.RightHand[i];
 		int m = d_Data.BlockIdDirt();
