@@ -40,116 +40,116 @@
             AddTool("Diamond Axe", new BlockType()
             {
                 ToolStrenght = baseAxeStrenght * diamondMod,
-                HarvestabilityMask = Axe
+                ToolTypeMask = Axe
             });
             AddTool("Diamond Shovel", new BlockType()
             {
                 ToolStrenght = baseShovelStrenght * diamondMod,
-                HarvestabilityMask = Shovel
+                ToolTypeMask = Shovel
             }); 
             AddTool("Diamond Sword", new BlockType()
             {
                 ToolStrenght = baseSwordStrenght * diamondMod,
-                HarvestabilityMask = Sword
+                ToolTypeMask = Sword
             });
             AddTool("Diamond Pickaxe", new BlockType()
             {
                 ToolStrenght = basePickaxeStrenght * diamondMod,
-                HarvestabilityMask = Pickaxe
+                ToolTypeMask = Pickaxe
             });
 
             float goldMod=5f;
             AddTool("Gold Axe", new BlockType()
             {
                 ToolStrenght = baseAxeStrenght * goldMod,
-                HarvestabilityMask = Axe
+                ToolTypeMask = Axe
             });
             AddTool("Gold Shovel", new BlockType()
             {
                 ToolStrenght = baseShovelStrenght * goldMod,
-                HarvestabilityMask = Shovel
+                ToolTypeMask = Shovel
             }); 
             AddTool("Gold Sword", new BlockType()
             {
                 ToolStrenght = baseSwordStrenght * goldMod,
-                HarvestabilityMask = Sword
+                ToolTypeMask = Sword
             });
             AddTool("Gold Pickaxe", new BlockType()
             {
                 ToolStrenght = basePickaxeStrenght * goldMod,
-                HarvestabilityMask = Pickaxe
+                ToolTypeMask = Pickaxe
             });
 
             float steelMod=3f;
             AddTool("Steel Axe", new BlockType()
             {
                 ToolStrenght = baseAxeStrenght * steelMod,
-                HarvestabilityMask = Axe
+                ToolTypeMask = Axe
             });
             AddTool("Steel Shovel", new BlockType()
             {
                 ToolStrenght = baseShovelStrenght * steelMod,
-                HarvestabilityMask = Shovel
+                ToolTypeMask = Shovel
             }); 
             AddTool("Steel Sword", new BlockType()
             {
                 ToolStrenght = baseSwordStrenght * steelMod,
-                HarvestabilityMask = Sword
+                ToolTypeMask = Sword
             });
             AddTool("Steel Pickaxe", new BlockType()
             {
                 ToolStrenght = basePickaxeStrenght * steelMod,
-                HarvestabilityMask = Pickaxe
+                ToolTypeMask = Pickaxe
             });
 
             float stoneMod=2f;
             AddTool("Stone Axe", new BlockType()
             {
                 ToolStrenght = baseAxeStrenght * stoneMod,
-                HarvestabilityMask = Axe
+                ToolTypeMask = Axe
             });
             AddTool("Stone Shovel", new BlockType()
             {
                 ToolStrenght = baseShovelStrenght * stoneMod,
-                HarvestabilityMask = Shovel
+                ToolTypeMask = Shovel
             }); 
             AddTool("Stone Sword", new BlockType()
             {
                 ToolStrenght = baseSwordStrenght * stoneMod,
-                HarvestabilityMask = Sword
+                ToolTypeMask = Sword
             });
             AddTool("Stone Pickaxe", new BlockType()
             {
                 ToolStrenght = basePickaxeStrenght * stoneMod,
-                HarvestabilityMask = Pickaxe
+                ToolTypeMask = Pickaxe
             });
 
             float woodMod=1f;
             AddTool("Wood Axe", new BlockType()
             {
                 ToolStrenght = baseAxeStrenght * woodMod,
-                HarvestabilityMask = Axe
+                ToolTypeMask = Axe
             });
             AddTool("Wood Shovel", new BlockType()
             {
                 ToolStrenght = baseShovelStrenght * woodMod,
-                HarvestabilityMask = Shovel
+                ToolTypeMask = Shovel
             }); 
             AddTool("Wood Sword", new BlockType()
             {
                 ToolStrenght = baseSwordStrenght * woodMod,
-                HarvestabilityMask = Sword
+                ToolTypeMask = Sword
             });
             AddTool("Wood Pickaxe", new BlockType()
             {
                 ToolStrenght = basePickaxeStrenght * woodMod,
-                HarvestabilityMask = Pickaxe
+                ToolTypeMask = Pickaxe
             });
 
             AddTool("Shears", new BlockType()
             {
                 ToolStrenght = 5,
-                HarvestabilityMask = Pickaxe
+                ToolTypeMask = Pickaxe
             });
         }
         ModManager m;

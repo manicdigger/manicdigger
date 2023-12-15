@@ -1361,7 +1361,7 @@ namespace ManicDigger
 		[ProtoMember(34)]
 		public int ToolSpeedBonusMask;
 		[ProtoMember(35)]
-		public float ReloadDelay;
+		public int ToolTypeMask;
 		[ProtoMember(36)]
 		public float ExplosionRange;
 		[ProtoMember(37)]

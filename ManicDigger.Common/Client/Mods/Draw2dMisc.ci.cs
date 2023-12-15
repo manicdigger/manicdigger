@@ -63,9 +63,9 @@
 			float progress = health / game.d_Data.Strength()[blocktype];
 			if (game.IsUsableBlock(blocktype))
 			{
-				DrawEnemyHealthUseInfo(game, game.language.Get(StringTools.StringAppend(game.platform, "Block_", game.blocktypes[blocktype].Name)), progress, true);
+				DrawEnemyHealthUseInfo(game, game.language.Get(StringTools.StringAppend(game.platform, "Block_", game.blocktypes[blocktype].Name)), progress, true,blocktype);
 			}
-			DrawEnemyHealthCommon(game, game.language.Get(StringTools.StringAppend(game.platform, "Block_", game.blocktypes[blocktype].Name)), progress);
+			DrawEnemyHealthCommon(game, game.language.Get(StringTools.StringAppend(game.platform, "Block_", game.blocktypes[blocktype].Name)), progress,blocktype);
 		}
 		if (game.currentlyAttackedEntity != -1)
 		{
@@ -90,29 +90,52 @@
 			}
 			if (e.usable)
 			{
-				DrawEnemyHealthUseInfo(game, game.language.Get(name), health, true);
+				DrawEnemyHealthUseInfo(game, game.language.Get(name), health, true,0);
 			}
-			DrawEnemyHealthCommon(game, game.language.Get(name), health);
+			DrawEnemyHealthCommon(game, game.language.Get(name), health,0);
 		}
 	}
 
-	internal void DrawEnemyHealthCommon(Game game, string name, float progress)
+	internal void DrawEnemyHealthCommon(Game game, string name, float progress,int blocktype)
 	{
-		DrawEnemyHealthUseInfo(game, name, progress, false);
+		DrawEnemyHealthUseInfo(game, name, progress, false,blocktype);
 	}
 
-	internal void DrawEnemyHealthUseInfo(Game game, string name, float progress, bool useInfo)
+	internal void DrawEnemyHealthUseInfo(Game game, string name, float progress, bool useInfo,int blockid)
 	{
 		int y = useInfo ? 55 : 35;
 		game.rend.Draw2dTexture(game.rend.WhiteTexture(), game.xcenter(300), 40, 300, y, null, 0, ColorCi.FromArgb(255, 0, 0, 0), false);
-		game.rend.Draw2dTexture(game.rend.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
-		FontCi font = new FontCi();
+        game.rend.Draw2dTexture(game.rend.WhiteTexture(), game.xcenter(300), 40, 300 * progress, y, null, 0, ColorCi.FromArgb(255, 255, 0, 0), false);
+        FontCi font = new FontCi();
 		font.size = 14;
 		IntRef w = new IntRef();
 		IntRef h = new IntRef();
 		game.platform.TextSize(name, font, w, h);
-		game.rend.Draw2dText(name, font, game.xcenter(w.value), 40, null, false);
-		if (useInfo)
+        game.rend.Draw2dText(name, font, game.xcenter(w.value), 40, null, false);
+        if(blockid != 0) {
+           bool isharvestable = (game.d_Data.IsHarvestableByTool(blockid, game.d_Inventory.RightHand[game.ActiveHudIndex].BlockId));
+            int blockspeedmask = game.d_Data.ToolSpeedBonusMask()[blockid];
+            int toolspeedmask = game.d_Data.HarvestabilityMask()[game.d_Inventory.RightHand[game.ActiveHudIndex].BlockId];
+            string val = game.platform.StringFormat3("Harvestable ? {0} | mask =  {1} | tool = {2}"
+               , isharvestable ? "yes " : "no"
+                , game.platform.IntToString(blockspeedmask)
+                , game.platform.IntToString(toolspeedmask));
+
+            // for(int i=0;i< game.d_Data.) i dont have tools mask names on client 
+            // todo
+
+            IntRef color = new IntRef();
+            if (isharvestable) //idk bugy with  ? : operator
+                color.value = ColorCi.FromArgb(255, 200, 0, 0);
+            else
+                color.value = ColorCi.FromArgb(255, 0, 200, 0);
+            game.rend.Draw2dText(val, font, game.xcenter(w.value), 70, color, false);
+
+        }
+
+
+        game.rend.Draw2dText(name, font, game.xcenter(w.value), 40, null, false);
+        if (useInfo)
 		{
 			name = game.platform.StringFormat(game.language.PressToUse(), "E");
 			FontCi font2 = new FontCi();

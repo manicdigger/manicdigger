@@ -1311,7 +1311,7 @@
     {
         if (d_Data.ToolStrength()[blocktypetool] <= 1)//beter way? todo 
             return 3;
-        bool getsBonus = (d_Data.ToolSpeedBonusMask()[blocktype] & d_Data.HarvestabilityMask()[blocktypetool] )> 0;
+        bool getsBonus = (d_Data.ToolSpeedBonusMask()[blocktype] & d_Data.ToolTypeMask()[blocktypetool] )> 0;
         return (getsBonus) ? d_Data.ToolStrength()[blocktypetool] : 3;
     }
 

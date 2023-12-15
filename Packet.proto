@@ -284,7 +284,7 @@ message BlockType {
 	optional int32 ironSightsFovFloat = 32;
 	optional int32 harvestabilityMask = 33;
 	optional int32 toolSpeedBonusMask = 34;
-	optional int32 reloadDelayFloat = 35;
+	optional int32 toolTypeMask = 35;
 	optional int32 explosionRangeFloat = 36;
 	optional int32 explosionTimeFloat = 37;
 	optional int32 projectileSpeedFloat = 38; // 0 is infinite

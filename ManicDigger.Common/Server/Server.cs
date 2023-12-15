@@ -3648,7 +3648,7 @@ namespace ManicDigger.Server
 			p.ProjectileSpeedFloat = Server.SerializeFloat(block.ProjectileSpeed);
 			p.Rail = block.Rail;
 			p.RecoilFloat = Server.SerializeFloat(block.Recoil);
-			p.ReloadDelayFloat = Server.SerializeFloat(block.ReloadDelay);
+			p.ToolTypeMask = block.ToolTypeMask;
 			p.Sounds = GetSoundSet(block.Sounds);
 			p.StartInventoryAmount = block.StartInventoryAmount;
 			p.Strength = block.Strength;

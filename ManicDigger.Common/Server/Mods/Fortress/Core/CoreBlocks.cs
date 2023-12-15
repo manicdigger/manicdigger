@@ -13,22 +13,45 @@
 		SoundSet snowSounds;
 		SoundSet noSound;
 
-		public void PreStart(ModManager m)
+        int Axe;
+        int Shovel;
+        // int Hoe = m.GetToolType("Hoe");
+        int Sword;
+        int Pickaxe;
+        int Shears;
+
+        public void PreStart(ModManager m)
 		{
 			m.RequireMod("Core");
 
         }
+
+        public TemplateAddStone(string name,BlockType blocktype) {
+            blocktype.AllTextures = "Stone";
+            blocktype.DrawType = DrawType.Solid;
+            blocktype.WalkableType = WalkableType.Solid;
+            blocktype.Sounds = solidSounds;
+            blocktype.ToolSpeedBonusMask = Pickaxe;
+            blocktype.HarvestabilityMask = Pickaxe;
+
+            if (blocktype.Strength == 10)
+                blocktype.Strength = 30
+            m.SetBlockType(name, blocktype);
+            m.AddToCreativeInventory(name);
+        }
+
+
         public void Start(ModManager manager)
 		{
 			m = manager;
 
 
-            int Axe = m.GetToolType("Axe");
-            int Shovel = m.GetToolType("Shovel");
+             Axe = m.GetToolType("Axe");
+             Shovel = m.GetToolType("Shovel");
             // int Hoe = m.GetToolType("Hoe");
-            int Sword = m.GetToolType("Sword");
-            int Pickaxe = m.GetToolType("Pickaxe");
-            int Shears = m.GetToolType("Shears");
+             Sword = m.GetToolType("Sword");
+             Pickaxe = m.GetToolType("Pickaxe");
+             Shears = m.GetToolType("Shears");
 
             //Timer for season changes
             m.RegisterTimer(UpdateSeasons, 1);
@@ -58,15 +81,10 @@
 				WalkableType = WalkableType.Empty,
 				Sounds = noSound,
 			});
-			m.SetBlockType(1, "Stone", new BlockType()
-			{
-				AllTextures = "Stone",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                Strength =30,
-			});
-			m.SetBlockType(2, "Grass", new BlockType()
+            TemplateAddStone("Stone", new BlockType());
+            TemplateAddStone("Cobblestone", new BlockType());
+
+            m.SetBlockType(2, "Grass", new BlockType()
 			{
 				TextureIdTop = "Grass",
 				SideTextures = "GrassSide",
@@ -86,15 +104,7 @@
 				Sounds = solidSounds,
                 ToolSpeedBonusMask = Shovel,
             });
-			m.SetBlockType(4, "Cobblestone", new BlockType()
-			{
-				AllTextures = "Cobblestone",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
+ 
 			m.SetBlockType(5, "OakWood", new BlockType()
 			{
 				AllTextures = "OakWood",
@@ -166,34 +176,11 @@
                 ToolSpeedBonusMask = Shovel,
 
             });
-			m.SetBlockType(14, "GoldOre", new BlockType()
-			{
-				AllTextures = "GoldOre",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
+            TemplateAddStone("GoldOre", new BlockType());
+            TemplateAddStone("IronOre", new BlockType());
+            TemplateAddStone("CoalOre", new BlockType());
 
-            });
-			m.SetBlockType(15, "IronOre", new BlockType()
-			{
-				AllTextures = "IronOre",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
-			m.SetBlockType(16, "CoalOre", new BlockType()
-			{
-				AllTextures = "CoalOre",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
+             
 			m.SetBlockType(17, "OakTreeTrunk", new BlockType()
 			{
 				TopBottomTextures = "OakTreeTrunkTopBottom",
@@ -364,24 +351,10 @@
 				WalkableType = WalkableType.Empty,
 				Sounds = solidSounds,
 			});
-			m.SetBlockType(41, "GoldBlock", new BlockType()
-			{
-				AllTextures = "GoldBlock",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
-			m.SetBlockType(42, "IronBlock", new BlockType()
-			{
-				AllTextures = "IronBlock",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
+            TemplateAddStone("GoldBlock", new BlockType());
+            TemplateAddStone("IronBlock", new BlockType());
+
+           
 			m.SetBlockType(43, "DoubleStair", new BlockType()
 			{
 				TopBottomTextures = "Stair",
@@ -400,16 +373,12 @@
 				WalkableType = WalkableType.Solid,
 				Sounds = solidSounds,
 			});
-			m.SetBlockType(45, "Brick", new BlockType()
-			{
-				AllTextures = "Brick",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
-			m.SetBlockType(47, "Bookcase", new BlockType()
+            TemplateAddStone("Brick", new BlockType());
+            TemplateAddStone("MossyCobblestone", new BlockType());
+            TemplateAddStone("Obsidian", new BlockType());
+
+
+            m.SetBlockType(47, "Bookcase", new BlockType()
 			{
 				TopBottomTextures = "OakWood",
 				SideTextures = "Bookcase",
@@ -418,24 +387,7 @@
 				WalkableType = WalkableType.Solid,
 				Sounds = solidSounds,
 			});
-			m.SetBlockType(48, "MossyCobblestone", new BlockType()
-			{
-				AllTextures = "MossyCobblestone",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
-			m.SetBlockType(49, "Obsidian", new BlockType()
-			{
-				AllTextures = "Obsidian",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
+			
 			m.SetBlockType(50, "Torch", new BlockType()
 			{
 				TextureIdTop = "TorchTop",
@@ -455,22 +407,11 @@
 				Sounds = solidSounds,
                 ToolSpeedBonusMask = Shovel,
             });
-			m.SetBlockType(52, "Marble", new BlockType()
-			{
-				AllTextures = "Marble",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
-			m.SetBlockType(53, "Granite", new BlockType()
-			{
-				AllTextures = "Granite",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-			});
+            TemplateAddStone("Marble", new BlockType());
+            TemplateAddStone("Granite", new BlockType());
+            TemplateAddStone("MossyCobblestone", new BlockType());
+
+           
 			m.SetBlockType(54, "RedSand", new BlockType()
 			{
 				AllTextures = "RedSand",
@@ -479,23 +420,10 @@
 				Sounds = solidSounds,
 
             });
-			m.SetBlockType(55, "Sandstone", new BlockType()
-			{
-				AllTextures = "Sandstone",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-                ToolSpeedBonusMask = Pickaxe,
-                HarvestabilityMask = Pickaxe,
-            });
-			m.SetBlockType(56, "RedSandstone", new BlockType()
-			{
-				AllTextures = "RedSandstone",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-			});
-			m.SetBlockType(57, "Cactus", new BlockType()
+            TemplateAddStone("Sandstone", new BlockType());
+            TemplateAddStone("RedSandstone", new BlockType());
+
+            m.SetBlockType(57, "Cactus", new BlockType()
 			{
 				TopBottomTextures = "CactusTopBottom",
 				SideTextures = "CactusSide",
@@ -855,13 +783,8 @@
 				Sounds = solidSounds,
 				LightRadius = 5,
 			});
-			m.SetBlockType(133, "SilverOre", new BlockType()
-			{
-				AllTextures = "SilverOre",
-				DrawType = DrawType.Solid,
-				WalkableType = WalkableType.Solid,
-				Sounds = solidSounds,
-			});
+            TemplateAddStone("SilverOre", new BlockType());
+             
 			m.SetBlockType(135, "SilverCoin", new BlockType()
 			{
 				AllTextures = "SilverCoin",
