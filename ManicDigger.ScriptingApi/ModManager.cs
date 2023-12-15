@@ -714,6 +714,33 @@ namespace ManicDigger
         /// <returns>Name of the block at the given position</returns>
 
         void SpawnMonster(int x, int y, int z);
+
+
+
+
+
+        #region VIP TOOLS AND CRAFTING
+        /// <summary>
+        /// Tool type is used for HarvestabilityMask
+        /// </summary>
+        /// <returns></returns>
+
+        int AddTooltype(string name);
+        /// <summary>
+        /// Tool type is used for HarvestabilityMask
+        /// </summary>
+        int GetToolType(string name);
+        bool IsHarvestableByTool(int harvestabilitymask, int tooltype);
+        #endregion
+
+
+
+
+
+
+
+
+
         #region Deprecated functions
         [Obsolete("GetCurrentYearTotal is deprecated, please use GetYear instead.", false)]
 		double GetCurrentYearTotal();
@@ -1330,7 +1357,7 @@ namespace ManicDigger
 		[ProtoMember(32)]
 		public float IronSightsFov;
 		[ProtoMember(33)]
-		public int AmmoMagazine;
+		public int HarvestabilityMask;
 		[ProtoMember(34)]
 		public int AmmoTotal;
 		[ProtoMember(35)]

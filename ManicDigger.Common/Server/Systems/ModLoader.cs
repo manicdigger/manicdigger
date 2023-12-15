@@ -217,21 +217,49 @@ namespace ManicDigger.Server
             {
                 CompilerResults results = compiler.CompileAssemblyFromSource(parms, csharpScriptsValues);
 
-                if (results.Errors.Count == 0)
+  
+                int warningsCount = 0;
+                int errorCount = 0;
+
+                for (int j =0; j < results.Errors.Count; j++) {
+                    if (results.Errors[j].IsWarning) {
+                        warningsCount++;
+                        Console.WriteLine("----------------------------------WARNING------------------------------------");
+
+                    }
+                    else
+                    {
+                        errorCount++;
+                        Console.WriteLine("-----------------------------------ERROR-------------------------------------");
+
+                    }
+                    //TODO ORGINAL FILENAME ?
+                    Console.WriteLine("Filename:" + errorCount+ results.Errors[j].FileName);
+                    Console.WriteLine("Line:" + results.Errors[j].Line);
+                    Console.WriteLine("Text:"+results.Errors[j].ErrorText);
+                    Console.WriteLine("-----------------------------------------------------------------------------");
+
+                }
+                if(errorCount!=0| warningsCount != 0) {
+                    Console.WriteLine("-----------------------------------------------------------------------------");
+                    Console.WriteLine("Compiled with:");
+                    Console.WriteLine("Errors:"+ errorCount);
+                    Console.WriteLine("Warnings:"+ warningsCount);
+                    Console.WriteLine("-----------------------------------------------------------------------------");
+
+                }
+
+                if (errorCount == 0)
                 {
                     Use(results);
                     return;
                 }
-                for(int j =0; j < results.Errors.Count; j++) {
-                    Console.WriteLine("-----------------------------------ERRORR------------------------------------");
-                    Console.WriteLine(results.Errors[j].ErrorText);
-                    Console.WriteLine("-----------------------------------------------------------------------------");
-                }
+
             }
 
             //Error. Load scripts separately.
             Console.WriteLine("Loading scripts separetly");
-
+            //TODO THIS NEVER WORKS
             foreach (var k in csharpScripts)
             {
                 CompilerResults results = compiler.CompileAssemblyFromSource(parms, new string[] { k.Value });

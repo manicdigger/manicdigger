@@ -64,9 +64,15 @@
 
         mDamageToPlayer = new int[count];
 		mWalkableType = new int[count];
+       
 
-		mDefaultHudSlots = new int[10];
-	}
+        mDefaultHudSlots = new int[10];
+
+        //Tools
+        mHarvestabilityMask = new int[count];
+        tooltypes = new string[count];
+
+    }
 
 	public int[] WhenPlayerPlacesGetsConvertedTo() { return mWhenPlayerPlacesGetsConvertedTo; }
 	public bool[] IsFlower() { return mIsFlower; }
@@ -82,9 +88,10 @@
     public float[] Strength() { return mStrength; }
     public float[] ToolStrength() { return mToolStrength; }
     public int[] DamageToPlayer() { return mDamageToPlayer; }
-	public int[] WalkableType1() { return mWalkableType; }
+    public int[] WalkableType1() { return mWalkableType; }
+    public int[] HarvestabilityMask() { return mWalkableType; }
 
-	public int[] DefaultHudSlots() { return mDefaultHudSlots; }
+    public int[] DefaultHudSlots() { return mDefaultHudSlots; }
 
 	int[] mWhenPlayerPlacesGetsConvertedTo;
 	bool[] mIsFlower;
@@ -103,10 +110,21 @@
 	int[] mWalkableType;
 
 	int[] mDefaultHudSlots;
+    int[] mHarvestabilityMask;
 
-	// TODO: hardcoded IDs
-	// few code sections still expect some hardcoded IDs
-	int mBlockIdEmpty;
+    //for now not inicilized outside server TODO
+    public string[] tooltypes; //STUPID TODO
+    public const int MAX_TOOLTYPES = 32;
+    public int tooltypesAdded;
+    public bool IsHarvestableByTool(int blockId, int toolID) {
+        int harvestabilitymask =mHarvestabilityMask[blockId];
+         int toolmask = mHarvestabilityMask[toolID];
+        return (harvestabilitymask & toolmask) > 0;
+    }
+
+    // TODO: hardcoded IDs
+    // few code sections still expect some hardcoded IDs
+    int mBlockIdEmpty;
 	int mBlockIdDirt;
 	int mBlockIdSponge;
 	int mBlockIdTrampoline;
@@ -265,6 +283,7 @@
         //StartInventoryAmount { get; }
         Strength()[id] = b.Strength;
         ToolStrength()[id] = DeserializeFloat(b.ToolStrenghtFloat);
+        HarvestabilityMask()[id] = b.HarvestabilityMask;
         DamageToPlayer()[id] = b.DamageToPlayer;
 		WalkableType1()[id] = b.WalkableType;
 		SetSpecialBlock(b, id);

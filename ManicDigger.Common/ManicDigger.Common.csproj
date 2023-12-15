@@ -233,7 +233,6 @@
     <Compile Include="Common\XmlTool.cs" />
     <Compile Include="Server\ClientOnServer.cs" />
     <Compile Include="Server\GetFile.cs" />
-    <Compile Include="Server\Mods\War\Food.cs" />
     <Compile Include="Server\NetworkDummyServer.cs" />
     <Compile Include="Server\NetworkEnetServer.cs" />
     <Compile Include="Server\NetworkWebSocketServer.cs" />
@@ -252,13 +251,6 @@
     <Compile Include="Server\Systems\LoadLast.cs" />
     <Compile Include="Server\Systems\LoadServerClient.cs" />
     <Compile Include="Server\Systems\ModLoader.cs" />
-    <Compile Include="Server\Mods\War\Core.cs" />
-    <Compile Include="Server\Mods\War\CoreBlocks.cs" />
-    <Compile Include="Server\Mods\War\WarBlocks.cs" />
-    <Compile Include="Server\Mods\War\Noise2DWorldGenerator.cs" />
-    <Compile Include="Server\Mods\War\TreeGenerator.cs" />
-    <Compile Include="Server\Mods\War\War.cs" />
-    <Compile Include="Server\Mods\War\WaterSimple.cs" />
     <Compile Include="Server\NetworkTcpServer.cs" />
     <Compile Include="Server\Packets.cs" />
     <Compile Include="Client\Misc\Platform.ci.cs" />
@@ -326,7 +318,8 @@
     <Compile Include="Server\Mods\Fortress\Unused\BlockId.cs" />
     <Compile Include="Server\Mods\Fortress\Unused\PermissionBlock.cs" />
     <Compile Include="Server\Mods\Fortress\Unused\Fluids.cs" />
-    <Compile Include="Server\Mods\Fortress\Core\Tools.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\CoreToolsDefinitions.cs" />
+    <Compile Include="Server\Mods\Fortress\Core\CoreTools.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -358,6 +351,7 @@
   <ItemGroup>
     <Folder Include="Server\Mods\Fortress\Core\" />
     <Folder Include="Server\Mods\Fortress\MoreCommands\" />
+    <Folder Include="Server\Mods\Fortress\TooMuchContent\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

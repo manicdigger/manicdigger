@@ -3620,7 +3620,7 @@ namespace ManicDigger.Server
 		{
 			Packet_BlockType p = new Packet_BlockType();
 			p.AimRadiusFloat = Server.SerializeFloat(block.AimRadius);
-			p.AmmoMagazine = block.AmmoMagazine;
+			//p.HarvestabilityMask = block.HarvestabilityMask;
 			p.AmmoTotal = block.AmmoTotal;
 			p.ToolStrenghtFloat = Server.SerializeFloat(block.ToolStrenght);
 			p.DamageBodyFloat = Server.SerializeFloat(block.DamageBody);
@@ -3631,7 +3631,7 @@ namespace ManicDigger.Server
 			p.ExplosionRangeFloat = Server.SerializeFloat(block.ExplosionRange);
 			p.ExplosionTimeFloat = Server.SerializeFloat(block.ExplosionTime);
 			p.Handimage = block.handimage;
-			p.IronSightsAimRadiusFloat = Server.SerializeFloat(block.IronSightsAimRadius);
+			//p.IronSightsAimRadiusFloat = Server.SerializeFloat(block.HarverstabilityMask);
 			p.IronSightsEnabled = block.IronSightsEnabled;
 			p.IronSightsFovFloat = Server.SerializeFloat(block.IronSightsFov);
 			p.IronSightsImage = block.IronSightsImage;

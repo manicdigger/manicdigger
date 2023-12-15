@@ -409,11 +409,11 @@ public class ProcessPacketTask : Action_
 				game.language.Override(packet.Translation.Lang, packet.Translation.Id, packet.Translation.Translation);
 				break;
 			case Packet_ServerIdEnum.BlockType:
-                game.platform.ConsoleWriteLine(
-                game.platform.StringFormat3("Name: {0} | id: {1} |toolStrenght: {2}",
-                    packet.BlockType.Blocktype.Name,
-                game.platform.IntToString(packet.BlockType.Id),
-                    game.platform.FloatToString(packet.BlockType.Blocktype.ToolStrenghtFloat)));
+                //game.platform.ConsoleWriteLine(
+                //game.platform.StringFormat3("Name: {0} | id: {1} |toolStrenght: {2}",
+                //    packet.BlockType.Blocktype.Name,
+                //game.platform.IntToString(packet.BlockType.Id),
+                    //game.platform.FloatToString(packet.BlockType.Blocktype.ToolStrenghtFloat)));
 				game.NewBlockTypes[packet.BlockType.Id] = packet.BlockType.Blocktype;
 				break;
 			case Packet_ServerIdEnum.SunLevels:
@@ -450,20 +450,20 @@ public class ProcessPacketTask : Action_
 				   game.DeserializeFloat(packet.Bullet.SpeedFloat)));
 				break;
 			case Packet_ServerIdEnum.Ammo:
-				if (!game.ammostarted)
-				{
-					game.ammostarted = true;
-					for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
-					{
-						Packet_IntInt k = packet.Ammo.TotalAmmo[i];
-						game.LoadedAmmo[k.Key_] = MathCi.MinInt(k.Value_, game.blocktypes[k.Key_].AmmoMagazine);
-					}
-				}
-				game.TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
-				for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
-				{
-					game.TotalAmmo[packet.Ammo.TotalAmmo[i].Key_] = packet.Ammo.TotalAmmo[i].Value_;
-				}
+				//if (!game.ammostarted)
+				//{
+				//	game.ammostarted = true;
+				//	for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
+				//	{
+				//		Packet_IntInt k = packet.Ammo.TotalAmmo[i];
+				//		game.LoadedAmmo[k.Key_] = MathCi.MinInt(k.Value_, game.blocktypes[k.Key_].AmmoMagazine);
+				//	}
+				//}
+				//game.TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
+				//for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
+				//{
+				//	game.TotalAmmo[packet.Ammo.TotalAmmo[i].Key_] = packet.Ammo.TotalAmmo[i].Value_;
+				//}
 				break;
 			case Packet_ServerIdEnum.Explosion:
 				{

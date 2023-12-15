@@ -16,8 +16,9 @@
 		public void PreStart(ModManager m)
 		{
 			m.RequireMod("Core");
-		}
-		public void Start(ModManager manager)
+
+        }
+        public void Start(ModManager manager)
 		{
 			m = manager;
 

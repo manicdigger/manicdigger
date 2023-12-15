@@ -2,18 +2,18 @@
 {
 	public override void OnNewFrameFixed(Game game, NewFrameEventArgs args)
 	{
-		if (game.reloadstartMilliseconds != 0
-			&& (game.one * (game.platform.TimeMillisecondsFromStart() - game.reloadstartMilliseconds) / 1000)
-			> game.DeserializeFloat(game.blocktypes[game.reloadblock].ReloadDelayFloat))
-		{
-			{
-				int loaded = game.TotalAmmo[game.reloadblock];
-				loaded = MathCi.MinInt(game.blocktypes[game.reloadblock].AmmoMagazine, loaded);
-				game.LoadedAmmo[game.reloadblock] = loaded;
-				game.reloadstartMilliseconds = 0;
-				game.reloadblock = -1;
-			}
-		}
+		//if (game.reloadstartMilliseconds != 0
+		//	&& (game.one * (game.platform.TimeMillisecondsFromStart() - game.reloadstartMilliseconds) / 1000)
+		//	> game.DeserializeFloat(game.blocktypes[game.reloadblock].ReloadDelayFloat))
+		//{
+		//	{
+		//		int loaded = game.TotalAmmo[game.reloadblock];
+		//		loaded = MathCi.MinInt(game.blocktypes[game.reloadblock].AmmoMagazine, loaded);
+		//		game.LoadedAmmo[game.reloadblock] = loaded;
+		//		game.reloadstartMilliseconds = 0;
+		//		game.reloadblock = -1;
+		//	}
+		//}
 	}
 	public override void OnKeyDown(Game game, KeyEventArgs args)
 	{
