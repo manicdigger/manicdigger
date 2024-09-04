@@ -185,6 +185,36 @@ namespace ManicDigger.Mods.War
 			               	DamageBody = 200,
 			               	PistolType = PistolType.Grenade,
 			               });
+			m.SetBlockType(161, "Flag", new BlockType()
+			               {
+							AllTextures = "FlagWhite",
+							DrawType = DrawType.Fence,
+							WalkableType = WalkableType.Empty,
+							Sounds = solidSounds,
+							});
+			m.SetBlockType(162, "BluePodest", new BlockType()
+			               {
+			               	TextureIdTop = "BlueCloth",
+			               	SideTextures = "BluePodest",
+			               	TextureIdForInventory = "BluePodest",
+			               	TextureIdBottom = "Stair",
+			               	DrawType = DrawType.Solid,
+			               	WalkableType = WalkableType.Solid,
+			               	Sounds = solidSounds,
+			               });
+			m.SetBlockType(163, "GreenPodest", new BlockType()
+			               {
+			               	TextureIdTop = "GreenCloth",
+			               	SideTextures = "GreenPodest",
+			               	TextureIdForInventory = "GreenPodest",
+			               	TextureIdBottom = "Stair",
+			               	DrawType = DrawType.Solid,
+			               	WalkableType = WalkableType.Solid,
+			               	Sounds = solidSounds,
+			               });
+			m.AddToCreativeInventory("Flag");
+			m.AddToCreativeInventory("BluePodest");
+			m.AddToCreativeInventory("GreenPodest");
 		}
 	}
 }
