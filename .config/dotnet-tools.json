@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "upgrade-assistant": {
+      "version": "1.0.518",
+      "commands": [
+        "upgrade-assistant"
+      ],
+      "rollForward": false
+    }
+  }
+}
